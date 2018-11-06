@@ -1,0 +1,447 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>SpinCore PulseBlaster Interpreter Documentation</title>
+  <meta http-equiv="Content-Language" content="en-us">
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=windows-1252">
+  <meta name="Description"
+ content="PulseBlaster&reg; - the Intelligent Pulse Programmer / Pattern Generator Board for NMR, MRI, NQR, ICR, and Solids applications. The innovative system-on-a-chip (SOC) design innovative design has many unique and attractive features, such as high speed, increased functionality, and low cost.">
+  <meta name="KeyWords"
+ content="Pulse Programmer, pattern generator, Programmable logic, NMR, MRI, spectroscopy, chemistry, physics, magneticresonance, nuclear magnetic resonance, magnetic resonance imaging">
+  <link rel="stylesheet" href="/spincore.css" type="text/css">
+</head>
+<body topmargin="5" leftmargin="0">
+<div align="center">
+<center>
+<table border="0" cellpadding="0" cellspacing="0" width="768">
+  <tbody>
+<!--#include virtual="/templates/header_row.inc" --> <tr>
+      <td bgcolor="#dddddd" valign="top"><!--#include virtual="/templates/menu_table.inc" --><br>
+      </td>
+      <td style="padding: 20px 0px 20px 30px;" valign="top"><!-- begin page content -->
+      <h1>SpinCore PulseBlaster Interpreter</h1>
+      <img src="InterpreterLogo.jpg" style="float: right;">
+      <h2>Sections</h2>
+      <ol>
+        <li><a href="#Legal">Legal</a></li>
+        <li><a href="#GUI">Graphical User Interface</a></li>
+        <li><a href="#Language">Language</a></li>
+        <li><a href="#Interpreter">Interpreter Special Features</a></li>
+        <li><a href="#CommandLine">Command Line</a></li>
+        <li><a href="#PulseBlasterESR">PulseBlaster ESR Pro Information</a></li>
+      </ol>
+      <br>
+For help or information about other SpinCore products, please visit us
+at <a href="http://www.spincore.com">www.spincore.com</a><br>
+      <br>
+      <a name="Legal"></a><br>
+      <h2>Legal</h2>
+      <h2><small><small>Copyright (c) 2009 SpinCore Technologies, Inc.</small></small><br>
+      </h2>
+This software is provided 'as-is', without any expressed or
+implied warranty. In no event will the authors be held liable for any
+damages arising from the
+use of this software. <br>
+      <br>
+Permission is granted to anyone to use this software
+for any purpose, including commercial applications. <a name="GUI"></a>
+      <h2>Graphical User Interface</h2>
+      <center><img src="Layout.jpg" style="width: 568px;"></center>
+      <br>
+&nbsp; &nbsp;Upon launching the program, you will be presented
+with an interface for writing your PulseBlaster programs. The top white
+box is an editor. The bottom gray box is output that the interpreter
+produces. At the bottom of the window is a box to put in the frequency
+your board uses. This frequency will be saved each time you shutdown
+the program and then reloaded the next time you launch. On the bottom
+right, you will notice Line # and Column # output. This tells you where
+the cursor is inside of the edit box for fixing errors and such.<br>
+      <br>
+&nbsp; &nbsp; At the top of the window is the menu bar and 5
+buttons. The buttons perform many of the same functions
+that can be found on the menu bar but are provided as a convenience.
+Starting from left to right:<br>
+      <br>
+      <span style="font-weight: bold;">Open File</span><br>
+This button opens a file. You will be prompted to save any changes to
+the contents of the current file.<br>
+      <br>
+      <span style="font-weight: bold;">Save File</span><br>
+This button saves the file you are currently editing.<br>
+      <br>
+      <span style="font-weight: bold;">Load Board</span><br>
+This button loads the program that currently resides in the edit box
+onto the board. The file does not
+have to be saved beforehand. The program will take the contents of the
+edit box and interpret them. The output
+of this operation will be displayed in the output box. Upon success, a
+message will be displayed saying the board
+was successfully loaded. If this message is not displayed, it means
+that some error occurred and a message telling
+you the error should be the last thing displayed. <br>
+      <br>
+      <span style="font-weight: bold;">Start</span><br>
+This button starts execution of the program currently in the board's
+memory.<br>
+      <br>
+      <span style="font-weight: bold;">Stop</span><br>
+This button stops execution of the program current in the board's
+memory.<br>
+      <br>
+&nbsp; &nbsp; The menu bar is just above the 5 buttons.
+Starting from left to right:<br>
+      <br>
+      <span style="font-weight: bold;">File-&gt;New</span><br>
+This will erase the current contents of the edit box. You will be
+prompted to save changes to the <br>
+current file.<br>
+      <br>
+      <span style="font-weight: bold;">File-&gt;Open</span><br>
+Same as the Open File button.<br>
+      <br>
+      <span style="font-weight: bold;">File-&gt;Save</span><br>
+Same as the Save File button.<br>
+      <br>
+      <span style="font-weight: bold;">File-&gt;Exit</span><br>
+This will exit the program. You will be prompted to save changes to the
+current file.<br>
+      <br>
+      <span style="font-weight: bold;">Interpreter-&gt;Show
+Debug Information</span><br>
+This turns debug information from the interpreter on and off. This
+might provide some insight into
+an error that you might not be able to resolve. The debug information
+will be shown next time the board is
+loaded. <br>
+      <br>
+      <span style="font-weight: bold;">Interpreter-&gt;Save
+Output</span><br>
+This saves the contents of the output box to a text file.<br>
+      <br>
+      <span style="font-weight: bold;">Interpreter-&gt;Clear
+Output</span><br>
+This clears the contents of the output box.<br>
+      <br>
+      <span style="font-weight: bold;">Board-&gt;Load</span><br>
+Same as Load Board button.<br>
+      <br>
+      <span style="font-weight: bold;">Board-&gt;Start</span><br>
+Same as Start button.<br>
+      <br>
+      <span style="font-weight: bold;">Board-&gt;Stop</span><br>
+Same as Stop button.<br>
+      <br>
+      <span style="font-weight: bold;">Help-&gt;Read Me</span><br>
+Opens this document in a web browser.<br>
+      <br>
+      <span style="font-weight: bold;">Help-&gt;About</span><br>
+This displays information about the program.<br>
+      <a name="Language"></a>
+      <h2>Language</h2>
+The language of the interpreter is very similar in appearance to that
+of an assembly language. Every line represents a single instruction.
+White space, such as tabs and spaces, is discarded. The language is
+case-insensitive. The following are instructions on the contents of a
+given line.<br>
+      <span style="font-weight: bold;"><br>
+Labels</span><br>
+      <br>
+&nbsp; &nbsp; Labels come at the beginning of a line and are
+denoted by a : at the end. For instance:<br>
+      <br>
+      <code>Start: 0xFFFFFF, 200 ms</code> <br>
+      <br>
+&nbsp; &nbsp; This line is labeled Start. Since the language is
+case insensitive though, the label is equal to any form of the word
+Start. Labels are optional and do not have to be contained on any line.<span
+ style="font-weight: bold;"><br>
+      <br>
+Output Pattern<br>
+      <br>
+      </span>&nbsp; &nbsp; This is the first required part for
+a given line. This field must exist on all lines or the interpreter
+will fail while programming the board. This field represents the
+pattern that the board will output for this instruction. This pattern
+may be represented in Hex, Binary, or simply Integer format. All output
+fields must begin with a number no matter what format they are
+represented in. This usually only matters for Hex and Binary
+representations. Hex and Binary representations should start with a 0
+followed by an 'x' or a 'b'. The following are examples of valid output
+patterns for all bits on:<br>
+      <br>
+      <code>Hex: 0xFFFFFF<br>
+Binary: 0b1111 1111 1111 1111 1111 1111<br>
+Integer: 16777215<br>
+      </code><br>
+&nbsp; &nbsp; Notice how Hex and Binary begin with "0x" and
+"0b". The x or the b must be there otherwise the interpreter will fail
+while trying to program the board. Also notice that the binary output
+pattern contains white space. This is allowed. You may also use white
+space inside of hex values:<br>
+      <br>
+      <code>0x FF FF FF<br>
+      </code><br>
+The output pattern is read until a comma is reached. All white space is
+thrown away during the read.<span style="font-weight: bold;"><br>
+      <br>
+Time Field<br>
+      <br>
+      </span>&nbsp; &nbsp; The time field consists of two
+parts, time value and time units. Time value can be any decimal number.
+Time units must be one of four options:<br>
+      <table style="text-align: left; width: 239px; height: 93px;"
+ border="1" cellpadding="1" cellspacing="0">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">s<br>
+            </td>
+            <td style="vertical-align: top;">seconds</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">ms<br>
+            </td>
+            <td style="vertical-align: top;">milliseconds</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">us<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">microseconds</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">ns<br>
+            </td>
+            <td style="vertical-align: top;">nanoseconds</td>
+          </tr>
+        </tbody>
+      </table>
+*PulseBlaster ESR-Pro 400MHz users: please see special note <a
+ href="#PulseBlasterESR">here</a><br>
+      <br>
+Examples of valid time fields are as follows:<br>
+      <br>
+      <code>500 ms<br>
+500ms<br>
+500.0 ms<br>
+500.0ms<br>
+      </code> <br>
+White space is permitted inside of a time field.<span
+ style="font-weight: bold;"><br>
+      <br>
+Command Field</span><br>
+      <br>
+The command field tells the board what to do after producing the
+output pattern for the given amount of time. Valid commands are as
+follows:<br>
+      <br>
+      <code>CONTINUE or continue</code> - Continue to next instruction<br>
+      <code>STOP or stop</code> - Stop execution<br>
+      <code>LOOP or loop</code> - Beginning of a loop<br>
+      <code>END_LOOP or end_loop</code> - End of a loop<br>
+      <code>JSR or jsr</code> - Jump to a sub routine<br>
+      <code>RTS or rts</code> - Return from a sub routine<br>
+      <code>BRANCH or branch</code> - Branch<br>
+      <code>LONG_DELAY or long_delay</code> - Long delay<br>
+      <code>WAIT* or wait</code> - Wait for a trigger<br>
+The command field is optional. If no command field is listed, the <code>CONTINUE</code>
+command will be assumed.<br>
+For more information on these commands see the <a
+ href="http://spincore.com/support/spinapi/">SpinAPI</a>
+reference.<br>
+      <span style="font-weight: bold;"><br>
+*Pleae note that WAIT cannot be placed at the top of the program and
+there should be at least one instruction execution time between the
+start of the program and WAIT.<br>
+      <br>
+Data Field<br>
+      <br>
+      </span>The data field is also optional unless a branch or jsr
+command is used during an instruction. In this case, the interpreter
+forces you to enter a label to jump to. The data field is used for
+different purposes depending on the command field. If no data field is
+specified, a value of 0 will be assumed. For more information see the <a
+ href="http://spincore.com/support/spinapi/">SpinAPI</a>
+reference.<span style="font-weight: bold;"><br>
+      <br>
+Comments<br>
+      <br>
+      </span>Comments start with a // and the interpreter just throws
+anything after that on the line away. Comments may be on a line my
+themselves or placed after an instruction as follows:<span
+ style="font-family: monospace;"></span><br>
+      <br>
+      <code>// Valid comment on a line by itself.<br>
+Label: 0xFFFFFF, 100 ms // Valid comment after a valid instruction<br>
+0x000000, 100 ms, branch, Label // Another valid comment<br>
+      </code><br>
+There are several example programs available. Please take a look at
+these.<br>
+      <a name="Interpreter"></a>
+      <h2>Interpreter Special Features</h2>
+The interpreter provides some special features to make your life a
+little simpler when writing a<br>
+PulseBlaster program.<br>
+      <span style="font-weight: bold;"><br>
+Stop<br>
+      <br>
+      </span>&nbsp; &nbsp; Stop is the only command allowed to
+be on a line by itself. When a line is found containing only the word
+stop, a program line will be generated with a 0 output pattern and a
+length of 0 ms. Stop is special in PulseBlaster boards in that the
+output pattern and the time field are ignored. It is recommended that
+before issuing a Stop command your output pattern be set to 0. For
+instance:<br>
+      <br>
+      <code>0xFFFFFF, 100ms<br>
+STOP</code><br>
+      <br>
+This will result in all bits remaining on after the Stop command has
+been executed. We recommend doing the following:<br>
+      <br>
+      <code>0xFFFFFF, 100ms<br>
+0x000000, 100ms<br>
+STOP</code><br>
+      <br>
+This will ensure that all bits are off when program execution stops.<span
+ style="font-weight: bold;"><br>
+      <br>
+Loop Matching<br>
+      <br>
+      </span>The interpreter will do loop matching for you. Example:<br>
+      <br>
+      <code>0x000000, 100ms, LOOP, 3 // Loop 3 times<br>
+0xFFFFFF, 100ms, END_LOOP // Interpreter will match END_LOOP with the
+LOOP on the line above<br>
+      </code> <br>
+      <span style="font-weight: bold;">Natural Language</span> <br>
+      <br>
+Natural Language allows
+you to specify what bits to switch on for a given instruction. Begin
+the output field with "0n" and then you can specify which bits to
+switch on. Valid ranges are 0 thru 23, and each bit is seperated by a
+'+'. See the examples below.<br>
+      <br>
+      <code>0n 1 + 3, 500ms // Bits 1 and 3 on for 500ms<br>
+0n 2 + 4, 500ms // Bits 2 and 4 on for 500ms<br>
+0n 0 + 5, 500ms // Bits 0 and 5 on for 500ms<br>
+      </code> <br>
+      <span style="font-weight: bold;">Variables</span> <br>
+Variables allow you to change portions of your program with
+ease. Variables are denoted by a leading '$' and must be assigned a
+value<br>
+before they are used in your program. To assign a variable a value,
+type the name of the variable followed by an equal sign and the value
+you want to assign to that variable. For example:<br>
+      <br>
+      <code>$var = 1234 // Assign $var 1234<br>
+      </code><br>
+Assignments must be on a line by themselves. Once a variable has been
+assigned, it can be used anywhere in a program line. Variables can
+not be used to label lines. See the following example:<br>
+      <br>
+      <code>$output1 = 0xFFFFFF<br>
+$time1 = 100ms<br>
+$output2 = 0x000000<br>
+$time2 = 500ms<br>
+      <br>
+start: $output1, $time1 // Translates to: 0xFFFFFF, 100ms<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $output2, $time2, branch, start //
+Translates to: 0x000000, 500ms, branch, start<br>
+      </code> <br>
+Variables are just replaced with the value they are assigned before
+program line values are parsed. They can also be changed once they are
+assigned a value.<br>
+      <br>
+      <code>$output = 0xFFFFFF // $output will be 0xFFFFFF after this
+point<br>
+$output, 100ms<br>
+$output = 0x000000 // $output will be 0x000000 after this point.<br>
+$output, 100ms<br>
+      </code> <a name="CommandLine"></a>
+      <h2>Command Line</h2>
+The interpreter can also be used from the command line using
+spbicl.exe. This is only recommended
+for users who are familiar with the usage of a command line and need to
+use the interpreter from some
+other program. The usage of the command line program is as follows:<br>
+      <br>
+Usage: <code>spbicl &lt;command&gt; [file] [frequency]<br>
+      </code>Commands:<br>
+Load = Load [file] into memory using [frequency]<br>
+Start = Start execution of program currently in memory<br>
+Stop = Stop execution of program currently running<br>
+      <br>
+Examples: <br>
+      <br>
+      <code>spbicl load file.pb 100.0</code> <b><i>Load file.pb at 100
+MHz</i></b><br>
+      <code>spbicl start</code> <b><i>Start program execution</i></b><br>
+      <code>spbicl stop</code> <b><i>Stop program execution</i></b><br>
+The return value of the program is 0 if success and -1 if an error
+occurs.<br>
+      <a name="PulseBlasterESR"></a>
+      <h2>PulseBlaster ESR Pro Information</h2>
+You can use the interpreter to program your PulseBlaster ESR Pro
+boards, but there are some things
+you need to know beforehand: <br>
+      <br>
+      <span style="font-weight: bold;">I.</span> <br>
+For 400MHz PulseBlaster ESR Pro boards, the longest allowed
+instruciton length is 647ns.&nbsp; For
+longer delays, please use the <code>LONG_DELAY</code> option in the
+command
+field.&nbsp; For example, to generate a 744ns delay, use:<br>
+      <br>
+      <div style="text-align: center;"><code>your_output_pattern_here,
+372 ns, LONG_DELAY, 2</code></div>
+      <br>
+      <br>
+This will result in two 372ns delays being created, thus producing a
+744ns total delay. <br>
+      <br>
+      <span style="font-weight: bold;">II.</span> <br>
+PulseBlaster ESR Pro boards use the upper three bits of the output
+pattern to determine different
+aspects about the output pattern. For instance, if the upper three bits
+of the output pattern are set
+to 0s, no output pattern will occur during this instruction. An upper
+three bits of 001 tells the board
+to perform the output period for 1 period. You see, the board's minimum
+time value is 12.5 ns. You can
+use the upper three bits to go lower than this value. <br>
+      <br>
+000 - No output pattern. <br>
+001 - Output pattern for 1 period. <br>
+010 - Output pattern for 2 periods. <br>
+011 - Output pattern for 3 periods. <br>
+100 - Output pattern for 4 periods. <br>
+101 - Output pattern for 5 periods. <br>
+110 - Output pattern uses time value. <br>
+111 - Output pattern uses time value. <br>
+      <br>
+Example: <br>
+      <br>
+      <code>0b 1010 0000 0000 0000 0000 0001, 12.5 ns // Bit 0 will be
+on for 5
+periods. <br>
+0b 1000 0000 0000 0000 0000 0010, 12.5 ns // Bit 1 will be on for 4
+periods. <br>
+0b 1110 0000 0000 0000 0000 0100, 12.5 ns // Bit 2 will be on for 12.5
+ns.<br>
+      <br>
+      <span style="color: rgb(153, 153, 153);">last modified 05/21/2009</span>
+      </code><!-- End page content --> </td>
+    </tr>
+    <tr bgcolor="#ef0000">
+      <td height="2"><br>
+      </td>
+      <td><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</center>
+</div>
+<!--#include virtual="/templates/footer.inc" -->
+</body>
+</html>

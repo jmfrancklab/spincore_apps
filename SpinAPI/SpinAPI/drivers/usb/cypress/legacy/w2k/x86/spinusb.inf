@@ -1,0 +1,115 @@
+; INF file for SpinCore Technologies, Inc. USB devices.
+; SpinCore Technologies, Inc. (www.spincore.com)
+; $Date: 2010/05/25 19:14:49 $
+
+[Version]
+Signature="$CHICAGO$"
+Class=USB
+ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
+provider=%CYUSB_Provider%
+CatalogFile=CYUSB.cat
+DriverVer=02/02/2010,3.4.2.147
+
+[SourceDisksNames]
+1=%CYUSB_Install%,,,
+
+[SourceDisksFiles]
+CYUSB.sys = 1
+
+[DestinationDirs]
+CYUSB.Files.Ext = 10,System32\Drivers
+
+[ControlFlags]
+ExcludeFromSelect = *
+
+[Manufacturer]
+%CYUSB_Provider%=Device,NTx86
+
+;for all platforms
+[Device]
+%VID_0403&PID_C1A9.DeviceDesc%=CyUsb, USB\VID_0403&PID_C1A9
+%VID_0403&PID_C1AA.DeviceDesc%=CyUsb, USB\VID_0403&PID_C1AA
+%VID_0403&PID_C1AB.DeviceDesc%=CyUsb, USB\VID_0403&PID_C1AB
+%VID_0403&PID_C2A9.DeviceDesc%=CyUsb, USB\VID_0403&PID_C2A9
+%VID_04B4&PID_8613.DeviceDesc%=CyUsb, USB\VID_04B4&PID_8613
+
+[CYUSB]
+CopyFiles=CYUSB.Files.Ext
+AddReg=CyUsb.AddReg
+
+[CYUSB.HW]
+AddReg=CYUSB.AddReg.Guid
+
+[CYUSB.Services]
+Addservice = CYUSB,2,CYUSB.AddService
+
+[CYUSB.NT]
+CopyFiles=CYUSB.Files.Ext
+AddReg=CyUsb.AddReg
+
+[CYUSB.NT.HW]
+AddReg=CYUSB.AddReg.Guid
+
+[CYUSB.NT.Services]
+Addservice = CYUSB,2,CYUSB.AddService
+
+
+[CYUSB.NTx86]
+CopyFiles=CYUSB.Files.Ext
+AddReg=CyUsb.AddReg
+
+[CYUSB.NTx86.HW]
+AddReg=CYUSB.AddReg.Guid
+
+[CYUSB.NTx86.Services]
+Addservice = CYUSB,2,CYUSB.AddService
+
+[CYUSB.NTamd64]
+CopyFiles=CYUSB.Files.Ext
+AddReg=CyUsb.AddReg
+
+[CYUSB.NTamd64.HW]
+AddReg=CYUSB.AddReg.Guid
+
+[CYUSB.NTamd64.Services]
+Addservice = CYUSB,2,CYUSB.AddService
+
+
+[CYUSB.AddReg]
+; Deprecating - do not use in new apps to identify a CYUSB driver
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,CYUSB.sys
+; You may optionally include a check for DriverBase in your application to check for a CYUSB driver
+HKR,,DriverBase,,CYUSB.sys
+HKR,"Parameters","MaximumTransferSize",0x10001,4096
+HKR,"Parameters","DebugLevel",0x10001,2
+HKR,,FriendlyName,,%CYUSB_Description%
+
+[CYUSB.AddService]
+DisplayName    = %CYUSB_Description%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %10%\System32\Drivers\CYUSB.sys
+AddReg         = CYUSB.AddReg
+LoadOrderGroup = Base
+
+[CYUSB.Files.Ext]
+CYUSB.sys
+
+[CYUSB.AddReg.Guid]
+HKR,,DriverGUID,,%CYUSB.GUID%
+
+[Strings]
+CYUSB_Provider    = "SpinCore"
+CYUSB_Company     = "SpinCore Technologies, Inc."
+CYUSB_Description = "SpinCore USB Driver"
+CYUSB_DisplayName = "SpinCore USB"
+CYUSB_Install     = "SpinCore USB Installation Disk"
+VID_0403&PID_C1A9.DeviceDesc="SpinCore Technologies, Inc. RadioProcessor"
+VID_0403&PID_C1AA.DeviceDesc="SpinCore Technologies, Inc. PulseBlaster Plus! (v2)"
+VID_0403&PID_C1AB.DeviceDesc="SpinCore Technologies, Inc. PulseBlaster"
+VID_0403&PID_C2A9.DeviceDesc="SpinCore Technologies, Inc. DDS"
+VID_04B4&PID_8613.DeviceDesc="SpinCore Technologies, Inc. Blank Firmware"
+CYUSB.GUID="{AE18AA60-7F6A-11d4-97DD-00010229B959}"
+CYUSB_Unused      = "."

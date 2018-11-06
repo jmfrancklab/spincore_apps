@@ -1,0 +1,66 @@
+// Sample program for SpinCore PulseBlaster Interpreter.
+// Integer output patterns in a continuous loop.
+
+Start: 1, 500ms // Ouput bit pattern equivlent to 1
+       2, 500ms
+       3, 500ms
+       4, 500ms
+       5, 500ms
+       6, 500ms
+       7, 500ms
+       8, 500ms
+       9, 500ms
+       10, 500ms
+       11, 500ms
+       12, 500ms
+       13, 500ms
+       14, 500ms
+       15, 500ms
+       16, 500ms
+       17, 500ms
+       18, 500ms
+       19, 500ms
+       20, 500ms
+       21, 500ms
+       22, 500ms
+       23, 500ms
+       24, 500ms
+       25, 500ms
+       26, 500ms
+       27, 500ms
+       28, 500ms
+       29, 500ms
+       30, 500ms
+       31, 500ms
+       32, 500ms
+       33, 500ms
+       34, 500ms
+       35, 500ms
+       36, 500ms
+       37, 500ms
+       38, 500ms
+       39, 500ms
+       40, 500ms
+       41, 500ms
+       42, 500ms
+       43, 500ms
+       44, 500ms
+       45, 500ms
+       46, 500ms
+       47, 500ms
+       48, 500ms
+       49, 500ms
+       50, 500ms
+       51, 500ms
+       52, 500ms
+       53, 500ms
+       54, 500ms
+       55, 500ms
+       56, 500ms
+       57, 500ms
+       58, 500ms
+       59, 500ms
+       60, 500ms
+       61, 500ms
+       62, 500ms
+       63, 500ms, BRANCH, Start
