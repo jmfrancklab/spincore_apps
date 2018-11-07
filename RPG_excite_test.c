@@ -1,3 +1,11 @@
+/*
+ * For RF output of 1 MHz for 10 us
+ * repeats until user stops by hitting enter
+ * based on 'excite_test.c' for the RadioProcessor
+ * and references parameter set up of GradientEcho.c
+ * TO COMPILE: $gcc RPG_excite_test.c mrispinabi64.lib
+ * TO RUN: $winpty ./a.exe
+ */
 #include <stdio.h>
 #include <math.h>
 
@@ -35,12 +43,12 @@ int main(int argc, char *argv[])
     ERROR_CATCH( spmri_set_defaults() );
 
     // Carrier Shape
-    double carrier[1024];
-    int i;
-    for( i = 0 ; i < 1024 ; i++ ) {
-        carrier[i] = sin( (double) i / 1024.0 * 2 * 3.14159 );
-    }
-    ERROR_CATCH(spmri_set_carrier_shape( carrier, 1024));
+    //double carrier[1024];
+    //int i;
+    //for( i = 0 ; i < 1024 ; i++ ) {
+    //    carrier[i] = sin( (double) i / 1024.0 * 2 * 3.14159 );
+    //}
+    //ERROR_CATCH(spmri_set_carrier_shape( carrier, 1024));
 
     // Carrier Frequency Registers
     double freq[1] = {1.0};
