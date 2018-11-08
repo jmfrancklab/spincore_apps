@@ -29,12 +29,12 @@ int main(int argc, char *argv[])
     // Initialize MRI SpinAPI
     ERROR_CATCH( spmri_init() );
 
-    printf("SpinAPI initialized...");
+    printf("SpinAPI initialized...\n");
     // Set all values on board to default values
     ERROR_CATCH( spmri_set_defaults() );
 
     // Carrier frequency registers
-    double freq[1] = {1.0};
+    double freq[1] = {14.46};
     ERROR_CATCH( spmri_set_frequency_registers( freq, 1 ) );
 
     // Phase registers
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     int start;
     float pulse_90;
     float pulse_180;
-    pulse_90 = 10.0;
+    pulse_90 = 1.0;
     pulse_180 = 2.0*pulse_90;
     start = ERROR_CATCH( spmri_mri_inst(
                 // DAC Information
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
                 0x00, // flags
                 0, // data
                 CONTINUE, // opcode
-                40.0 * us // delay
+                80.0 * us // delay
                 ));
 
     // This instruction outputs 180 pulse
