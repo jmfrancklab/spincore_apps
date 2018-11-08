@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     float pulse_90;
     float pulse_180;
     pulse_90 = 10.0;
-    pulse_180 = 20.0;
+    pulse_180 = 2.0*pulse_90;
     start = ERROR_CATCH( spmri_mri_inst(
                 // DAC Information
                 0.0, // Amplitude
