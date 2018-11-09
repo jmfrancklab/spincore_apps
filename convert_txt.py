@@ -31,6 +31,16 @@ SW = 60e3 # get this to be read in, i.e. print in the
             # text file output from SpinCore program
 acq_time = float(size(real))/SW
 print acq_time
-#data = nddata(result,'data',
-#result = complex128(result)
-#print ndshape(data)
+dt = acq_time/float(size(real))
+print dt
+time_axis = linspace(0.0,acq_time,float(size(real)))
+print time_axis
+print shape(time_axis)
+print shape(result)
+data = nddata(result,'t')
+data.setaxis('t',time_axis)
+print data
+fl = figlist_var()
+fl.next('test plot')
+fl.plot(data)
+fl.show()
