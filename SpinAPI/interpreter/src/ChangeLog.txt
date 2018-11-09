@@ -1,0 +1,24 @@
+SpinCore PulseBlaster Interpreter Change Log
+
+20120404
+	-Added 64bit support
+
+20070420
+	-Compatibility with SpinAPI version 20070420
+
+20070411
+	- 'About' Descriptor string modified
+
+20061009
+	- update: compatibility with spinapi version 20061009.
+
+20060706
+	- update: compatibility with spinapi version 20060706.
+
+20060517
+	- Changed Parse Values to only show when Show Debug Information is selected.
+	- Fixed error in which temporary files were not being deleted.
+	- Added support for variables.
+
+20060516
+	- Added Natural Language.
