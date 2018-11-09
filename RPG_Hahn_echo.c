@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
                 // PulseBlaster
                 0x00, // flags
                 0, // data
-                BRANCH, // opcode
+                CONTINUE, // opcode
                 delay * us // delay
                 ));
 
@@ -253,16 +253,16 @@ int main(int argc, char *argv[])
 
    // wait for scan to finish
    while( done == 0 ) {
-        ERROR_CATCH(spmri_get_status(&status));
-        ERROR_CATCH(spmri_get_scan_count(&current_scan));
-        if( status == 0x01 ) {
-            done = 1;
-        } else if(current_scan != last_scan) {
+       printf("Getting status...\n");
+       ERROR_CATCH(spmri_get_status(&status));
+       if( status == 0x01 ) {
+           done = 1;
+       }
+       else if(current_scan != last_scan) {
             printf("Current scan: %d\n", current_scan);
-            last_scan = current_scan;
-        }
-        printf("Scan completed.\n");
+       }
    }
+   printf("Scan completed.\n");
 
    // ** Read Data **
    char txt_fname[128];
@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
         fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
    }
    fclose(pFile);
-   printf("Data written");
+   printf("Data written\n");
 
    pause();
    // Stops the board by resetting it
