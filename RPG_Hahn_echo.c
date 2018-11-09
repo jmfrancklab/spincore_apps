@@ -25,25 +25,89 @@ DWORD error_catch(int error, int line_number)
 
 int main(int argc, char *argv[])
 {
+    // ** Arguments **
+    int nPoints = 16384;
+    int nScans = 1; // 
+    int nPhases = 1; // 
+    double freq[1] = {14.46};
+    double SW_kHz = 60.0; // from manual 
+    double phase[1] = {0.0};
+    double amp[1] = {1.0};
+    float pulse_90 = 1.0; // us
+    float pulse_180 = 2.0*pulse_90; // us
+    float tau = 80.0; // us
+    float delay = 40.0; //us
+    int adcoffset = 38;
+    char outputFilename[10] = "Hahn_Echo";
+
+    float adcFrequency_MHz = 75.0; // need to check
+
+    // ** Verify Arguments **
+    if (nPoints > 16*1024 || nPoints < 1)
+    {
+        printf("Error: Maximum number of points is 16384.\n");
+        return -1;
+    }
+    if (nScans < 1)
+    {
+        printf("Error: There must be at least one scan.\n");
+        return -1;
+    }
+    if (pulse_90 < 0.065)
+    {
+        printf("Error: Pulse time is too small to work with board.\n");
+        return -1;
+    }
+    if (tau < 0.065)
+    {
+        printf("Error: Delay time is too small to work with board.\n");
+        return -1;
+    }
+    if (delay < 0.065)
+    {
+        printf("Error: Delay time is too small to work with board.\n");
+        return -1;
+    }
+    if (amp[1] < 0 || amp[1] > 1.0)
+    {
+        printf("Error: Amplitude value out of range.\n");
+        return -1;
+    }
+
+
     // ** Configure board **
     // Initialize MRI SpinAPI
+    double actual_SW;
+    double SW_MHz = SW_kHz / 1000.0;
+    int dec_amount;
+    int i;
+
     ERROR_CATCH( spmri_init() );
 
     printf("SpinAPI initialized...\n");
     // Set all values on board to default values
     ERROR_CATCH( spmri_set_defaults() );
-
+    // ADC offset
+    ERROR_CATCH( spmri_set_adc_offset( adcoffset ) );
     // Carrier frequency registers
-    double freq[1] = {14.46};
     ERROR_CATCH( spmri_set_frequency_registers( freq, 1 ) );
-
     // Phase registers
-    double phase[1] = {0.0};
     ERROR_CATCH( spmri_set_phase_registers( phase, 1 ) );
-
     // Amplitude registers
-    double amp[1] = {1.0};
     ERROR_CATCH( spmri_set_amplitude_registers( amp, 1 ) );
+
+    ERROR_CATCH(spmri_set_num_samples(nPoints));
+    ERROR_CATCH(spmri_setup_filters(
+                SW_MHz, // Spectral Width in MHz
+                nScans, // Number of Scans
+                0, // Not Used
+                &dec_amount
+                ));
+
+    actual_SW = (adcFrequency_MHz * 1e6) / (double) dec_amount;
+    printf(" Decimation              : %d\n", dec_amount);
+    printf("Actual Spectral Width   : %f Hz\n",
+            actual_SW);
 
     // ** Program board **
     int loop_addr;
@@ -55,10 +119,6 @@ int main(int argc, char *argv[])
 
     // This instruction enables a 15 MHz analog output 90 pulse
     int start;
-    float pulse_90;
-    float pulse_180;
-    pulse_90 = 1.0;
-    pulse_180 = 2.0*pulse_90;
     start = ERROR_CATCH( spmri_mri_inst(
                 // DAC Information
                 0.0, // Amplitude
@@ -103,7 +163,7 @@ int main(int argc, char *argv[])
                 0x00, // flags
                 0, // data
                 CONTINUE, // opcode
-                80.0 * us // delay
+                tau * us // delay
                 ));
 
     // This instruction outputs 180 pulse
@@ -130,7 +190,7 @@ int main(int argc, char *argv[])
                pulse_180 * us // pulse length
                ));
    //
-    // This instruction enables repetition delay
+    // This instruction enables delay before acquisition
     ERROR_CATCH(spmri_mri_inst(
                 // DAC Information
                 0.0, // Amplitude
@@ -151,7 +211,7 @@ int main(int argc, char *argv[])
                 0x00, // flags
                 0, // data
                 BRANCH, // opcode
-                3000000.0 * us // delay
+                delay * us // delay
                 ));
 
    // Stop instruction
@@ -178,16 +238,50 @@ int main(int argc, char *argv[])
                1.0 * us // delay
                ));
 
-
-   printf("Board programmed.\n");
+   // ** Run Scan ** 
+   printf("Scan ready to run.\n");
 
    // Starts pulse prog stored on board
    ERROR_CATCH(spmri_start());
 
-   printf("Board is running...\n");
+   printf("Scan running...\n");
+   
+   int done = 0;
+   int last_scan = 0;
+   int status;
+   unsigned int current_scan;
+
+   // wait for scan to finish
+   while( done == 0 ) {
+        ERROR_CATCH(spmri_get_status(&status));
+        ERROR_CATCH(spmri_get_scan_count(&current_scan));
+        if( status == 0x01 ) {
+            done = 1;
+        } else if(current_scan != last_scan) {
+            printf("Current scan: %d\n", current_scan);
+            last_scan = current_scan;
+        }
+        printf("Scan completed.\n");
+   }
+
+   // ** Read Data **
+   char txt_fname[128];
+   int* real = malloc(nPoints * nPhases * sizeof(int));
+   int* imag = malloc(nPoints * nPhases * sizeof(int));
+   int j;
+   ERROR_CATCH(spmri_read_memory(real, imag, nPoints * nPhases));
+
+   // Write to file
+   snprintf(txt_fname, 128, "%s.text", outputFilename);
+   FILE* pFile = fopen( txt_fname, "w" );
+   if( pFile == NULL ) return -1;
+   for( j = 0 ; j < nPoints * nPhases ; j++ ) {
+        fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
+   }
+   fclose(pFile);
+   printf("Data written");
 
    pause();
-
    // Stops the board by resetting it
    ERROR_CATCH(spmri_stop());
 
