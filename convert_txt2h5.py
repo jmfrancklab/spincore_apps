@@ -12,28 +12,26 @@ result = []
 for line in F:
     temp = line.strip().split()
     result.append(complex128(float(temp[0]))+1j*complex128(float(temp[1])))
-    #real.append(float(temp[0]))
-    #imag.append(float(temp[1]))
 F.close()
-quit()
-#result = complex128(real) + 1j*complex128(imag) 
-if (complex128(real[0]) + 1j*complex128(imag[0]) != result[0]):
-        raise ValueError('Quadrature data incorrectly cast to complex array')
-print result[0]
-print real[0]
-print imag[0]
-print shape(result)
+num_points = float(shape(result)[0])
 SW = 60e3 # get this to be read in, i.e. print in the
             # text file output from SpinCore program
-acq_time = float(size(real))/SW
+acq_time = num_points/SW
 print "ACQUISITION TIME:",acq_time
-dt = acq_time/float(size(real))
+dt = acq_time/num_points
 print "DWELL TIME:",dt
-time_axis = linspace(0.0,acq_time,float(size(real)))
-data = nddata(result,'t')
+time_axis = linspace(0.0,acq_time,num_points)
+data = nddata(array(result),'t')
 data.setaxis('t',time_axis)
-print data
-fl = figlist_var()
-fl.next('test plot')
-fl.plot(data)
-fl.show()
+data.set_units('t','s')
+data.name('signal')
+date = '181109'
+id_string = 'HahnEcho'
+data.hdf5_write(date+'_'+id_string+'.h5')
+print "name of data",data.name()
+print "units should be",data.get_units('t')
+print "shape of data",ndshape(data)
+#fl = figlist_var()
+#fl.next('test plot')
+#fl.plot(data)
+#fl.show()
