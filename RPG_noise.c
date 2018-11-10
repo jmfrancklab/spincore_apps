@@ -26,9 +26,9 @@ DWORD error_catch(int error, int line_number)
 int main(int argc, char *argv[])
 {
     // ** Arguments **
-    char outputFilename[] = "181109_test_4";
+    char outputFilename[] = "181109_test_5";
     int nPoints = 16384;
-    int nScans = 1; // 
+    int nScans = 50; // 
     int nPhases = 1; // 
     double freq[1] = {14.46}; // MHz
     double SW_kHz = 200.0; // from manual 
@@ -38,7 +38,8 @@ int main(int argc, char *argv[])
     float pulse_180 = 2.0*pulse_90; // us
     float tau = 80.0; // us
     float delay = 40.0; //us
-    int adcoffset = 47;
+    float repetition_delay = 1e6; //us
+    int adcoffset = 46;
 
     float adcFrequency_MHz = 75.0; // need to check
 
@@ -116,33 +117,80 @@ int main(int argc, char *argv[])
     ERROR_CATCH( spmri_start_programming() );
     // Read current memory address for ability to return back to this point later on in prog
     ERROR_CATCH( spmri_read_addr( &loop_addr ) );
-
-    // This instruction enables a 15 MHz analog output 90 pulse
     
+    // LOOP INSTRUCTION (nScans)
     ERROR_CATCH( spmri_mri_inst(
-        // DAC Information
-        0.0, // Amplitude
-        ALL_DACS, // DAC Select
-        DONT_WRITE, // Write
-        DONT_UPDATE, // Update
-        DONT_CLEAR, // Clear
-        // RF Information
-        0, // freq register
-        0, // phase register
-        0, // tx enable
-        0, // phase select
-        0, // rx enable
-        7, // envelope freq reg (7=no shape)
-        0, // amp register
-        0, // cyclops phase (must be 0)
-        // PulseBlaster Information
-        0x01, // flags
-        0, // data
-        CONTINUE, // opcode
-        pulse_90 * us // pulse time
-        ));
+                // DAC Information
+                0.0, // Amplitude
+                ALL_DACS, // DAC Select
+                DO_WRITE, // Write
+                DO_UPDATE, // Update
+                DONT_CLEAR, // Clear
+                // RF Information
+                0, // freq register
+                0, // phase register
+                0, // tx enable
+                1, // phase reset
+                0, // rx enable
+                7, // envelope freq reg (7=no shape)
+                0, // amp register
+                0, // cyclops phase (must be 0)
+                // PulseBlaster Information
+                0x00, // flags
+                nScans, // data
+                LOOP, // opcode
+                1.0 * us // pulse time
+                ));
 
-    // This instruction enables delay tau
+    // REPETITION DELAY (d1)
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC Information
+                0.0, // Amplitude
+                ALL_DACS, // DAC Select
+                DO_WRITE, // Write
+                DO_UPDATE, // Update
+                DONT_CLEAR, // Clear
+                // RF Information
+                0, // freq reg
+                0, // ph reg
+                0, // tx enable
+                1, // phase reset
+                0, // rx enable
+                7, // envelope freq reg
+                0, // amp register
+                0, // cyclops phase
+                // PulseBlaster
+                0x00, // flags
+                0, // data
+                CONTINUE, // opcode
+                repetition_delay * us // delay
+                ));
+
+    // 90 PULSE (OUTPUT DISABLED)
+    ERROR_CATCH( spmri_mri_inst(
+                // DAC Information
+                0.0, // Amplitude
+                ALL_DACS, // DAC Select
+                DONT_WRITE, // Write
+                DONT_UPDATE, // Update
+                DONT_CLEAR, // Clear
+                // RF Information
+                0, // freq register
+                0, // phase register
+                0, // tx enable
+                0, // phase select
+                0, // rx enable
+                7, // envelope freq reg (7=no shape)
+                0, // amp register
+                0, // cyclops phase (must be 0)
+                // PulseBlaster Information
+                0x01, // flags
+                0, // data
+                CONTINUE, // opcode
+                pulse_90 * us // pulse time
+                ));
+
+    // TAU DELAY
     ERROR_CATCH(spmri_mri_inst(
                 // DAC Information
                 0.0, // Amplitude
@@ -166,7 +214,7 @@ int main(int argc, char *argv[])
                 tau * us // delay
                 ));
 
-    // This instruction outputs 180 pulse
+    // 180 PULSE (OUTPUT DISABLED)
    ERROR_CATCH(spmri_mri_inst(
                // DAC
                0.0, // Amplitude
@@ -189,8 +237,8 @@ int main(int argc, char *argv[])
                CONTINUE, // opcode
                pulse_180 * us // pulse length
                ));
-   //
-    // This instruction enables delay before acquisition
+   
+    // RINGDOWN DELAY BEFORE ACQUISITION
     ERROR_CATCH(spmri_mri_inst(
                 // DAC Information
                 0.0, // Amplitude
@@ -214,6 +262,29 @@ int main(int argc, char *argv[])
                 delay * us // delay
                 ));
 
+    // END LOOP
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC Information
+                0.0, // Amplitude
+                ALL_DACS, // DAC Select
+                DO_WRITE, // Write
+                DO_UPDATE, // Update
+                DONT_CLEAR, // Clear
+                // RF Information
+                0, // freq reg
+                0, // ph reg
+                0, // tx enable
+                0, // phase reset
+                0, // rx enable
+                7, // envelope freq reg
+                0, // amp register
+                0, // cyclops phase
+                // PulseBlaster
+                0x00, // flags
+                loop_addr, // data
+                END_LOOP, // opcode
+                1.0 * us // delay
+                ));
    // Stop instruction
    ERROR_CATCH(spmri_mri_inst(
                // DAC
@@ -253,14 +324,15 @@ int main(int argc, char *argv[])
 
    // wait for scan to finish
    while( done == 0 ) {
-       printf("Getting status...\n");
        ERROR_CATCH(spmri_get_status(&status));
+       ERROR_CATCH(spmri_get_scan_count(&current_scan));
        if( status == 0x01 ) {
            done = 1;
        }
        else if(current_scan != last_scan) {
             printf("Current scan: %d\n", current_scan);
        }
+       last_scan = current_scan;
    }
    printf("Scan completed.\n");
 
