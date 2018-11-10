@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
         // RF Information
         0, // freq register
         0, // phase register
-        1, // tx enable
+        0, // tx enable
         0, // phase select
         0, // rx enable
         7, // envelope freq reg (7=no shape)
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
                // RF
                0, // freq reg
                0, // ph reg
-               1, // tx enable
+               0, // tx enable
                0, // phase reset
                0, // rx enable
                7, // envelope freq reg
