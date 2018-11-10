@@ -26,19 +26,19 @@ DWORD error_catch(int error, int line_number)
 int main(int argc, char *argv[])
 {
     // ** Arguments **
+    char outputFilename[] = "181109_test_2";
     int nPoints = 16384;
     int nScans = 1; // 
     int nPhases = 1; // 
     double freq[1] = {14.46};
-    double SW_kHz = 60.0; // from manual 
+    double SW_kHz = 1.0; // from manual 
     double phase[1] = {0.0};
     double amp[1] = {1.0};
     float pulse_90 = 1.0; // us
     float pulse_180 = 2.0*pulse_90; // us
     float tau = 80.0; // us
     float delay = 40.0; //us
-    int adcoffset = 38;
-    char outputFilename[10] = "Hahn_Echo";
+    int adcoffset = 47;
 
     float adcFrequency_MHz = 75.0; // need to check
 
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 
     actual_SW = (adcFrequency_MHz * 1e6) / (double) dec_amount;
     printf(" Decimation              : %d\n", dec_amount);
-    printf("Actual Spectral Width   : %f Hz\n",
+    printf(" Actual Spectral Width   : %f Hz\n",
             actual_SW);
 
     // ** Program board **
@@ -118,29 +118,29 @@ int main(int argc, char *argv[])
     ERROR_CATCH( spmri_read_addr( &loop_addr ) );
 
     // This instruction enables a 15 MHz analog output 90 pulse
-    int start;
-    start = ERROR_CATCH( spmri_mri_inst(
-                // DAC Information
-                0.0, // Amplitude
-                ALL_DACS, // DAC Select
-                DONT_WRITE, // Write
-                DONT_UPDATE, // Update
-                DONT_CLEAR, // Clear
-                // RF Information
-                0, // freq register
-                0, // phase register
-                1, // tx enable
-                0, // phase select
-                0, // rx enable
-                7, // envelope freq reg (7=no shape)
-                0, // amp register
-                0, // cyclops phase (must be 0)
-                // PulseBlaster Information
-                0x01, // flags
-                0, // data
-                CONTINUE, // opcode
-                pulse_90 * us // pulse time
-                ));
+    
+    ERROR_CATCH( spmri_mri_inst(
+        // DAC Information
+        0.0, // Amplitude
+        ALL_DACS, // DAC Select
+        DONT_WRITE, // Write
+        DONT_UPDATE, // Update
+        DONT_CLEAR, // Clear
+        // RF Information
+        0, // freq register
+        0, // phase register
+        1, // tx enable
+        0, // phase select
+        0, // rx enable
+        7, // envelope freq reg (7=no shape)
+        0, // amp register
+        0, // cyclops phase (must be 0)
+        // PulseBlaster Information
+        0x01, // flags
+        0, // data
+        CONTINUE, // opcode
+        pulse_90 * us // pulse time
+        ));
 
     // This instruction enables delay tau
     ERROR_CATCH(spmri_mri_inst(
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
                0, // cyclops phase
                // PulseBlaster
                0x00, // flags
-               start, // data
+               0, // data
                STOP, // opcode
                1.0 * us // delay
                ));
@@ -272,9 +272,10 @@ int main(int argc, char *argv[])
    ERROR_CATCH(spmri_read_memory(real, imag, nPoints * nPhases));
 
    // Write to file
-   snprintf(txt_fname, 128, "%s.text", outputFilename);
+   snprintf(txt_fname, 128, "%s.txt", outputFilename);
    FILE* pFile = fopen( txt_fname, "w" );
    if( pFile == NULL ) return -1;
+   fprintf(pFile, "SPECTRAL WIDTH %f\n", actual_SW);
    for( j = 0 ; j < nPoints * nPhases ; j++ ) {
         fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
    }
