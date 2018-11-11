@@ -9,7 +9,18 @@ for date,id_string in [
         #('181109','test_4') # SW = 200 kHz
         #('181109','SE_5') # SW = 200 kHz
         #('181110','SE_1'), # SW = 200 kHz
-        ('181110','noise_1'), # SW = 200 kHz
+        #('181110','noise_1'), # SW = 200 kHz
+        #('181110','noise_2'), # SW = 200 kHz
+        #('181110','noise_3'), # SW = 200 kHz
+        #('181110','noise_4'), # SW = 200 kHz
+        #('181110','noise_5'), # SW = 200 kHz
+        ('181110','SE_1'), # SW = 200 kHz
+        ('181110','SE_2'), # SW = 200 kHz
+        ('181110','SE_3'), # SW = 200 kHz
+        ('181110','SE_4'), # SW = 200 kHz
+        ('181110','SE_5'), # SW = 200 kHz
+        ('181110','SE_6'), # SW = 200 kHz
+        ('181110','SE_7'), # SW = 200 kHz
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'

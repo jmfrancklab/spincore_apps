@@ -299,6 +299,7 @@ int readData(SCANPARAMS * scanParams)
     snprintf(txt_fname, 128, "%s.txt", scanParams->outputFilename);
     FILE* pFile = fopen( txt_fname, "w" );
     if ( pFile == NULL ) return -1;
+    fprintf(pFile, "SPECTRAL WIDTH %f\n", scanParams->actualSW_Hz);
     for( j = 0 ; j < scanParams->nPoints * scanParams->nPhases ; j++)
     {
         fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
