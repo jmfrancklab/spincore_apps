@@ -1,3 +1,6 @@
 *.exe
 *.txt
 *.fid
+*.swo
+*.swp
+*.h5
