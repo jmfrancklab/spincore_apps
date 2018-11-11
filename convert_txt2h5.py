@@ -2,7 +2,7 @@ from pyspecdata import *
 import os
 import sys
 directory = str(os.path.dirname(os.path.realpath(__file__)))
-file_name = "181109_SE_4"
+file_name = "181110_noise_1"
 F = open(directory+"\\"+file_name+".txt", "r")
 real = []
 imag = []
@@ -12,7 +12,7 @@ for line in F:
     if temp[0] == 'SPECTRAL':
         SW = float(temp[-1])
     else:
-        result.append(complex128(float(temp[0]))+1j*complex128(float(temp[1])))
+            result.append(complex128(float(temp[0]))+1j*complex128(float(temp[1])))
 F.close()
 num_points = float(shape(result)[0])
 acq_time = num_points/SW
