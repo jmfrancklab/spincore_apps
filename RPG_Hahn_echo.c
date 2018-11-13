@@ -2,7 +2,7 @@
 #include <math.h>
 
 #include "mrispinapi.h"
-#include "param_set.h"
+#include "Hahn_echo.h"
 
 #define ERROR_CATCH(arg) error_catch(arg,__LINE__)
 
