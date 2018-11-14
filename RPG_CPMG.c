@@ -132,6 +132,8 @@ int configureBoard(SCANPARAMS * scanParams)
     ERROR_CATCH(spmri_set_amplitude_registers( amps, 1 ));
 
     // Set Acquisition parameters
+    scanParams->nPoints = roundUpPower2(scanParams->nPoints); // make sure acquired number of points
+                                        // can be stored by the board
     ERROR_CATCH(spmri_set_num_samples(scanParams->nPoints));
     ERROR_CATCH(spmri_setup_filters(
                 SW_MHz, // SW in Mhz
@@ -139,7 +141,6 @@ int configureBoard(SCANPARAMS * scanParams)
                 0, // Not used?
                 &dec_amount
                 ));
-    ERROR_CATCH(spmri_set_num_segments(scanParams->nEchoes));
 
     actual_SW = (scanParams->adcFrequency_MHz * 1e6) / (double) dec_amount;
     scanParams->actualSW_Hz = actual_SW;
@@ -149,6 +150,7 @@ int configureBoard(SCANPARAMS * scanParams)
     
     scanParams->acqTime_ms = scanParams->nPoints / actual_SW * 1000.0;
 
+    ERROR_CATCH(spmri_set_num_segments(scanParams->nEchoes));
     return 0;
 }
 
@@ -295,4 +297,21 @@ int readData(SCANPARAMS * scanParams)
     fclose(pFile);
     printf("Data written\n");
     return 0;
+}
+
+// Function to round up acquired points to highest power of 2
+int roundUpPower2(int number)
+{
+    int remainder_total = 0;
+    int rounded_number = 1;
+    while(number != 0){
+        remainder_total += number % 2;
+        number /= 2;
+        rounded_number *= 2;
+    }
+    if(remainder_total == 1){
+        rounded_number /= 2;
+    }
+    
+    return rounded_number;
 }
