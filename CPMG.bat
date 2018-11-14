@@ -4,9 +4,9 @@ SET outputFilename=181113_test
 REM ==================
 REM Acquisition
 REM ==================
-SET nPoints=4096
+SET nPoints=2048
 SET nScans=2
-SET nEchoes=5
+SET nEchoes=4
 SET SW_kHz=200.0
 REM ==================
 REM Excitation

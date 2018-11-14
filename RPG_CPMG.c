@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     ERROR_CATCH( configureBoard( &myScan ) );
     ERROR_CATCH( programBoard( & myScan ) );
     ERROR_CATCH( runScan( &myScan ) );
-    //ERROR_CATCH( readData( &myScan ) );
+    ERROR_CATCH( readData( &myScan ) );
     printf("Program complete\n");
     pause();
     ERROR_CATCH( spmri_stop());
@@ -216,16 +216,16 @@ int programBoard(SCANPARAMS * scanParams)
                 // PB
                 0x00,scanParams->nEchoes,LOOP,scanParams->p180Time_us*us
                 ));
-    // DATA ACQUISITION
+    // DATA ACQUISITION (ALSO SPECIFIES END OF ECHO LOOP)
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
                 0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
                 // RF
-                0,0,0,0,0,7,0,0,
+                0,0,0,0,1,7,0,0,
                 // PB
-                0x00,echo_loop_label,END_LOOP,1000 * ms
+                0x00,echo_loop_label,END_LOOP,scanParams->acqTime_ms * ms
                 ));
-    // REPETITION DELAY
+    // REPETITION DELAY (ALSO SPECIFIED END OF SCAN LOOP)
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
                 0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
