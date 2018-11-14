@@ -1,13 +1,13 @@
 
-SET outputFilename=181113_CPMG_1
+SET outputFilename=181113_CPMG_5
 
 REM ==================
 REM Acquisition
 REM ==================
-SET nPoints=2074
-SET nScans=1
-SET nEchoes=4
-SET SW_kHz=200.0
+SET nPoints=2048
+SET nScans=20
+SET nEchoes=8
+SET SW_kHz=513.283
 REM ==================
 REM Excitation
 REM ==================
@@ -17,13 +17,13 @@ SET p90Time_us=1.0
 REM ==================
 REM Delays
 REM ==================
-SET transTime_us=500.0
-SET tauDelay_us=1000000.0
+SET transTime_us=10.0
+SET tauDelay_us=4000.0
 SET repetitionDelay_s=1.0
 
 SET tx_phase=0.0
 
-SET adcOffset=47
+SET adcOffset=43
 
 COPY CPMG.bat %outputFilename%_params.txt
 

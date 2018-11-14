@@ -222,6 +222,15 @@ int programBoard(SCANPARAMS * scanParams)
                 // PB
                 0x00,scanParams->nEchoes,LOOP,scanParams->p180Time_us*us
                 ));
+    // TRANSIENT DELAY
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC
+                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                // RF
+                0,0,0,0,0,7,0,0,
+                // PB
+                0x00,0,CONTINUE,scanParams->transTime_us * us
+                ));
     // DATA ACQUISITION (ALSO SPECIFIES END OF ECHO LOOP)
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
