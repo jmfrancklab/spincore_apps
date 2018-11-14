@@ -22,6 +22,7 @@ typedef struct SCANPARAMS
     double adcFrequency_MHz;
     double acqTime_ms;
     double p180Time_us;
+    double nPoints_total;
     } SCANPARAMS;
 
 DWORD error_catch(int error, int line_number);

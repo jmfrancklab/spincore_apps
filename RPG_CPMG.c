@@ -135,6 +135,10 @@ int configureBoard(SCANPARAMS * scanParams)
     scanParams->nPoints = roundUpPower2(scanParams->nPoints); // make sure acquired number of points
                                         // can be stored by the board
     ERROR_CATCH(spmri_set_num_samples(scanParams->nPoints));
+    scanParams->nPoints_total = scanParams->nEchoes * scanParams->nPoints;
+    if(scanParams->nPoints_total > 16384){
+        printf("WARNING: Trying to acquire too many points than board can store.\n");
+                }
     ERROR_CATCH(spmri_setup_filters(
                 SW_MHz, // SW in Mhz
                 scanParams->nScans, // Number of Scacns
@@ -300,6 +304,7 @@ int readData(SCANPARAMS * scanParams)
 }
 
 // Function to round up acquired points to highest power of 2
+// From CPMG sequence by Sleator
 int roundUpPower2(int number)
 {
     int remainder_total = 0;

@@ -1,11 +1,11 @@
 
-SET outputFilename=181113_test
+SET outputFilename=181113_CPMG_1
 
 REM ==================
 REM Acquisition
 REM ==================
 SET nPoints=2074
-SET nScans=2
+SET nScans=1
 SET nEchoes=4
 SET SW_kHz=200.0
 REM ==================
