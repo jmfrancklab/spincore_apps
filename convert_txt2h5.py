@@ -2,7 +2,7 @@ from pyspecdata import *
 import os
 import sys
 directory = str(os.path.dirname(os.path.realpath(__file__)))
-file_name = "181110_SE_8"
+file_name = "181113_SE_1"
 F = open(directory+"\\"+file_name+".txt", "r")
 real = []
 imag = []
