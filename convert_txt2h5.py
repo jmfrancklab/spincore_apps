@@ -1,7 +1,7 @@
 from pyspecdata import *
 import os
 import sys
-def pull_data(directory,file_name):
+def pull_data(directory,file_name,suppress_print = False):
     #{{{ documentation
     r'''use this function to pull data from a text file
     generated as the output by SpinCore and return the data
@@ -46,12 +46,14 @@ def pull_data(directory,file_name):
     F.close()
     num_points = float(shape(result)[0])
     acq_time = num_points/SW
-    print "ACQUISITION TIME:",acq_time
     dt = acq_time/num_points
-    print "DWELL TIME:",dt
+    if not suppress_print:
+        print "ACQUISITION TIME:",acq_time
+        print "DWELL TIME:",dt
     time_axis = linspace(0.0,acq_time,num_points)
     return result, time_axis
 
+fl = figlist_var()
 directory = str(os.path.dirname(os.path.realpath(__file__)))
 file_name = "181114_sweep1_SE1"
 date = "181114"
@@ -62,9 +64,20 @@ if field_sweep:
     field_axis = linspace(3400.,3419.,20)
     for index,field in enumerate(field_axis):
         file_name = date+'_'+name+'_'+'SE%d'%(index+1)
-        result, time_axis = pull_data(directory,file_name)
+        result, time_axis = pull_data(directory,file_name,True)
         if(index==0):
-            data = ndshape
+            data = ndshape([len(field_axis),len(time_axis)],
+                    ['field','t']).alloc(dtype=complex128)
+            data.setaxis('t',time_axis).set_units('t','s')
+            data.setaxis('field',field_axis)
+        print "LOADING ... INDEX %d\tFIELD %0.2f"%(index,field)
+        data['field',index] = result
+print ndshape(data)
+fl.next('plotting')
+fl.plot(data['field',0],alpha=0.3)
+fl.plot(data['field',5],alpha=0.3)
+fl.plot(data['field',15],alpha=0.3)
+fl.show();quit()
 
 result, time_axis = pull_data(directory, file_name)
 #field_sweep = True
@@ -90,7 +103,6 @@ while save_file:
 print "name of data",data.name()
 print "units should be",data.get_units('t')
 print "shape of data",ndshape(data)
-fl = figlist_var()
 fl.next('test plot, time')
 fl.plot(data)
 data.ft('t',shift=True)
