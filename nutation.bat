@@ -1,5 +1,5 @@
 
-SET outputFilename=181114_nutation_2
+SET outputFilename=181114_nutation_6
 
 REM ==================
 REM Acquisition
@@ -25,7 +25,7 @@ SET repetitionDelay_s=1.0
 SET tx_phase=0.0
 
 SET adcOffset=42
-SET nutation_step=0.5
+SET nutation_step=0.9
 
 COPY nutation.bat %outputFilename%_params.txt
 

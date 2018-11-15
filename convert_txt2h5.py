@@ -55,9 +55,11 @@ def pull_data(directory,file_name,suppress_print = False):
 
 fl = figlist_var()
 directory = str(os.path.dirname(os.path.realpath(__file__)))
-file_name = "181114_sweep1_SE1"
+#file_name = "181114_sweep1_SE1"
 date = "181114"
-name = "sweep1"
+name = "nutation_6"
+file_name = date+'_'+name
+field_sweep = False
 if "sweep" in name:
     field_sweep = True
 if field_sweep:
