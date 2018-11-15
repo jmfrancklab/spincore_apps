@@ -1,7 +1,7 @@
 from pyspecdata import *
 import os
 import sys
-def pull_data(directory,file_name,field_sweep=False):
+def pull_data(directory,file_name):
     #{{{ documentation
     r'''use this function to pull data from a text file
     generated as the output by SpinCore and return the data
@@ -16,10 +16,6 @@ def pull_data(directory,file_name,field_sweep=False):
     file_name : str
     
         Name of the SpinCore raw data (.txt) file
-
-    field_sweep : bool
-
-        Not sure if I will keep using this or not.
 
     RETURNS 
     ======= 
@@ -58,6 +54,18 @@ def pull_data(directory,file_name,field_sweep=False):
 
 directory = str(os.path.dirname(os.path.realpath(__file__)))
 file_name = "181114_sweep1_SE1"
+date = "181114"
+name = "sweep1"
+if "sweep" in name:
+    field_sweep = True
+if field_sweep:
+    field_axis = linspace(3400.,3419.,20)
+    for index,field in enumerate(field_axis):
+        file_name = date+'_'+name+'_'+'SE%d'%(index+1)
+        result, time_axis = pull_data(directory,file_name)
+        if(index==0):
+            data = ndshape
+
 result, time_axis = pull_data(directory, file_name)
 #field_sweep = True
 #field_axis = linspace(3400.,3419.,20)
