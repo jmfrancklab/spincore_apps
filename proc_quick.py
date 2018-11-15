@@ -1,7 +1,7 @@
 from pyspecdata import *
 fl = figlist_var()
 for date,id_string in [
-        ('181114','nutation_5'),
+        ('181114','nutation_2'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -47,11 +47,24 @@ for date,id_string in [
     s.setaxis('t2',t2_axis).set_units('t2','s')
     s.setaxis('PW',PW_axis).set_units('PW','us')
     s.reorder('t2',first=False)
+    #{{{ Try to phase
+    s_ph = s['PW',2].C
+    fl.next('single')
+    s_ph.ft('t2',shift=True)
+    ph_corr = exp(1j*2*pi*0.3)
+    s_ph *= ph_corr
+    s_ph.ift('t2')
+    fl.plot(s_ph, alpha=0.5)
+    fl.plot(s_ph.imag, alpha=0.5)
+    #}}}
     s.ft('t2',shift=True)
-    s = s['t2':(-5e3,5e3)]
+    s *= ph_corr
+    #s = s['t2':(-5e3,5e3)]
     s.ift('t2')
-    fl.next('image nutation')
+    fl.next('image nutation, abs')
     fl.image(abs(s))
+    fl.next('image nutation')
+    fl.image(s)
     fl.show();quit()
     fl.next('Plotting nutation')
     fl.plot(abs(s))
