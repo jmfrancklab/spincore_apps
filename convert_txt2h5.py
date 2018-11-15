@@ -72,29 +72,15 @@ if field_sweep:
             data.setaxis('field',field_axis)
         print "LOADING ... INDEX %d\tFIELD %0.2f"%(index,field)
         data['field',index] = result
-print ndshape(data)
-fl.next('plotting')
-fl.plot(data['field',0],alpha=0.3)
-fl.plot(data['field',5],alpha=0.3)
-fl.plot(data['field',15],alpha=0.3)
-fl.show();quit()
-
-result, time_axis = pull_data(directory, file_name)
-#field_sweep = True
-#field_axis = linspace(3400.,3419.,20)
-#if field_sweep:
-    #data = ndshape([shape(result),len(field_axis)],['t','field']).alloc(dtype=complex128)
-    #data = nddata([array(result),array(field_axis)],['t','field'])
-#print ndshape(data)
-#quit()
-data = nddata(array(result),'t')
-data.setaxis('t',time_axis)
-data.set_units('t','s')
+if not field_sweep:
+    result, time_axis = pull_data(directory, file_name)
+    data = nddata(array(result),'t')
+    data.setaxis('t',time_axis).set_units('t','s')
 data.name('signal')
 save_file = True
 while save_file:
     try:
-        data.hdf5_write(file_name+'.h5')
+        data.hdf5_write(date+'_'+name+'.h5')
         save_file = False
     except Exception as e:
         print e
@@ -104,8 +90,13 @@ print "name of data",data.name()
 print "units should be",data.get_units('t')
 print "shape of data",ndshape(data)
 fl.next('test plot, time')
-fl.plot(data)
-data.ft('t',shift=True)
-fl.next('test plot, freq')
-fl.plot(data)
+if field_sweep:
+    fl.plot(data['field',0],alpha=0.3)
+    fl.plot(data['field',5],alpha=0.3)
+    fl.plot(data['field',15],alpha=0.3)
+if not field_sweep:
+    fl.plot(data)
+    data.ft('t',shift=True)
+    fl.next('test plot, freq')
+    fl.plot(data)
 fl.show()
