@@ -14,7 +14,7 @@ for date,id_string in [
             if 'nPoints_Nutation=' in line:
                 temp = line.strip().split()
                 temp = temp[1].split('=')
-                nPoints_Nutation = float(temp[1])
+                nPoints_Nutation = int(temp[1])
             if 'tauDelay_us=' in line:
                 temp = line.strip().split()
                 temp = temp[1].split('=')
@@ -23,10 +23,14 @@ for date,id_string in [
                 temp = line.strip().split()
                 temp = temp[1].split('=')
                 nScans = int(temp[1])
-            if 'nScans=' in line:
+            if 'nutation_step=' in line:
                 temp = line.strip().split()
                 temp = temp[1].split('=')
-                nScans = int(temp[1])
+                nutation_step = float(temp[1])
+            if 'p90Time_us=' in line:
+                temp = line.strip().split()
+                temp = temp[1].split('=')
+                p90Time_us = float(temp[1])
     label=r'$\tau$=%0.1f ms'%(tauDelay_us/1e3)
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
@@ -34,12 +38,20 @@ for date,id_string in [
     s.set_units('t','s')
     t_axis = s.getaxis('t')
     s.setaxis('t',None)
-    s.chunk('t',['nPW','t2'],[nPoints_Nutation,nPoints])
+    s.chunk('t',['PW','t2'],[nPoints_Nutation,nPoints])
     t2_axis = t_axis[0:1024]
+    PW_axis = []
+    for x in xrange(nPoints_Nutation):
+        temp = p90Time_us*(x+1)*nutation_step*1e-6
+        PW_axis.append(temp)
     s.setaxis('t2',t2_axis).set_units('t2','s')
+    s.setaxis('PW',PW_axis).set_units('PW','us')
     s.reorder('t2',first=False)
+    s.ft('t2',shift=True)
+    s = s['t2':(-5e3,5e3)]
+    s.ift('t2')
     fl.next('image nutation')
-    fl.image(s)
+    fl.image(abs(s))
     fl.show();quit()
     fl.next('Plotting nutation')
     fl.plot(abs(s))
