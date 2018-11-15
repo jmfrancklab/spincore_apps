@@ -7,10 +7,22 @@ for date,id_string in [
     nodename = 'signal'
     with open(getDATADIR(exp_type='test_equip')+date+'_'+id_string+'_params.txt', "r") as F:
         for line in F:
+            if 'nPoints=' in line:
+                temp = line.strip().split()
+                temp = temp[1].split('=')
+                nPoints = float(temp[1])
+            if 'nPoints_Nutation=' in line:
+                temp = line.strip().split()
+                temp = temp[1].split('=')
+                nPoints_Nutation = float(temp[1])
             if 'tauDelay_us=' in line:
                 temp = line.strip().split()
                 temp = temp[1].split('=')
                 tauDelay_us = float(temp[1])
+            if 'nScans=' in line:
+                temp = line.strip().split()
+                temp = temp[1].split('=')
+                nScans = int(temp[1])
             if 'nScans=' in line:
                 temp = line.strip().split()
                 temp = temp[1].split('=')
@@ -20,15 +32,26 @@ for date,id_string in [
             directory = getDATADIR(
                 exp_type = 'test_equip'))
     s.set_units('t','s')
+    t_axis = s.getaxis('t')
+    s.setaxis('t',None)
+    s.chunk('t',['nPW','t2'],[nPoints_Nutation,nPoints])
+    t2_axis = t_axis[0:1024]
+    s.setaxis('t2',t2_axis).set_units('t2','s')
+    s.reorder('t2',first=False)
+    fl.next('image nutation')
+    fl.image(s)
+    fl.show();quit()
     fl.next('Plotting nutation')
     fl.plot(abs(s))
     s.ft('t',shift=True)
     fl.next('F plot')
     fl.plot(s)
-    s = s['t':(-10e3,10e3)]
+    s *= exp(1j*2*pi*pi*1.01)
+    s = s['t':(-5e3,5e3)]
     s.ift('t')
     fl.next('Filtered')
-    fl.plot(abs(s))
+    fl.plot(s.real)
+    fl.plot(s.imag)
     fl.show();quit()
     #fl.next('SpinCore Spin Echo, %d scan(s)'%nScans)
     #fl.plot(s.real,alpha=0.4,c='r',label='real')
