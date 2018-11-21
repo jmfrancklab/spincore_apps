@@ -50,31 +50,30 @@ for date,id_string in [
         fl.plot(s.imag,alpha=0.5,label='imag')
         fl.next('raw data, abs')
         fl.plot(abs(s))
+        #{{{ Try to phase
+        phase = True
+        if phase:
+            s.ft('t',shift=True)
+            ph_corr = exp(1j*2*pi*0.29)
+            s *= ph_corr
+            s.ift('t')
+            fl.next('phased data')
+            fl.plot(s.real,alpha=0.5,label='real')
+            fl.plot(s.imag,alpha=0.5,label='imag')
+        #}}}
         t_axis = s.getaxis('t')
         s.setaxis('t',None)
         s.chunk('t',['PW','t2'],[nPoints_Nutation,nPoints])
         t2_axis = t_axis[0:int(nPoints)]
         PW_axis = []
         for x in xrange(nPoints_Nutation):
-            temp = p90Time_us*(x+1)*nutation_step*1e-6
+            print x
+            temp = p90Time_us*x*1e-6
             PW_axis.append(temp)
+        print PW_axis
         s.setaxis('t2',t2_axis).set_units('t2','s')
-        s.setaxis('PW',PW_axis)
+        s.setaxis('PW',PW_axis).set_units('PW','s')
         s.reorder('t2',first=False)
-        #{{{ Try to phase
-        s_ph = s['PW',2].C
-        fl.next('single')
-        s_ph.ft('t2',shift=True)
-        ph_corr = exp(1j*2*pi*0.3)
-        s_ph *= ph_corr
-        s_ph.ift('t2')
-        fl.plot(s_ph, alpha=0.5)
-        fl.plot(s_ph.imag, alpha=0.5)
-        #}}}
-        s.ft('t2',shift=True)
-        s *= ph_corr
-        #s = s['t2':(-5e3,5e3)]
-        s.ift('t2')
         fl.next('image nutation, abs')
         fl.image(abs(s))
         fl.next('image nutation')
