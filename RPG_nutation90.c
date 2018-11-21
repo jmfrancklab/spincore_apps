@@ -2,7 +2,7 @@
 #include <math.h>
 
 #include "mrispinapi.h"
-#include "nutation_90.h"
+#include "nutation90.h"
 
 #define ERROR_CATCH(arg) error_catch(arg,__LINE__)
 
@@ -190,6 +190,16 @@ int programBoard(SCANPARAMS * scanParams)
                 1.0 * us // delay
                 ));
 
+        // PHASE RESET TRANSIENT DELAY
+        // *** NEED THIS OR ELSE GET STRANGE LOW FREQ *** //
+        // *** ARTIFACT AT BEGINNING OF FIRST PULSE   *** // 
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,0,0,0,7,0,0,
+                    // PB
+                    0x00,0,CONTINUE,1.0*us));
     // 90 PULSE
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
