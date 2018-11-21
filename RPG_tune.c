@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
                 0x00, // flags
                 branch_addr, // data
                 BRANCH, // opcode
-                1000000.0 * us // delay
+                5000.0 * us // delay
                 ));
    // Stop Instruction
    ERROR_CATCH(spmri_mri_inst(
