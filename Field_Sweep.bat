@@ -1,4 +1,4 @@
-SET outputFilename=181120_sweep3_SE33
+SET outputFilename=181121_sweep1_SE19
 
 REM ==================
 REM Acquisition
