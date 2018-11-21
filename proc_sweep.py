@@ -1,6 +1,6 @@
 from pyspecdata import *
 fl = figlist_var()
-date = '181114'
+date = '181120'
 id_string = 'sweep1'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
@@ -12,11 +12,17 @@ s.ft('t',shift=True)
 s *= exp(1j*2*pi*pi*1.05)
 s.ift('t')
 fl.next('imaging absolute val')
-fl.image(abs(s)['t':(5e-3,15e-3)])
+fl.image(abs(s))
 fl.next('imaging')
-fl.image(s['t':(5e-3,15e-3)])
+fl.image(s)
 fl.next('plot')
 fl.plot(s['field':3410.0].real)
 fl.plot(s['field':3410.0].imag)
+s.ft('t')
+print ndshape(s)
+s.reorder('t',first=True)
+print ndshape(s)
+fl.next('plot all')
+fl.plot(s)
 #fl.plot(abs(s)['field':3418.0])
 fl.show()

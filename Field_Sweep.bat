@@ -1,12 +1,12 @@
-SET outputFilename=181114_sweep1_SE20
+SET outputFilename=181120_sweep2_SE0
 
 REM ==================
 REM Acquisition
 REM ==================
-SET nPoints=16384
-SET nScans=20
+SET nPoints=256
+SET nScans=10
 SET nPhases=1
-SET SW_kHz=200.0
+SET SW_kHz=30.0
 REM ==================
 REM Excitation
 REM ==================
@@ -17,12 +17,12 @@ REM ==================
 REM Delays
 REM ==================
 SET transTime_us=500.0
-SET tauDelay_us=10500.0
+SET tauDelay_us=2500.0
 SET repetitionDelay_s=1.0
 
 SET tx_phase=0.0
 
-SET adcOffset=47
+SET adcOffset=45
 
 COPY Field_Sweep.bat %outputFilename%_params.txt
 
