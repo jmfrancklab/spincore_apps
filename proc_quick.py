@@ -1,8 +1,10 @@
 from pyspecdata import *
 fl = figlist_var()
 for date,id_string in [
-#        ('181114','nutation_2'),
-        ('181113','CPMG_8'),
+        ('181120','nutation_2'),
+        #('181120','nutation90_1'),
+        #('181114','nutation_5'),
+        #('181113','CPMG_8'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -51,7 +53,7 @@ for date,id_string in [
             temp = p90Time_us*(x+1)*nutation_step*1e-6
             PW_axis.append(temp)
         s.setaxis('t2',t2_axis).set_units('t2','s')
-        s.setaxis('PW',PW_axis).set_units('PW','us')
+        s.setaxis('PW',PW_axis)
         s.reorder('t2',first=False)
         #{{{ Try to phase
         s_ph = s['PW',2].C

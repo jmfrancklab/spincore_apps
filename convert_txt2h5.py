@@ -57,7 +57,7 @@ fl = figlist_var()
 directory = str(os.path.dirname(os.path.realpath(__file__)))
 #file_name = "181114_sweep1_SE1"
 date = "181120"
-name = "sweep3"
+name = "nutation90_2"
 file_name = date+'_'+name
 field_sweep = False
 if "sweep" in name:
