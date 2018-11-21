@@ -1,20 +1,20 @@
 
-SET outputFilename=181121_nutation_1
+SET outputFilename=181121_nutation_2
 
 REM ==================
 REM Acquisition
 REM ==================
 SET nPoints=256
-SET nScans=5
+SET nScans=10
 REM You will collect one less than the following
-SET nPoints_Nutation=16
+SET nPoints_Nutation=32
 SET SW_kHz=30.0
 REM ==================
 REM Excitation
 REM ==================
 SET carrierFreq_MHz=14.46
 SET amplitude=1.0
-SET p90Time_us=0.065
+SET p90Time_us=0.1
 REM ==================
 REM Delays
 REM ==================
@@ -25,7 +25,7 @@ SET repetitionDelay_s=1.0
 SET tx_phase=0.0
 
 SET adcOffset=43
-SET nutation_step=0.159
+SET nutation_step=1.0
 
 COPY nutation.bat %outputFilename%_params.txt
 

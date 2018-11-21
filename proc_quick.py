@@ -1,7 +1,7 @@
 from pyspecdata import *
 fl = figlist_var()
 for date,id_string in [
-        ('181121','nutation_1'),
+        ('181121','nutation_2'),
         #('181120','nutation_2'),
         #('181120','nutation90_1'),
         #('181114','nutation_5'),
@@ -45,10 +45,15 @@ for date,id_string in [
     s.set_units('t','s')
     #{{{ for nutation data
     if is_Nutation:
+        fl.next('raw data pull')
+        fl.plot(s.real,alpha=0.5,label='real')
+        fl.plot(s.imag,alpha=0.5,label='imag')
+        fl.next('raw data, abs')
+        fl.plot(abs(s))
         t_axis = s.getaxis('t')
         s.setaxis('t',None)
         s.chunk('t',['PW','t2'],[nPoints_Nutation,nPoints])
-        t2_axis = t_axis[0:1024]
+        t2_axis = t_axis[0:int(nPoints)]
         PW_axis = []
         for x in xrange(nPoints_Nutation):
             temp = p90Time_us*(x+1)*nutation_step*1e-6
