@@ -1,4 +1,4 @@
-// Based on CPMG.h
+// Based on nutation.h
 //
 
 typedef struct SCANPARAMS
