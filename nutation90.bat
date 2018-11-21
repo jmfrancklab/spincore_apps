@@ -1,5 +1,5 @@
 
-SET outputFilename=181120_nutation90_1
+SET outputFilename=181121_nutation90_1
 
 REM ==================
 REM Acquisition

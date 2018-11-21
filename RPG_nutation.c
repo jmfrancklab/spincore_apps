@@ -164,9 +164,9 @@ int programBoard(SCANPARAMS * scanParams)
     ERROR_CATCH(spmri_start_programming());
     DWORD scan_loop_label;
     int nutation_counter;
-    float temp_90;
-    float temp_tau;
-    float temp_180;
+    double temp_90;
+    double temp_tau;
+    double temp_180;
     for( nutation_counter = 1 ; nutation_counter < scanParams->nPoints_Nutation ; nutation_counter++){
         // SCAN LOOP
         temp_90 = scanParams->p90Time_us + scanParams->nutation_step*nutation_counter;
@@ -213,7 +213,7 @@ int programBoard(SCANPARAMS * scanParams)
                     // RF
                     0,0,1,0,0,7,0,0,
                     // PB
-                    0x00,0,CONTINUE,scanParams->p90Time_us*us
+                    0x00,0,CONTINUE,temp_90*us
                     ));
         // TAU DELAY
         ERROR_CATCH(spmri_mri_inst(
@@ -222,10 +222,7 @@ int programBoard(SCANPARAMS * scanParams)
                     // RF
                     0,0,0,0,0,7,0,0,
                     // PB
-                    0x00,
-                    0,
-                    CONTINUE,
-                    scanParams->tauDelay_us*us));
+                    0x00,0,CONTINUE,temp_tau*us));
         // 180 PULSE
         ERROR_CATCH(spmri_mri_inst(
                     // DAC
@@ -233,7 +230,7 @@ int programBoard(SCANPARAMS * scanParams)
                     // RF
                     0,0,1,0,0,7,0,0,
                     // PB
-                    0x00,0,CONTINUE,scanParams->p90Time_us*2.0*us
+                    0x00,0,CONTINUE,temp_180*us
                     ));
         // TRANSIENT DELAY
         ERROR_CATCH(spmri_mri_inst(
