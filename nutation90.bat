@@ -27,7 +27,7 @@ SET tx_phase=0.0
 SET adcOffset=44
 SET nutation_step=0.159
 
-COPY nutation_90.bat %outputFilename%_params.txt
+COPY nutation90.bat %outputFilename%_params.txt
 
 REM Specify C program then call variables
-RPG_nutation_90 %nPoints% %nScans% %nPoints_Nutation% %SW_kHz% %carrierFreq_MHz% %amplitude% %p90Time_us% %transTime_us% %tauDelay_us% %repetitionDelay_s% %tx_phase% %adcOffset% %outputFilename% %nutation_step%
+nutation90 %nPoints% %nScans% %nPoints_Nutation% %SW_kHz% %carrierFreq_MHz% %amplitude% %p90Time_us% %transTime_us% %tauDelay_us% %repetitionDelay_s% %tx_phase% %adcOffset% %outputFilename% %nutation_step%

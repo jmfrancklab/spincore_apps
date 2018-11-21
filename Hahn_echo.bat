@@ -25,7 +25,7 @@ SET tx_phase=0.0
 
 SET adcOffset=47
 
-COPY test.bat %outputFilename%_params.txt
+COPY Hahn_echo.bat %outputFilename%_params.txt
 
 REM Specify C program then call variables
-RPG_Hahn_echo %nPoints% %nScans% %nPhases% %SW_kHz% %carrierFreq_MHz% %amplitude% %p90Time_us% %transTime_us% %tauDelay_us% %repetitionDelay_s% %tx_phase% %adcOffset% %outputFilename%
+Hahn_echo %nPoints% %nScans% %nPhases% %SW_kHz% %carrierFreq_MHz% %amplitude% %p90Time_us% %transTime_us% %tauDelay_us% %repetitionDelay_s% %tx_phase% %adcOffset% %outputFilename%

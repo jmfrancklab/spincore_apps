@@ -26,5 +26,5 @@ SET adcOffset=45
 
 COPY Field_Sweep.bat %outputFilename%_params.txt
 
-REM Specify C program then call variables
-RPG_Field_Sweep %nPoints% %nScans% %nPhases% %SW_kHz% %carrierFreq_MHz% %amplitude% %p90Time_us% %transTime_us% %tauDelay_us% %repetitionDelay_s% %tx_phase% %adcOffset% %outputFilename%
+REM Specify C executable then call variables
+Field_Sweep %nPoints% %nScans% %nPhases% %SW_kHz% %carrierFreq_MHz% %amplitude% %p90Time_us% %transTime_us% %tauDelay_us% %repetitionDelay_s% %tx_phase% %adcOffset% %outputFilename%
