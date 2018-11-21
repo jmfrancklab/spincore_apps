@@ -197,7 +197,7 @@ int programBoard(SCANPARAMS * scanParams)
                 // RF
                 0,0,1,0,0,7,0,0,
                 // PB
-                0x00,0,CONTINUE,(scanParams->p90Time_us*nutation_counter*scanParams->nutation_step)*us
+                0x00,0,CONTINUE,(scanParams->p90Time_us+scanParams->nutation_step*nutation_counter)*us
                 ));
     // TAU DELAY
     ERROR_CATCH(spmri_mri_inst(
@@ -217,7 +217,7 @@ int programBoard(SCANPARAMS * scanParams)
                 // RF
                 0,0,1,0,0,7,0,0,
                 // PB
-                0x00,0,CONTINUE,(scanParams->p180Time_us*nutation_counter*scanParams->nutation_step)*us
+                0x00,0,CONTINUE,(2*(scanParams->p90Time_us+scanParams->nutation_step*nutation_counter))*us
                 ));
     // TRANSIENT DELAY
     ERROR_CATCH(spmri_mri_inst(
