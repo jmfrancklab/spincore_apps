@@ -1,11 +1,11 @@
 
-SET outputFilename=181121_nutation_7
+SET outputFilename=181121_nutation_10_2scans
 
 REM ==================
 REM Acquisition
 REM ==================
 SET nPoints=256
-SET nScans=1
+SET nScans=2
 REM You will collect one less than the following
 SET nPoints_Nutation=64
 SET SW_kHz=30.0

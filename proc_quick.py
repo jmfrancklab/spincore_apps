@@ -1,7 +1,8 @@
 from pyspecdata import *
 fl = figlist_var()
 for date,id_string in [
-        ('181121','nutation_7'),
+        ('181121','nutation_8'),
+        #('181121','nutation_7'),
         #('181121','nutation_6'),
         #('181121','nutation_5'),
         #('181121','nutation_4'),
