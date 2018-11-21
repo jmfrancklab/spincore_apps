@@ -164,89 +164,105 @@ int programBoard(SCANPARAMS * scanParams)
     ERROR_CATCH(spmri_start_programming());
     DWORD scan_loop_label;
     int nutation_counter;
+    float temp_90;
+    float temp_tau;
+    float temp_180;
     for( nutation_counter = 1 ; nutation_counter < scanParams->nPoints_Nutation ; nutation_counter++){
-    // SCAN LOOP
-    ERROR_CATCH( spmri_read_addr( &scan_loop_label ) );
-    ERROR_CATCH(spmri_mri_inst(
-                // DAC
-                0.0, // Amplitude
-                ALL_DACS, // DAC Select
-                DO_WRITE, // Write
-                DO_UPDATE, // Update
-                DONT_CLEAR, // Clear
-                // RF
-                0, // freq reg
-                0, // phase reg
-                0, // tx enable
-                1, // phase reset
-                0, // rx enable
-                7, // envelope freq (default)
-                0, // amp reg
-                0, // cyclops (default)
-                // PulseBlaster
-                0x00, // flags = TTL low (off)
-                scanParams->nScans, // data
-                LOOP, // opcode
-                1.0 * us // delay
-                ));
+        // SCAN LOOP
+        temp_90 = scanParams->p90Time_us + scanParams->nutation_step*nutation_counter;
+        temp_tau = scanParams->tauDelay_us*0.5 - scanParams->nutation_step*nutation_counter*2.0;
+        temp_180 = 2.0*(scanParams->p90Time_us + scanParams->nutation_step*nutation_counter);
+        ERROR_CATCH( spmri_read_addr( &scan_loop_label ) );
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0, // Amplitude
+                    ALL_DACS, // DAC Select
+                    DO_WRITE, // Write
+                    DO_UPDATE, // Update
+                    DONT_CLEAR, // Clear
+                    // RF
+                    0, // freq reg
+                    0, // phase reg
+                    0, // tx enable
+                    1, // phase reset
+                    0, // rx enable
+                    7, // envelope freq (default)
+                    0, // amp reg
+                    0, // cyclops (default)
+                    // PulseBlaster
+                    0x00, // flags = TTL low (off)
+                    scanParams->nScans, // data
+                    LOOP, // opcode
+                    1.0 * us // delay
+                    ));
 
-    // 90 PULSE
-    ERROR_CATCH(spmri_mri_inst(
-                // DAC
-                0.0,ALL_DACS,DONT_WRITE,DONT_UPDATE,DONT_CLEAR,
-                // RF
-                0,0,1,0,0,7,0,0,
-                // PB
-                0x00,0,CONTINUE,(scanParams->p90Time_us+scanParams->nutation_step*nutation_counter)*us
-                ));
-    // TAU DELAY
-    ERROR_CATCH(spmri_mri_inst(
-                // DAC
-                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
-                // RF
-                0,0,0,0,0,7,0,0,
-                // PB
-                0x00,
-                0,
-                CONTINUE,
-                (scanParams->tauDelay_us*0.5-2*nutation_counter*scanParams->nutation_step)*us));
-    // 180 PULSE
-    ERROR_CATCH(spmri_mri_inst(
-                // DAC
-                0.0,ALL_DACS,DONT_WRITE,DONT_UPDATE,DONT_CLEAR,
-                // RF
-                0,0,1,0,0,7,0,0,
-                // PB
-                0x00,0,CONTINUE,(2*(scanParams->p90Time_us+scanParams->nutation_step*nutation_counter))*us
-                ));
-    // TRANSIENT DELAY
-    ERROR_CATCH(spmri_mri_inst(
-                // DAC
-                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
-                // RF
-                0,0,0,0,0,7,0,0,
-                // PB
-                0x00,0,CONTINUE,scanParams->transTime_us * us
-                ));
-    // DATA ACQUISITION (ALSO SPECIFIES END OF ECHO LOOP)
-    ERROR_CATCH(spmri_mri_inst(
-                // DAC
-                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
-                // RF
-                0,0,0,0,1,7,0,0,
-                // PB
-                0x00,0,CONTINUE,scanParams->acqTime_ms * ms
-                ));
-    // REPETITION DELAY (ALSO SPECIFIED END OF SCAN LOOP)
-    ERROR_CATCH(spmri_mri_inst(
-                // DAC
-                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
-                // RF
-                0,0,0,0,0,7,0,0,
-                // PB
-                0x00,scan_loop_label,END_LOOP,scanParams->repetitionDelay_s * 1000.0 * ms
-                ));
-    
+        // PHASE RESET TRANSIENT DELAY
+        // *** NEED THIS OR ELSE GET STRANGE LOW FREQ *** //
+        // *** ARTIFACT AT BEGINNING OF FIRST PULSE   *** // 
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,0,0,0,7,0,0,
+                    // PB
+                    0x00,0,CONTINUE,1.0*us));
+        // 90 PULSE
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DONT_WRITE,DONT_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,1,0,0,7,0,0,
+                    // PB
+                    0x00,0,CONTINUE,scanParams->p90Time_us*us
+                    ));
+        // TAU DELAY
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,0,0,0,7,0,0,
+                    // PB
+                    0x00,
+                    0,
+                    CONTINUE,
+                    scanParams->tauDelay_us*us));
+        // 180 PULSE
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DONT_WRITE,DONT_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,1,0,0,7,0,0,
+                    // PB
+                    0x00,0,CONTINUE,scanParams->p90Time_us*2.0*us
+                    ));
+        // TRANSIENT DELAY
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,0,0,0,7,0,0,
+                    // PB
+                    0x00,0,CONTINUE,scanParams->transTime_us * us
+                    ));
+        // DATA ACQUISITION (ALSO SPECIFIES END OF ECHO LOOP)
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,0,0,1,7,0,0,
+                    // PB
+                    0x00,0,CONTINUE,scanParams->acqTime_ms * ms
+                    ));
+        // REPETITION DELAY (ALSO SPECIFIED END OF SCAN LOOP)
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,0,0,0,7,0,0,
+                    // PB
+                    0x00,scan_loop_label,END_LOOP,scanParams->repetitionDelay_s * 1000.0 * ms
+                    ));
+        
     }
     // STOP
     ERROR_CATCH(spmri_mri_inst(
