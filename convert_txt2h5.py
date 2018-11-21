@@ -57,7 +57,7 @@ fl = figlist_var()
 directory = str(os.path.dirname(os.path.realpath(__file__)))
 #file_name = "181114_sweep1_SE1"
 date = "181121"
-name = "nutation_10_2scans"
+name = "CPMG_3_2"
 file_name = date+'_'+name
 field_sweep = False
 if "sweep" in name:
@@ -99,6 +99,8 @@ if field_sweep:
 if not field_sweep:
     fl.plot(data)
     fl.plot(data.imag)
+    fl.next('plot abs')
+    fl.plot(abs(data))
     data.ft('t',shift=True)
     fl.next('test plot, freq')
     fl.plot(data)

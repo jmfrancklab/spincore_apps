@@ -1,16 +1,8 @@
 from pyspecdata import *
 fl = figlist_var()
 for date,id_string in [
-        ('181121','nutation_8'),
-        #('181121','nutation_7'),
-        #('181121','nutation_6'),
-        #('181121','nutation_5'),
-        #('181121','nutation_4'),
-        #('181121','nutation_2'),
-        #('181120','nutation_2'),
-        #('181120','nutation90_1'),
-        #('181114','nutation_5'),
-        #('181113','CPMG_8'),
+        ('181121','CPMG_2'),
+        #('181121','nutation_10'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -101,12 +93,8 @@ for date,id_string in [
     fl.next('CPMG')
     fl.plot(s.real,alpha=0.4,c='r',label='real')
     fl.plot(s.imag,alpha=0.4,c='blue',label='imag')
-    fl.next('SpinCore Spin Echo, %d scan(s) (zoom)'%nScans)
-    fl.plot(s.real['t':(0,7e-3)],alpha=0.4,c='r',label='real')
-    fl.plot(s.imag['t':(0,7e-3)],alpha=0.4,c='blue',label='imag')
-    axvline(4.9,c='k',linestyle=':')
-    fl.next('CPMG, 16 echoes')
-    fl.plot(s['t':(0,40e-3)],alpha=0.4,label='%s'%label)
+    fl.next('CPMG, abs')
+    fl.plot(abs(s),alpha=0.4,label='%s'%label)
     #s.ft('t',shift=True)
     #fl.next('capture, f')
     #fl.plot(s,alpha=0.4,label='%s'%label)

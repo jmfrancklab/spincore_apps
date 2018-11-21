@@ -208,8 +208,7 @@ int programBoard(SCANPARAMS * scanParams)
                 // RF
                 0,0,1,0,0,7,0,0,
                 // PB
-                0x00,0,CONTINUE,scanParams->p90Time_us*us
-                ));
+                0x00,0,CONTINUE,scanParams->p90Time_us*us));
     // TAU DELAY
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
@@ -217,10 +216,7 @@ int programBoard(SCANPARAMS * scanParams)
                 // RF
                 0,0,0,0,0,7,0,0,
                 // PB
-                0x00,
-                0,
-                CONTINUE,
-                scanParams->tauDelay_us*0.5*us));
+                0x00,0,CONTINUE,scanParams->tauDelay_us*0.5*us));
     // 180 PULSE
     ERROR_CATCH( spmri_read_addr( &echo_loop_label ) );
     //echo_loop_label = 
@@ -230,8 +226,7 @@ int programBoard(SCANPARAMS * scanParams)
                 // RF
                 0,0,1,0,0,7,0,0,
                 // PB
-                0x00,scanParams->nEchoes,LOOP,scanParams->p180Time_us*us
-                ));
+                0x00,scanParams->nEchoes,LOOP,scanParams->p180Time_us*us));
     // TRANSIENT DELAY
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
@@ -239,8 +234,7 @@ int programBoard(SCANPARAMS * scanParams)
                 // RF
                 0,0,0,0,0,7,0,0,
                 // PB
-                0x00,0,CONTINUE,scanParams->transTime_us * us
-                ));
+                0x00,0,CONTINUE,scanParams->transTime_us * us));
     // DATA ACQUISITION (ALSO SPECIFIES END OF ECHO LOOP)
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
@@ -248,8 +242,7 @@ int programBoard(SCANPARAMS * scanParams)
                 // RF
                 0,0,0,0,1,7,0,0,
                 // PB
-                0x00,echo_loop_label,END_LOOP,scanParams->acqTime_ms * ms
-                ));
+                0x00,echo_loop_label,END_LOOP,scanParams->acqTime_ms * ms));
     // REPETITION DELAY (ALSO SPECIFIED END OF SCAN LOOP)
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
@@ -257,8 +250,7 @@ int programBoard(SCANPARAMS * scanParams)
                 // RF
                 0,0,0,0,0,7,0,0,
                 // PB
-                0x00,scan_loop_label,END_LOOP,scanParams->repetitionDelay_s * 1000.0 * ms
-                ));
+                0x00,scan_loop_label,END_LOOP,scanParams->repetitionDelay_s * 1000.0 * ms));
     // STOP
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
@@ -268,7 +260,6 @@ int programBoard(SCANPARAMS * scanParams)
                 // PB
                 0x00,0,STOP,1.0 * us
                 ));
-
     return 0;
 }
 
