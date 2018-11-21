@@ -57,13 +57,13 @@ fl = figlist_var()
 directory = str(os.path.dirname(os.path.realpath(__file__)))
 #file_name = "181114_sweep1_SE1"
 date = "181120"
-name = "sweep1"
+name = "sweep2"
 file_name = date+'_'+name
 field_sweep = False
 if "sweep" in name:
     field_sweep = True
 if field_sweep:
-    field_axis = linspace(3400.0,3411.9,20)
+    field_axis = linspace(3407.0,3408.8,10)
     for index,field in enumerate(field_axis):
         file_name = date+'_'+name+'_'+'SE%d'%(index)
         result, time_axis = pull_data(directory,file_name,True)
@@ -95,7 +95,7 @@ fl.next('test plot, time')
 if field_sweep:
     fl.plot(data['field',0],alpha=0.3)
     fl.plot(data['field',5],alpha=0.3)
-    fl.plot(data['field',15],alpha=0.3)
+    #fl.plot(data['field',15],alpha=0.3)
 if not field_sweep:
     fl.plot(data)
     data.ft('t',shift=True)
