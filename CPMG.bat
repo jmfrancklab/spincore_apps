@@ -1,13 +1,13 @@
 
-SET outputFilename=181121_CPMG_5
+SET outputFilename=181121_CPMG_5_4
 
 REM ==================
 REM Acquisition
 REM ==================
 SET nPoints=128
-SET nScans=16
-SET nEchoes=64
-SET SW_kHz=55.0
+SET nScans=64
+SET nEchoes=128
+SET SW_kHz=128.0
 REM ==================
 REM Excitation
 REM ==================
