@@ -1,13 +1,13 @@
 
-SET outputFilename=181121_CPMG_3_2
+SET outputFilename=181121_CPMG_4_5
 
 REM ==================
 REM Acquisition
 REM ==================
 SET nPoints=128
-SET nScans=8
+SET nScans=16
 SET nEchoes=64
-SET SW_kHz=60.0
+SET SW_kHz=55.0
 REM ==================
 REM Excitation
 REM ==================
@@ -18,7 +18,7 @@ REM ==================
 REM Delays
 REM ==================
 SET transTime_us=500.0
-SET tauDelay_us=2500.0
+SET tauDelay_us=3000.0
 SET repetitionDelay_s=1.0
 
 SET tx_phase=0.0
