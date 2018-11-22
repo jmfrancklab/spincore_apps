@@ -1,5 +1,5 @@
 
-SET outputFilename=181121_CPMG_4_5
+SET outputFilename=181121_CPMG_5
 
 REM ==================
 REM Acquisition
