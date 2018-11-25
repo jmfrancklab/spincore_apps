@@ -1,4 +1,5 @@
 from pyspecdata import *
+from scipy.optimize import leastsq
 fl = figlist_var()
 for date,id_string in [
         ('181121','CPMG_5'),
@@ -138,33 +139,30 @@ for date,id_string in [
     fl.image(even_echo)
     fl.next('image CPMG, odd echo')
     fl.image(odd_echo)
+    x = even_echo.getaxis('echo')
     even_echo.sum('t2')
     odd_echo.sum('t2')
     fl.next('CPMG, even echo')
     fl.plot(even_echo,'.')
     fl.next('CPMG, odd echo')
     fl.plot(odd_echo,'.')
+    #x = CPMG_data.getaxis('echo')
     CPMG_data.sum('t2')
+    max_val = amax(abs(even_echo).data)
+    avg_min = abs(even_echo['echo':(10,-1)]).data.mean()
+    print avg_min
+    #even_echo /= amax(abs(even_echo).data)
+    #min_val = amin(abs(even_echo).data)
+    #ydata = (abs(even_echo).data) - min_val
+    ydata = (abs(even_echo).data) - avg_min
     fl.next('CPMG, all echoes')
-    fl.plot(abs(CPMG_data),'.')
+    fl.plot(x,ydata,'.', label='data', human_units=False)
+    fitfunc = lambda p, x: p[0]*exp(-1*x/p[1])
+    fl.plot(x, fitfunc(r_[max_val,0.1],x), ':', label='initial fit', human_units=False)
+    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
+    p0 = [max_val,0.2]
+    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+    x_fit = linspace(x.min(), x.max(), 5000)
+    fl.plot(x_fit, fitfunc(p1, x_fit), ':', c='k', label='final fit, T2=%f'%p1[1])
     fl.show();quit()
-    fl.image(CPMG_data['echo',r_[0:128:2]])
-    fl.show();quit()
-    fl.next('plotting CPMG')
-    fl.plot(CPMG_data)
-    fl.show()
-    #for echo_index in r_[0:128:1]:
-    #    CPMG_data = ndshape([int(indirect_points),len(indirect_time_axis)],
-    #            ['echo','t2']).alloc(dtype=complex128)
-    #    CPMG_data.setaxis('t2',indirect_time_axis).set_units('t2','s')
-    #    CPMG_data.setaxis('echo',r_[0:indirect_points:1])
-    #CPMG_data['echo',index] = result
-    quit()
-    time_axis = s.getaxis('t')
-    acq_time = time_axis[-1]
-
-    print ndshape(s)
-    #s.ft('t',shift=True)
-    #fl.next('capture, f')
-    #fl.plot(s,alpha=0.4,label='%s'%label)
 fl.show()
