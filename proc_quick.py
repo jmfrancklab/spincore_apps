@@ -154,15 +154,34 @@ for date,id_string in [
     #even_echo /= amax(abs(even_echo).data)
     #min_val = amin(abs(even_echo).data)
     #ydata = (abs(even_echo).data) - min_val
-    ydata = (abs(even_echo).data) - avg_min
-    fl.next('CPMG, all echoes')
-    fl.plot(x,ydata,'.', label='data', human_units=False)
-    fitfunc = lambda p, x: p[0]*exp(-1*x/p[1])
-    fl.plot(x, fitfunc(r_[max_val,0.1],x), ':', label='initial fit', human_units=False)
+    ydata_abs = (abs(even_echo).data) - avg_min
+    ydata = ((even_echo).data) - avg_min
+    print shape(ydata)
+    new_y = []
+    for x in r_[0:len(ydata):1]:
+        print x
+        if 3 < x < 5:
+            print "Rejecting"
+        else:
+            new_y.append(ydata[x])
+    fl.next('CPMG, only even echoes')
+    fl.plot(x, ydata_abs,'.', label='data', human_units=False)
+    fitfunc = lambda p, x: p[0]*exp(-1*x/p[1])-p[2]
+    fl.plot(x, fitfunc(r_[max_val,0.1,avg_min],x), ':', label='initial fit', human_units=False)
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [max_val,0.2]
-    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+    p0 = [max_val,0.2,avg_min]
+    p1, success = leastsq(errfunc, p0[:], args=(x, ydata_abs))
     x_fit = linspace(x.min(), x.max(), 5000)
     fl.plot(x_fit, fitfunc(p1, x_fit), ':', c='k', label='final fit, T2=%f'%p1[1])
+    print p0
+    print p1
+    fitfunc2 = lambda q, x: p1[0]*exp(-1*x/q[0])-p1[2]
+    fl.plot(x, fitfunc2([0.2],x), ':', label='fit 2', human_units=False)
+    errfunc2 = lambda q_arg, x_arg, y_arg: fitfunc2(q_arg, x_arg) - y_arg
+    q0 = [0.2]
+    q1, success = leastsq(errfunc2, q0[:], args=(x, ydata_abs))
+    x_fit = linspace(x.min(), x.max(), 5000)
+    fl.plot(x_fit, fitfunc(p1, x_fit), ':', label='second fit, T2=%f'%q1[0])
+
     fl.show();quit()
 fl.show()
