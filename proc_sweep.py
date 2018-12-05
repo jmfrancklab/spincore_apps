@@ -13,10 +13,11 @@ s.reorder('t',first=True)
 s.ft('t',shift=True)
 s *= exp(1j*2*pi*pi*1.05)
 offset_plot = s.C
+# gammabar_H is in units of Hz/T
 offset_plot.setaxis('t', lambda x: x/(gammabar_H)*1e4).set_units('t','G')
-offset_plot.rename('t',r'$\frac{\Omega}{2 \pi \gamma_{H}}$')
+offset_plot.rename('t',r'$\frac{\Omega}{\gamma_{H}}$')
 fl.next('offset')
-fl.plot(offset_plot[r'$\frac{\Omega}{2 \pi \gamma_{H}}$':(-326e-3,282e-3)],alpha=0.35)
+fl.plot(offset_plot['field',9],alpha=0.35,label=r'$B_{0} = %0.1f G$'%offset_plot.getaxis('field')[9])
 print ndshape(offset_plot)
 offset_plot.reorder('field', first=True)
 fl.next('sweep, image plot abs (offset)')
