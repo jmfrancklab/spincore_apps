@@ -99,6 +99,26 @@ except __builtin__.Exception:
 def get_time():
     return _Hahn_echo.get_time()
 get_time = _Hahn_echo.get_time
+
+def pause():
+    return _Hahn_echo.pause()
+pause = _Hahn_echo.pause
+
+def configureBoard(adcOffset, carrierFreq_MHz, tx_phase, amplitude):
+    return _Hahn_echo.configureBoard(adcOffset, carrierFreq_MHz, tx_phase, amplitude)
+configureBoard = _Hahn_echo.configureBoard
+
+def programBoard(nScans, p90, tau):
+    return _Hahn_echo.programBoard(nScans, p90, tau)
+programBoard = _Hahn_echo.programBoard
+
+def runBoard():
+    return _Hahn_echo.runBoard()
+runBoard = _Hahn_echo.runBoard
+
+def spincore_stop():
+    return _Hahn_echo.spincore_stop()
+spincore_stop = _Hahn_echo.spincore_stop
 # This file is compatible with both classic and new-style classes.
 
 
