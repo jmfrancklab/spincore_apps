@@ -1,0 +1,16 @@
+Tested on Windows lab computer...
+
+From /c/apps-su/swigwin-3.0.12 directory, go to 'example' directory
+This directory should only have two files: example.c and example.i
+example.c is the c program that you wish to use within python
+example.i is the interface file that SWIG will use to generate the
+appropriate wrapper to enable this usage within python
+
+$ winpty ./../swig.exe -python -o example_wrap.c example.i
+$ gcc -shared -DMS_WIN64 -I'C:\ProgramData\Anaconda2\include' -L'C:\Program
+Files (x86)\Dev-Cpp\MinGW64\bin\lib' example.c example_wrap.c -lpython27 -o _example.pyd
+
+The last line compiles both C programs (example.c and example_wrap.c,
+the latter generated with the prior line) and then links them as a
+.pyd file. It is important to have leading underscore here, as this is
+how python handles modules.
