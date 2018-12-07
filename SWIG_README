@@ -14,3 +14,14 @@ The last line compiles both C programs (example.c and example_wrap.c,
 the latter generated with the prior line) and then links them as a
 .pyd file. It is important to have leading underscore here, as this is
 how python handles modules.
+
+*** OR ***
+After running
+$ conda install libpython
+within the Anaconda2 directory in c, was able to compile module with the following:
+$ winpty ./../swig.exe -python -o example_wrap.c example.i
+$ gcc -shared -DMS_WIN64 -I'C:\ProgramData\Anaconda2\include' -L'C:\ProgramData\
+Anaconda2\libs' example.c example_wrap.c -lpython27 -o _example.pyd
+
+which is at least a simplification for the linking directory for the library containing
+python27 (wanting libpython27.dll.a)
