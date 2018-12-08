@@ -31,7 +31,7 @@ DWORD error_catch(int error, int line_number)
     return error;
 }
 
-int configureBoard(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude){
+int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude, unsigned int nPoints){
     double freqs[1] = {carrierFreq_MHz};
     double phase[1] = {tx_phase};
     double amp[1] = {amplitude};
@@ -43,11 +43,32 @@ int configureBoard(int adcOffset, double carrierFreq_MHz, double tx_phase, doubl
     ERROR_CATCH( spmri_set_frequency_registers( freqs, 1));
     ERROR_CATCH( spmri_set_phase_registers( phase, 1 ));
     ERROR_CATCH( spmri_set_amplitude_registers( amp, 1));
-    
+    ERROR_CATCH( spmri_set_num_samples(nPoints));
+    if(nPoints > 16384){
+        printf("WARNING: TRYING TO ACQUIRE TOO MANY POINTS THAN BOARD CAN STORE.\n");
+    }
     return 0;
 }
 
-int programBoard(int nScans, double p90, double tau){
+double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans){
+    double SW_MHz = SW_kHz / 1000.0;
+    double adcFrequency_MHz = 75.0;
+    int dec_amount;
+    ERROR_CATCH( spmri_setup_filters(
+                SW_MHz,
+                nScans,
+                0,
+                &dec_amount
+                ));
+    double actual_SW = (adcFrequency_MHz * 1e6) / (double) dec_amount;
+    printf("Decimation: %d\n", dec_amount);
+    printf("Actual SW: %f Hz\n", actual_SW);
+    double acq_time = nPoints / actual_SW * 1000.0;
+    printf("Acq time: %f ms\n", acq_time);
+    return acq_time;
+}
+
+int programBoard(unsigned int nScans, double p90, double tau){
     DWORD loop_addr;
     ERROR_CATCH(spmri_start_programming());
     ERROR_CATCH( spmri_read_addr( &loop_addr ) );
@@ -100,7 +121,7 @@ int programBoard(int nScans, double p90, double tau){
                 // PB
                 0x00,0,CONTINUE,tau*us
                 ));
-    // DELAY
+    // ACQUIRE (ALSO END LOOP)
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
                 0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
@@ -121,10 +142,29 @@ int programBoard(int nScans, double p90, double tau){
     return 0;
 }
 
-int runBoard(void)
+/* Checked that acq_time is transferred successfully from
+ * configureRX function */
+int runBoard(double acq_time)
 {
     ERROR_CATCH(spmri_start());
     printf("Board is running...");
+    int done = 0;
+    int last_scan = 0;
+    int status;
+    unsigned int current_scan;
+    while( done == 0)
+    {
+        ERROR_CATCH(spmri_get_status(&status));
+        ERROR_CATCH(spmri_get_scan_count(&current_scan));
+        if( status == 0x01 ) {
+            done = 1; }
+        else if(current_scan != last_scan) {
+            printf("Current scan: %d\n", current_scan);
+        last_scan = current_scan;
+        }
+        }
+    printf("Scan completed.\n");
+        
     pause();
     ERROR_CATCH(spmri_stop());
     return 0;

@@ -3030,9 +3030,10 @@ static swig_module_info swig_module = {swig_types, 15, 0, 0, 0, 0};
 #include <windows.h>
 extern char *get_time();
 extern void pause(void);
-extern int configureBoard(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude);
-extern int programBoard(int nScans, double p90, double tau);
-extern int runBoard();
+extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude, unsigned int nPoints);
+extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
+extern int programBoard(unsigned int nScans, double p90, double tau);
+extern int runBoard(double acq_time);
 extern int spincore_stop(void);
 
 
@@ -3236,11 +3237,78 @@ SWIG_AsVal_int (PyObject * obj, int *val)
 }
 
 
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_long (PyObject *obj, unsigned long *val) 
+{
+#if PY_VERSION_HEX < 0x03000000
+  if (PyInt_Check(obj)) {
+    long v = PyInt_AsLong(obj);
+    if (v >= 0) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      return SWIG_OverflowError;
+    }
+  } else
+#endif
+  if (PyLong_Check(obj)) {
+    unsigned long v = PyLong_AsUnsignedLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+      return SWIG_OverflowError;
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    unsigned long v = PyLong_AsUnsignedLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      double d;
+      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, 0, ULONG_MAX)) {
+	if (val) *val = (unsigned long)(d);
+	return res;
+      }
+    }
+  }
+#endif
+  return SWIG_TypeError;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_int (PyObject * obj, unsigned int *val)
+{
+  unsigned long v;
+  int res = SWIG_AsVal_unsigned_SS_long (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v > UINT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = (unsigned int)(v);
+    }
+  }  
+  return res;
+}
+
+
 SWIGINTERNINLINE PyObject*
   SWIG_From_int  (int value)
 {
   return PyInt_FromLong((long) value);
 }
+
+
+  #define SWIG_From_double   PyFloat_FromDouble 
 
 #ifdef __cplusplus
 extern "C" {
@@ -3270,12 +3338,13 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_configureBoard(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_configureTX(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
   double arg2 ;
   double arg3 ;
   double arg4 ;
+  unsigned int arg5 ;
   int val1 ;
   int ecode1 = 0 ;
   double val2 ;
@@ -3284,35 +3353,83 @@ SWIGINTERN PyObject *_wrap_configureBoard(PyObject *SWIGUNUSEDPARM(self), PyObje
   int ecode3 = 0 ;
   double val4 ;
   int ecode4 = 0 ;
+  unsigned int val5 ;
+  int ecode5 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOO:configureBoard",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:configureTX",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   ecode1 = SWIG_AsVal_int(obj0, &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "configureBoard" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "configureTX" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = (int)(val1);
   ecode2 = SWIG_AsVal_double(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "configureBoard" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "configureTX" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = (double)(val2);
   ecode3 = SWIG_AsVal_double(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "configureBoard" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "configureTX" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = (double)(val3);
   ecode4 = SWIG_AsVal_double(obj3, &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "configureBoard" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "configureTX" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = (double)(val4);
-  result = (int)configureBoard(arg1,arg2,arg3,arg4);
+  ecode5 = SWIG_AsVal_unsigned_SS_int(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "configureTX" "', argument " "5"" of type '" "unsigned int""'");
+  } 
+  arg5 = (unsigned int)(val5);
+  result = (int)configureTX(arg1,arg2,arg3,arg4,arg5);
   resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_configureRX(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  double arg1 ;
+  unsigned int arg2 ;
+  unsigned int arg3 ;
+  double val1 ;
+  int ecode1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:configureRX",&obj0,&obj1,&obj2)) SWIG_fail;
+  ecode1 = SWIG_AsVal_double(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "configureRX" "', argument " "1"" of type '" "double""'");
+  } 
+  arg1 = (double)(val1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "configureRX" "', argument " "2"" of type '" "unsigned int""'");
+  } 
+  arg2 = (unsigned int)(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "configureRX" "', argument " "3"" of type '" "unsigned int""'");
+  } 
+  arg3 = (unsigned int)(val3);
+  result = (double)configureRX(arg1,arg2,arg3);
+  resultobj = SWIG_From_double((double)(result));
   return resultobj;
 fail:
   return NULL;
@@ -3321,10 +3438,10 @@ fail:
 
 SWIGINTERN PyObject *_wrap_programBoard(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
-  int arg1 ;
+  unsigned int arg1 ;
   double arg2 ;
   double arg3 ;
-  int val1 ;
+  unsigned int val1 ;
   int ecode1 = 0 ;
   double val2 ;
   int ecode2 = 0 ;
@@ -3336,11 +3453,11 @@ SWIGINTERN PyObject *_wrap_programBoard(PyObject *SWIGUNUSEDPARM(self), PyObject
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"OOO:programBoard",&obj0,&obj1,&obj2)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  ecode1 = SWIG_AsVal_unsigned_SS_int(obj0, &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "programBoard" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "programBoard" "', argument " "1"" of type '" "unsigned int""'");
   } 
-  arg1 = (int)(val1);
+  arg1 = (unsigned int)(val1);
   ecode2 = SWIG_AsVal_double(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "programBoard" "', argument " "2"" of type '" "double""'");
@@ -3361,10 +3478,19 @@ fail:
 
 SWIGINTERN PyObject *_wrap_runBoard(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
+  double arg1 ;
+  double val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)":runBoard")) SWIG_fail;
-  result = (int)runBoard();
+  if (!PyArg_ParseTuple(args,(char *)"O:runBoard",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_double(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "runBoard" "', argument " "1"" of type '" "double""'");
+  } 
+  arg1 = (double)(val1);
+  result = (int)runBoard(arg1);
   resultobj = SWIG_From_int((int)(result));
   return resultobj;
 fail:
@@ -3389,7 +3515,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"get_time", _wrap_get_time, METH_VARARGS, NULL},
 	 { (char *)"pause", _wrap_pause, METH_VARARGS, NULL},
-	 { (char *)"configureBoard", _wrap_configureBoard, METH_VARARGS, NULL},
+	 { (char *)"configureTX", _wrap_configureTX, METH_VARARGS, NULL},
+	 { (char *)"configureRX", _wrap_configureRX, METH_VARARGS, NULL},
 	 { (char *)"programBoard", _wrap_programBoard, METH_VARARGS, NULL},
 	 { (char *)"runBoard", _wrap_runBoard, METH_VARARGS, NULL},
 	 { (char *)"spincore_stop", _wrap_spincore_stop, METH_VARARGS, NULL},

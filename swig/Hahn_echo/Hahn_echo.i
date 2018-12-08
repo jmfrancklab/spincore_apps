@@ -4,14 +4,16 @@
 #include <windows.h>
 extern char *get_time();
 extern void pause(void);
-extern int configureBoard(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude);
-extern int programBoard(int nScans, double p90, double tau);
-extern int runBoard();
+extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude, unsigned int nPoints);
+extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
+extern int programBoard(unsigned int nScans, double p90, double tau);
+extern int runBoard(double acq_time);
 extern int spincore_stop(void);
 %}
 extern char *get_time();
 extern void pause(void);
-extern int configureBoard(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude);
-extern int programBoard(int nScans, double p90, double tau);
-extern int runBoard();
+extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude, unsigned int nPoints);
+extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
+extern int programBoard(unsigned int nScans, double p90, double tau);
+extern int runBoard(double acq_time);
 extern int spincore_stop(void);

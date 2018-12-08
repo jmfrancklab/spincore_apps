@@ -104,16 +104,20 @@ def pause():
     return _Hahn_echo.pause()
 pause = _Hahn_echo.pause
 
-def configureBoard(adcOffset, carrierFreq_MHz, tx_phase, amplitude):
-    return _Hahn_echo.configureBoard(adcOffset, carrierFreq_MHz, tx_phase, amplitude)
-configureBoard = _Hahn_echo.configureBoard
+def configureTX(adcOffset, carrierFreq_MHz, tx_phase, amplitude, nPoints):
+    return _Hahn_echo.configureTX(adcOffset, carrierFreq_MHz, tx_phase, amplitude, nPoints)
+configureTX = _Hahn_echo.configureTX
+
+def configureRX(SW_kHz, nPoints, nScans):
+    return _Hahn_echo.configureRX(SW_kHz, nPoints, nScans)
+configureRX = _Hahn_echo.configureRX
 
 def programBoard(nScans, p90, tau):
     return _Hahn_echo.programBoard(nScans, p90, tau)
 programBoard = _Hahn_echo.programBoard
 
-def runBoard():
-    return _Hahn_echo.runBoard()
+def runBoard(acq_time):
+    return _Hahn_echo.runBoard(acq_time)
 runBoard = _Hahn_echo.runBoard
 
 def spincore_stop():
