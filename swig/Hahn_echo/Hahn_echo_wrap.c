@@ -3034,7 +3034,7 @@ extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, d
 extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
 extern int programBoard(unsigned int nScans, double p90, double tau);
 extern int runBoard(double acq_time);
-extern void initData(unsigned int nPoints, unsigned int nEchoes, char* output_name);
+extern int getData(unsigned int nPoints, unsigned int nEchoes, char* output_name);
 extern int spincore_stop(void);
 
 
@@ -3615,7 +3615,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_initData(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_getData(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   unsigned int arg1 ;
   unsigned int arg2 ;
@@ -3630,25 +3630,26 @@ SWIGINTERN PyObject *_wrap_initData(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
+  int result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:initData",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:getData",&obj0,&obj1,&obj2)) SWIG_fail;
   ecode1 = SWIG_AsVal_unsigned_SS_int(obj0, &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "initData" "', argument " "1"" of type '" "unsigned int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "getData" "', argument " "1"" of type '" "unsigned int""'");
   } 
   arg1 = (unsigned int)(val1);
   ecode2 = SWIG_AsVal_unsigned_SS_int(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "initData" "', argument " "2"" of type '" "unsigned int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "getData" "', argument " "2"" of type '" "unsigned int""'");
   } 
   arg2 = (unsigned int)(val2);
   res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "initData" "', argument " "3"" of type '" "char *""'");
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "getData" "', argument " "3"" of type '" "char *""'");
   }
   arg3 = (char *)(buf3);
-  initData(arg1,arg2,arg3);
-  resultobj = SWIG_Py_Void();
+  result = (int)getData(arg1,arg2,arg3);
+  resultobj = SWIG_From_int((int)(result));
   if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return resultobj;
 fail:
@@ -3678,7 +3679,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"configureRX", _wrap_configureRX, METH_VARARGS, NULL},
 	 { (char *)"programBoard", _wrap_programBoard, METH_VARARGS, NULL},
 	 { (char *)"runBoard", _wrap_runBoard, METH_VARARGS, NULL},
-	 { (char *)"initData", _wrap_initData, METH_VARARGS, NULL},
+	 { (char *)"getData", _wrap_getData, METH_VARARGS, NULL},
 	 { (char *)"spincore_stop", _wrap_spincore_stop, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }
 };
