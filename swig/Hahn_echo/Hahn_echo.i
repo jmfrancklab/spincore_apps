@@ -8,7 +8,8 @@ extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, d
 extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
 extern int programBoard(unsigned int nScans, double p90, double tau);
 extern int runBoard(double acq_time);
-extern int getData(unsigned int nPoints, unsigned int nEchoes, char* output_name);
+#define SWIG_FILE_WITH_INIT
+extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, char* output_name);
 extern int spincore_stop(void);
 %}
 extern char *get_time();
@@ -17,5 +18,10 @@ extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, d
 extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
 extern int programBoard(unsigned int nScans, double p90, double tau);
 extern int runBoard(double acq_time);
-extern int getData(unsigned int nPoints, unsigned int nEchoes, char* output_name);
+%include "numpy.i"
+%init %{
+    import_array();
+%}
+%apply (int* ARGOUT_ARRAY1, int DIM1) {(int* output_array, int length)};
+extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, char* output_name);
 extern int spincore_stop(void);

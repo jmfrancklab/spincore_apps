@@ -59,9 +59,12 @@ for tx_phase in [0.0, 90.0, 180.0, 270.0]:
     print "***"
     print "RUNNING BOARD..."
     Hahn_echo.runBoard(acq_time)
-    Hahn_echo.getData(nPoints, nEchoes, output_name)
+    data_length = 2*nPoints*nEchoes
+    my_array = Hahn_echo.getData(data_length, nPoints, nEchoes, output_name)
     print "EXITING..."
     print "\n*** *** ***\n"
+    print my_array
+    quit()
     result, time_axis = pull_data(output_name)
     data = nddata(array(result),'t')
     data.setaxis('t',time_axis).set_units('t','s')

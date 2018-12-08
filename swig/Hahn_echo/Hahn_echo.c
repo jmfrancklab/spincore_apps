@@ -170,35 +170,51 @@ int runBoard(double acq_time)
     return 0;
 }
 
-int getData(unsigned int nPoints, unsigned int nEchoes, char* output_name)
-{
-    char txt_fname[128];
+void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, char* output_name){
     int* real = malloc(nPoints * nEchoes * sizeof(int));
     int* imag = malloc(nPoints * nEchoes * sizeof(int));
-    // int* data = malloc(nPoints * nEchoes * sizeof(int)*2);
-    // int j,k,m;
-    // ERROR_CATCH(spmri_read_memory(real, imag, nPoints*nEchoes));
-    // int index=0;
-    // printf("Creating array...\n");
-    // for( j = 0 ; j < nPoints*nEchoes ; j++){
-    //     invec[index] = real[j];
-    //     invec[index+1] = imag[j];
-    //     index = index+2;
-    // }
-    // // invec = &data;
-    // printf("%s", output_name);
     int j;
-    snprintf(txt_fname, 128, "%s.txt", output_name);
-    FILE* pFile = fopen( txt_fname, "w" );
-    if ( pFile == NULL ) return -1;
-    for( j = 0 ; j < nPoints*nEchoes ; j++)
-    {
-        fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
+    int index=0;
+    ERROR_CATCH(spmri_read_memory(real, imag, nPoints*nEchoes));
+    printf("Read data. Creating array...\n");
+    for( j = 0 ; j < nPoints*nEchoes ; j++){
+        output_array[index] = real[j];
+        output_array[index+1] = imag[j];
+        index = index+2;
     }
-    fclose(pFile);
-    printf("Data written\n");
-    return 0;
+    printf("Finished reading data...\n");
+    return;
 }
+
+// int getData(unsigned int nPoints, unsigned int nEchoes, char* output_name)
+// {
+//     char txt_fname[128];
+//     int* real = malloc(nPoints * nEchoes * sizeof(int));
+//     int* imag = malloc(nPoints * nEchoes * sizeof(int));
+//     // int* data = malloc(nPoints * nEchoes * sizeof(int)*2);
+//     // int j,k,m;
+//     // ERROR_CATCH(spmri_read_memory(real, imag, nPoints*nEchoes));
+//     // int index=0;
+//     // printf("Creating array...\n");
+//     // for( j = 0 ; j < nPoints*nEchoes ; j++){
+//     //     invec[index] = real[j];
+//     //     invec[index+1] = imag[j];
+//     //     index = index+2;
+//     // }
+//     // // invec = &data;
+//     // printf("%s", output_name);
+//     int j;
+//     snprintf(txt_fname, 128, "%s.txt", output_name);
+//     FILE* pFile = fopen( txt_fname, "w" );
+//     if ( pFile == NULL ) return -1;
+//     for( j = 0 ; j < nPoints*nEchoes ; j++)
+//     {
+//         fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
+//     }
+//     fclose(pFile);
+//     printf("Data written\n");
+//     return 0;
+// }
 
 
 int spincore_stop(void)
