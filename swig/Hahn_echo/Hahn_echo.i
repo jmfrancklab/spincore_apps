@@ -8,6 +8,7 @@ extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, d
 extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
 extern int programBoard(unsigned int nScans, double p90, double tau);
 extern int runBoard(double acq_time);
+extern void initData(unsigned int nPoints, unsigned int nEchoes, char* output_name);
 extern int spincore_stop(void);
 %}
 extern char *get_time();
@@ -16,4 +17,5 @@ extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, d
 extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
 extern int programBoard(unsigned int nScans, double p90, double tau);
 extern int runBoard(double acq_time);
+extern void initData(unsigned int nPoints, unsigned int nEchoes, char* output_name);
 extern int spincore_stop(void);

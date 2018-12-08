@@ -120,6 +120,10 @@ def runBoard(acq_time):
     return _Hahn_echo.runBoard(acq_time)
 runBoard = _Hahn_echo.runBoard
 
+def initData(nPoints, nEchoes, output_name):
+    return _Hahn_echo.initData(nPoints, nEchoes, output_name)
+initData = _Hahn_echo.initData
+
 def spincore_stop():
     return _Hahn_echo.spincore_stop()
 spincore_stop = _Hahn_echo.spincore_stop

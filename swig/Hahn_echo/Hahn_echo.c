@@ -126,7 +126,7 @@ int programBoard(unsigned int nScans, double p90, double tau){
                 // DAC
                 0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
                 // RF
-                0,0,0,0,0,7,0,0,
+                0,0,0,0,1,7,0,0,
                 // PB
                 0x00,loop_addr,END_LOOP,1.0*us
                 ));
@@ -147,7 +147,7 @@ int programBoard(unsigned int nScans, double p90, double tau){
 int runBoard(double acq_time)
 {
     ERROR_CATCH(spmri_start());
-    printf("Board is running...");
+    printf("Board is running...\n");
     int done = 0;
     int last_scan = 0;
     int status;
@@ -169,6 +169,26 @@ int runBoard(double acq_time)
     ERROR_CATCH(spmri_stop());
     return 0;
 }
+
+int initData(unsigned int nPoints, unsigned int nEchoes, char* output_name)
+{
+    char txt_fname[128];
+    int* real = malloc(nPoints * nEchoes * sizeof(int));
+    int* imag = malloc(nPoints * nEchoes * sizeof(int));
+    int j;
+    ERROR_CATCH(spmri_read_memory(real, imag, nPoints*nEchoes));
+    snprintf(txt_fname, 128, "%s.txt", output_name);
+    FILE* pFile = fopen( txt_fname, "w" );
+    if ( pFile == NULL ) return -1;
+    for( j = 0 ; j < nPoints*nEchoes ; j++)
+    {
+        fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
+    }
+    fclose(pFile);
+    printf("Data written\n");
+    return 0;
+}
+
 
 int spincore_stop(void)
 {
