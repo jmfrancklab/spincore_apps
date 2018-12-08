@@ -164,9 +164,6 @@ int runBoard(double acq_time)
         }
         }
     printf("Scan completed.\n");
-        
-    pause();
-    ERROR_CATCH(spmri_stop());
     return 0;
 }
 
@@ -175,6 +172,7 @@ void getData(int* output_array, int length, unsigned int nPoints, unsigned int n
     int* imag = malloc(nPoints * nEchoes * sizeof(int));
     int j;
     int index=0;
+    printf("Reading data...\n");
     ERROR_CATCH(spmri_read_memory(real, imag, nPoints*nEchoes));
     printf("Read data. Creating array...\n");
     for( j = 0 ; j < nPoints*nEchoes ; j++){
@@ -182,7 +180,10 @@ void getData(int* output_array, int length, unsigned int nPoints, unsigned int n
         output_array[index+1] = imag[j];
         index = index+2;
     }
-    printf("Finished reading data...\n");
+    printf("Finished getting data.\n");
+    pause();
+    ERROR_CATCH(spmri_stop());
+    printf("Stopped pulse program. Reset board.\n");
     return;
 }
 
