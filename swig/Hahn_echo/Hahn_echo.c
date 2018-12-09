@@ -68,7 +68,7 @@ double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans){
     return acq_time;
 }
 
-int programBoard(unsigned int nScans, double p90, double tau){
+int programBoard(unsigned int nScans, double p90, double tau, double acq_time, double transient, double repetition){
     DWORD loop_addr;
     ERROR_CATCH(spmri_start_programming());
     ERROR_CATCH( spmri_read_addr( &loop_addr ) );
@@ -103,7 +103,7 @@ int programBoard(unsigned int nScans, double p90, double tau){
                 // PB
                 0x00,0,CONTINUE,1.0*us
                 ));
-    // PULSE
+    // 90 PULSE
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
                 0.0,ALL_DACS,DONT_WRITE,DONT_UPDATE,DONT_CLEAR,
@@ -112,7 +112,7 @@ int programBoard(unsigned int nScans, double p90, double tau){
                 // PB
                 0x00,0,CONTINUE,p90*us
                 ));
-    // DELAY
+    // TAU DELAY
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
                 0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
@@ -121,12 +121,48 @@ int programBoard(unsigned int nScans, double p90, double tau){
                 // PB
                 0x00,0,CONTINUE,tau*us
                 ));
-    // ACQUIRE (ALSO END LOOP)
+    // 180 PULSE
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC
+                0.0,ALL_DACS,DONT_WRITE,DONT_UPDATE,DONT_CLEAR,
+                // RF
+                0,0,1,0,0,7,0,0,
+                // PB
+                0x00,0,CONTINUE,2.0*p90*us
+                ));
+    // TRANSIENT DELAY
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC
+                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                // RF
+                0,0,0,0,0,7,0,0,
+                // PB
+                0x00,0,CONTINUE,transient*us
+                ));
+    // ACQUIRE
     ERROR_CATCH(spmri_mri_inst(
                 // DAC
                 0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
                 // RF
                 0,0,0,0,1,7,0,0,
+                // PB
+                0x00,0,CONTINUE,acq_time*ms
+                ));
+    // REPETITION DELAY
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC
+                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                // RF
+                0,0,0,0,0,7,0,0,
+                // PB
+                0x00,0,CONTINUE,repetition*ms
+                ));
+    // END LOOP
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC
+                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                // RF
+                0,0,0,0,0,7,0,0,
                 // PB
                 0x00,loop_addr,END_LOOP,1.0*us
                 ));
@@ -144,7 +180,7 @@ int programBoard(unsigned int nScans, double p90, double tau){
 
 /* Checked that acq_time is transferred successfully from
  * configureRX function */
-int runBoard(double acq_time)
+int runBoard()
 {
     ERROR_CATCH(spmri_start());
     printf("Board is running...\n");
@@ -186,37 +222,6 @@ void getData(int* output_array, int length, unsigned int nPoints, unsigned int n
     printf("Stopped pulse program. Reset board.\n");
     return;
 }
-
-// int getData(unsigned int nPoints, unsigned int nEchoes, char* output_name)
-// {
-//     char txt_fname[128];
-//     int* real = malloc(nPoints * nEchoes * sizeof(int));
-//     int* imag = malloc(nPoints * nEchoes * sizeof(int));
-//     // int* data = malloc(nPoints * nEchoes * sizeof(int)*2);
-//     // int j,k,m;
-//     // ERROR_CATCH(spmri_read_memory(real, imag, nPoints*nEchoes));
-//     // int index=0;
-//     // printf("Creating array...\n");
-//     // for( j = 0 ; j < nPoints*nEchoes ; j++){
-//     //     invec[index] = real[j];
-//     //     invec[index+1] = imag[j];
-//     //     index = index+2;
-//     // }
-//     // // invec = &data;
-//     // printf("%s", output_name);
-//     int j;
-//     snprintf(txt_fname, 128, "%s.txt", output_name);
-//     FILE* pFile = fopen( txt_fname, "w" );
-//     if ( pFile == NULL ) return -1;
-//     for( j = 0 ; j < nPoints*nEchoes ; j++)
-//     {
-//         fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
-//     }
-//     fclose(pFile);
-//     printf("Data written\n");
-//     return 0;
-// }
-
 
 int spincore_stop(void)
 {

@@ -4,46 +4,53 @@ import sys
 import Hahn_echo
 #{{{
 fl = figlist_var()
-def pull_data(id_string):
-    F = open(str(os.path.dirname(os.path.realpath(__file__)))+"\\"+id_string+".txt", "r")
-    real = []
-    imag = []
-    result = []
-    for line in F:
-        temp = line.strip().split()
-        result.append(complex128(float(temp[0]))+1j*complex128(float(temp[1])))
-    F.close()
-    num_points = float(shape(result)[0])
-    ACQ = nPoints/SW_kHz
-    if nPoints/SW_kHz == acq_time:
-        print "Acquisition time:",acq_time,"ms"
-    else:
-        print "Acquisition time conflict"
-    if nPoints == num_points:
-        print "Number of points:",nPoints
-    else:
-        print "Number of points conflict"
-    dt = acq_time/nPoints
-    print "Dwell time:",dt,"ms"
-    time_axis = linspace(0.0,acq_time,nPoints)
-    return result, time_axis
-#}}}
 
-date = '181207'
-output_name = 'testing'
-adcOffset = 45
-carrierFreq_MHz = 2.0
+#{{{ Verify arguments compatible with board
+def verifyParams():
+    if (nPoints > 16*1024 or nPoints < 1):
+        print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED NUMBER OF POINTS."
+    if (nScans < 1):
+        print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED NUMBER OF SCANS."
+    if (p90 < 0.065):
+        print "ERROR: PULSE TIME TOO SMALL."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED PULSE TIME."
+    if (tau < 0.065):
+        print "ERROR: DELAY TIME TOO SMALL."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED DELAY TIME."
+    return
+#}}}
+date = '181208'
+output_name = 'test_echo_2'
+adcOffset = 48
+carrierFreq_MHz = 14.46
 tx_phase = 0.0
 amplitude = 1.0
-SW_kHz = 200.0
-nPoints = 16384
-nScans = 5 
+SW_kHz = 50.0
+nPoints = 1024
+nScans = 1
 nEchoes = 1
-p90 = 15.0
-tau = 1000000.0
+p90 = 1.0 # us
+tau = 10500.0 # us
+transient = 500.0 # us
+repetition = 1000.0 # ms
 
 #for tx_phase in [0.0, 90.0, 180.0, 270.0]:
 #output_name = output_name + str(tx_phase)
+verifyParams()
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
 Hahn_echo.configureTX(adcOffset, carrierFreq_MHz, tx_phase, amplitude, nPoints)
@@ -54,21 +61,23 @@ acq_time = Hahn_echo.configureRX(SW_kHz, nPoints, nScans) #ms
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "PROGRAMMING BOARD..."
-Hahn_echo.programBoard(nScans,p90,tau)
+Hahn_echo.programBoard(nScans,p90,tau,acq_time,transient,repetition)
 print "\nBOARD PROGRAMMED."
 print "***"
 print "RUNNING BOARD..."
-Hahn_echo.runBoard(acq_time)
+Hahn_echo.runBoard()
 data_length = 2*nPoints*nEchoes
 raw_data = Hahn_echo.getData(data_length, nPoints, nEchoes, output_name)
 print "EXITING..."
 print "\n*** *** ***\n"
+raw_data.astype(float)
 data = []
-for x in xrange(shape(raw_data)[0]/2):
-    data.append(complex128(float(raw_data[x]))+1j*complex128(float(raw_data[x+1])))
+data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+#for x in xrange(shape(raw_data)[0]/2):
+    #data.append(complex128(float(raw_data[x]))+1j*complex128(float(raw_data[x+1])))
 print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
 print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
-time_axis = linspace(0.0,acq_time,nPoints)
+time_axis = linspace(0.0,acq_time*1e-3,nPoints)
 data = nddata(array(data),'t')
 data.setaxis('t',time_axis).set_units('t','s')
 data.name('signal')

@@ -112,12 +112,12 @@ def configureRX(SW_kHz, nPoints, nScans):
     return _Hahn_echo.configureRX(SW_kHz, nPoints, nScans)
 configureRX = _Hahn_echo.configureRX
 
-def programBoard(nScans, p90, tau):
-    return _Hahn_echo.programBoard(nScans, p90, tau)
+def programBoard(nScans, p90, tau, acq_time, transient, repetition):
+    return _Hahn_echo.programBoard(nScans, p90, tau, acq_time, transient, repetition)
 programBoard = _Hahn_echo.programBoard
 
-def runBoard(acq_time):
-    return _Hahn_echo.runBoard(acq_time)
+def runBoard():
+    return _Hahn_echo.runBoard()
 runBoard = _Hahn_echo.runBoard
 
 def getData(output_array, nPoints, nEchoes, output_name):

@@ -3032,8 +3032,8 @@ extern char *get_time();
 extern void pause(void);
 extern int configureTX(int adcOffset, double carrierFreq_MHz, double tx_phase, double amplitude, unsigned int nPoints);
 extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans);
-extern int programBoard(unsigned int nScans, double p90, double tau);
-extern int runBoard(double acq_time);
+extern int programBoard(unsigned int nScans, double p90, double tau, double acq_time, double transient, double repetition);
+extern int runBoard();
 #define SWIG_FILE_WITH_INIT
 extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, char* output_name);
 extern int spincore_stop(void);
@@ -4045,18 +4045,30 @@ SWIGINTERN PyObject *_wrap_programBoard(PyObject *SWIGUNUSEDPARM(self), PyObject
   unsigned int arg1 ;
   double arg2 ;
   double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
   unsigned int val1 ;
   int ecode1 = 0 ;
   double val2 ;
   int ecode2 = 0 ;
   double val3 ;
   int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:programBoard",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:programBoard",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   ecode1 = SWIG_AsVal_unsigned_SS_int(obj0, &val1);
   if (!SWIG_IsOK(ecode1)) {
     SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "programBoard" "', argument " "1"" of type '" "unsigned int""'");
@@ -4072,7 +4084,22 @@ SWIGINTERN PyObject *_wrap_programBoard(PyObject *SWIGUNUSEDPARM(self), PyObject
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "programBoard" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = (double)(val3);
-  result = (int)programBoard(arg1,arg2,arg3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "programBoard" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = (double)(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "programBoard" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = (double)(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "programBoard" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = (double)(val6);
+  result = (int)programBoard(arg1,arg2,arg3,arg4,arg5,arg6);
   resultobj = SWIG_From_int((int)(result));
   return resultobj;
 fail:
@@ -4082,19 +4109,10 @@ fail:
 
 SWIGINTERN PyObject *_wrap_runBoard(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
-  double arg1 ;
-  double val1 ;
-  int ecode1 = 0 ;
-  PyObject * obj0 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:runBoard",&obj0)) SWIG_fail;
-  ecode1 = SWIG_AsVal_double(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "runBoard" "', argument " "1"" of type '" "double""'");
-  } 
-  arg1 = (double)(val1);
-  result = (int)runBoard(arg1);
+  if (!PyArg_ParseTuple(args,(char *)":runBoard")) SWIG_fail;
+  result = (int)runBoard();
   resultobj = SWIG_From_int((int)(result));
   return resultobj;
 fail:
