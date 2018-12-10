@@ -4,3 +4,6 @@
 *.swo
 *.swp
 *.h5
+*.pyd
+*.o
+*.pyc
