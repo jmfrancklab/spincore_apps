@@ -1,3 +1,12 @@
+* JF ran
+$ conda install swig
+which now allows us to use swig from a shell script and greatly simplifies wrapping.
+Also suggested use of environment variables to enable compilation across machines.
+Thus need a re-structuring of the workflow here, likely removing the swig executable.
+Will incorporate a compile shell script for each program.
+
+See the Hahn_echo directory for working example.
+
 ** To compile, run compile_swig.sh from directory containing module **
 Important in the interface file for compilation:
     %include <windows.i> below module definition
