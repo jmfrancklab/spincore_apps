@@ -13,7 +13,7 @@ char *get_time()
 
 /* provide a function that interprets tuples an uses them to generate a pulse program*/
 int ppg_element(char *str_label, double firstarg, double secondarg){
-    DWORD DWORDS[50]; /* large amount -- probably unnecessary */
+    DWORD* DWORDS = malloc(10 * sizeof(DWORD)); /* large amount -- probably unnecessary */
     int error_status;
     if (strcmp(str_label,"pulse")==0){
         error_status = 0;
@@ -27,9 +27,13 @@ int ppg_element(char *str_label, double firstarg, double secondarg){
         printf("DELAY: length %0.1f\n",firstarg);
     }else if (strcmp(str_label,"marker")==0){
         error_status = 0;
+        int label = (int) firstarg;
         printf("MARKER: label %d, %d times\n",(int) firstarg,(int) secondarg);
-        DWORDS[(int) firstarg] = get_time();
-        printf("%s\n", DWORDS[(int) firstarg]);
+        printf("\n * * * \n");
+        printf("%d\n", DWORDS[0]);
+        printf("%d\n", DWORDS[1]);
+        printf("%d\n", DWORDS[label]);
+        printf("\n * * * \n");
     }else if (strcmp(str_label,"jumpto")==0){
         error_status = 0;
         if(secondarg != 0){
