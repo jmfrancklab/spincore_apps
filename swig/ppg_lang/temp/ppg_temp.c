@@ -76,8 +76,9 @@ char *error_message = "";
 /* DELAY: 'delay', time_len */
 /* MARKER: 'marker', string */
 /* JUMPTO: 'jumpto', string, no. times */
+DWORD jump_addresses[10];
+
 int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 vars*/
-    DWORD* DWORDS = malloc(10 * sizeof(DWORD));
     int error_status;
     if (strcmp(str_label,"pulse")==0){
         error_status = 0;
@@ -113,8 +114,8 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
         printf("READING TO MEMORY...\n");
         int label = (int) firstarg;
         unsigned int nTimes = (int) secondarg;
-        ERROR_CATCH(spmri_read_addr( &DWORDS[label] ));
-        printf("BEGINNING LOOP INSTRUCTION...\n");
+        ERROR_CATCH(spmri_read_addr( &jump_addresses[label] ));
+        printf("BEGINNING LOOP INSTRUCTION, jump address %04x...\n",jump_addresses[label]);
         ERROR_CATCH(spmri_mri_inst(
                     // DAC
                     0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
@@ -131,15 +132,15 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
             error_message = "JUMPTO tuples should only provide label to which you wish to jump";
         }
         printf("JUMPTO: label %d\n",(int) firstarg);
-        printf("BEGINNING END_LOOP INSTRUCTION...\n");
         int label = (int) firstarg;
+        printf("BEGINNING END_LOOP INSTRUCTION, marker address %04x...\n",jump_addresses[label]);
         ERROR_CATCH(spmri_mri_inst(
                     // DAC
                     0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
                     // RF
                     0,0,0,0,0,7,0,0,
                     // PB
-                    0x00,DWORDS[label],END_LOOP,1.0*us
+                    0x00,jump_addresses[label],END_LOOP,1.0*us
                     ));
         printf("ENDING END_LOOP INSTRUCTION...\n");
     }else{
