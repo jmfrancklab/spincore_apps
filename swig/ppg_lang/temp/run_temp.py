@@ -17,9 +17,12 @@ print "\nINITIALIZING PROG BOARD...\n"
 ppg_temp.init_ppg();
 print "\nLOADING PULSE PROG..."
 ppg_temp.load([
+    ('marker','start',10),
     ('pulse',2.0,0),
-    ('delay',4.0),
-    ('pulse',4.0,0)
+    ('delay',10.0),
+    ('pulse',4.0,0),
+    ('delay',1000000.0),
+    ('jumpto','start'),
     ])
 print "\nSTOPPING PROG BOARD...\n"
 ppg_temp.stop_ppg();

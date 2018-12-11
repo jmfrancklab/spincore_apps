@@ -77,6 +77,8 @@ char *error_message = "";
 /* MARKER: 'marker', string */
 /* JUMPTO: 'jumpto', string, no. times */
 int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 vars*/
+    DWORD DWORDS[50];
+    DWORD loop_addr;
     int error_status;
     if (strcmp(str_label,"pulse")==0){
         error_status = 0;
@@ -94,9 +96,10 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
         error_status = 0;
         if(secondarg != 0){
             error_status = 1;
-            error_message = "Delay tuples should only be 'delay' followed by the delay";
+            error_message = "DELAY tuples should only be 'delay' followed by the delay";
         }
         printf("DELAY: length %0.1f\n",firstarg);
+        /* COMMAND FOR PROGRAMMING DELAY */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC
                     0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
@@ -107,15 +110,41 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
                     ));
     }else if (strcmp(str_label,"marker")==0){
         error_status = 0;
-        if(secondarg != 0){
-            error_status = 1;
-            error_message = "Marker tuples should only be 'marker' followed by the name";
-        }
-        printf("MARKER: %d\n",(int) firstarg);
+        printf("MARKER: label %d, %d times\n",(int) firstarg,(int) secondarg);
+        printf("READING TO MEMORY...");
+        int label = (int) firstarg;
+        unsigned int nTimes = (int) secondarg;
+        //printf("%d\n",nTimes);
+        //ERROR_CATCH(spmri_read_addr( &DWORDS[label] ));
+        ERROR_CATCH(spmri_read_addr( &loop_addr ));
+        printf("BEGINNING LOOP INSTRUCTION...");
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    //RF
+                    0,0,0,0,0,7,0,0,
+                    // PB
+                    0x00,nTimes,LOOP,1.0*us
+                    ));
+        printf("ENDING LOOP INSTRUCTION...");
     }else if (strcmp(str_label,"jumpto")==0){
         error_status = 0;
-        printf("JUMPTO: label %d, %d times\n",(int) round(firstarg),
-                (int) round(secondarg));
+        if(secondarg != 0){
+            error_status = 1;
+            error_message = "JUMPTO tuples should only provide label to which you wish to jump";
+        }
+        printf("JUMPTO: label %d\n",(int) firstarg);
+        printf("BEGINNING END_LOOP INSTRUCTION...");
+        int label = (int) firstarg;
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,0,0,0,7,0,0,
+                    // PB
+                    0x00,loop_addr,END_LOOP,1.0*us
+                    ));
+        printf("ENDING END_LOOP INSTRUCTION...");
     }else{
         error_status = 1;
         error_message = "unknown ppg element";
