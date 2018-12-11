@@ -1,7 +1,15 @@
 #include <Python.h>
 #include <stdio.h>
+#include <time.h>
 #include "mrispinapi.h"
 char *error_message = "";
+
+char *get_time()
+{
+    time_t ltime;
+    time(&ltime);
+    return ctime(&ltime);
+}
 
 /* provide a function that interprets tuples an uses them to generate a pulse program*/
 int ppg_element(char *str_label, double firstarg, double secondarg){
@@ -20,11 +28,8 @@ int ppg_element(char *str_label, double firstarg, double secondarg){
     }else if (strcmp(str_label,"marker")==0){
         error_status = 0;
         printf("MARKER: label %d, %d times\n",(int) firstarg,(int) secondarg);
-        if ((int) firstarg==0){
-            DWORDS[(int) firstarg] = 14;} /* numbers 14 and 24 mean nothing */
-        else if ((int) firstarg==1){
-            DWORDS[(int) firstarg] = 24;}
-        printf("%d\n", DWORDS[(int) firstarg]);
+        DWORDS[(int) firstarg] = get_time();
+        printf("%s\n", DWORDS[(int) firstarg]);
     }else if (strcmp(str_label,"jumpto")==0){
         error_status = 0;
         if(secondarg != 0){
