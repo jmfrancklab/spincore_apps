@@ -23,5 +23,8 @@ def load(args):
         elif a_tuple[0] == 'jumpto':
             a_tuple = list(a_tuple)
             a_tuple[1] = marker_names[a_tuple[1]]
+        print "***"
+        print a_tuple
+        print "***"
         ppg_element(*a_tuple)
 %}

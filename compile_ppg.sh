@@ -11,20 +11,20 @@ if [ -z "$conda_libs" ]; then
     echo "conda_libs isn't defined!! see comments here and define in your .bashrc"
     exit
 fi
-gcc -c -fpic -DMS_WIN64 -I$conda_headers -L$conda_libs ppg.c ppg_wrap.c
-gcc -shared -DMS_WIN64 -I$conda_headers -L$conda_libs ppg.o ppg_wrap.o -lpython27 -o _ppg.pyd 
+gcc -c -fpic -DMS_WIN64 -I$conda_headers -I$spincore -I$numpy -L$conda_libs -L$spincore ppg.c ppg_wrap.c
+gcc -shared -DMS_WIN64 -I$conda_headers -I$spincore -I$numpy -L$conda_libs -L$spincore ppg.o ppg_wrap.o -lpython27 -o _ppg.pyd 
 pycode=$(cat <<-END
 from numpy import *
 import ppg
 ppg.load([
-    ('marker','start'),
+    ('marker','start',4),
     ('pulse',10.0,pi/2),
     ('delay',10.0),
-    ('marker','cpmg_start'),
+    ('marker','cpmg_start',20),
     ('pulse',20.0,-pi/2),
     ('delay',20.0),
-    ('jumpto','cpmg_start',20),
-    ('jumpto','start',4),
+    ('jumpto','cpmg_start'),
+    ('jumpto','start'),
     ])
 END
 )
