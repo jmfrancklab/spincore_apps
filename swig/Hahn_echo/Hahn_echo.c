@@ -220,6 +220,8 @@ void getData(int* output_array, int length, unsigned int nPoints, unsigned int n
     pause();
     ERROR_CATCH(spmri_stop());
     printf("Stopped pulse program. Reset board.\n");
+    free(real);
+    free(imag);
     return;
 }
 

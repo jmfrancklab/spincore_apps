@@ -72,6 +72,9 @@ print "EXITING..."
 print "\n*** *** ***\n"
 raw_data.astype(float)
 data = []
+# according to JF, this commented out line
+# should work same as line below and be more effic
+#data = raw_data.view(complex128)
 data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
 #for x in xrange(shape(raw_data)[0]/2):
     #data.append(complex128(float(raw_data[x]))+1j*complex128(float(raw_data[x+1])))
