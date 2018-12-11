@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
                 0, // amp register
                 0, // cyclops phase (must be 0)
                 // PulseBlaster Information
-                0x01, // flags
+                0x00, // flags
                 0, // data
                 CONTINUE, // opcode
                 10.0 * us // pulse time
