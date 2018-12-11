@@ -14,6 +14,8 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
     if (strcmp(str_label,"pulse")==0){
         error_status = 0;
         printf("PULSE: length %0.1f phase %0.1f\n",firstarg,secondarg);
+        /* THIS IS THE EXACT COMMAND NEEDED TO TRANSMIT A PULSE
+         * TYPICALLY THIS IS STATED IN programBoard() */
     }else if (strcmp(str_label,"delay")==0){
         error_status = 0;
         if(secondarg != 0){

@@ -77,8 +77,7 @@ char *error_message = "";
 /* MARKER: 'marker', string */
 /* JUMPTO: 'jumpto', string, no. times */
 int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 vars*/
-    DWORD DWORDS[50];
-    DWORD loop_addr;
+    DWORD* DWORDS = malloc(10 * sizeof(DWORD));
     int error_status;
     if (strcmp(str_label,"pulse")==0){
         error_status = 0;
@@ -111,13 +110,11 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
     }else if (strcmp(str_label,"marker")==0){
         error_status = 0;
         printf("MARKER: label %d, %d times\n",(int) firstarg,(int) secondarg);
-        printf("READING TO MEMORY...");
+        printf("READING TO MEMORY...\n");
         int label = (int) firstarg;
         unsigned int nTimes = (int) secondarg;
-        //printf("%d\n",nTimes);
-        //ERROR_CATCH(spmri_read_addr( &DWORDS[label] ));
-        ERROR_CATCH(spmri_read_addr( &loop_addr ));
-        printf("BEGINNING LOOP INSTRUCTION...");
+        ERROR_CATCH(spmri_read_addr( &DWORDS[label] ));
+        printf("BEGINNING LOOP INSTRUCTION...\n");
         ERROR_CATCH(spmri_mri_inst(
                     // DAC
                     0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
@@ -126,7 +123,7 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
                     // PB
                     0x00,nTimes,LOOP,1.0*us
                     ));
-        printf("ENDING LOOP INSTRUCTION...");
+        printf("ENDING LOOP INSTRUCTION...\n");
     }else if (strcmp(str_label,"jumpto")==0){
         error_status = 0;
         if(secondarg != 0){
@@ -134,7 +131,7 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
             error_message = "JUMPTO tuples should only provide label to which you wish to jump";
         }
         printf("JUMPTO: label %d\n",(int) firstarg);
-        printf("BEGINNING END_LOOP INSTRUCTION...");
+        printf("BEGINNING END_LOOP INSTRUCTION...\n");
         int label = (int) firstarg;
         ERROR_CATCH(spmri_mri_inst(
                     // DAC
@@ -142,9 +139,9 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
                     // RF
                     0,0,0,0,0,7,0,0,
                     // PB
-                    0x00,loop_addr,END_LOOP,1.0*us
+                    0x00,DWORDS[label],END_LOOP,1.0*us
                     ));
-        printf("ENDING END_LOOP INSTRUCTION...");
+        printf("ENDING END_LOOP INSTRUCTION...\n");
     }else{
         error_status = 1;
         error_message = "unknown ppg element";

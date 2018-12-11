@@ -31,10 +31,11 @@ def load(args):
         if a_tuple[0] == 'marker':
             a_tuple = list(a_tuple)
             marker_names[a_tuple[1]] = len(marker_names)
-            a_tuple[1] = len(marker_names)-1
+            a_tuple[1] = len(marker_names)
         elif a_tuple[0] == 'jumpto':
             a_tuple = list(a_tuple)
-            a_tuple[1] = marker_names[a_tuple[1]]
+            a_tuple[1] = len(marker_names)
+        print a_tuple
         ppg_element(*a_tuple)
 %}
 extern int runBoard();
