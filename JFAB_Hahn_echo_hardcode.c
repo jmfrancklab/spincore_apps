@@ -10,7 +10,7 @@ typedef struct SCANPARAMS
     // User input
     unsigned int nPoints;
     unsigned int nScans;
-    unsigned int nPhases;
+    unsigned int nSegments;
     double SW_kHz;
     double carrierFreq_MHz;
     double amplitude;
@@ -22,7 +22,7 @@ typedef struct SCANPARAMS
     unsigned int phase90_idx;
     unsigned int phase180_idx;
     int adcOffset;
-    char outputFilename[128];
+    char *outputFilename;
     // Derived values
     double actualSW_Hz;
     double adcFrequency_MHz;
@@ -133,8 +133,7 @@ int configureBoard(SCANPARAMS * scanParams)
                 0, // Not used?
                 &dec_amount
                 ));
-    //ERROR_CATCH(spmri_set_num_segments(scanParams->nPhases));
-
+    ERROR_CATCH(spmri_set_num_segments(scanParams->nSegments));
     actual_SW = (scanParams->adcFrequency_MHz * 1e6) / (double) dec_amount;
     scanParams->actualSW_Hz = actual_SW;
 
@@ -300,17 +299,17 @@ int runScan(SCANPARAMS * scanParams)
 int readData(SCANPARAMS * scanParams)
 {
     char txt_fname[128];
-    int* real = malloc(scanParams->nPoints * scanParams->nPhases * sizeof(int));
-    int* imag = malloc(scanParams->nPoints * scanParams->nPhases * sizeof(int));
+    int* real = malloc(scanParams->nPoints * scanParams->nSegments * sizeof(int));
+    int* imag = malloc(scanParams->nPoints * scanParams->nSegments * sizeof(int));
     int j;
-    ERROR_CATCH(spmri_read_memory(real, imag, scanParams->nPoints * scanParams->nPhases));
+    ERROR_CATCH(spmri_read_memory(real, imag, scanParams->nPoints * scanParams->nSegments));
     // Text file output
     //snprintf(txt_fname, 128, "%s.txt", scanParams->outputFilename);
     snprintf(txt_fname, 128, "diagnostic_run.txt");
     FILE* pFile = fopen( txt_fname, "w" );
     if ( pFile == NULL ) return -1;
     fprintf(pFile, "SPECTRAL WIDTH %f\n", scanParams->actualSW_Hz);
-    for( j = 0 ; j < scanParams->nPoints * scanParams->nPhases ; j++)
+    for( j = 0 ; j < scanParams->nPoints * scanParams->nSegments ; j++)
     {
         fprintf(pFile, "%d\t%d\n", real[j], imag[j]);
     }
@@ -324,14 +323,13 @@ int main(int argc, char *argv[])
     SCANPARAMS scanParams_object;
     SCANPARAMS *scanParams;
     scanParams = &scanParams_object;
-    //char myfile[128] = "diagnostic_run";
-    //strcpy(scanParams->outputFilename,"diagnostic_run");
+    scanParams->outputFilename = "diagnostic_run";
     // ==================
     // Acquisition
     // ==================
     scanParams->nPoints=(int) 16384;
     scanParams->nScans=(int) 4;
-    scanParams->nPhases=(int) 1;
+    scanParams->nSegments=(int) 1;
     scanParams->SW_kHz=(float) 200.0;
     // ==================;
     // Excitation;
@@ -343,8 +341,8 @@ int main(int argc, char *argv[])
     // Delays;
     // ==================;
     scanParams->transTime_us=(float) 500.0;
-    scanParams->tauDelay_us=(float) 10500.0;
-    scanParams->repetitionDelay_s=(float) 1.0;
+    scanParams->tauDelay_us=(float) 10.0;
+    scanParams->repetitionDelay_s=(float) 0.5;
 
     scanParams->phase_values[0] = 0.0;
     scanParams->phase_values[1] = 90.0;
