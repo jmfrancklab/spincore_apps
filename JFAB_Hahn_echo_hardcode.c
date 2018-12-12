@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #include "mrispinapi.h"
@@ -17,11 +18,11 @@ typedef struct SCANPARAMS
     double transTime_us;
     double tauDelay_us;
     double repetitionDelay_s;
-    double phase_values[4] = {0.0,90.0,180.0,270.0};
+    double phase_values[4];
     unsigned int phase90_idx;
     unsigned int phase180_idx;
     int adcOffset;
-    char* outputFilename;
+    char outputFilename[128];
     // Derived values
     double actualSW_Hz;
     double adcFrequency_MHz;
@@ -288,9 +289,9 @@ int runScan(SCANPARAMS * scanParams)
             done = 1; }
         else if(current_scan != last_scan) {
             printf("Current scan: %d\n", current_scan);
-        last_scan = current_scan;
+            last_scan = current_scan;
         }
-        }
+    }
     printf("Scan completed.\n");
 
     return 0;
@@ -304,7 +305,8 @@ int readData(SCANPARAMS * scanParams)
     int j;
     ERROR_CATCH(spmri_read_memory(real, imag, scanParams->nPoints * scanParams->nPhases));
     // Text file output
-    snprintf(txt_fname, 128, "%s.txt", scanParams->outputFilename);
+    //snprintf(txt_fname, 128, "%s.txt", scanParams->outputFilename);
+    snprintf(txt_fname, 128, "diagnostic_run.txt");
     FILE* pFile = fopen( txt_fname, "w" );
     if ( pFile == NULL ) return -1;
     fprintf(pFile, "SPECTRAL WIDTH %f\n", scanParams->actualSW_Hz);
@@ -319,12 +321,16 @@ int readData(SCANPARAMS * scanParams)
 
 int main(int argc, char *argv[])
 {
-    SCANPARAMS myScan;
+    SCANPARAMS scanParams_object;
+    SCANPARAMS *scanParams;
+    scanParams = &scanParams_object;
+    //char myfile[128] = "diagnostic_run";
+    //strcpy(scanParams->outputFilename,"diagnostic_run");
     // ==================
     // Acquisition
     // ==================
     scanParams->nPoints=(int) 16384;
-    scanParams->nScans=(int) 20;
+    scanParams->nScans=(int) 4;
     scanParams->nPhases=(int) 1;
     scanParams->SW_kHz=(float) 200.0;
     // ==================;
@@ -340,6 +346,10 @@ int main(int argc, char *argv[])
     scanParams->tauDelay_us=(float) 10500.0;
     scanParams->repetitionDelay_s=(float) 1.0;
 
+    scanParams->phase_values[0] = 0.0;
+    scanParams->phase_values[1] = 90.0;
+    scanParams->phase_values[2] = 180.0;
+    scanParams->phase_values[3] = 270.0;
     scanParams->phase90_idx=(unsigned int)0;//set the phase of the 90 -- 0,1,2,3, or 4
     scanParams->phase180_idx=(unsigned int)0;//set the phase of the 180 -- 0,1,2,3, or 4
 
@@ -348,11 +358,11 @@ int main(int argc, char *argv[])
     scanParams->adcFrequency_MHz = 75.0;
     scanParams->p180Time_us = (scanParams->p90Time_us * 2.0);
 
-    ERROR_CATCH( verifyArguments( &myScan ) );
-    ERROR_CATCH( configureBoard( &myScan ) );
-    ERROR_CATCH( programBoard( & myScan ) );
-    ERROR_CATCH( runScan( &myScan ) );
-    ERROR_CATCH( readData( &myScan ) );
+    ERROR_CATCH( verifyArguments( scanParams ) );
+    ERROR_CATCH( configureBoard( scanParams ) );
+    ERROR_CATCH( programBoard( scanParams ) );
+    ERROR_CATCH( runScan( scanParams ) );
+    ERROR_CATCH( readData( scanParams ) );
     ERROR_CATCH( spmri_stop());
 
     return 0;
