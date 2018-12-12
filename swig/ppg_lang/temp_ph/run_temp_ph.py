@@ -24,7 +24,7 @@ ppg_temp_ph.load([
     ('phase_reset',1),
     ('pulse',2.0,'ph1',r_[0,1]),
     ('delay',1.5),
-    ('pulse',2.0,'ph2',r_[2,3]),
+    ('pulse',2.0,'ph1',r_[2,3]),
     ('delay',10e6),
     ('jumpto','start'),
     ])
