@@ -39,9 +39,6 @@ int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nP
     printf("%f\n",tx_phases[1]);
     printf("%f\n",tx_phases[2]);
     printf("%f\n",tx_phases[3]);
-    pause();
-    ERROR_CATCH(spmri_stop());
-    printf("Stopped pulse program. Reset board.\n");
     double freqs[1] = {carrierFreq_MHz};
     // double phases[4] = {phase1, phase2, phase3, phase4};
     // double phases[1] = {phase1};
