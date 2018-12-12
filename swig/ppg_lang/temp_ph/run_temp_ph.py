@@ -6,10 +6,6 @@ output_name = 'testing'
 adcOffset = 48
 carrierFreq_MHz = 5.0 
 tx_phases = r_[0.0,90.0,180.0,270.0]
-#phase1 = 0.0
-#phase2 = 90.0
-#phase3 = 180.0
-#phase4 = 270.0
 nPhases = 4 
 amplitude = 1.0
 nPoints = 1024
@@ -24,12 +20,12 @@ print "\nINITIALIZING PROG BOARD...\n"
 ppg_temp_ph.init_ppg();
 print "\nLOADING PULSE PROG..."
 ppg_temp_ph.load([
-    ('marker','start',3),
+    ('marker','start',1),
     ('phase_reset',1),
-    ('pulse',2.0,0),
+    ('pulse',2.0,'ph1',r_[0,1]),
     ('delay',1.5),
-    ('pulse',2.0,2),
-    ('delay',1e6),
+    ('pulse',2.0,'ph2',r_[2,3]),
+    ('delay',10e6),
     ('jumpto','start'),
     ])
 print "\nSTOPPING PROG BOARD...\n"
