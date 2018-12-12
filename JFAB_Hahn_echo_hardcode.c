@@ -15,7 +15,7 @@ typedef struct SCANPARAMS
     double carrierFreq_MHz;
     double amplitude;
     double p90Time_us;
-    double transTime_us;
+    double deadTime_us;
     double tauDelay_us;
     double repetitionDelay_s;
     double phase_values[4];
@@ -80,7 +80,7 @@ int verifyArguments(SCANPARAMS * scanParams)
 		return -1;
 	}
 
-	if (scanParams->transTime_us < 0.065)
+	if (scanParams->deadTime_us < 0.065)
 	{
 		printf ("Error: Transient time is too small to work with board.\n");
 		return -1;
@@ -149,7 +149,8 @@ int programBoard(SCANPARAMS * scanParams)
 {
     DWORD loop_addr[1];// write it this way so that we can easily expand to multiple loops
     ERROR_CATCH(spmri_start_programming());
-    // {{{ start of loop
+    // {{{ start of transient loop -- ONLY a model for transient loop, since it resets the phase and allows a delay for the phase reset
+    //     for more general loops, set the phase reset parameter to 0 and remove the delay command that comes after
     ERROR_CATCH( spmri_read_addr( &loop_addr[0] ) );
     ERROR_CATCH(spmri_mri_inst(
                 // -- DAC section --
@@ -162,7 +163,7 @@ int programBoard(SCANPARAMS * scanParams)
                 0, // freq register
                 0, // phase register
                 0, // tx enable
-                0, // phase reset
+                1, // phase reset
                 0, // rx enable
                 7, // envelope freq (default)
                 0, // amp register
@@ -172,19 +173,19 @@ int programBoard(SCANPARAMS * scanParams)
                 scanParams->nScans, // data
                 LOOP, // opcode -- listed in radioprocessor g manual
                 1.0 * us // delay
-                ));
-    // }}}
+                    ));
 
-    //    // PHASE RESET TRANSIENT DELAY
-    //    // *** NEED THIS OR ELSE GET STRANGE LOW FREQ *** //
-    //    // *** ARTIFACT AT BEGINNING OF FIRST PULSE   *** // 
-    //    ERROR_CATCH(spmri_mri_inst(
-    //                // DAC
-    //                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
-    //                // RF
-    //                0,0,0,0,0,7,0,0,
-    //                // PB
-    //                0x00,0,CONTINUE,1.0*us));
+    // PHASE RESET TRANSIENT DELAY
+    // *** NEED THIS OR ELSE GET STRANGE LOW FREQ *** //
+    // *** ARTIFACT AT BEGINNING OF FIRST PULSE   *** // 
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC
+                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                // RF
+                0,0,0,0,0,7,0,0,
+                // PB
+                0x00,0,CONTINUE,20.0*us));
+    // }}}
     // {{{ 90 PULSE
     ERROR_CATCH(spmri_mri_inst(
                 // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -214,14 +215,14 @@ int programBoard(SCANPARAMS * scanParams)
                 0x00,0,CONTINUE,scanParams->p180Time_us*us
                 ));
     // }}}
-    // {{{ TRANSIENT DELAY
+    // {{{ DEADTIME DELAY
     ERROR_CATCH(spmri_mri_inst(
                 // DAC: Amplitude, DAC Select, Write, Update, Clear
                 0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
                 // RF: freq register, phase register, tx enable, phase reset, rx enable, envelope freq (default), amp register, cyclops (default),
                 0,0,0,0,0,7,0,0,
                 // PB: flags = TTL low (off), data, opcode -- listed in radioprocessor g manual, delay
-                0x00,0,CONTINUE,scanParams->transTime_us * us
+                0x00,0,CONTINUE,scanParams->deadTime_us * us
                 ));
     // }}}
     // {{{ DATA ACQUISITION
@@ -340,8 +341,8 @@ int main(int argc, char *argv[])
     // ==================;
     // Delays;
     // ==================;
-    scanParams->transTime_us=(float) 500.0;
-    scanParams->tauDelay_us=(float) 10.0;
+    scanParams->deadTime_us=(float) 500.0;
+    scanParams->tauDelay_us=(float) 5.0;
     scanParams->repetitionDelay_s=(float) 0.5;
 
     scanParams->phase_values[0] = 0.0;
