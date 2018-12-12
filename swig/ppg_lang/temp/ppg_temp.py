@@ -125,15 +125,12 @@ def load(args):
     for a_tuple in args:
         if a_tuple[0] == 'marker':
             a_tuple = list(a_tuple)
-            marker_idx = len(marker_names)
-            print "for marker, converting name",a_tuple[1],"to index",marker_idx
-            marker_names[a_tuple[1]] = marker_idx
-            a_tuple[1] = marker_idx
+            marker_names[a_tuple[1]] = len(marker_names)
+            a_tuple[1] = len(marker_names)
         elif a_tuple[0] == 'jumpto':
             a_tuple = list(a_tuple)
-            marker_idx = marker_names[a_tuple[1]]
-            print "for jump, converting name",a_tuple[1],"to index",marker_idx
-            a_tuple[1] = marker_idx
+            a_tuple[1] = len(marker_names)
+        print a_tuple
         ppg_element(*a_tuple)
 
 

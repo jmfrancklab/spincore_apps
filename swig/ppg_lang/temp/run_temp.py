@@ -19,12 +19,9 @@ print "\nLOADING PULSE PROG..."
 ppg_temp.load([
     ('marker','start',3),
     ('pulse',2.0,0), # this breaks the looping
-    ('delay',10.0),
-    ('marker','cpmg',10),
-    ('pulse',4.0,0),
-    ('delay',20.0,0),
-    ('jumpto','cpmg'),
-    ('delay',1e6),
+    #('delay',1.0),
+    #('pulse',2.0,0), # this breaks the looping
+    ('delay',10e6),
     ('jumpto','start'),
     ])
 print "\nSTOPPING PROG BOARD...\n"
