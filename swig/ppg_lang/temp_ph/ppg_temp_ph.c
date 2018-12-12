@@ -32,17 +32,22 @@ DWORD error_catch(int error, int line_number)
     return error;
 }
 
-int configureTX(int adcOffset, double carrierFreq_MHz, double phase1, double phase2, double phase3, double phase4, int nPhases, double amplitude, unsigned int nPoints){
+int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nPhases, double amplitude, unsigned int nPoints){
     printf("***");
-    printf("RECEIVED TX PHASES...");
-    printf("%f\n",phase1);
-    printf("%f\n",phase2);
+    printf("RECEIVED TX PHASES...\n");
+    printf("%f\n",tx_phases[0]);
+    printf("%f\n",tx_phases[1]);
+    printf("%f\n",tx_phases[2]);
+    printf("%f\n",tx_phases[3]);
+    pause();
+    ERROR_CATCH(spmri_stop());
+    printf("Stopped pulse program. Reset board.\n");
     double freqs[1] = {carrierFreq_MHz};
-    double phase[4] = {phase1, phase2, phase3, phase4};
-    // double phase[1] = {phase1};
+    // double phases[4] = {phase1, phase2, phase3, phase4};
+    // double phases[1] = {phase1};
     // printf("INTERPRETED TX PHASES...");
-    // printf("%f\n",phase[0]);
-    // printf("%f\n",phase[1]);
+    // printf("%f\n",phases[0]);
+    // printf("%f\n",phases[1]);
     double amp[1] = {amplitude};
     ERROR_CATCH( spmri_init() );
     printf("SpinAPI initialized...");
@@ -50,8 +55,8 @@ int configureTX(int adcOffset, double carrierFreq_MHz, double phase1, double pha
     printf("Set to defaults...");
     ERROR_CATCH( spmri_set_adc_offset(adcOffset));
     ERROR_CATCH( spmri_set_frequency_registers( freqs, 1));
-    // ERROR_CATCH( spmri_set_phase_registers( phase, 1 ));
-    ERROR_CATCH( spmri_set_phase_registers( phase, 4 ));
+    // ERROR_CATCH( spmri_set_phase_registers( phases, 1 ));
+    ERROR_CATCH( spmri_set_phase_registers( tx_phases, 4 ));
     ERROR_CATCH( spmri_set_amplitude_registers( amp, 1));
     ERROR_CATCH( spmri_set_num_samples(nPoints));
     if(nPoints > 16384){

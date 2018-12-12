@@ -3,7 +3,7 @@
 #define SWIG_FILE_WITH_INIT
 extern char *get_time();
 extern void pause(void);
-extern int configureTX(int adcOffset, double carrierFreq_MHz, double phase1, double phase2, double phase3, double phase4, int nPhases, double amplitude, unsigned int nPoints);
+extern int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nPhases, double amplitude, unsigned int nPoints);
 extern int init_ppg();
 extern int stop_ppg();
 extern int ppg_element(char *str_label, double firstarg, double secondarg);
@@ -11,12 +11,13 @@ extern char *exception_info();
 extern int runBoard();
 %}
 %include "numpy.i"
+extern char *get_time();
+extern void pause(void);
 %init %{
     import_array();
 %}
-extern char *get_time();
-extern void pause(void);
-extern int configureTX(int adcOffset, double carrierFreq_MHz, double phase1, double phase2, double phase3, double phase4, int nPhases, double amplitude, unsigned int nPoints);
+%apply (double* INPLACE_ARRAY1, int DIM1) {(double* tx_phases, int nPhases)}
+extern int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nPhases, double amplitude, unsigned int nPoints);
 extern int init_ppg();
 extern int stop_ppg();
 %exception ppg_element{
