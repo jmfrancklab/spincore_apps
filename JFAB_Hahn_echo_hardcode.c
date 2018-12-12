@@ -149,8 +149,7 @@ int programBoard(SCANPARAMS * scanParams)
 {
     DWORD loop_addr[1];// write it this way so that we can easily expand to multiple loops
     ERROR_CATCH(spmri_start_programming());
-    // {{{ start of transient loop -- ONLY a model for transient loop, since it resets the phase and allows a delay for the phase reset
-    //     for more general loops, set the phase reset parameter to 0 and remove the delay command that comes after
+    // {{{ start of transient loop
     ERROR_CATCH( spmri_read_addr( &loop_addr[0] ) );
     ERROR_CATCH(spmri_mri_inst(
                 // -- DAC section --
@@ -163,7 +162,7 @@ int programBoard(SCANPARAMS * scanParams)
                 0, // freq register
                 0, // phase register
                 0, // tx enable
-                1, // phase reset
+                0, // phase reset
                 0, // rx enable
                 7, // envelope freq (default)
                 0, // amp register
@@ -174,17 +173,22 @@ int programBoard(SCANPARAMS * scanParams)
                 LOOP, // opcode -- listed in radioprocessor g manual
                 1.0 * us // delay
                     ));
-
-    // PHASE RESET TRANSIENT DELAY
-    // *** NEED THIS OR ELSE GET STRANGE LOW FREQ *** //
-    // *** ARTIFACT AT BEGINNING OF FIRST PULSE   *** // 
+    // }}}
+    // {{{ phase reset
     ERROR_CATCH(spmri_mri_inst(
-                // DAC
+                // DAC: Amplitude, DAC Select, Write, Update, Clear
                 0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
-                // RF
+                // RF: freq register, phase register, tx enable, phase reset, rx enable, envelope freq (default), amp register, cyclops (default),
+                0,0,0,1,0,7,0,0,
+                // PB: flags = TTL low (off), data, opcode -- listed in radioprocessor g manual, delay
+                0x00,0,CONTINUE,1.0*us));
+    ERROR_CATCH(spmri_mri_inst(
+                // DAC: Amplitude, DAC Select, Write, Update, Clear
+                0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                // RF: freq register, phase register, tx enable, phase reset, rx enable, envelope freq (default), amp register, cyclops (default),
                 0,0,0,0,0,7,0,0,
-                // PB
-                0x00,0,CONTINUE,20.0*us));
+                // PB: flags = TTL low (off), data, opcode -- listed in radioprocessor g manual, delay
+                0x00,0,CONTINUE,1.0*us));
     // }}}
     // {{{ 90 PULSE
     ERROR_CATCH(spmri_mri_inst(
