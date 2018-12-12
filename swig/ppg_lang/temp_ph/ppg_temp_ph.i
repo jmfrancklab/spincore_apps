@@ -1,6 +1,6 @@
 %module ppg_temp_ph
 %{
-
+#define SWIG_FILE_WITH_INIT
 extern char *get_time();
 extern void pause(void);
 extern int configureTX(int adcOffset, double carrierFreq_MHz, double phase1, double phase2, double phase3, double phase4, int nPhases, double amplitude, unsigned int nPoints);
@@ -9,6 +9,10 @@ extern int stop_ppg();
 extern int ppg_element(char *str_label, double firstarg, double secondarg);
 extern char *exception_info();
 extern int runBoard();
+%}
+%include "numpy.i"
+%init %{
+    import_array();
 %}
 extern char *get_time();
 extern void pause(void);

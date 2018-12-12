@@ -22,15 +22,11 @@ print "\nINITIALIZING PROG BOARD...\n"
 ppg_temp_ph.init_ppg();
 print "\nLOADING PULSE PROG..."
 ppg_temp_ph.load([
-    ('phase_reset',1),
     ('marker','start',3),
-    ('pulse',1.0,0),
+    ('phase_reset',1),
+    ('pulse',2.0,0),
     ('delay',1.5),
-    ('pulse',1.0,0),
-    ('delay',1.5),
-    ('pulse',1.0,0),
-    ('delay',1.5),
-    ('pulse',1.0,0),
+    ('pulse',2.0,2),
     ('delay',1e6),
     ('jumpto','start'),
     ])

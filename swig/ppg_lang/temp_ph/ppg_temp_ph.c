@@ -38,8 +38,8 @@ int configureTX(int adcOffset, double carrierFreq_MHz, double phase1, double pha
     printf("%f\n",phase1);
     printf("%f\n",phase2);
     double freqs[1] = {carrierFreq_MHz};
-    // double phase[4] = {phase1, phase2, phase3, phase4};
-    double phase[1] = {phase1};
+    double phase[4] = {phase1, phase2, phase3, phase4};
+    // double phase[1] = {phase1};
     // printf("INTERPRETED TX PHASES...");
     // printf("%f\n",phase[0]);
     // printf("%f\n",phase[1]);
@@ -50,8 +50,8 @@ int configureTX(int adcOffset, double carrierFreq_MHz, double phase1, double pha
     printf("Set to defaults...");
     ERROR_CATCH( spmri_set_adc_offset(adcOffset));
     ERROR_CATCH( spmri_set_frequency_registers( freqs, 1));
-    ERROR_CATCH( spmri_set_phase_registers( phase, 1 ));
-    // ERROR_CATCH( spmri_set_phase_registers( phase, 4 ));
+    // ERROR_CATCH( spmri_set_phase_registers( phase, 1 ));
+    ERROR_CATCH( spmri_set_phase_registers( phase, 4 ));
     ERROR_CATCH( spmri_set_amplitude_registers( amp, 1));
     ERROR_CATCH( spmri_set_num_samples(nPoints));
     if(nPoints > 16384){
