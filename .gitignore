@@ -8,5 +8,5 @@
 *.o
 *.pyc
 *wrap.c
-ppg.py
+*ppg*.py
 2D_MRI.py
