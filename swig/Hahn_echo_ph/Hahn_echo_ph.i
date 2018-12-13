@@ -1,4 +1,4 @@
-%module ppg_temp_ph
+%module Hahn_echo_ph
 %{
 #define SWIG_FILE_WITH_INIT
 extern char *get_time();
