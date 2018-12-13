@@ -40,11 +40,6 @@ int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nP
     printf("%f\n",tx_phases[2]);
     printf("%f\n",tx_phases[3]);
     double freqs[1] = {carrierFreq_MHz};
-    // double phases[4] = {phase1, phase2, phase3, phase4};
-    // double phases[1] = {phase1};
-    // printf("INTERPRETED TX PHASES...");
-    // printf("%f\n",phases[0]);
-    // printf("%f\n",phases[1]);
     double amp[1] = {amplitude};
     ERROR_CATCH( spmri_init() );
     printf("SpinAPI initialized...");
@@ -60,6 +55,30 @@ int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nP
         printf("WARNING: TRYING TO ACQUIRE TOO MANY POINTS THAN BOARD CAN STORE.\n");
     }
     return 0;
+}
+
+double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, unsigned int nEchoes, unsigned int nPhaseSteps){
+    double SW_MHz = SW_kHz / 1000.0;
+    double adcFrequency_MHz = 75.0;
+    int dec_amount;
+    ERROR_CATCH( spmri_setup_filters(
+                SW_MHz,
+                nScans,
+                0,
+                &dec_amount
+                ));
+    double actual_SW = (adcFrequency_MHz * 1e6) / (double) dec_amount;
+    printf("Decimation: %d\n", dec_amount);
+    printf("Actual SW: %f Hz\n", actual_SW);
+    double acq_time = nPoints / actual_SW * 1000.0;
+    printf("Acq time: %f ms\n", acq_time);
+    int nSegments = nEchoes*nPhaseSteps;
+    printf("Number of segements (i.e., buffers): %d\n",nSegments);
+    if(nPoints*nEchoes*nPhaseSteps > 16384){
+        printf("WARNING: TRYING TO ACQUIRE TOO MANY POINTS THAN BOARD CAN STORE.\n");
+    }
+    ERROR_CATCH( spmri_set_num_segments(nSegments));
+    return acq_time;
 }
 
 int init_ppg(){
@@ -127,6 +146,22 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
                     0,0,0,0,0,7,0,0,
                     // PB
                     0x00,0,CONTINUE,1.0*us
+                    ));
+    }else if (strcmp(str_label,"acquire")==0){
+        error_status = 0;
+        if(secondarg != 0){
+            error_status = 1;
+            error_message = "ACQUIRE tuples should only be 'acquire' followed by length of acquisition time";
+        }
+        printf("ACQUIRE: length %0.1f\n",firstarg);
+        /* COMMAND FOR PROGRAMMING DELAY */
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF
+                    0,0,0,0,1,7,0,0,
+                    // PB
+                    0x00,0,CONTINUE,firstarg*ms
                     ));
     }else if (strcmp(str_label,"delay")==0){
         error_status = 0;
@@ -210,10 +245,27 @@ int runBoard()
         }
         }
     printf("Scan completed.\n");
-    pause();
-    ERROR_CATCH(spmri_stop());
-    printf("Stopped pulse program. Reset board.\n");
     return 0;
 }
 
-
+void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name){
+    int* real = malloc(nPoints * nEchoes * nPhaseSteps * sizeof(int));
+    int* imag = malloc(nPoints * nEchoes * nPhaseSteps * sizeof(int));
+    int j;
+    int index=0;
+    printf("Reading data...\n");
+    ERROR_CATCH(spmri_read_memory(real, imag, nPoints*nEchoes*nPhaseSteps));
+    printf("Read data. Creating array...\n");
+    for( j = 0 ; j < nPoints*nEchoes*nPhaseSteps ; j++){
+        output_array[index] = real[j];
+        output_array[index+1] = imag[j];
+        index = index+2;
+    }
+    printf("Finished getting data.\n");
+    pause();
+    ERROR_CATCH(spmri_stop());
+    printf("Stopped pulse program. Reset board.\n");
+    free(real);
+    free(imag);
+    return;
+}

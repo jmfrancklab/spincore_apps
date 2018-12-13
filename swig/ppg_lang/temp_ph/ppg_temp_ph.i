@@ -4,11 +4,13 @@
 extern char *get_time();
 extern void pause(void);
 extern int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nPhases, double amplitude, unsigned int nPoints);
+extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, unsigned int nEchoes, unsigned int nPhaseSteps);
 extern int init_ppg();
 extern int stop_ppg();
 extern int ppg_element(char *str_label, double firstarg, double secondarg);
 extern char *exception_info();
 extern int runBoard();
+extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name);
 %}
 %include "numpy.i"
 extern char *get_time();
@@ -18,6 +20,7 @@ extern void pause(void);
 %}
 %apply (double* INPLACE_ARRAY1, int DIM1) {(double* tx_phases, int nPhases)}
 extern int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nPhases, double amplitude, unsigned int nPoints);
+extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, unsigned int nEchoes, unsigned int nPhaseSteps);
 extern int init_ppg();
 extern int stop_ppg();
 %exception ppg_element{
@@ -33,7 +36,7 @@ extern int ppg_element(char *str_label, double firstarg, ...);
 marker_names = {}
 from numpy import *
 def apply_cycles(ppg_in,list_of_cycles_found):
-    #{{{
+    #{{{ documentation for apply cycles
     """Recursively apply the phase cycles indicated by elements with tuple form
     ``('pulse',length,cyclename,cycle)``
     where ``cyclename`` is a string and ``cycle`` is a numpy array.
@@ -116,3 +119,5 @@ def load(args):
         ppg_element(*a_tuple)
 %}
 extern int runBoard();
+%apply (int* ARGOUT_ARRAY1, int DIM1) {(int* output_array, int length)};
+extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name);
