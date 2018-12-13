@@ -49,7 +49,7 @@ SW_kHz = 50.0
 nPoints = 256
 nScans = 1
 nEchoes = 1
-nPhaseSteps = 2 # should come up with way to determine this offhand
+nPhaseSteps = 8 # should come up with way to determine this offhand
                 # or rather, from the phase programs that we want to send
                 # to the SpinCore
 # NOTE: Number of segments is nEchoes * nPhaseSteps
@@ -66,11 +66,11 @@ print "\nINITIALIZING PROG BOARD...\n"
 ppg_temp_ph.init_ppg();
 print "\nLOADING PULSE PROG...\n"
 ppg_temp_ph.load([
-    ('marker','start',2),
+    ('marker','start',1),
     ('phase_reset',1),
-    ('pulse',2.0,'ph1',r_[0,1]),
+    ('pulse',2.0,'ph1',r_[0,1,2,3]),
     ('delay',1.5),
-    ('pulse',2.0,'ph1',r_[2,3]),
+    ('pulse',2.0,'ph2',r_[0,2]),
     ('acquire',acq_time),
     ('delay',2e6),
     ('jumpto','start'),
@@ -92,8 +92,7 @@ data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
 print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
 print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
 dataPoints = float(shape(data)[0])
-print dataPoints
-time_axis = linspace(0.0,acq_time*1e-3,dataPoints)
+time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
 data = nddata(array(data),'t')
 data.setaxis('t',time_axis).set_units('t','s')
 data.name('signal')
