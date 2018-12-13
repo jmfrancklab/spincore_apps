@@ -39,20 +39,24 @@ from numpy import *
 import ppg_temp_ph
 fl = figlist_var()
 date = '181212'
-output_name = 'testing'
-adcOffset = 48
+output_name = 'Hahn_echo_multscan_2'
+adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 nPhases = 4 
 amplitude = 1.0
 SW_kHz = 50.0
-nPoints = 256
-nScans = 1
+nPoints = 1024
+nScans = 8
 nEchoes = 1
 nPhaseSteps = 8 # should come up with way to determine this offhand
                 # or rather, from the phase programs that we want to send
                 # to the SpinCore
 # NOTE: Number of segments is nEchoes * nPhaseSteps
+p90 = 1.0
+tau = 10500.0
+transient = 500.0
+repetition = 1000000.0 # us
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
 ppg_temp_ph.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
@@ -66,13 +70,14 @@ print "\nINITIALIZING PROG BOARD...\n"
 ppg_temp_ph.init_ppg();
 print "\nLOADING PULSE PROG...\n"
 ppg_temp_ph.load([
-    ('marker','start',1),
+    ('marker','start',8),
     ('phase_reset',1),
-    ('pulse',2.0,'ph1',r_[0,1,2,3]),
-    ('delay',1.5),
-    ('pulse',2.0,'ph2',r_[0,2]),
+    ('pulse',p90,'ph1',r_[0,1,2,3]),
+    ('delay',tau),
+    ('pulse',2.0*p90,'ph2',r_[0,2]),
+    ('delay',transient),
     ('acquire',acq_time),
-    ('delay',2e6),
+    ('delay',repetition),
     ('jumpto','start'),
     ])
 print "\nSTOPPING PROG BOARD...\n"

@@ -4,7 +4,6 @@ import sys
 import Hahn_echo
 #{{{
 fl = figlist_var()
-
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
@@ -33,8 +32,8 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '181208'
-output_name = 'test_echo_2'
+date = '181212'
+output_name = 'test_echo'
 adcOffset = 48
 carrierFreq_MHz = 14.46
 tx_phase = 0.0
