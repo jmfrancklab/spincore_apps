@@ -2,8 +2,10 @@ from pyspecdata import *
 from scipy.optimize import leastsq
 fl = figlist_var()
 for date,id_string in [
-        ('181212','Hahn_echo'),
+        ('181213','Hahn_echo_15'),
         ]:
+    nPoints = 128
+    nScans = 4
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -70,26 +72,41 @@ for date,id_string in [
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
     print ndshape(s)
-    t2_end = s.getaxis('t')[1024]
-    t2_axis = linspace(0,t2_end,1024)
+    t2_axis = linspace(0,s.getaxis('t')[nPoints],nPoints)
+    nIndirect = shape(s.getaxis('t'))[0]/nPoints
     s.setaxis('t',None)
-    s.chunk('t',['indirect','t2'],[8,-1])
-    s.setaxis('indirect',r_[1:9])
+    s.chunk('t',['indirect','t2'],[nIndirect,-1])
+    s.setaxis('indirect',r_[1:nIndirect+1])
     s.setaxis('t2',t2_axis)
-    fl.next('test plots')
-    for x in xrange(shape(s.getaxis('indirect'))[0]):
-        fl.plot(s['indirect',x], alpha=0.4)
+    fl.next('raw data, indirect chunk - abs')
+    fl.image(abs(s))
+    fl.next('raw data, indirect chunk - real')
+    fl.image(s.real)
+    fl.next('raw data, indirect chunk - imag')
+    fl.image(s.imag)
+    #fl.next('test plots')
+    #for x in xrange(shape(s.getaxis('indirect'))[0]):
+    #    fl.plot(s['indirect',x], alpha=0.4)
     s.setaxis('indirect',None)
+    s.chunk('indirect',['indirect','nScans'],[-1,nScans])
+    print ndshape(s)
+    #s.chunk('indirect',['ph2','ph1'],[2,4])
     s.chunk('indirect',['ph2','ph1'],[2,4])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('ph2',r_[0.,2.]/4)
-    #s.set_units('t2','s')
-    fl.next('image plot')
-    fl.image(s['t2':(5e-3,15e-3)])
-    s.ft(['ph2','ph1'])
+    s.setaxis('nScans',r_[1.:float(nScans)+1.0])
+    fl.next('ph cyc data, indirect chunk - abs')
+    fl.image(abs(s))
+    fl.next('ph cyc data, indirect chunk - real')
+    fl.image(s.real)
+    fl.next('ph cyc data, indirect chunk - imag')
+    fl.image(s.imag)
     print ndshape(s)
+    #s.reorder(['nScans','t2'],first=False)
+    s.ft(['ph2','ph1'])
     fl.next('image plot coherence')
     fl.image(s)
+    fl.show();quit()
     fl.next('image plot coherence zoomed')
     fl.image(s['t2':(5e-3,15e-3)])
     s.ft('t2', shift=True)

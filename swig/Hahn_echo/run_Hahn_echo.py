@@ -2,7 +2,6 @@ from pyspecdata import *
 import os
 import sys
 import Hahn_echo
-#{{{
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -32,18 +31,18 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '181212'
+date = '181213'
 output_name = 'test_echo'
-adcOffset = 48
+adcOffset = 46
 carrierFreq_MHz = 14.46
 tx_phase = 0.0
 amplitude = 1.0
-SW_kHz = 50.0
-nPoints = 1024
+SW_kHz = 25.0
+nPoints = 128
 nScans = 1
 nEchoes = 1
 p90 = 1.0 # us
-tau = 10500.0 # us
+tau = 2500.0 # us
 transient = 500.0 # us
 repetition = 1000.0 # ms
 

@@ -36,41 +36,47 @@ in the second case.
 #}}}
 from pyspecdata import *
 from numpy import *
-import ppg_temp_ph
+import Hahn_echo_ph
 fl = figlist_var()
-date = '181212'
-output_name = 'Hahn_echo_multscan_2'
-adcOffset = 49
+date = '181213'
+output_name = 'Hahn_echo_16'
+adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 nPhases = 4 
 amplitude = 1.0
-SW_kHz = 50.0
-nPoints = 1024
-nScans = 8
-nEchoes = 1
+SW_kHz = 25.0
+nPoints = 128
+nScans = 12
+#{{{ # bit of a hack here to accomplish what JF suggested
+     # where I set nEchoes = nScans here
+     # which is to acquire several scans in separate 'buffers'
+     # or segments, and nEchoes is used (in addition to nPhases)
+     # to set the number of segments...
+nEchoes = nScans 
+#}}}
 nPhaseSteps = 8 # should come up with way to determine this offhand
                 # or rather, from the phase programs that we want to send
                 # to the SpinCore
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 1.0
-tau = 10500.0
+tau = 2500.0
 transient = 500.0
-repetition = 1000000.0 # us
+repetition = 1e6 # us
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
-ppg_temp_ph.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+Hahn_echo_ph.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
 print "\nTRANSMITTER CONFIGURED."
 print "***"
 print "CONFIGURING RECEIVER..."
-acq_time = ppg_temp_ph.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+acq_time = Hahn_echo_ph.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"
-ppg_temp_ph.init_ppg();
+Hahn_echo_ph.init_ppg();
 print "\nLOADING PULSE PROG...\n"
-ppg_temp_ph.load([
-    ('marker','start',8),
+Hahn_echo_ph.load([
+    ('marker','start',nScans),
     ('phase_reset',1),
     ('pulse',p90,'ph1',r_[0,1,2,3]),
     ('delay',tau),
@@ -81,11 +87,11 @@ ppg_temp_ph.load([
     ('jumpto','start'),
     ])
 print "\nSTOPPING PROG BOARD...\n"
-ppg_temp_ph.stop_ppg();
+Hahn_echo_ph.stop_ppg();
 print "\nRUNNING PROG BOARD...\n"
-ppg_temp_ph.runBoard();
+Hahn_echo_ph.runBoard();
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-raw_data = ppg_temp_ph.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+raw_data = Hahn_echo_ph.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
 print "EXITING..."
 print "\n*** *** ***\n"
 raw_data.astype(float)
