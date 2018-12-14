@@ -2,18 +2,9 @@ from pyspecdata import *
 from scipy.optimize import leastsq
 fl = figlist_var()
 for date,id_string in [
-        ('181213','Hahn_echo_2'),
-        ('181213','Hahn_echo_3'),
-        ('181213','Hahn_echo_4'),
-        ('181213','Hahn_echo_5'),
-        ('181213','Hahn_echo_7'),
-        ('181213','Hahn_echo_8'),
-        ('181213','Hahn_echo_9'),
-        ('181213','Hahn_echo_10'),
-        ('181213','Hahn_echo_11'),
-        ('181213','Hahn_echo_12'),
-        ('181213','Hahn_echo_13'),
-        ('181213','Hahn_echo_14'),
+        ('181214','Hahn_echo_1'),
+        ('181214','Hahn_echo_2'),
+        ('181214','Hahn_echo_3')
         ]:
     nPoints = 128
     nScans = 4

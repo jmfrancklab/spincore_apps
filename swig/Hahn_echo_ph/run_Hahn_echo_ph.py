@@ -38,8 +38,8 @@ from pyspecdata import *
 from numpy import *
 import Hahn_echo_ph
 fl = figlist_var()
-date = '181213'
-output_name = 'Hahn_echo_21'
+date = '181214'
+output_name = 'Hahn_echo_3'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -47,13 +47,13 @@ nPhases = 4
 amplitude = 1.0
 SW_kHz = 25.0
 nPoints = 128
-nScans = 8
+nScans = 4
 #{{{ # bit of a hack here to accomplish what JF suggested
      # where I set nEchoes = nScans here
      # which is to acquire several scans in separate 'buffers'
      # or segments, and nEchoes is used (in addition to nPhases)
      # to set the number of segments...
-nEchoes = 8
+nEchoes = nScans
 #}}}
 nPhaseSteps = 8 # should come up with way to determine this offhand
                 # or rather, from the phase programs that we want to send
