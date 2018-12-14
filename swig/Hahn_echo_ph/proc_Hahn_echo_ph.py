@@ -2,10 +2,10 @@ from pyspecdata import *
 from scipy.optimize import leastsq
 fl = figlist_var()
 for date,id_string in [
-        ('181213','Hahn_echo_15'),
+        ('181213','Hahn_echo_21'),
         ]:
     nPoints = 128
-    nScans = 4
+    nScans = 8
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -84,6 +84,7 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('raw data, indirect chunk - imag')
     fl.image(s.imag)
+    fl.show();quit()
     #fl.next('test plots')
     #for x in xrange(shape(s.getaxis('indirect'))[0]):
     #    fl.plot(s['indirect',x], alpha=0.4)
