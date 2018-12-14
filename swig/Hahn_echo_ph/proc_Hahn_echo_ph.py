@@ -2,10 +2,21 @@ from pyspecdata import *
 from scipy.optimize import leastsq
 fl = figlist_var()
 for date,id_string in [
-        ('181213','Hahn_echo_21'),
+        ('181213','Hahn_echo_2'),
+        ('181213','Hahn_echo_3'),
+        ('181213','Hahn_echo_4'),
+        ('181213','Hahn_echo_5'),
+        ('181213','Hahn_echo_7'),
+        ('181213','Hahn_echo_8'),
+        ('181213','Hahn_echo_9'),
+        ('181213','Hahn_echo_10'),
+        ('181213','Hahn_echo_11'),
+        ('181213','Hahn_echo_12'),
+        ('181213','Hahn_echo_13'),
+        ('181213','Hahn_echo_14'),
         ]:
     nPoints = 128
-    nScans = 8
+    nScans = 4
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -62,15 +73,15 @@ for date,id_string in [
         fl.plot(s.imag)
         fl.show();quit()
         #}}}
-    fl.next('raw data')
-    fl.plot(s.real,alpha=0.4)
-    fl.plot(s.imag,alpha=0.4)
+    #fl.next(id_string+' raw data')
+    #fl.plot(s.real,alpha=0.4)
+    #fl.plot(s.imag,alpha=0.4)
     s.ft('t',shift=True)
-    s *= exp(1j*(pi/2.0))
+    #s *= exp(1j*(pi/2.0))
     s.ift('t')
-    fl.next('proc data')
-    fl.plot(s.real,alpha=0.4)
-    fl.plot(s.imag,alpha=0.4)
+    #fl.next(id_string+' proc data')
+    #fl.plot(s.real,alpha=0.4)
+    #fl.plot(s.imag,alpha=0.4)
     print ndshape(s)
     t2_axis = linspace(0,s.getaxis('t')[nPoints],nPoints)
     nIndirect = shape(s.getaxis('t'))[0]/nPoints
@@ -78,41 +89,35 @@ for date,id_string in [
     s.chunk('t',['indirect','t2'],[nIndirect,-1])
     s.setaxis('indirect',r_[1:nIndirect+1])
     s.setaxis('t2',t2_axis)
-    fl.next('raw data, indirect chunk - abs')
+    fl.next(id_string+' raw data, indirect chunk - abs')
     fl.image(abs(s))
-    fl.next('raw data, indirect chunk - real')
-    fl.image(s.real)
-    fl.next('raw data, indirect chunk - imag')
-    fl.image(s.imag)
-    fl.show();quit()
-    #fl.next('test plots')
-    #for x in xrange(shape(s.getaxis('indirect'))[0]):
-    #    fl.plot(s['indirect',x], alpha=0.4)
+    ##fl.next(id_string+' raw data, indirect chunk - real')
+    ##fl.image(s.real)
+    ##fl.next(id_string+' raw data, indirect chunk - imag')
+    ##fl.image(s.imag)
     s.setaxis('indirect',None)
     s.chunk('indirect',['indirect','nScans'],[-1,nScans])
     print ndshape(s)
-    #s.chunk('indirect',['ph2','ph1'],[2,4])
     s.chunk('indirect',['ph2','ph1'],[2,4])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('nScans',r_[1.:float(nScans)+1.0])
-    fl.next('ph cyc data, indirect chunk - abs')
-    fl.image(abs(s))
-    fl.next('ph cyc data, indirect chunk - real')
-    fl.image(s.real)
-    fl.next('ph cyc data, indirect chunk - imag')
-    fl.image(s.imag)
+    #fl.next(id_string+' ph cyc data, indirect chunk - abs')
+    #fl.image(abs(s))
+    #fl.next(id_string+' ph cyc data, indirect chunk - real')
+    #fl.image(s.real)
+    #fl.next(id_string+' ph cyc data, indirect chunk - imag')
+    #fl.image(s.imag)
     print ndshape(s)
     #s.reorder(['nScans','t2'],first=False)
     s.ft(['ph2','ph1'])
-    fl.next('image plot coherence')
-    fl.image(s)
-    fl.show();quit()
-    fl.next('image plot coherence zoomed')
-    fl.image(s['t2':(5e-3,15e-3)])
-    s.ft('t2', shift=True)
-    s.ift('t2')
-    fl.next('signal')
-    fl.plot(s['ph1',1]['ph2',0]['t2':(9.4e-3,10.6e-3)],label='real')
-    fl.plot(s.imag['ph1',1]['ph2',0]['t2':(9.4e-3,10.6e-3)],label='imag')
-    fl.show();quit()
+    ###fl.next(id_string+' image plot coherence')
+    ###fl.image(s)
+    #fl.next(id_string+' image plot coherence zoomed')
+    #fl.image(s['t2':(5e-3,15e-3)])
+    #s.ft('t2', shift=True)
+    #s.ift('t2')
+    #fl.next(id_string+' signal')
+    #fl.plot(s['ph1',1]['ph2',0]['t2':(9.4e-3,10.6e-3)],label='real')
+    #fl.plot(s.imag['ph1',1]['ph2',0]['t2':(9.4e-3,10.6e-3)],label='imag')
+fl.show();quit()
