@@ -39,7 +39,7 @@ from numpy import *
 import Hahn_echo_ph
 fl = figlist_var()
 date = '181214'
-output_name = 'Hahn_echo_3'
+output_name = 'Hahn_echo_6'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]

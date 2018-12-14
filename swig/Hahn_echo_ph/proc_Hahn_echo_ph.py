@@ -2,9 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq
 fl = figlist_var()
 for date,id_string in [
-        ('181214','Hahn_echo_1'),
-        ('181214','Hahn_echo_2'),
-        ('181214','Hahn_echo_3')
+        #('181214','Hahn_echo_1'),
+        #('181214','Hahn_echo_2'),
+        #('181214','Hahn_echo_3'),
+        #('181214','Hahn_echo_4'),
+        #('181214','Hahn_echo_5'),
+        ('181214','Hahn_echo_6')
         ]:
     nPoints = 128
     nScans = 4
@@ -64,8 +67,8 @@ for date,id_string in [
         fl.plot(s.imag)
         fl.show();quit()
         #}}}
-    #fl.next(id_string+' raw data')
-    #fl.plot(s.real,alpha=0.4)
+    fl.next(id_string+' raw data')
+    fl.plot(s.real,alpha=0.4)
     #fl.plot(s.imag,alpha=0.4)
     s.ft('t',shift=True)
     #s *= exp(1j*(pi/2.0))
@@ -88,6 +91,10 @@ for date,id_string in [
     ##fl.image(s.imag)
     s.setaxis('indirect',None)
     s.chunk('indirect',['indirect','nScans'],[-1,nScans])
+    fl.next('plot 1')
+    fl.plot(s.real['indirect',0]['nScans',0])
+    fl.plot(s.imag['indirect',0]['nScans',0])
+    fl.show();quit()
     print ndshape(s)
     s.chunk('indirect',['ph2','ph1'],[2,4])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
