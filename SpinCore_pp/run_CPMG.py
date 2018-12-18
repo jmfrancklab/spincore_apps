@@ -36,46 +36,45 @@ in the second case.
 #}}}
 from pyspecdata import *
 from numpy import *
-import Hahn_echo_ph
+import SpinCore_pp 
 fl = figlist_var()
 date = '181217'
-output_name = 'test_Hahn_echo'
+output_name = 'CPMG_2'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
-nPhases = 4 
 amplitude = 1.0
 SW_kHz = 25.0
 nPoints = 128
-nScans = 4
+nScans = 1
 #{{{ # bit of a hack here to accomplish what JF suggested
      # where I set nEchoes = nScans here
      # which is to acquire several scans in separate 'buffers'
-     # or segments, and nEchoes is used (in addition to nPhases)
+     # or segments, and nEchoes is used
      # to set the number of segments...
-nEchoes = nScans
+nEchoes = 4 
 #}}}
-nPhaseSteps = 8 # should come up with way to determine this offhand
+nPhaseSteps =  8 # should come up with way to determine this offhand
                 # or rather, from the phase programs that we want to send
-                # to the SpinCore
+                # to the SpinCore -- FOR USE IN SETTING UP RECEIVER ONLY
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 1.0
-tau = 2500.0
+p90 = 1.0 
+tau = 2800.0
 transient = 500.0
 repetition = 1e6 # us
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
-Hahn_echo_ph.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
 print "\nTRANSMITTER CONFIGURED."
 print "***"
 print "CONFIGURING RECEIVER..."
-acq_time = Hahn_echo_ph.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"
-Hahn_echo_ph.init_ppg();
+SpinCore_pp.init_ppg();
 print "\nLOADING PULSE PROG...\n"
-Hahn_echo_ph.load([
+SpinCore_pp.load([
     ('marker','start',nScans),
     ('phase_reset',1),
     ('pulse',p90,'ph1',r_[0,1,2,3]),
@@ -83,15 +82,21 @@ Hahn_echo_ph.load([
     ('pulse',2.0*p90,'ph2',r_[0,2]),
     ('delay',transient),
     ('acquire',acq_time),
+    ('marker','echo_label',(nEchoes-1)),
+    ('pulse',2.0*p90,0.0),
+    ('delay',transient),
+    ('acquire',acq_time),
+    ('jumpto','echo_label'),
     ('delay',repetition),
-    ('jumpto','start'),
+    ('jumpto','start')
     ])
 print "\nSTOPPING PROG BOARD...\n"
-Hahn_echo_ph.stop_ppg();
-print "\nRUNNING PROG BOARD...\n"
-Hahn_echo_ph.runBoard();
+SpinCore_pp.stop_ppg();
+print "\nRUNNING BOARD...\n"
+SpinCore_pp.runBoard(); # Run now contains the closing statement, need to move
+                         # to the getData function and re-compile to remove it 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-raw_data = Hahn_echo_ph.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
 print "EXITING..."
 print "\n*** *** ***\n"
 raw_data.astype(float)

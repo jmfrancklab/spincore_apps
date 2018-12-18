@@ -256,9 +256,6 @@ int runBoard()
         }
         }
     printf("Scan completed.\n");
-    pause();
-    ERROR_CATCH(spmri_stop());
-    printf("Stopped pulse program. Reset board.\n");
     return 0;
 }
 
