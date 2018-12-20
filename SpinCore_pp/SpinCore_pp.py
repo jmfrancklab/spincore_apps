@@ -217,6 +217,10 @@ runBoard = _SpinCore_pp.runBoard
 def getData(output_array, nPoints, nEchoes, nPhaseSteps, output_name):
     return _SpinCore_pp.getData(output_array, nPoints, nEchoes, nPhaseSteps, output_name)
 getData = _SpinCore_pp.getData
+
+def stopBoard():
+    return _SpinCore_pp.stopBoard()
+stopBoard = _SpinCore_pp.stopBoard
 # This file is compatible with both classic and new-style classes.
 
 

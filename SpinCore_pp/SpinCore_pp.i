@@ -10,6 +10,7 @@ extern int stop_ppg();
 extern int ppg_element(char *str_label, double firstarg, double secondarg);
 extern char *exception_info();
 extern int runBoard();
+extern void stopBoard();
 extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name);
 %}
 %include "numpy.i"
@@ -121,3 +122,4 @@ def load(args):
 extern int runBoard();
 %apply (int* ARGOUT_ARRAY1, int DIM1) {(int* output_array, int length)};
 extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name);
+extern void stopBoard();
