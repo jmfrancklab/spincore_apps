@@ -38,30 +38,26 @@ from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
-date = '181217'
-output_name = 'CPMG_2'
+date = '181221'
+output_name = 'CPMG_noph_3'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-SW_kHz = 25.0
-nPoints = 128
-nScans = 1
-#{{{ # bit of a hack here to accomplish what JF suggested
-     # where I set nEchoes = nScans here
-     # which is to acquire several scans in separate 'buffers'
-     # or segments, and nEchoes is used
-     # to set the number of segments...
-nEchoes = 4 
-#}}}
-nPhaseSteps =  8 # should come up with way to determine this offhand
-                # or rather, from the phase programs that we want to send
-                # to the SpinCore -- FOR USE IN SETTING UP RECEIVER ONLY
-# NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 1.0 
+p90 = 0.835 
 tau = 2800.0
 transient = 500.0
 repetition = 1e6 # us
+SW_kHz = 25.0
+nPoints = 128
+nScans = 4
+nEchoes = 64 
+phase_cycling = False
+if phase_cycling:
+    nPhaseSteps =  8 
+if not phase_cycling:
+    nPhaseSteps =  1 
+# NOTE: Number of segments is nEchoes * nPhaseSteps
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
 SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
@@ -74,22 +70,40 @@ print "***"
 print "\nINITIALIZING PROG BOARD...\n"
 SpinCore_pp.init_ppg();
 print "\nLOADING PULSE PROG...\n"
-SpinCore_pp.load([
-    ('marker','start',nScans),
-    ('phase_reset',1),
-    ('pulse',p90,'ph1',r_[0,1,2,3]),
-    ('delay',tau),
-    ('pulse',2.0*p90,'ph2',r_[0,2]),
-    ('delay',transient),
-    ('acquire',acq_time),
-    ('marker','echo_label',(nEchoes-1)),
-    ('pulse',2.0*p90,0.0),
-    ('delay',transient),
-    ('acquire',acq_time),
-    ('jumpto','echo_label'),
-    ('delay',repetition),
-    ('jumpto','start')
-    ])
+if phase_cycling:
+    SpinCore_pp.load([
+        ('marker','start',nScans),
+        ('phase_reset',1),
+        ('pulse',p90,'ph1',r_[0,1,2,3]),
+        ('delay',tau),
+        ('pulse',2.0*p90,'ph2',r_[0,2]),
+        ('delay',transient),
+        ('acquire',acq_time),
+        ('marker','echo_label',(nEchoes-1)),
+        ('pulse',2.0*p90,0.0),
+        ('delay',transient),
+        ('acquire',acq_time),
+        ('jumpto','echo_label'),
+        ('delay',repetition),
+        ('jumpto','start')
+        ])
+if not phase_cycling:
+    SpinCore_pp.load([
+        ('marker','start',nScans),
+        ('phase_reset',1),
+        ('pulse',p90,0.0),
+        ('delay',tau),
+        ('pulse',2.0*p90,0.0),
+        ('delay',transient),
+        ('acquire',acq_time),
+        ('marker','echo_label',(nEchoes-1)),
+        ('pulse',2.0*p90,0.0),
+        ('delay',transient),
+        ('acquire',acq_time),
+        ('jumpto','echo_label'),
+        ('delay',repetition),
+        ('jumpto','start')
+        ])
 print "\nSTOPPING PROG BOARD...\n"
 SpinCore_pp.stop_ppg();
 print "\nRUNNING BOARD...\n"
@@ -97,6 +111,7 @@ SpinCore_pp.runBoard(); # Run now contains the closing statement, need to move
                          # to the getData function and re-compile to remove it 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
 raw_data.astype(float)

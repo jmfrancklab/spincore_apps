@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq
 fl = figlist_var()
 for date,id_string in [
-        ('181217','CPMG_1')
+        ('181221','CPMG_noph_1')
         ]:
     nPoints = 128
     nScans = 1
@@ -12,59 +12,10 @@ for date,id_string in [
             directory = getDATADIR(
                 exp_type = 'test_equip'))
     s.set_units('t','s')
-    is_Nutation = False
-    #{{{ for nutation data
-    if is_Nutation:
-        fl.next('raw data pull')
-        fl.plot(s.real,alpha=0.5,label='real')
-        fl.plot(s.imag,alpha=0.5,label='imag')
-        fl.next('raw data, abs')
-        fl.plot(abs(s))
-        #{{{ Try to phase
-        phase = True
-        if phase:
-            s.ft('t',shift=True)
-            ph_corr = exp(1j*2*pi*0.29)
-            s *= ph_corr
-            s.ift('t')
-            fl.next('phased data')
-            fl.plot(s.real,alpha=0.5,label='real')
-            fl.plot(s.imag,alpha=0.5,label='imag')
-        #}}}
-        t_axis = s.getaxis('t')
-        s.setaxis('t',None)
-        s.chunk('t',['PW','t2'],[nPoints_Nutation,nPoints])
-        t2_axis = t_axis[0:int(nPoints)]
-        PW_axis = []
-        for x in xrange(nPoints_Nutation):
-            print x
-            temp = p90Time_us*x*1e-6
-            PW_axis.append(temp)
-        print PW_axis
-        s.setaxis('t2',t2_axis).set_units('t2','s')
-        s.setaxis('PW',PW_axis).set_units('PW','s')
-        s.reorder('t2',first=False)
-        fl.next('image nutation, abs')
-        fl.image(abs(s))
-        fl.next('image nutation')
-        fl.image(s)
-        fl.show();quit()
-        fl.next('Plotting nutation')
-        fl.plot(abs(s))
-        s.ft('t',shift=True)
-        fl.next('F plot')
-        fl.plot(s)
-        s *= exp(1j*2*pi*pi*1.01)
-        s = s['t':(-5e3,5e3)]
-        s.ift('t')
-        fl.next('Filtered')
-        fl.plot(s.real)
-        fl.plot(s.imag)
-        fl.show();quit()
-        #}}}
     fl.next(id_string+' raw data')
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
+    fl.show();quit()
     #s.ft('t',shift=True)
     #s *= exp(1j*(pi/2.0))
     #s.ift('t')
