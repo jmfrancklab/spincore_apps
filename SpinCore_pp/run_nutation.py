@@ -50,7 +50,7 @@ def API_sender(value):
     print "FIELD SET TO...", MESSAGE
     time.sleep(20)
     return
-set_field = True
+set_field = False
 if set_field:
     B0 = 3409.5 # Determine this from Field Sweep
     API_sender(B0)
@@ -68,7 +68,7 @@ nPhaseSteps = 1
 tau = 2500.0 # us
 transient = 565.0 # us
 repetition = 1e6
-p90_range = linspace(0.1,5.0,15,endpoint=False)
+p90_range = linspace(0.1,3.0,15,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "\n***\n"
@@ -131,6 +131,7 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
+        nutation_data.name('nutation')
         nutation_data.hdf5_write(date+'_'+output_name+'.h5')
         print "Name of saved data",nutation_data.name()
         print "Units of saved data",nutation_data.get_units('t')
