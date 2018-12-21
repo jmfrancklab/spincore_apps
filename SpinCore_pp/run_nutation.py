@@ -50,12 +50,12 @@ def API_sender(value):
     print "FIELD SET TO...", MESSAGE
     time.sleep(20)
     return
-set_field = False
+set_field = True
 if set_field:
-    B0 = 3409.5 # Determine this from Field Sweep
+    B0 = 3409.4 # Determine this from Field Sweep
     API_sender(B0)
 date = '181221'
-output_name = 'nutation_2'
+output_name = 'nutation_3'
 adcOffset = 46
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -68,25 +68,15 @@ nPhaseSteps = 1
 tau = 2500.0 # us
 transient = 565.0 # us
 repetition = 1e6
-p90_range = linspace(0.1,3.0,15,endpoint=False)
+p90_range = linspace(0.1,3.2,30,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
-    print "\n***\n"
+    print "***"
     print "INDEX %d - 90 TIME %f"%(index,val)
-    print "\n***\n"
-    print "\n*** *** ***\n"
-    print "CONFIGURING TRANSMITTER..."
+    print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    print "\nTRANSMITTER CONFIGURED."
-    print "***"
-    print "CONFIGURING RECEIVER..."
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    print "\nRECEIVER CONFIGURED."
-    print "***"
-    print "\nINITIALIZING PROG BOARD...\n"
     SpinCore_pp.init_ppg();
-    print "PROGRAMMING BOARD..."
-    print "\nLOADING PULSE PROG...\n"
     SpinCore_pp.load([
         ('marker','start',nScans),
         ('phase_reset',1),
@@ -98,9 +88,7 @@ for index,val in enumerate(p90_range):
         ('delay',repetition),
         ('jumpto','start')
         ])
-    print "\nSTOPPING PROG BOARD...\n"
     SpinCore_pp.stop_ppg();
-    print "\nRUNNING BOARD...\n"
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
@@ -122,8 +110,6 @@ for index,val in enumerate(p90_range):
         nutation_data.setaxis('p_90',p90_range*1e-6).set_units('p_90','s')
         nutation_data.setaxis('t',time_axis).set_units('t','s')
     nutation_data['p_90',index] = data
-print "\n *** *** ***\n"
-print "ABOUT TO RUN STOP BOARD...\n"
 SpinCore_pp.stopBoard();
 print "EXITING...\n"
 print "\n*** *** ***\n"
