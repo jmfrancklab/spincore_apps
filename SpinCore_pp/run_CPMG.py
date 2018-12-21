@@ -39,7 +39,7 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 date = '181221'
-output_name = 'CPMG_noph_3'
+output_name = 'CPMG_4'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -50,13 +50,14 @@ transient = 500.0
 repetition = 1e6 # us
 SW_kHz = 25.0
 nPoints = 128
-nScans = 4
-nEchoes = 64 
-phase_cycling = False
+nScans = 8
+nEchoes = 32
+phase_cycling = True
 if phase_cycling:
-    nPhaseSteps =  8 
+    nPhaseSteps = 4 
 if not phase_cycling:
-    nPhaseSteps =  1 
+    nPhaseSteps = 1 
+data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
@@ -72,11 +73,11 @@ SpinCore_pp.init_ppg();
 print "\nLOADING PULSE PROG...\n"
 if phase_cycling:
     SpinCore_pp.load([
-        ('marker','start',nScans),
+        ('marker','start',1),
         ('phase_reset',1),
         ('pulse',p90,'ph1',r_[0,1,2,3]),
         ('delay',tau),
-        ('pulse',2.0*p90,'ph2',r_[0,2]),
+        ('pulse',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
         ('marker','echo_label',(nEchoes-1)),
@@ -107,9 +108,12 @@ if not phase_cycling:
 print "\nSTOPPING PROG BOARD...\n"
 SpinCore_pp.stop_ppg();
 print "\nRUNNING BOARD...\n"
-SpinCore_pp.runBoard(); # Run now contains the closing statement, need to move
-                         # to the getData function and re-compile to remove it 
-data_length = 2*nPoints*nEchoes*nPhaseSteps
+if phase_cycling:
+    for x in xrange(nScans):
+        print "SCAN NO. %d"%(x+1)
+        SpinCore_pp.runBoard();
+if not phase_cycling:
+    SpinCore_pp.runBoard(); 
 raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
 SpinCore_pp.stopBoard();
 print "EXITING..."

@@ -1,11 +1,13 @@
 from pyspecdata import *
 from scipy.optimize import leastsq
+from scipy.optimize import minimize 
 fl = figlist_var()
 for date,id_string in [
-        ('181221','CPMG_noph_1')
+        ('181221','CPMG_4')
         ]:
     nPoints = 128
-    nScans = 1
+    nEchoes = 32
+    nPhaseSteps = 4
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -15,53 +17,98 @@ for date,id_string in [
     fl.next(id_string+' raw data')
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
-    fl.show();quit()
-    #s.ft('t',shift=True)
-    #s *= exp(1j*(pi/2.0))
-    #s.ift('t')
-    #fl.next(id_string+' proc data')
-    #fl.plot(s.real,alpha=0.4)
-    #fl.plot(s.imag,alpha=0.4)
-    print ndshape(s)
     t2_axis = linspace(0,s.getaxis('t')[nPoints],nPoints)
-    nIndirect = shape(s.getaxis('t'))[0]/nPoints
     s.setaxis('t',None)
-    s.chunk('t',['indirect','t2'],[nIndirect,-1])
-    s.setaxis('indirect',r_[1:nIndirect+1])
-    s.setaxis('t2',t2_axis)
-    fl.next(id_string+' raw data, indirect chunk - abs')
-    fl.image(abs(s))
-    fl.next(id_string+' raw data, indirect chunk - real')
-    fl.image(s.real)
-    fl.next(id_string+' raw data, indirect chunk - imag')
-    fl.image(s.imag)
-    s.setaxis('indirect',None)
-    s.chunk('indirect',['indirect','nScans'],[-1,nScans])
-    fl.next('plot 1')
-    fl.plot(s.real['indirect',0]['nScans',0])
-    fl.plot(s.imag['indirect',0]['nScans',0])
-    print ndshape(s)
-    s.chunk('indirect',['indirect','ph2','ph1'],[-1,2,4])
+    s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.setaxis('ph2',r_[0.,2.]/4)
-    #s.setaxis('nScans',r_[1.:float(nScans)+1.0])
-    fl.next(id_string+' ph cyc data, indirect chunk - abs')
-    fl.image(abs(s))
-    fl.next(id_string+' ph cyc data, indirect chunk - real')
-    fl.image(s.real)
-    fl.next(id_string+' ph cyc data, indirect chunk - imag')
-    fl.image(s.imag)
-    print ndshape(s)
-    s.reorder(['indirect','t2'],first=False)
-    s.ft(['ph2','ph1'])
+    s.setaxis('nEchoes',r_[1:nEchoes+1])
+    s.setaxis('t2',t2_axis)
+    s.ft(['ph1'])
     fl.next(id_string+' image plot coherence')
     fl.image(s)
-    fl.show();quit()
-    #fl.next(id_string+' image plot coherence zoomed')
-    #fl.image(s['t2':(5e-3,15e-3)])
-    #s.ft('t2', shift=True)
-    #s.ift('t2')
-    #fl.next(id_string+' signal')
-    #fl.plot(s['ph1',1]['ph2',0]['t2':(9.4e-3,10.6e-3)],label='real')
-    #fl.plot(s.imag['ph1',1]['ph2',0]['t2':(9.4e-3,10.6e-3)],label='imag')
+    phasing = False
+    if phasing:
+        sample = s['ph1',1]['nEchoes',0].C
+        fl.next('phase plot')
+        fl.plot(sample.real,',',alpha=0.4,label='real')
+        fl.plot(sample.imag,',',alpha=0.4,label='imag')
+        sample.ft('t2',shift=True)
+        f_axis = sample.getaxis('t2')
+        sample.ift('t2')
+        SWH = diff(r_[f_axis[0],f_axis[-1]])[0]
+        ph0 = 51.3e-3#+0.3e-3
+        ph1 = 277e-6#-5.8e-6
+        ph0_corr = exp(-1j*2*pi*ph0)
+        ph1_corr = 1j*2*pi*ph1
+        sample.ft('t2')
+        sample *= ph0_corr
+        sample *= exp(sample.fromaxis('t2')*ph1_corr)
+        sample *= exp(1j*0.5*pi)
+        sample.ift('t2')
+        fl.next('phase plot')
+        fl.plot(sample.real,alpha=0.4,label='real ph')
+        fl.plot(sample.imag,alpha=0.4,label='imag ph')
+        gen_cost = False
+        if gen_cost:
+            sample.ft('t2')
+            N = 100
+            dw = 100
+            x = nddata(r_[-0.3:0.3:N*1j],'phi0').set_units('phi0','cyc')
+            phi0 = exp(-1j*2*pi*x)
+            x = nddata(r_[-3e-1*dw/SWH/2:3e-1*dw/SWH/2:N*1j],'phi1').set_units('phi1','s')
+            phi1 = -1j*2*pi*x
+            sample *= phi0
+            sample *= exp(phi1*sample.fromaxis('t2'))
+            sample_absr = sample.C
+            sample_absr.data = abs(sample_absr.data.real)
+            sample_absr.sum('t2')
+            fl.next('abs real cost')
+            fl.image(sample_absr)
+            fl.show();quit()
+        fl.show();quit()
+    ph0 = 51.3e-3
+    ph1 = 277e-6
+    ph0_corr = exp(-1j*2*pi*ph0)
+    ph1_corr = 1j*2*pi*ph1
+    s.ft('t2')
+    s *= ph0_corr
+    s *= exp(s.fromaxis('t2')*ph1_corr)
+    s *= exp(1j*0.5*pi)
+    s.ift('t2')
+    interleaved = ndshape([2,16,128],['evenodd','nEchoes','t2']).alloc()
+    interleaved.setaxis('evenodd',r_[0:3])
+    interleaved.setaxis('nEchoes',r_[1:nEchoes/2+1])
+    interleaved.setaxis('t2',s.getaxis('t2').copy())
+    interleaved['evenodd',0] = s['ph1',1]['nEchoes',0::2].C.run(conj)
+    interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2].C
+    fl.next('interleaved')
+    fl.image(interleaved)
+    interleaved.ft('t2')
+    phdiff = interleaved['evenodd',1]/interleaved['evenodd',0]*abs(interleaved['evenodd',0])
+    fl.next('ph diff')
+    fl.image(phdiff)
+    phdiff *= abs(interleaved['evenodd',1])
+    f_axis = interleaved.getaxis('t2')
+    def costfun(firstorder):
+        phshift = exp(-1j*2*pi*f_axis*firstorder)
+        return -1*abs((phdiff * phshift).data[:].sum())
+    sol = minimize(costfun, ([0],),
+            method='L-BFGS-B',
+            bounds=((-1e-3,1e-3),))
+    firstorder = sol.x[0]
+    phshift = exp(-1j*2*pi*f_axis*firstorder)
+    phdiff_corr = phdiff.C
+    phdiff_corr *= phshift
+    zeroorder = phdiff_corr.data[:].sum().conj()
+    zeroorder /= abs(zeroorder)
+    phdiff_corr *= zeroorder
+    print "relative phase shift was",firstorder/1e-6,"microseconds and,",angle(zeroorder)/pi*180,"degrees"
+    interleaved['evenodd',1] *= zeroorder
+    interleaved['evenodd',1] *= exp(-1j*2*pi*interleaved['evenodd',1].fromaxis('t2')*firstorder)
+    interleaved.ift('t2')
+    interleaved.reorder('evenodd',first=False)
+    interleaved.smoosh(['nEchoes','evenodd'],noaxis=True)
+    interleaved.reorder('t2',first=False)
+    fl.next('interleaved, smooshed')
+    fl.image(interleaved)
 fl.show();quit()
