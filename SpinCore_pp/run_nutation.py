@@ -1,7 +1,9 @@
 from pyspecdata import *
 import os
-import sys
 import SpinCore_pp
+import socket
+import sys
+import time
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -31,8 +33,29 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '181220'
-output_name = 'test'
+def API_sender(value):
+    IP = "jmfrancklab-bruker.syr.edu"
+    if len(sys.argv) > 1:
+        IP = sys.argv[1]
+    PORT = 6001
+    print "target IP:", IP
+    print "target port:", PORT
+    MESSAGE = str(value)
+    print "SETTING FIELD TO...", MESSAGE
+    sock = socket.socket(socket.AF_INET, # Internet
+            socket.SOCK_STREAM) # TCP
+    sock.connect((IP, PORT))
+    sock.send(MESSAGE)
+    sock.close()
+    print "FIELD SET TO...", MESSAGE
+    time.sleep(20)
+    return
+set_field = True
+if set_field:
+    B0 = 3409.5 # Determine this from Field Sweep
+    API_sender(B0)
+date = '181221'
+output_name = 'nutation_2'
 adcOffset = 46
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -45,9 +68,12 @@ nPhaseSteps = 1
 tau = 2500.0 # us
 transient = 565.0 # us
 repetition = 1e6
-p90_range = linspace(0.1,5.0,20)
+p90_range = linspace(0.1,5.0,15,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
+    print "\n***\n"
+    print "INDEX %d - 90 TIME %f"%(index,val)
+    print "\n***\n"
     print "\n*** *** ***\n"
     print "CONFIGURING TRANSMITTER..."
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
@@ -92,12 +118,14 @@ for index,val in enumerate(p90_range):
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
     if index == 0:
-        nutation_data = ndshape(len(p90_range),len(time_axis),['PW_90','t']).alloc(dtype=complex128)
-        nutation_data.setaxis('PW_90',p90_range*1e-6).set_units('PW_90','s')
+        nutation_data = ndshape([len(p90_range),len(time_axis)],['p_90','t']).alloc(dtype=complex128)
+        nutation_data.setaxis('p_90',p90_range*1e-6).set_units('p_90','s')
         nutation_data.setaxis('t',time_axis).set_units('t','s')
-    nutation_data['field',index] = data
+    nutation_data['p_90',index] = data
+print "\n *** *** ***\n"
+print "ABOUT TO RUN STOP BOARD...\n"
 SpinCore_pp.stopBoard();
-print "EXITING..."
+print "EXITING...\n"
 print "\n*** *** ***\n"
 save_file = True
 while save_file:

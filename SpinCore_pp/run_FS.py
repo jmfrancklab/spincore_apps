@@ -59,10 +59,10 @@ def API_sender(value):
     time.sleep(20)
     return
 
-field_axis = linspace(3300.0,3500.0,40,endpoint=False)
+field_axis = linspace(3407.0,3413.0,6,endpoint=False)
 fl = figlist_var()
-date = '181220'
-output_name = 'FS_6'
+date = '181221'
+output_name = 'FS_1'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
