@@ -273,7 +273,6 @@ void getData(int* output_array, int length, unsigned int nPoints, unsigned int n
         index = index+2;
     }
     printf("Finished getting data.\n");
-    pause();
     free(real);
     free(imag);
     return;
