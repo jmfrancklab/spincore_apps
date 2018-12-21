@@ -59,60 +59,47 @@ def API_sender(value):
     time.sleep(20)
     return
 
-field_axis = linspace(3405.0,3414.5,20)
-#field_axis = linspace(3405.0,3414.5,3)
+field_axis = linspace(3300.0,3500.0,40,endpoint=False)
 fl = figlist_var()
 date = '181220'
-output_name = 'FS_1'
+output_name = 'FS_6'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-SW_kHz = 30.0
-nPoints = 256
+SW_kHz = 500.0
+nPoints = 2048
 nScans = 10
-nEchoes = 1 
-#}}}
+nEchoes = 1
 nPhaseSteps = 1 # should come up with way to determine this offhand
                 # or rather, from the phase programs that we want to send
                 # to the SpinCore -- FOR USE IN SETTING UP RECEIVER ONLY
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 1.0 
 tau = 2500.0
-transient = 500.0
+transient = 565.0
 repetition = 1e6 # us
-print "\n*** *** ***\n"
-print "CONFIGURING TRANSMITTER..."
-SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-print "\nTRANSMITTER CONFIGURED."
-print "***"
-print "CONFIGURING RECEIVER..."
-acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-print "\nRECEIVER CONFIGURED."
-print "***"
-print "\nINITIALIZING PROG BOARD...\n"
-SpinCore_pp.init_ppg();
-print "\nLOADING PULSE PROG...\n"
-SpinCore_pp.load([
-    ('marker','start',nScans),
-    ('phase_reset',1),
-    ('pulse',p90,0.0),
-    ('delay',tau),
-    ('pulse',2.0*p90,0.0),
-    ('delay',transient),
-    ('acquire',acq_time),
-    ('delay',repetition),
-    ('jumpto','start')
-    ])
-print "\nSTOPPING PROG BOARD...\n"
-SpinCore_pp.stop_ppg();
-print "\nRUNNING BOARD...\n"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for index,val in enumerate(field_axis):
     print "***"
     print "INDEX NO.",index
     print "***"
     API_sender(val)
+    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    SpinCore_pp.init_ppg();
+    SpinCore_pp.load([
+        ('marker','start',nScans),
+        ('phase_reset',1),
+        ('pulse',p90,0.0),
+        ('delay',tau),
+        ('pulse',2.0*p90,0.0),
+        ('delay',transient),
+        ('acquire',acq_time),
+        ('delay',repetition),
+        ('jumpto','start')
+        ])
+    SpinCore_pp.stop_ppg();
     SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
