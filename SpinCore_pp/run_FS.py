@@ -39,6 +39,8 @@ from numpy import *
 import SpinCore_pp 
 import socket
 import sys
+import time
+
 def API_sender(value):
     IP = "jmfrancklab-bruker.syr.edu"
     if len(sys.argv) > 1:
@@ -54,25 +56,31 @@ def API_sender(value):
     sock.send(MESSAGE)
     sock.close()
     print "FIELD SET TO...", MESSAGE
+    time.sleep(20)
     return
-field_axis = linspace(3407.0,3411.0,3)
+
+field_axis = linspace(3405.0,3414.5,20)
+#field_axis = linspace(3405.0,3414.5,3)
 fl = figlist_var()
 date = '181220'
-output_name = 'test'
+output_name = 'FS_1'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-SW_kHz = 25.0
-nPoints = 128
-nScans = 3
-nEchoes = 1
-nPhaseSteps =  8
+SW_kHz = 30.0
+nPoints = 256
+nScans = 10
+nEchoes = 1 
+#}}}
+nPhaseSteps = 1 # should come up with way to determine this offhand
+                # or rather, from the phase programs that we want to send
+                # to the SpinCore -- FOR USE IN SETTING UP RECEIVER ONLY
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 5.0 
-tau = 2800.0
+p90 = 1.0 
+tau = 2500.0
 transient = 500.0
-repetition = 2e6 # us
+repetition = 1e6 # us
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
 SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
@@ -89,9 +97,8 @@ SpinCore_pp.load([
     ('marker','start',nScans),
     ('phase_reset',1),
     ('pulse',p90,0.0),
-    #('pulse',p90,'ph1',0.0),
-    #('delay',tau),
-    #('pulse',2.0*p90,'ph2',0.0),
+    ('delay',tau),
+    ('pulse',2.0*p90,0.0),
     ('delay',transient),
     ('acquire',acq_time),
     ('delay',repetition),
@@ -133,15 +140,20 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
-        data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",data.name()
-        print "Units of saved data",data.get_units('t')
+        field_sweep.name('field_sweep')
+        field_sweep.hdf5_write(date+'_'+output_name+'.h5')
+        print "Name of saved data",field_sweep.name()
+        print "Units of saved data",field_sweep.get_units('t')
         print "Shape of saved data",ndshape(field_sweep)
         save_file = False
     except Exception as e:
         print e
         print "FILE ALREADY EXISTS."
         save_file = False
-fl.next('image test')
+fl.next('raw data')
+fl.image(field_sweep)
+field_sweep.ft('t',shift=True)
+fl.next('FT raw field_sweep')
 fl.image(field_sweep)
 fl.show()
+
