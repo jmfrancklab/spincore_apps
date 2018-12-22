@@ -23,10 +23,8 @@ for date,id_string in [
     s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('nEchoes',r_[1:nEchoes+1])
-    s.setaxis('t2',t2_axis-0.00)
+    s.setaxis('t2',t2_axis)
     fl.next(id_string+' chunked, no ft')
-    approx_echo_center = abs(s['ph1',r_[1,3]]).run(sum,'nEchoes').run(sum,'ph1').argmax('t2').data.item()
-    s.setaxis('t2',lambda x: x-approx_echo_center)
     fl.image(s)
     fl.next(id_string+' chunked, no ft - cropped log')
     fl.image(s.C.cropped_log())
@@ -38,6 +36,7 @@ for date,id_string in [
     fl.image(s)
     s.ift('t2')
     phasing = False
+    #{{{ code for determining preliminary phase corrections
     if phasing:
         sample = s['ph1',1]['nEchoes',0].C
         fl.next('phase plot')
@@ -77,6 +76,7 @@ for date,id_string in [
             fl.image(sample_absr)
             fl.show();quit()
         fl.show();quit()
+    #}}}
     ph0 = 51.3e-3
     ph1 = 277e-6
     ph0_corr = exp(-1j*2*pi*ph0)
@@ -86,12 +86,15 @@ for date,id_string in [
     s *= exp(s.fromaxis('t2')*ph1_corr)
     s *= exp(1j*0.5*pi)
     s.ift('t2')
+    approx_echo_center = abs(s['ph1',r_[1,3]]).run(sum,'nEchoes').run(sum,'ph1').argmax('t2').data.item()
+    s.setaxis('t2',lambda x: x-approx_echo_center)
     interleaved = ndshape([2,16,128],['evenodd','nEchoes','t2']).alloc()
     interleaved.setaxis('evenodd',r_[0:3])
     interleaved.setaxis('nEchoes',r_[1:nEchoes/2+1])
-    interleaved.setaxis('t2',s.getaxis('t2').copy())
+    interleaved.setaxis('t2',t2_axis)
     interleaved['evenodd',0] = s['ph1',1]['nEchoes',0::2].C.run(conj)
     interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2].C
+    interleaved.setaxis('t2',s.getaxis('t2'))
     fl.next('interleaved')
     fl.image(interleaved)
     interleaved.ft('t2', shift=True)
@@ -113,24 +116,29 @@ for date,id_string in [
     zeroorder = phdiff_corr.data[:].sum().conj()
     zeroorder /= abs(zeroorder)
     phdiff_corr *= zeroorder
-    print "relative phase shift was",firstorder/1e-6,"microseconds and,",angle(zeroorder)/pi*180,"degrees"
     interleaved['evenodd',1] *= zeroorder
     interleaved['evenodd',1] *= exp(-1j*2*pi*interleaved['evenodd',1].fromaxis('t2')*firstorder)
     interleaved.ift('t2')
-    odd = interleaved['evenodd',0].C
     interleaved.reorder('evenodd',first=False)
     interleaved.smoosh(['nEchoes','evenodd'],noaxis=True)
     interleaved.reorder('t2',first=False)
     interleaved.setaxis('nEchoes',r_[1:nEchoes+1])
+    interleaved.setaxis('t2',s.getaxis('t2')).set_units('t2','s')
+    interleaved.reorder('t2',first=True)
     fl.next('interleaved, smooshed')
     fl.image(interleaved)
-    data = interleaved.C.sum('t2')
+    interleaved.ft('t2')
+    fl.next('interleaved, smooshed ft')
+    fl.image(interleaved)
+    interleaved.ift('t2')
+    fl.next('plot 1')
+    fl.plot(interleaved['t2':(-0.15e-3,0.23e-3)])
+    data = interleaved['t2':(-0.15e-3,0.23e-3)].C.sum('t2')
     fl.next('Plot')
     echo_spacing = r_[0:32.0*5.1e-3:32j]
     x = echo_spacing
     ydata = data.data.real
     ydata /= max(ydata)
-    ydata -= min(ydata)
     fl.plot(x,ydata, '.', alpha=0.4, human_units=False)
     fitfunc = lambda p, x: exp(-x/p[0])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
@@ -146,22 +154,4 @@ for date,id_string in [
     data_concat.setaxis('t2',orig_t[len(data_concat.data)])
     fl.next('Echoes')
     fl.plot(data_concat)
-    max_list = []
-    max_index = []
-    for x in xrange(nEchoes):
-        temp_max = max(interleaved['nEchoes',x].data)
-        temp_index= list(interleaved['nEchoes',x].data).index(temp_max)
-        max_list.append(temp_max)
-        max_index.append(temp_index)
-    print max_list
-    print max_index
-    fl.next('Fit')
-    data = interleaved.smoosh(['nEchoes','t2'],noaxis=True)
-    fl.next('plot')
-    fl.plot(data)
-    fl.show();quit()
-    print ndshape(data);quit()
-    fl.next('Echoes')
-    for x in xrange(shape(interleaved.getaxis('nEchoes'))[0]):
-        fl.plot(interleaved['nEchoes',x])
 fl.show();quit()
