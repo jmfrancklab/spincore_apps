@@ -14,6 +14,7 @@ for date,id_string in [
             directory = getDATADIR(
                 exp_type = 'test_equip'))
     s.set_units('t','s')
+    orig_t = s.getaxis('t')
     fl.next(id_string+' raw data')
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
@@ -22,10 +23,20 @@ for date,id_string in [
     s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('nEchoes',r_[1:nEchoes+1])
-    s.setaxis('t2',t2_axis)
+    s.setaxis('t2',t2_axis-0.00)
+    fl.next(id_string+' chunked, no ft')
+    approx_echo_center = abs(s['ph1',r_[1,3]]).run(sum,'nEchoes').run(sum,'ph1').argmax('t2').data.item()
+    s.setaxis('t2',lambda x: x-approx_echo_center)
+    fl.image(s)
+    fl.next(id_string+' chunked, no ft - cropped log')
+    fl.image(s.C.cropped_log())
     s.ft(['ph1'])
     fl.next(id_string+' image plot coherence')
     fl.image(s)
+    fl.next(id_string+' image plot coherence -- ft')
+    s.ft('t2', shift=True)
+    fl.image(s)
+    s.ift('t2')
     phasing = False
     if phasing:
         sample = s['ph1',1]['nEchoes',0].C
@@ -83,7 +94,7 @@ for date,id_string in [
     interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2].C
     fl.next('interleaved')
     fl.image(interleaved)
-    interleaved.ft('t2')
+    interleaved.ft('t2', shift=True)
     phdiff = interleaved['evenodd',1]/interleaved['evenodd',0]*abs(interleaved['evenodd',0])
     fl.next('ph diff')
     fl.image(phdiff)
@@ -106,9 +117,51 @@ for date,id_string in [
     interleaved['evenodd',1] *= zeroorder
     interleaved['evenodd',1] *= exp(-1j*2*pi*interleaved['evenodd',1].fromaxis('t2')*firstorder)
     interleaved.ift('t2')
+    odd = interleaved['evenodd',0].C
     interleaved.reorder('evenodd',first=False)
     interleaved.smoosh(['nEchoes','evenodd'],noaxis=True)
     interleaved.reorder('t2',first=False)
+    interleaved.setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('interleaved, smooshed')
     fl.image(interleaved)
+    data = interleaved.C.sum('t2')
+    fl.next('Plot')
+    echo_spacing = r_[0:32.0*5.1e-3:32j]
+    x = echo_spacing
+    ydata = data.data.real
+    ydata /= max(ydata)
+    ydata -= min(ydata)
+    fl.plot(x,ydata, '.', alpha=0.4, human_units=False)
+    fitfunc = lambda p, x: exp(-x/p[0])
+    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
+    p0 = [0.2]
+    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+    x_fit = linspace(x.min(),x.max(),5000)
+    fl.plot(x_fit, fitfunc(p1, x_fit),':',human_units=False)
+    T2 = p1[0]
+    print T2
+    fl.show();quit()
+    print ndshape(interleaved);quit()
+    data_concat = nddata(concatenate(interleaved['nEchoes',:].data),['t2'])
+    data_concat.setaxis('t2',orig_t[len(data_concat.data)])
+    fl.next('Echoes')
+    fl.plot(data_concat)
+    max_list = []
+    max_index = []
+    for x in xrange(nEchoes):
+        temp_max = max(interleaved['nEchoes',x].data)
+        temp_index= list(interleaved['nEchoes',x].data).index(temp_max)
+        max_list.append(temp_max)
+        max_index.append(temp_index)
+    print max_list
+    print max_index
+    fl.next('Fit')
+    data = interleaved.smoosh(['nEchoes','t2'],noaxis=True)
+    fl.next('plot')
+    fl.plot(data)
+    fl.show();quit()
+    print ndshape(data);quit()
+    fl.next('Echoes')
+    for x in xrange(shape(interleaved.getaxis('nEchoes'))[0]):
+        fl.plot(interleaved['nEchoes',x])
 fl.show();quit()
