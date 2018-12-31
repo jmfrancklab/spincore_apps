@@ -147,7 +147,7 @@ for date,id_string in [
     x_fit = linspace(x.min(),x.max(),5000)
     fl.plot(x_fit, fitfunc(p1, x_fit),':',human_units=False)
     T2 = p1[0]
-    print T2
+    print "T2:",T2
     fl.show();quit()
     print ndshape(interleaved);quit()
     data_concat = nddata(concatenate(interleaved['nEchoes',:].data),['t2'])
