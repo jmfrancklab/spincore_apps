@@ -38,8 +38,8 @@ from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
-date = '181221'
-output_name = 'CPMG_4'
+date = '181231'
+output_name = 'CPMG_1'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -50,7 +50,7 @@ transient = 500.0
 repetition = 1e6 # us
 SW_kHz = 25.0
 nPoints = 128
-nScans = 8
+nScans = 1
 nEchoes = 32
 phase_cycling = True
 if phase_cycling:
