@@ -35,6 +35,7 @@ def verifyParams():
     return
 #}}}
 date = '190102'
+clock_correction = -2.77/1.6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 output_name = 'timedep_phase_err'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
@@ -154,6 +155,7 @@ while save_file:
         print "FILE ALREADY EXISTS."
         save_file = False
 fl.next('raw data')
+vd_data *= exp(-1j*vd_data.fromaxis('vd')*clock_correction)
 vd_data.setaxis('t',lambda x: x-manual_taxis_zero)
 fl.image(vd_data)
 vd_data.ft('t',shift=True)
@@ -162,7 +164,7 @@ fl.image(vd_data)
 fl.next('phase error vs. vd')
 fl.plot(vd_data.sum('t').angle,'o')
 fl.next('phase error, unwrapped vs. vd')
-vd_data = vd_data['vd',:-1]/vd_data['vd',1:]
+vd_data = vd_data['vd',1:]/vd_data['vd',:-1]
 vd_data = vd_data.angle
 vd_data.data = vd_data.data.cumsum()
 fl.plot(vd_data,'o')
