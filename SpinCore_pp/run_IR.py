@@ -57,7 +57,13 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e3,3e3,5e3,7e3,9e3,1e4,3e4,5e4,7e4,9e4,1e5,3e5,7e5,9e5,1e6,3e6,5e6,6e6]
+vd_list = r_[
+        1e3,1e3,1e3,
+        0.25e6,0.25e6,0.25e6,
+        0.5e6,0.5e6,0.5e6,
+        0.75e6,0.75e6,0.75e6,
+        1e6,1e6,1e6,
+        ]
 #vd_list = r_[1e3,3e3,5e3]
 for index,val in enumerate(vd_list):
     vd = val
@@ -84,9 +90,8 @@ for index,val in enumerate(vd_list):
     if not phase_cycling:
         SpinCore_pp.load([
             ('marker','start',nScans),
-            ('pulse',2.0*p90,0.0),
-            ('delay',vd),
             ('phase_reset',1),
+            ('delay',vd),
             ('pulse',p90,0.0),
             ('delay',tau),
             ('pulse',2.0*p90,0.0),
