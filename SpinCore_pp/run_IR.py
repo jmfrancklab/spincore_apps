@@ -35,7 +35,7 @@ def verifyParams():
     return
 #}}}
 date = '190102'
-output_name = 'IR_test_1'
+output_name = 'timedep_phase_err'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 manual_taxis_zero = 2.29e-3
@@ -58,11 +58,17 @@ if not phase_cycling:
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 vd_list = r_[
-        1e3,1e3,1e3,
-        0.25e6,0.25e6,0.25e6,
-        0.5e6,0.5e6,0.5e6,
-        0.75e6,0.75e6,0.75e6,
-        1e6,1e6,1e6,
+        1e3,
+        0.05e6,
+        0.1e6,
+        0.25e6,
+        0.5e6,
+        0.75e6,
+        1e6,
+        1.25e6,
+        1.1e6,
+        1.5e6,
+        1.6e6,
         ]
 #vd_list = r_[1e3,3e3,5e3]
 for index,val in enumerate(vd_list):
@@ -153,5 +159,12 @@ fl.image(vd_data)
 vd_data.ft('t',shift=True)
 fl.next('FT raw data')
 fl.image(vd_data)
+fl.next('phase error vs. vd')
+fl.plot(vd_data.sum('t').angle,'o')
+fl.next('phase error, unwrapped vs. vd')
+vd_data = vd_data['vd',:-1]/vd_data['vd',1:]
+vd_data = vd_data.angle
+vd_data.data = vd_data.data.cumsum()
+fl.plot(vd_data,'o')
 fl.show()
 
