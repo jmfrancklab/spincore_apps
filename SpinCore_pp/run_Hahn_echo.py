@@ -31,20 +31,20 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '181220'
-output_name = 'test_echo_4'
+date = '190102'
+output_name = 'test_echo_1'
 adcOffset = 46
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-SW_kHz = 500.0
-nPoints = 2048
-nScans = 10
+SW_kHz = 25.0
+nPoints = 128
+nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
 p90 = 1.0 # us
-tau = 2500.0 # us
-transient = 565.0 # us
+tau_adjust = 350.0 # us
+transient = 500.0 # us
 repetition = 1e6
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
@@ -53,6 +53,9 @@ print "\nTRANSMITTER CONFIGURED."
 print "***"
 print "CONFIGURING RECEIVER..."
 acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+# acq_time is in msec!
+tau = (acq_time*1000.0+transient+tau_adjust)/2.0
+print acq_time
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"
@@ -108,6 +111,7 @@ while save_file:
 fl.next('raw data')
 fl.plot(data.real,alpha=0.8)
 fl.plot(data.imag,alpha=0.8)
+fl.plot(abs(data),':',alpha=0.8)
 data.ft('t',shift=True)
 fl.next('FT raw data')
 fl.plot(data.real,alpha=0.8)
