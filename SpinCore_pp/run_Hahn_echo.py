@@ -55,7 +55,7 @@ print "CONFIGURING RECEIVER..."
 acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
 # acq_time is in msec!
 tau = (acq_time*1000.0+transient+tau_adjust)/2.0
-print acq_time
+print "ACQUISITION TIME IS",acq_time,"ms"
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"

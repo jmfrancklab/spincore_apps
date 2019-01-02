@@ -38,21 +38,23 @@ from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
-date = '181231'
-output_name = 'CPMG_1'
+date = '190102'
+output_name = 'test_CPMG_1'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 0.835 
-tau = 2800.0
+# determine tau_adjust from running
+# single Hahn echo (run_Hahn_echo.py)
+tau_adjust = 350.0 # us
 transient = 500.0
 repetition = 1e6 # us
 SW_kHz = 25.0
 nPoints = 128
 nScans = 1
 nEchoes = 32
-phase_cycling = True
+phase_cycling = False
 if phase_cycling:
     nPhaseSteps = 4 
 if not phase_cycling:
@@ -66,6 +68,8 @@ print "\nTRANSMITTER CONFIGURED."
 print "***"
 print "CONFIGURING RECEIVER..."
 acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+# acq_time is in msec!
+tau = (acq_time*1000.0+transient+tau_adjust)/2.0
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"
