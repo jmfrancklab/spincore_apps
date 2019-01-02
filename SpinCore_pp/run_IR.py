@@ -4,6 +4,7 @@ import SpinCore_pp
 import socket
 import sys
 import time
+init_logging(level='debug')
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -33,12 +34,14 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '181221'
-output_name = 'IR_noph_3'
+date = '190102'
+output_name = 'IR_test_1'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
+manual_taxis_zero = 2.29e-3
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
+#p90 = 5000.
 p90 = 0.879 
 tau = 2800.0
 transient = 500.0
@@ -54,7 +57,8 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e3,3e3,5e3,7e3,9e3,1e4,3e4,5e4,7e4,9e4,1e5,3e5,7e5,9e3,1e6,3e6,5e6,9e6]
+vd_list = r_[1e3,3e3,5e3,7e3,9e3,1e4,3e4,5e4,7e4,9e4,1e5,3e5,7e5,9e5,1e6,3e6,5e6,6e6]
+#vd_list = r_[1e3,3e3,5e3]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -80,9 +84,9 @@ for index,val in enumerate(vd_list):
     if not phase_cycling:
         SpinCore_pp.load([
             ('marker','start',nScans),
-            ('phase_reset',1),
             ('pulse',2.0*p90,0.0),
             ('delay',vd),
+            ('phase_reset',1),
             ('pulse',p90,0.0),
             ('delay',tau),
             ('pulse',2.0*p90,0.0),
@@ -98,7 +102,10 @@ for index,val in enumerate(vd_list):
             print "SCAN NO. %d"%(x+1)
             SpinCore_pp.runBoard();
     if not phase_cycling:
+        start = time.time()
         SpinCore_pp.runBoard(); 
+        runtime = time.time()-start
+        logger.debug(strm("for vd",vd/1e6," s run time is",runtime))
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
     data = []
@@ -136,6 +143,7 @@ while save_file:
         print "FILE ALREADY EXISTS."
         save_file = False
 fl.next('raw data')
+vd_data.setaxis('t',lambda x: x-manual_taxis_zero)
 fl.image(vd_data)
 vd_data.ft('t',shift=True)
 fl.next('FT raw data')

@@ -180,7 +180,7 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
             error_status = 1;
             error_message = "DELAY tuples should only be 'delay' followed by the delay";
         }
-        printf("DELAY: length %0.1f\n",firstarg);
+        printf("DELAY: length %0.1g\n",firstarg/1e6);
         /* COMMAND FOR PROGRAMMING DELAY */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -280,7 +280,7 @@ void getData(int* output_array, int length, unsigned int nPoints, unsigned int n
 
 void stopBoard(){
     printf("Calling STOP BOARD...\n");
-    pause();
+    //pause();
     ERROR_CATCH(spmri_stop());
     printf("Stopped pulse program. Reset board.\n");
     return;

@@ -50,25 +50,25 @@ def API_sender(value):
     print "FIELD SET TO...", MESSAGE
     time.sleep(20)
     return
-set_field = True
+set_field = False
 if set_field:
     B0 = 3409.4 # Determine this from Field Sweep
     API_sender(B0)
 date = '181221'
-output_name = 'nutation_3'
+output_name = 'nutation_4'
 adcOffset = 46
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 SW_kHz = 500.0
 nPoints = 2048
-nScans = 10
+nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
 tau = 2500.0 # us
 transient = 565.0 # us
 repetition = 1e6
-p90_range = linspace(0.1,3.2,30,endpoint=False)
+p90_range = linspace(0.1,3.2,15,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "***"
