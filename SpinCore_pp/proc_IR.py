@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
 date = '190102'
-id_string = 'test_IR_2'
+id_string = 'IR_ph2'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
@@ -21,19 +21,22 @@ t2_axis = s.getaxis('t2')
 fl.next('plot')
 for x in xrange(3):
     fl.plot(abs(s)['vd',x])
-fl.show();quit()
 s.setaxis('t2',None)
-s.chunk('t2',['ph1','t2'],[4,-1])
+s.chunk('t2',['ph2','ph1','t2'],[4,2,-1])
 s.setaxis('t2',t2_axis[nPoints])
-s.setaxis('ph1',r_[0,1,2,3])
+s.setaxis('ph1',r_[0,2])
+s.setaxis('ph2',r_[0,1,2,3])
+print ndshape(s)
 fl.next('image')
 fl.image(s)
-s.ft(['ph1'])
+s.ft(['ph2','ph1'])
 fl.next('image coherence')
 fl.image(s)
-data = s['ph1',-1].C
+data = s['ph2',1]['ph1',0].C
 fl.next('plot data')
-fl.plot(abs(data))
+fl.image(abs(data))
+fl.show();quit()
+
 data.ft('t2',shift=True)
 fl.next('plot data freq')
 fl.plot(data)

@@ -40,7 +40,7 @@ import SpinCore_pp
 import time
 fl = figlist_var()
 date = '190102'
-output_name = 'test_T1CPMG_ph2'
+output_name = 'T1CPMG_ph3_2'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 adcOffset = 46
 carrierFreq_MHz = 14.46 
@@ -64,22 +64,22 @@ if not phase_cycling:
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 vd_list = r_[1e3,
-        #3e3,
-        #5e3,
+        3e3,
+        5e3,
         7e3,
-        #9e3,
+        9e3,
         1e4,
-        #3e4,
-        #5e4,
-        #7e4,
+        3e4,
+        5e4,
+        7e4,
         9e4,
-        #1e5,
-        #3e5,
+        1e5,
+        3e5,
         7e5,
-        #9e5,
-        #1e6,
-        #3e6,
-        #5e6,
+        9e5,
+        1e6,
+        3e6,
+        5e6,
         6e6]
 for index,val in enumerate(vd_list):
     vd = val
