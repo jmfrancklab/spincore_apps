@@ -35,18 +35,19 @@ def verifyParams():
     return
 #}}}
 date = '190102'
-clock_correction = -10.44/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-output_name = 'timedep_phase_err'
+#clock_correction = -10.44/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
+clock_correction = 0
+output_name = 'timedep_phase_err_2'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
-manual_taxis_zero = 2.29e-3
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-#p90 = 5000.
+# all times are in us
+# except acq_time in ms
 p90 = 0.879 
-tau = 2800.0
+tau_adjust = 470.0
 transient = 500.0
-repetition = 1e6 # us
+repetition = 1e6
 SW_kHz = 25.0
 nPoints = 128
 nScans = 1
@@ -54,20 +55,8 @@ nEchoes = 1
 nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[
-        1e3,
-        0.25e6,
-        0.5e6,
-        0.75e6,
-        1e6,
-        1.1e6,
-        1.5e6,
-        1.6e6,
-        3e6,
-        4.5e6,
-        6e6,
-        ]
-#vd_list = r_[1e3,3e3,5e3]
+#vd_list = r_[1e3,0.25e6,0.5e6,0.75e6,1e6,1.1e6,1.5e6,1.6e6,3e6,4.5e6,6e6]
+vd_list = r_[1e3,3e3,5e3]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -75,6 +64,7 @@ for index,val in enumerate(vd_list):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    tau = (acq_time*1000.0+transient+tau_adjust)/2.0
     SpinCore_pp.init_ppg();
     SpinCore_pp.load([
         ('marker','start',nScans),
@@ -132,6 +122,7 @@ while save_file:
         save_file = False
 fl.next('raw data')
 vd_data *= exp(-1j*vd_data.fromaxis('vd')*clock_correction)
+manual_taxis_zero = acq_time*1e-3/2.0 #2.29e-3
 vd_data.setaxis('t',lambda x: x-manual_taxis_zero)
 fl.image(vd_data)
 vd_data.ft('t',shift=True)
