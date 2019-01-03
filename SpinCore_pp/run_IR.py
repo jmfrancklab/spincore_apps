@@ -35,8 +35,8 @@ def verifyParams():
     return
 #}}}
 date = '190102'
-clock_correction = -10.44/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-output_name = 'timedep_phase_err'
+clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
+output_name = 'test_IR_2'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 manual_taxis_zero = 2.29e-3
