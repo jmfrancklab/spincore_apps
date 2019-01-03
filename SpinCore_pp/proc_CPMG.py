@@ -8,6 +8,7 @@ for date,id_string in [
     nPoints = 128
     nEchoes = 32
     nPhaseSteps = 4
+    p90 = 0.879*1e-6
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -135,7 +136,7 @@ for date,id_string in [
     fl.plot(interleaved['t2':(-0.15e-3,0.23e-3)])
     data = interleaved['t2':(-0.15e-3,0.23e-3)].C.sum('t2')
     fl.next('Plot')
-    echo_spacing = r_[0:32.0*(5.1+0.5)*1e-3:32j]
+    echo_spacing = r_[0:32.0*(5.1+0.5)*1e-3+2.0*p90:32j]
     x = echo_spacing
     ydata = data.data.real
     ydata /= max(ydata)
