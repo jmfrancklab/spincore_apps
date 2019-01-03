@@ -39,17 +39,17 @@ from numpy import *
 import SpinCore_pp 
 import time
 fl = figlist_var()
-date = '190102'
-output_name = 'T1CPMG_ph3_2'
+date = '190103'
+output_name = 'T1CPMG_ph2'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 0.879 
-# determine tau_adjust from running
-# single Hahn echo (run_Hahn_echo.py)
-tau_adjust = 350.0 # us
+p90 = 0.8
+# DO NOT USE TAU_ADJUST FOR CPMG
+# IT SCREWS UP ECHO TIMING
+tau_adjust = 0.0 #350.0 # us
 transient = 500.0
 repetition = 1e6 # us
 SW_kHz = 25.0

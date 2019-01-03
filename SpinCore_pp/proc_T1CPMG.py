@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 from scipy.optimize import minimize 
 fl = figlist_var()
 for date,id_string in [
-        ('181221','T1CPMG_noph_1')
+        ('190103','T1CPMG_ph1')
         ]:
     nPoints = 128
     nEchoes = 32
@@ -14,29 +14,31 @@ for date,id_string in [
             directory = getDATADIR(
                 exp_type = 'test_equip'))
     s.set_units('t','s')
-    fl.next('raw data')
+    fl.next('raw data - no clock correction')
+    fl.image(s)
+    s.ft('t',shift=True)
+    clock_correction = -10.51/6 # radians per second
+    s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+    s.ift('t')
+    fl.next('raw data - clock correction')
     fl.image(s)
     vd_len = len(s.getaxis('vd'))
     orig_t = s.getaxis('t')
     t2_axis = linspace(0,s.getaxis('t')[nPoints],nPoints)
     s.setaxis('t',None)
-    s.chunk('t',['nEchoes','t2'],[nEchoes,-1])
-    #s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
-    #s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('nEchoes',r_[1:nEchoes+1])
-    s.setaxis('t2',t2_axis)
+    s.setaxis('t2',t2_axis).set_units('t2','s')
     fl.next(id_string+' chunked, no ft')
     fl.image(s)
-    fl.next(id_string+' chunked, no ft - cropped log')
-    fl.image(s.C.cropped_log())
-    #s.ft(['ph1'])
-    #fl.next(id_string+' image plot coherence')
-    #fl.image(s)
-    #fl.show();quit()
-    #fl.next(id_string+' image plot coherence -- ft')
-    s.ft('t2', shift=True)
-    fl.next('image plot -- ft')
-    fl.image(s)
+    s.ft(['ph1'])
+    print ndshape(s)
+    fl.next(id_string+' image plot coherence')
+    fl.image(s['vd',0])
+    s.ft('t2',shift=True)
+    fl.next(id_string+' image plot coherence -- ft')
+    fl.image(s['vd',0])
     s.ift('t2')
     phasing = False
     #{{{ code for determining preliminary phase corrections
@@ -81,27 +83,27 @@ for date,id_string in [
             fl.show();quit()
         fl.show();quit()
     #}}}
-    ph0 = -205.9e-3
-    ph1 = 288.75e-6
-    ph0_corr = exp(-1j*2*pi*ph0)
-    ph1_corr = 1j*2*pi*ph1
-    s.ft('t2')
-    s *= ph0_corr
-    s *= exp(s.fromaxis('t2')*ph1_corr)
-    #s *= exp(1j*0.5*pi)
-    s.ift('t2')
-    approx_echo_center = abs(s).sum('nEchoes').sum('vd').argmax('t2').data.item()
-    #approx_echo_center = abs(s['ph1',r_[1,3]]).run(sum,'nEchoes').run(sum,'ph1').argmax('t2').data.item()
+    #ph0 = -205.9e-3
+    #ph1 = 288.75e-6
+    #ph0_corr = exp(-1j*2*pi*ph0)
+    #ph1_corr = 1j*2*pi*ph1
+    #s.ft('t2')
+    #s *= ph0_corr
+    #s *= exp(s.fromaxis('t2')*ph1_corr)
+    ##s *= exp(1j*0.5*pi)
+    #s.ift('t2')
+    #approx_echo_center = abs(s).sum('nEchoes').sum('vd').argmax('t2').data.item()
+    approx_echo_center = abs(s['vd',0]['ph1',r_[1,3]]).run(sum,'nEchoes').run(sum,'ph1').argmax('t2').data.item()
     s.setaxis('t2',lambda x: x-approx_echo_center)
     interleaved = ndshape([vd_len,2,16,128],['vd','evenodd','nEchoes','t2']).alloc()
     interleaved.setaxis('vd',r_[0:vd_len])
     interleaved.setaxis('evenodd',r_[0:3])
     interleaved.setaxis('nEchoes',r_[1:nEchoes/2+1])
     interleaved.setaxis('t2',t2_axis)
-    interleaved['evenodd',0] = s['nEchoes',0::2].C.run(conj)
-    interleaved['evenodd',1] = s['nEchoes',1::2].C
-    #interleaved['evenodd',0] = s['ph1',1]['nEchoes',0::2].C.run(conj)
-    #interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2].C
+    #interleaved['evenodd',0] = s['nEchoes',0::2].C.run(conj)
+    #interleaved['evenodd',1] = s['nEchoes',1::2].C
+    interleaved['evenodd',0] = s['ph1',1]['nEchoes',0::2].C.run(conj)
+    interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2].C
     interleaved.setaxis('t2',s.getaxis('t2'))
     print ndshape(interleaved)
     fl.next('interleaved')
@@ -135,8 +137,8 @@ for date,id_string in [
     interleaved.setaxis('nEchoes',r_[1:nEchoes+1])
     interleaved.setaxis('t2',s.getaxis('t2')).set_units('t2','s')
     print ndshape(interleaved)
-    interleaved.reorder(['t2','nEchoes'],first=False)
-    #interleaved.reorder('vd',first=True)
+    #interleaved.reorder(['t2','nEchoes'],first=False)
+    interleaved.reorder('vd',first=True)
     fl.next('interleaved, smooshed')
     fl.image(interleaved)
     interleaved.ft('t2')

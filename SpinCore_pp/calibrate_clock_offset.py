@@ -34,18 +34,18 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190102'
+date = '190103'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 #clock_correction = 0
-output_name = 'timedep_phase_err_2'
+output_name = 'calibrate_clock'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 # all times are in us
 # except acq_time in ms
-p90 = 0.879 
-tau_adjust = 470.0
+p90 = 0.8
+tau_adjust = 451.0
 transient = 500.0
 repetition = 1e6
 SW_kHz = 25.0
@@ -66,10 +66,10 @@ vd_list = r_[1e3,
         3e6,
         4.5e6,
         6e6]
-vd_list = r_[1e3,
-        1e6,
-        6e6,
-        9e6]
+#vd_list = r_[1e3,
+#        1e6,
+#        6e6,
+#        9e6]
 #vd_list = r_[1e3,3e3,5e3]
 for index,val in enumerate(vd_list):
     vd = val
