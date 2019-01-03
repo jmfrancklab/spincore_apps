@@ -40,7 +40,7 @@ import SpinCore_pp
 import time
 fl = figlist_var()
 date = '190102'
-output_name = 'test_T1CPMG_1'
+output_name = 'test_T1CPMG_ph2'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 adcOffset = 46
 carrierFreq_MHz = 14.46 
@@ -54,9 +54,9 @@ transient = 500.0
 repetition = 1e6 # us
 SW_kHz = 25.0
 nPoints = 128
-nScans = 1
+nScans = 4
 nEchoes = 32
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
 if not phase_cycling:

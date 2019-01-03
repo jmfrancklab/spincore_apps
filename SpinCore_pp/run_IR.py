@@ -88,7 +88,7 @@ for index,val in enumerate(vd_list):
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
-            ('marker','start',nScans),
+            ('marker','start',1),
             ('phase_reset',1),
             ('pulse',2.0*p90,'ph1',r_[0,2]),
             ('delay',vd),
