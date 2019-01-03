@@ -42,9 +42,9 @@ nPoints = 128
 nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
-p90 = 0.8 # us
-tau_adjust = 451.0 # us
-transient = 500.0 # us
+p90 = 0.8
+tau_adjust = 451.0
+transient = 500.0
 repetition = 1e6
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 print "\n*** *** ***\n"

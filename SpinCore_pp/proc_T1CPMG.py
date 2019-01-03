@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 from scipy.optimize import minimize 
 fl = figlist_var()
 for date,id_string in [
-        ('190103','T1CPMG_ph1')
+        ('190103','T1CPMG_ph2')
         ]:
     nPoints = 128
     nEchoes = 32
@@ -144,11 +144,11 @@ for date,id_string in [
     interleaved.ft('t2')
     fl.next('interleaved, smooshed ft')
     fl.image(interleaved)
-    fl.show();quit()
     interleaved.ift('t2')
+    interleaved = interleaved['vd',-1].C
     fl.next('plot 1')
-    fl.plot(interleaved['t2':(-0.15e-3,0.23e-3)])
-    data = interleaved['t2':(-0.15e-3,0.23e-3)].C.sum('t2')
+    fl.image(interleaved)
+    data = interleaved.C.sum('t2')
     fl.next('Plot')
     echo_spacing = r_[0:32.0*5.1e-3:32j]
     x = echo_spacing
