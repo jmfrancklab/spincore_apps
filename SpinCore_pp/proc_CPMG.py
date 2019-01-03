@@ -3,9 +3,10 @@ from scipy.optimize import leastsq
 from scipy.optimize import minimize 
 fl = figlist_var()
 for date,id_string,nPoints in [
-        ('190102','CPMG_ph1',128),
-        ('190102','CPMG_ph2',64),
-        ('190102','CPMG_ph3',32),
+        ('181221','CPMG_1',128),
+        #('190102','CPMG_ph1',128),
+        #('190102','CPMG_ph2',64),
+        #('190102','CPMG_ph3',32),
         ]:
     nEchoes = 32
     nPhaseSteps = 4
@@ -28,12 +29,12 @@ for date,id_string,nPoints in [
     s.setaxis('t2',t2_axis)
     fl.next(id_string+' chunked')
     fl.image(s)
-    #s.ft('t2',shift=True)
-    #clock_correction = -10.51/6 # radians per second
-    #s *= exp(-1j*s.fromaxis('nEchoes')*clock_correction)
-    #s.ift('t2')
-    #fl.next(id_string+' chunked, clock corr')
-    #fl.image(s)
+    s.ft('t2',shift=True)
+    clock_correction = -10.51/6 # radians per second
+    s *= exp(-1j*s.fromaxis('nEchoes')*clock_correction)
+    s.ift('t2')
+    fl.next(id_string+' chunked, clock corr')
+    fl.image(s)
     s.ft(['ph1'])
     fl.next(id_string+' image plot coherence')
     fl.image(abs(s))
