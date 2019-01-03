@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 from scipy.optimize import minimize 
 fl = figlist_var()
 for date,id_string in [
-        ('181221','CPMG_4')
+        ('190102','CPMG_ph1')
         ]:
     nPoints = 128
     nEchoes = 32
@@ -32,9 +32,12 @@ for date,id_string in [
     s.ft(['ph1'])
     fl.next(id_string+' image plot coherence')
     fl.image(s)
-    fl.next(id_string+' image plot coherence -- ft')
+    fl.next(id_string+' abs image plot coherence')
+    fl.image(abs(s))
     s.ft('t2', shift=True)
+    fl.next(id_string+' image plot coherence -- ft')
     fl.image(s)
+    fl.show();quit()
     s.ift('t2')
     phasing = False
     #{{{ code for determining preliminary phase corrections
