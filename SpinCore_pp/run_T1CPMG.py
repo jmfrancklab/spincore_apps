@@ -39,30 +39,48 @@ from numpy import *
 import SpinCore_pp 
 import time
 fl = figlist_var()
-date = '181221'
-output_name = 'T1CPMG_1'
+date = '190102'
+output_name = 'test_T1CPMG_1'
+clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 0.879 
-tau = 2800.0
+# determine tau_adjust from running
+# single Hahn echo (run_Hahn_echo.py)
+tau_adjust = 350.0 # us
 transient = 500.0
-repetition = 3e6 # us
+repetition = 1e6 # us
 SW_kHz = 25.0
 nPoints = 128
 nScans = 1
 nEchoes = 32
-phase_cycling = True
+phase_cycling = False
 if phase_cycling:
     nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list = r_[1e3,3e3,5e3,1e4,3e4,5e4,1e5,3e5,5e5,1e6,3e6,5e6]
-vd_list = r_[1e3,5e3,7e3,9e3,1e4,3e4,5e4,7e4,9e4,1e5,3e5,5e5,6e5,7e5,8e5,9e5]
-#vd_list = r_[1e3,5e5,9e6]
+vd_list = r_[1e3,
+        #3e3,
+        #5e3,
+        7e3,
+        #9e3,
+        1e4,
+        #3e4,
+        #5e4,
+        #7e4,
+        9e4,
+        #1e5,
+        #3e5,
+        7e5,
+        #9e5,
+        #1e6,
+        #3e6,
+        #5e6,
+        6e6]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -70,6 +88,7 @@ for index,val in enumerate(vd_list):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    tau = (acq_time*1000.0+transient+tau_adjust)/2.0
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
@@ -137,8 +156,6 @@ for index,val in enumerate(vd_list):
         data_2d.setaxis('vd',vd_list*1e-6).set_units('vd','s')
         data_2d.setaxis('t',time_axis).set_units('t','s')
     data_2d['vd',index] = data
-    print "SLEEP..."
-    time.sleep(3)
 SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
@@ -157,6 +174,9 @@ while save_file:
         print "FILE ALREADY EXISTS."
         save_file = False
 fl.next('raw data')
+data_2d *= exp(-1j*data_2d.fromaxis('vd')*clock_correction)
+manual_taxis_zero = acq_time*1e-3/2.0 #2.29e-3
+data_2d.setaxis('t',lambda x: x-manual_taxis_zero)
 fl.image(data_2d)
 data_2d.ft('t',shift=True)
 fl.next('FT raw data')
