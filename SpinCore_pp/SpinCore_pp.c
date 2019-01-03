@@ -122,7 +122,7 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
     int error_status;
     if (strcmp(str_label,"pulse")==0){
         error_status = 0;
-        printf("PULSE: length %0.1f phase %0.1f\n",firstarg,secondarg);
+        printf("PULSE: length %0.1f us phase %0.1f\n",firstarg,secondarg);
         /* COMMAND FOR PROGRAMMING RF PULSE */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -138,7 +138,7 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
             error_status = 1;
             error_message = "PHASE RESET tuples should only be 'phase_reset' followed by the delay";
         }
-        printf("PHASE RESET: length %0.1f\n",firstarg);
+        printf("PHASE RESET: length %0.1f us\n",firstarg);
         /* COMMAND FOR RESETTING PHASE */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -164,7 +164,7 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
 
             error_message = "ACQUIRE tuples should only be 'acquire' followed by length of acquisition time";
         }
-        printf("ACQUIRE: length %0.1f\n",firstarg);
+        printf("ACQUIRE: length %0.1f ms\n",firstarg);
         /* COMMAND FOR PROGRAMMING DELAY */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -180,7 +180,7 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
             error_status = 1;
             error_message = "DELAY tuples should only be 'delay' followed by the delay";
         }
-        printf("DELAY: length %g\n",firstarg/1e6);
+        printf("DELAY: length %g us\n",firstarg/1e6);
         /* COMMAND FOR PROGRAMMING DELAY */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
