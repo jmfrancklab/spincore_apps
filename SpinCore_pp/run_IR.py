@@ -36,7 +36,7 @@ def verifyParams():
 #}}}
 date = '190102'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-output_name = 'IR_ph1'
+output_name = 'IR_ph2'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 manual_taxis_zero = 2.29e-3
@@ -59,22 +59,22 @@ if not phase_cycling:
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 vd_list = r_[1e3,
-        #3e3,
-        #5e3,
-        #7e3,
+        3e3,
+        5e3,
+        7e3,
         9e3,
-        #1e4,
-        #3e4,
-        #5e4,
+        1e4,
+        3e4,
+        5e4,
         7e4,
-        #9e4,
-        #1e5,
-        #3e5,
+        9e4,
+        1e5,
+        3e5,
         7e5,
-        #9e5,
-        #1e6,
-        #3e6,
-        #5e6,
+        9e5,
+        1e6,
+        3e6,
+        5e6,
         6e6]
 #vd_list = r_[1e3,3e3,5e3]
 for index,val in enumerate(vd_list):
