@@ -171,7 +171,7 @@ fl.next('phase error vs. vd')
 fl.plot(vd_data.sum('t').angle,'o')
 fl.next('phase error, unwrapped vs. vd')
 vd_data = vd_data['vd',1:]/vd_data['vd',:-1]
-vd_data = vd_data.angle
+vd_data = vd_data.angle.name('signal phase').set_units('rad')
 vd_data.data = vd_data.data.cumsum()
 fl.plot(vd_data,'o')
 fl.show()
