@@ -35,8 +35,8 @@ def verifyParams():
     return
 #}}}
 date = '190102'
-#clock_correction = -10.44/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-clock_correction = 0
+clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
+#clock_correction = 0
 output_name = 'timedep_phase_err_2'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
@@ -55,8 +55,22 @@ nEchoes = 1
 nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list = r_[1e3,0.25e6,0.5e6,0.75e6,1e6,1.1e6,1.5e6,1.6e6,3e6,4.5e6,6e6]
-vd_list = r_[1e3,3e3,5e3]
+vd_list = r_[1e3,
+        0.25e6,
+        0.5e6,
+        0.75e6,
+        1e6,
+        1.1e6,
+        1.5e6,
+        1.6e6,
+        3e6,
+        4.5e6,
+        6e6]
+vd_list = r_[1e3,
+        1e6,
+        6e6,
+        9e6]
+#vd_list = r_[1e3,3e3,5e3]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
