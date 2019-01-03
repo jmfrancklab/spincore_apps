@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '181221'
+date = '190103'
 id_string = 'nutation_3'
 filename = date+'_'+id_string+'.h5'
 nodename = 'nutation'
@@ -20,7 +20,7 @@ if test_plot:
         fl.plot(s['p_90',x],alpha=0.5,label='%d'%x)
         fl.show();quit()
 s.ft('t2')
-phasing = True
+phasing = False
 if phasing:
     gen_cost = False 
     if gen_cost:
@@ -51,4 +51,6 @@ if phasing:
     fl.plot(s['p_90',7].imag,alpha=0.4,label='imag')
 fl.next('image')
 fl.image(s)
+fl.next('image abs')
+fl.image(abs(s))
 fl.show();quit()

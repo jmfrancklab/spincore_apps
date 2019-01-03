@@ -56,12 +56,12 @@ def API_sender(value):
     sock.send(MESSAGE)
     sock.close()
     print "FIELD SET TO...", MESSAGE
-    time.sleep(20)
+    time.sleep(3)
     return
 
-field_axis = linspace(3408.0,3410.0,20,endpoint=False)
+field_axis = linspace(3408.5,3410.5,20,endpoint=False)
 fl = figlist_var()
-date = '181221'
+date = '190103'
 output_name = 'FS_3'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
@@ -71,14 +71,12 @@ SW_kHz = 500.0
 nPoints = 2048
 nScans = 10
 nEchoes = 1
-nPhaseSteps = 1 # should come up with way to determine this offhand
-                # or rather, from the phase programs that we want to send
-                # to the SpinCore -- FOR USE IN SETTING UP RECEIVER ONLY
+nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 0.725 
-tau = 2500.0
-transient = 565.0
-repetition = 1e6 # us
+p90 = 0.8 # us
+tau_adjust = 451.0 # us
+transient = 500.0 # us
+repetition = 1e6
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for index,val in enumerate(field_axis):
     print "***"
@@ -87,6 +85,8 @@ for index,val in enumerate(field_axis):
     API_sender(val)
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    tau = (acq_time*1000.0+transient+tau_adjust)/2.0
+    print "ACQUISITION TIME IS",acq_time,"ms"
     SpinCore_pp.init_ppg();
     SpinCore_pp.load([
         ('marker','start',nScans),
@@ -138,6 +138,8 @@ while save_file:
         print "FILE ALREADY EXISTS."
         save_file = False
 fl.next('raw data')
+#manual_taxis_zero = acq_time*1e-3/2.0
+#field_sweep.setaxis('t',lambda x: x-manual_taxis_zero)
 fl.image(field_sweep)
 field_sweep.ft('t',shift=True)
 fl.next('FT raw field_sweep')

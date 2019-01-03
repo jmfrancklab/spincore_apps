@@ -52,23 +52,24 @@ def API_sender(value):
     return
 set_field = False
 if set_field:
-    B0 = 3409.4 # Determine this from Field Sweep
+    B0 = 3409.3 # Determine this from Field Sweep
     API_sender(B0)
-date = '181221'
-output_name = 'nutation_4'
+date = '190103'
+output_name = 'nutation_3'
 adcOffset = 46
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-SW_kHz = 500.0
-nPoints = 2048
-nScans = 1
+SW_kHz = 25.0
+nPoints = 128
+nScans = 10 
 nEchoes = 1
 nPhaseSteps = 1
-tau = 2500.0 # us
-transient = 565.0 # us
+tau_adjust = 440.0
+transient = 500.0
 repetition = 1e6
-p90_range = linspace(0.1,3.2,15,endpoint=False)
+data_length = 2*nPoints*nEchoes*nPhaseSteps
+p90_range = linspace(0.1,4.5,44,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "***"
@@ -76,6 +77,7 @@ for index,val in enumerate(p90_range):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    tau = (acq_time*1000.0+transient+tau_adjust)/2.0
     SpinCore_pp.init_ppg();
     SpinCore_pp.load([
         ('marker','start',nScans),
@@ -89,7 +91,6 @@ for index,val in enumerate(p90_range):
         ('jumpto','start')
         ])
     SpinCore_pp.stop_ppg();
-    data_length = 2*nPoints*nEchoes*nPhaseSteps
     SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)

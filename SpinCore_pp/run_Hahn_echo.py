@@ -31,28 +31,29 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190102'
+date = '190103'
 output_name = 'test_echo_1'
 adcOffset = 46
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 SW_kHz = 25.0
-nPoints = 32
+nPoints = 128
 nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
-p90 = 1.0 # us
-tau_adjust = 350.0 # us
+p90 = 0.8 # us
+tau_adjust = 451.0 # us
 transient = 500.0 # us
 repetition = 1e6
+data_length = 2*nPoints*nEchoes*nPhaseSteps
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
 SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
 print "\nTRANSMITTER CONFIGURED."
 print "***"
 print "CONFIGURING RECEIVER..."
-acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
 # acq_time is in msec!
 tau = (acq_time*1000.0+transient+tau_adjust)/2.0
 print "ACQUISITION TIME IS",acq_time,"ms"
@@ -77,7 +78,6 @@ SpinCore_pp.load([
 print "\nSTOPPING PROG BOARD...\n"
 SpinCore_pp.stop_ppg();
 print "\nRUNNING BOARD...\n"
-data_length = 2*nPoints*nEchoes*nPhaseSteps
 SpinCore_pp.runBoard();
 raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
 raw_data.astype(float)
