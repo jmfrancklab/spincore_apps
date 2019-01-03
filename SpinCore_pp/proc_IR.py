@@ -35,14 +35,8 @@ fl.image(s)
 data = s['ph2',1]['ph1',0].C
 fl.next('plot data')
 fl.image(abs(data))
+min_index = abs(data).run(sum,'t2').argmin('vd',raw_index=True).data
+min_vd = data.getaxis('vd')[min_index]
+est_T1 = min_vd/log(2)
+print "Estimated T1 is:",est_T1,"s"
 fl.show();quit()
-
-data.ft('t2',shift=True)
-fl.next('plot data freq')
-fl.plot(data)
-fl.show();quit()
-s.ft('t2',shift=True)
-f_axis = s.getaxis('t2')
-s.ift('t2')
-SWH = diff(r_[f_axis[0],f_axis[-1]])[0]
-test_plot = False
