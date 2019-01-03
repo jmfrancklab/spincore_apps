@@ -4,6 +4,9 @@ from scipy.optimize import minimize
 fl = figlist_var()
 for date,id_string,nPoints in [
         ('181221','CPMG_1',128),
+        ('190103','CPMG_ph1',128),
+        ('190103','CPMG_ph1_1',128),
+        ('190103','CPMG_ph2',128),
         #('190102','CPMG_ph1',128),
         #('190102','CPMG_ph2',64),
         #('190102','CPMG_ph3',32),

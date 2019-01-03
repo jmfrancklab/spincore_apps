@@ -38,21 +38,21 @@ from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
-date = '190102'
-output_name = 'CPMG_ph3'
+date = '190103'
+output_name = 'CPMG_ph2'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 0.879 
-# determine tau_adjust from running
-# single Hahn echo (run_Hahn_echo.py)
-tau_adjust = 350.0 # us
-transient = 500.0
-repetition = 1e6 # us
+p90 = 0.8
+# DO NOT USE TAU_ADJUST HERE
+# AS IT SCREWS UP ECHO TIMING
+tau_adjust = 0.0
+transient = 500.0 # us
+repetition = 1e6
 SW_kHz = 25.0
-nPoints = 32
-nScans = 1
+nPoints = 128
+nScans = 4
 nEchoes = 32
 phase_cycling = True
 if phase_cycling:
@@ -88,6 +88,7 @@ if phase_cycling:
         ('pulse',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
+        #('delay',tau_adjust),
         ('jumpto','echo_label'),
         ('delay',repetition),
         ('jumpto','start')
