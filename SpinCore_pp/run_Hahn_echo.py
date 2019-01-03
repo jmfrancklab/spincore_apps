@@ -38,7 +38,7 @@ carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 SW_kHz = 25.0
-nPoints = 128
+nPoints = 32
 nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
@@ -56,6 +56,7 @@ acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps
 # acq_time is in msec!
 tau = (acq_time*1000.0+transient+tau_adjust)/2.0
 print "ACQUISITION TIME IS",acq_time,"ms"
+verifyParams()
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"

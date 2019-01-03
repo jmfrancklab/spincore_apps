@@ -39,22 +39,22 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 date = '190102'
-output_name = 'test_CPMG_1'
+output_name = 'CPMG_ph3'
 adcOffset = 46
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 0.835 
+p90 = 0.879 
 # determine tau_adjust from running
 # single Hahn echo (run_Hahn_echo.py)
 tau_adjust = 350.0 # us
 transient = 500.0
 repetition = 1e6 # us
 SW_kHz = 25.0
-nPoints = 128
+nPoints = 32
 nScans = 1
 nEchoes = 32
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4 
 if not phase_cycling:
