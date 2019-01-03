@@ -180,7 +180,7 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
             error_status = 1;
             error_message = "DELAY tuples should only be 'delay' followed by the delay";
         }
-        printf("DELAY: length %0.1g\n",firstarg/1e6);
+        printf("DELAY: length %g\n",firstarg/1e6);
         /* COMMAND FOR PROGRAMMING DELAY */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
