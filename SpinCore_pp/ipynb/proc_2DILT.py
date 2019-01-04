@@ -1,3 +1,5 @@
+from pyspecdata import *
+from scipy.optimize import minimize,basinhopping,nnls
 #References
 #Venkataramanan et al. - 2002 (DOI : 10.1109/78.995059)
 #Mitchell et al. - 2012 (DOI : 10.1016/j.pnmrs.2011.07.002)
@@ -186,8 +188,6 @@ def mod_BRD(guess,maxiter=20):
 
 # Initializing dataset
 
-from pyspecdata import *
-from scipy.optimize import nnls
 
 fl = figlist_var()
 date = '190103'
@@ -220,8 +220,8 @@ s *= exp(-1j*s.fromaxis('vd')*clock_correction)
 s.ift('t')
 fl.next('raw data - clock correction')
 fl.image(s)
-vd_len = len(s.getaxis('vd'))
 orig_t = s.getaxis('t')
+vd_list = s.getaxis('vd')
 t2_axis = linspace(0,s.getaxis('t')[nPoints],nPoints)
 s.setaxis('t',None)
 s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
@@ -233,13 +233,117 @@ fl.image(s)
 s.ft(['ph1'])
 print ndshape(s)
 fl.next(id_string+' image plot coherence')
-fl.image(s['vd',0])
+fl.image(s)
 s.ft('t2',shift=True)
 fl.next(id_string+' image plot coherence -- ft')
 fl.image(s['vd',0])
 s.ift('t2')
+echo_center = abs(s)['vd',0]['ph1',1]['nEchoes',0].argmax('t2').data.item()
+#odd_center = abs(s)['vd',0]['ph1',-1]['nEchoes',1].argmax('t2').data.item()
+s = s['t2':(0,2*echo_center)].C
+s.setaxis('t2',lambda x: x-echo_center)
+fl.next('check center')
+fl.image(s)
+interleaved = ndshape(s)
+interleaved['ph1'] = 2
+interleaved['nEchoes'] /= 2
+interleaved = interleaved.rename('ph1','evenodd').alloc()
+interleaved.copy_props(s).setaxis('t2',s.getaxis('t2').copy()).set_units('t2',s.get_units('t2'))
+interleaved['evenodd',0] = s['ph1',1]['nEchoes',0::2].C.run(conj)['t2',::-1]
+interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2]
+#interleaved.ft('t2')
+interleaved.setaxis('vd',s.getaxis('vd'))
+interleaved.ft('t2')
+fl.next('even and odd')
+fl.image(interleaved['vd',0])
+phdiff = interleaved['evenodd',1]/interleaved['evenodd',0]*abs(interleaved['evenodd',0])
+fl.next('phdiff')
+fl.image(phdiff)
+phdiff *= abs(interleaved['evenodd',1])
+f_axis = interleaved.fromaxis('t2')
+def costfun(firstorder):
+    phshift = exp(-1j*2*pi*f_axis*firstorder)
+    return -1*abs((phdiff * phshift).data[:].sum())
+sol = minimize(costfun, ([0],),
+        method='L-BFGS-B',
+        bounds=((-1e-3,1e-3),))
+firstorder = sol.x[0]
+phshift = exp(-1j*2*pi*f_axis*firstorder)
+phdiff_corr = phdiff.C
+phdiff_corr *= phshift
+zeroorder = phdiff_corr.data[:].sum().conj()
+zeroorder /= abs(zeroorder)
+phdiff_corr *= zeroorder
+fl.next('phdiff -- corrected')
+fl.image(phdiff_corr)
+print "Relative phase shift (for interleaving) was "\
+        "{:0.1f}\us and {:0.1f}$^\circ$".format(
+                firstorder/1e-6,angle(zeroorder)/pi*180)
+interleaved['evenodd',1] *= zeroorder*phshift
+interleaved.smoosh(['nEchoes','evenodd'],noaxis=True).reorder('t2',first=False)
+interleaved.ift('t2')
+fl.next('interleaved')
+fl.image(interleaved)
+interleaved.ft('t2')
+fl.next('interleaved -- ft')
+fl.image(interleaved)
+f_axis = interleaved.fromaxis('t2')
+def costfun(p):
+    zeroorder_rad,firstorder = p
+    phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
+    phshift *= exp(-1j*2*pi*zeroorder_rad)
+    corr_test = phshift * interleaved
+    return (abs(corr_test.data.imag)**2)[:].sum()
+iteration = 0
+def print_fun(x, f, accepted):
+    global iteration
+    iteration += 1
+    print(iteration, x, f, int(accepted))
+sol = basinhopping(costfun, r_[0.,0.],
+        minimizer_kwargs={"method":'L-BFGS-B'},
+        callback=print_fun,
+        stepsize=100.,
+        niter=10,
+        T=1000.
+        )
+zeroorder_rad, firstorder = sol.x
+phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
+phshift *= exp(-1j*2*pi*zeroorder_rad)
+interleaved *= phshift
+print "Relative phase shift was {:0.1f}\us and {:0.1f}$^\circ$".format(
+        firstorder,angle(zeroorder_rad)/pi*180)
+if interleaved['nEchoes',0]['vd',0].data[:].sum().real > 0:
+    interleaved *= -1
+fl.next('interleaved -- phased ft')
+fl.image(interleaved)
+fl.next('final real data')
+fl.image(interleaved.real)
+fl.next('final imag data')
+fl.image(interleaved.imag)
+interleaved.ift('t2')
+fl.next('interleaved -- phased')
+fl.image(interleaved)
 fl.show();quit()
-
+interleaved = ndshape([len(vd_list),2,16,128],['vd','evenodd','nEchoes','t2']).alloc()
+interleaved.setaxis('vd',vd_list)
+interleaved.setaxis('evenodd',r_[0:2])
+interleaved.setaxis('nEchoes',r_[1:nEchoes/2+1])
+interleaved.setaxis('t2',t2_axis)
+#interleaved['evenodd',0] = s['nEchoes',0::2].C.run(conj)
+#interleaved['evenodd',1] = s['nEchoes',1::2].C
+interleaved['evenodd',0] = s['ph1',1]['nEchoes',0::2].C.run(conj)
+interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2].C
+interleaved.setaxis('t2',s.getaxis('t2'))
+print interleaved
+quit()
+fl.next('interleaved')
+fl.image(interleaved['t2':(-5e-4,5e-4)])
+interleaved.ft('t2', shift=True)
+phdiff = interleaved['evenodd',1]/interleaved['evenodd',0]*abs(interleaved['evenodd',0])
+fl.next('ph diff')
+fl.image(phdiff)
+phdiff *= abs(interleaved['evenodd',1])
+f_axis = interleaved.getaxis('t2')
 
 
 
