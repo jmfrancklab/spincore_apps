@@ -25,12 +25,21 @@ for date,id_string in [
     vd_len = len(s.getaxis('vd'))
     orig_t = s.getaxis('t')
     t2_axis = linspace(0,s.getaxis('t')[nPoints],nPoints)
+    print len(t2_axis)
     p90 = 0.8*1e-6
     transient = 500*1e-6
     acq_time = t2_axis[-1]
-    tau = transient  + acq_time*1e-3*0.5
-    pad = 2.0*tau - transient - acq_time*1e-3 - 2.0*p90
-    echo_spacing = r_[0:nEchoes*transient*acq_time*pad:32j] # use this later
+    tau = transient + acq_time*0.5
+    pad = 2.0*tau - transient - acq_time - 2.0*p90
+    print transient*1e6,"us"
+    print acq_time*1e3,"ms"
+    print 128/64.0
+    print tau*1e6,"us"
+    print pad*1e6,"us"
+    print transient*acq_time*pad*1e6,"us"
+    print 2*tau*1e6,"us"
+    echo_spacing = r_[1:nEchoes:32j]*(transient+acq_time+pad)
+    print echo_spacing[0]*1e6,"us"
     s.setaxis('t',None)
     s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
@@ -115,6 +124,7 @@ for date,id_string in [
     print ndshape(interleaved)
     fl.next('interleaved')
     fl.image(interleaved['t2':(-5e-4,5e-4)])
+    fl.show();quit()
     interleaved.ft('t2', shift=True)
     phdiff = interleaved['evenodd',1]/interleaved['evenodd',0]*abs(interleaved['evenodd',0])
     fl.next('ph diff')
