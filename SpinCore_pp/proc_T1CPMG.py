@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 from scipy.optimize import minimize 
 fl = figlist_var()
 for date,id_string in [
-        ('190103','T1CPMG_ph2')
+        ('190103','T1CPMG_ph3')
         ]:
     nPoints = 128
     nEchoes = 32
@@ -25,6 +25,12 @@ for date,id_string in [
     vd_len = len(s.getaxis('vd'))
     orig_t = s.getaxis('t')
     t2_axis = linspace(0,s.getaxis('t')[nPoints],nPoints)
+    p90 = 0.8*1e-6
+    transient = 500*1e-6
+    acq_time = t2_axis[-1]
+    tau = transient  + acq_time*1e-3*0.5
+    pad = 2.0*tau - transient - acq_time*1e-3 - 2.0*p90
+    echo_spacing = r_[0:nEchoes*transient*acq_time*pad:32j] # use this later
     s.setaxis('t',None)
     s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
@@ -93,7 +99,8 @@ for date,id_string in [
     ##s *= exp(1j*0.5*pi)
     #s.ift('t2')
     #approx_echo_center = abs(s).sum('nEchoes').sum('vd').argmax('t2').data.item()
-    approx_echo_center = abs(s['vd',0]['ph1',r_[1,3]]).run(sum,'nEchoes').run(sum,'ph1').argmax('t2').data.item()
+    #approx_echo_center = abs(s['vd',0]['ph1',r_[1,3]]).run(sum,'nEchoes').run(sum,'ph1').argmax('t2').data.item()
+    approx_echo_center = t2_axis[-1]/2.0
     s.setaxis('t2',lambda x: x-approx_echo_center)
     interleaved = ndshape([vd_len,2,16,128],['vd','evenodd','nEchoes','t2']).alloc()
     interleaved.setaxis('vd',r_[0:vd_len])
@@ -150,7 +157,6 @@ for date,id_string in [
     fl.image(interleaved)
     data = interleaved.C.sum('t2')
     fl.next('Plot')
-    echo_spacing = r_[0:32.0*5.1e-3:32j]
     x = echo_spacing
     ydata = data.data.real
     ydata /= max(ydata)

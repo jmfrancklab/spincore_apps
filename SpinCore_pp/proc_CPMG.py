@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 from scipy.optimize import minimize 
 fl = figlist_var()
 for date,id_string in [
-        ('190103','CPMG_ph2')
+        ('190103','CPMG_ph3')
         ]:
     nPoints = 128
     nEchoes = 32

@@ -39,19 +39,23 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 date = '190103'
-output_name = 'CPMG_ph2'
-adcOffset = 46
+output_name = 'CPMG_ph3'
+adcOffset = 47
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 0.8
-# DO NOT USE TAU_ADJUST HERE
-# AS IT SCREWS UP ECHO TIMING
-tau_adjust = 0.0
-transient = 500.0 # us
+transient = 500.0
 repetition = 1e6
-SW_kHz = 25.0
+SW_kHz = 64.0
 nPoints = 128
+acq_time = nPoints/SW_kHz # ms
+tau_adjust = 0.0
+tau = transient + acq_time*1e3*0.5 + tau_adjust
+pad = 2.0*tau - transient - acq_time*1e3 - 2.0*p90
+print "ACQUISITION TIME:",acq_time,"ms"
+print "TAU DELAY:",tau,"us"
+print "PAD DELAY:",pad,"us"
 nScans = 4
 nEchoes = 32
 phase_cycling = True
@@ -69,7 +73,6 @@ print "***"
 print "CONFIGURING RECEIVER..."
 acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
 # acq_time is in msec!
-tau = (acq_time*1000.0+transient+tau_adjust)/2.0
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"
@@ -84,11 +87,12 @@ if phase_cycling:
         ('pulse',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
+        ('delay',pad),
         ('marker','echo_label',(nEchoes-1)),
         ('pulse',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
-        #('delay',tau_adjust),
+        ('delay',pad),
         ('jumpto','echo_label'),
         ('delay',repetition),
         ('jumpto','start')
@@ -102,10 +106,12 @@ if not phase_cycling:
         ('pulse',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
+        ('delay',pad),
         ('marker','echo_label',(nEchoes-1)),
         ('pulse',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
+        ('delay',pad),
         ('jumpto','echo_label'),
         ('delay',repetition),
         ('jumpto','start')
@@ -152,9 +158,11 @@ while save_file:
 fl.next('raw data')
 fl.plot(data.real,alpha=0.8)
 fl.plot(data.imag,alpha=0.8)
+fl.plot(abs(data),':',alpha=0.8)
 data.ft('t',shift=True)
 fl.next('FT raw data')
 fl.plot(data.real,alpha=0.8)
 fl.plot(data.imag,alpha=0.8)
+fl.plot(abs(data),':',alpha=0.8)
 fl.show()
 

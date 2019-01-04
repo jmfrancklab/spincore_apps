@@ -40,20 +40,24 @@ import SpinCore_pp
 import time
 fl = figlist_var()
 date = '190103'
-output_name = 'T1CPMG_ph2'
+output_name = 'T1CPMG_ph3'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-adcOffset = 46
+adcOffset = 47
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 0.8
-# DO NOT USE TAU_ADJUST FOR CPMG
-# IT SCREWS UP ECHO TIMING
-tau_adjust = 0.0 #350.0 # us
 transient = 500.0
-repetition = 1e6 # us
-SW_kHz = 25.0
+repetition = 1e6
+SW_kHz = 64.0
 nPoints = 128
+acq_time = nPoints/SW_kHz # ms
+tau_adjust = 0.0
+tau = transient + acq_time*1e3*0.5 + tau_adjust
+pad = 2.0*tau - transient - acq_time*1e3 - 2.0*p90
+print "ACQUISITION TIME:",acq_time,"ms"
+print "TAU DELAY:",tau,"us"
+print "PAD DELAY:",pad,"us"
 nScans = 4
 nEchoes = 32
 phase_cycling = True
@@ -88,7 +92,6 @@ for index,val in enumerate(vd_list):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    tau = (acq_time*1000.0+transient+tau_adjust)/2.0
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
@@ -101,10 +104,12 @@ for index,val in enumerate(vd_list):
             ('pulse',2.0*p90,0.0),
             ('delay',transient),
             ('acquire',acq_time),
+            ('delay',pad),
             ('marker','echo_label',(nEchoes-1)),
             ('pulse',2.0*p90,0.0),
             ('delay',transient),
             ('acquire',acq_time),
+            ('delay',pad),
             ('jumpto','echo_label'),
             ('delay',repetition),
             ('jumpto','start')
@@ -120,10 +125,12 @@ for index,val in enumerate(vd_list):
             ('pulse',2.0*p90,0.0),
             ('delay',transient),
             ('acquire',acq_time),
+            ('delay',pad),
             ('marker','echo_label',(nEchoes-1)),
             ('pulse',2.0*p90,0.0),
             ('delay',transient),
             ('acquire',acq_time),
+            ('delay',pad),
             ('jumpto','echo_label'),
             ('delay',repetition),
             ('jumpto','start')
