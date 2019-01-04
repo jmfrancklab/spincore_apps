@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190103'
-id_string = 'nutation_3'
+date = '190104'
+id_string = 'nutation_1'
 filename = date+'_'+id_string+'.h5'
 nodename = 'nutation'
 s = nddata_hdf5(filename+'/'+nodename,
@@ -20,6 +20,7 @@ if test_plot:
         fl.plot(s['p_90',x],alpha=0.5,label='%d'%x)
         fl.show();quit()
 s.ft('t2')
+#{{{
 phasing = False
 if phasing:
     gen_cost = False 
@@ -49,6 +50,7 @@ if phasing:
     fl.next('plot phase corrected data')
     fl.plot(s['p_90',7].real,alpha=0.4,label='real')
     fl.plot(s['p_90',7].imag,alpha=0.4,label='imag')
+    #}}}
 fl.next('image')
 fl.image(s)
 fl.next('image abs')

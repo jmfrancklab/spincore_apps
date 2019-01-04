@@ -59,24 +59,28 @@ def API_sender(value):
     time.sleep(3)
     return
 
-field_axis = linspace(3408.5,3410.5,20,endpoint=False)
+field_axis = linspace(3408.9,3409.6,7,endpoint=False)
 fl = figlist_var()
-date = '190103'
-output_name = 'FS_3'
-adcOffset = 46
+date = '190104'
+output_name = 'FS_1'
+adcOffset = 50
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-SW_kHz = 500.0
-nPoints = 2048
 nScans = 10
 nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 0.8 # us
-tau_adjust = 451.0 # us
-transient = 500.0 # us
+p90 = 0.8
+transient = 500.0
 repetition = 1e6
+SW_kHz = 500.0
+nPoints = 2048
+acq_time = nPoints/SW_kHz # ms
+tau_adjust = 0.0
+tau = transient + acq_time*1e3*0.5 + tau_adjust
+print "ACQUISITION TIME:",acq_time,"ms"
+print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for index,val in enumerate(field_axis):
     print "***"
@@ -85,7 +89,6 @@ for index,val in enumerate(field_axis):
     API_sender(val)
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    tau = (acq_time*1000.0+transient+tau_adjust)/2.0
     print "ACQUISITION TIME IS",acq_time,"ms"
     SpinCore_pp.init_ppg();
     SpinCore_pp.load([
