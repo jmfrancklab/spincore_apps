@@ -1,5 +1,16 @@
+
+# coding: utf-8
+
+# 
+
+
 from pyspecdata import *
 from scipy.optimize import minimize,basinhopping,nnls
+
+
+# 
+
+
 #References
 #Venkataramanan et al. - 2002 (DOI : 10.1109/78.995059)
 #Mitchell et al. - 2012 (DOI : 10.1016/j.pnmrs.2011.07.002)
@@ -186,7 +197,10 @@ def mod_BRD(guess,maxiter=20):
     return new_lambda
 #}}}
 
+
 # Initializing dataset
+
+# 
 
 
 fl = figlist_var()
@@ -276,11 +290,11 @@ zeroorder /= abs(zeroorder)
 phdiff_corr *= zeroorder
 fl.next('phdiff -- corrected')
 fl.image(phdiff_corr)
-print "Relative phase shift (for interleaving) was "\
-        "{:0.1f}\us and {:0.1f}$^\circ$".format(
+print "Relative phase shift (for interleaving) was "        "{:0.1f}\us and {:0.1f}$^\circ$".format(
                 firstorder/1e-6,angle(zeroorder)/pi*180)
 interleaved['evenodd',1] *= zeroorder*phshift
 interleaved.smoosh(['nEchoes','evenodd'],noaxis=True).reorder('t2',first=False)
+interleaved.setaxis('nEchoes',r_[1:nEchoes+1])
 interleaved.ift('t2')
 fl.next('interleaved')
 fl.image(interleaved)
@@ -323,184 +337,6 @@ fl.image(interleaved.imag)
 interleaved.ift('t2')
 fl.next('interleaved -- phased')
 fl.image(interleaved)
-fl.show();quit()
-interleaved = ndshape([len(vd_list),2,16,128],['vd','evenodd','nEchoes','t2']).alloc()
-interleaved.setaxis('vd',vd_list)
-interleaved.setaxis('evenodd',r_[0:2])
-interleaved.setaxis('nEchoes',r_[1:nEchoes/2+1])
-interleaved.setaxis('t2',t2_axis)
-#interleaved['evenodd',0] = s['nEchoes',0::2].C.run(conj)
-#interleaved['evenodd',1] = s['nEchoes',1::2].C
-interleaved['evenodd',0] = s['ph1',1]['nEchoes',0::2].C.run(conj)
-interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2].C
-interleaved.setaxis('t2',s.getaxis('t2'))
-print interleaved
-quit()
-fl.next('interleaved')
-fl.image(interleaved['t2':(-5e-4,5e-4)])
-interleaved.ft('t2', shift=True)
-phdiff = interleaved['evenodd',1]/interleaved['evenodd',0]*abs(interleaved['evenodd',0])
-fl.next('ph diff')
-fl.image(phdiff)
-phdiff *= abs(interleaved['evenodd',1])
-f_axis = interleaved.getaxis('t2')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-d = find_file(exp_name, exp_type='NMR_Data_EGR', dimname='indirect', expno=expno)
-n_indirect = d.get_prop('acq')['L'][23] # changed to l23 from pp
-print "number of delays (tau 1):",n_indirect
-with figlist_var() as fl:
-    # convolving to visualize better
-    plot_raw = True
-    absvis = lambda x: abs(x).convolve('t2',0.1).real
-    use_bad_hack = True
-    if use_bad_hack:
-        # this is a hack to at least get rid of the large data in Emily's bad dataset
-        for j in r_[65,131,197]:
-            d['t2':(6,None)]['indirect',j] = 0
-            d['t2',0]['indirect',j] = 0
-            d['t2',-1]['indirect',j] = 0
-    if plot_raw:
-        fl.next('raw data', figsize=(4,14))
-        fl.image(absvis(d))
-        fl.show()
-    d.setaxis('indirect',None)
-    print "shape before chunking along indirect",ndshape(d)
-    d.chunk('indirect',['indirect','phcyc'],[n_indirect,-1])
-    print "shape after chunking along indirect",ndshape(d)
-    fl.next('after chunk',figsize=(8,30))
-    fl.image(abs(d))
-    d.chunk('phcyc',['ph3','ph2','ph1'],[2,4,2])
-chunk_checkpoint = d.C
-
-
-# Checkpoint
-
-# 
-
-
-d = chunk_checkpoint.C
-orig_t = d.getaxis('t2').copy()
-d.setaxis('ph1',r_[0,2.]/4)
-d.setaxis('ph2',r_[0,1,2,3.]/4)
-d.setaxis('ph3',r_[0,2.]/4)
-print "vdlist is:",d.get_prop('vd')
-d.setaxis('indirect',d.get_prop('vd'))
-d.ft(['ph3','ph2','ph1'])
-d.reorder(['indirect','t2'],first=False)
-visualize_ph_cycling = False
-if visualize_ph_cycling:
-    with figlist_var() as fl:
-        fl.next('after phase cycle',figsize=(8,14))
-        fl.image(absvis(d))
-        fl.next('after phase cycle, ph',figsize=(8,14))
-        fl.image(d)
-phcyc_checkpoint = d.C
-
-
-# Pulling signal
-
-# 
-
-
-d = phcyc_checkpoint.C
-d = d['ph3',0]['ph1',0]
-
-
-# Pulling parameters
-
-# 
-
-
-n_echoes = d.get_prop('acq')['L'][12]
-n_delays = len(d.getaxis('indirect'))
-SW = d.get_prop('acq')['SW']
-SFO1 = d.get_prop('acq')['SFO1']
-SWH = SW*SFO1
-DW = 1.0/SWH
-t2 = len(d.getaxis('t2'))
-tau2 = t2/n_delays
-print "Number of echoes:",n_echoes
-d.setaxis('t2',None)
-ndshape(d.chunk('t2',['echo','t2'],[n_echoes,-1]))
-d.setaxis('t2',orig_t[:ndshape(d)['t2']])
-t2_len = d.getaxis('t2')[-1]
-d.setaxis('t2', lambda x: x-t2_len/2)
-d.setaxis('echo',r_[:n_echoes])
-echochunk_checkpoint = d.C
-figure(figsize=(8,18))
-image(abs(d)['ph2',1]);show()
-
-
-# Checkpoint
-
-# 
-
-
-d = echochunk_checkpoint.C
-d.ft('t2',shift=True)
-d *= exp(1j*(140.*pi/180)/2.1e3*d.fromaxis('t2'))
-d_forplot = d.C.convolve('t2',10)
-d_ph = d_forplot['indirect',-1].C.run(sum,'t2')
-d_ph /= abs(d_ph)
-d_forplot /= d_ph
-#NOTE: ['ph2',1] are odd echoes and ['ph2',-1] are even echoes
-#Thus here we only image the odd echoes
-figure(figsize=(20,18))
-image(cropvis(d_forplot['ph2',1],at=0.1), black=True);show()
-figure(figsize=(20,18))
-image(d_forplot['ph2',1].real);show()
-figure(figsize=(20,18))
-image(d_forplot['ph2',1].imag);show()
-#image(d_forplot['ph2',1], black=True);show()
-ph_checkpoint = d_forplot.C
-
-
-# Interleaving echoes
-
-# 
-
-
-d = ph_checkpoint.C
-
-#figure(figsize=(10,10));image(d['ph2',1]['echo',1::2],black=True);show()
-#figure();image(d['ph2',-1]['echo',0::2],black=True);show()
-
-with figlist_var() as fl:
-    for indirect_idx,indirect_val in enumerate(d.getaxis('indirect')):
-        even = d['ph2',-1]['echo',1::2]
-        odd = d['ph2',1]['echo',0::2]
-        fl.next('image even')
-        fl.image(cropvis(even))
-        fl.next('image odd')
-        fl.image(cropvis(odd))
-        #}}}
-        phdiff = even/odd*abs(odd)
-        fl.next('phase diff')
-        fl.image(cropvis(phdiff))
-        even_minus_odd_ph = phdiff.data.mean()
-        even_minus_odd_ph /= abs(even_minus_odd_ph)
-        print "FOR DELAY",indirect_idx,"=",indirect_val,"s PHASE DIFF IS",format(angle(even_minus_odd_ph)*180/pi)
-        fl.next('Interleaving echoes')
-        d_interleaved = d['ph2',1]
-        d_interleaved['echo',1::2] = d['ph2',-1]['echo',1::2].run(conj)
-        fl.image(cropvis(d_interleaved))
-print ndshape(d_interleaved) 
 fl.show()
 
 
@@ -509,7 +345,7 @@ fl.show()
 # 
 
 
-d = d_interleaved.C
+d = interleaved.C
 
 
 # For determining 'NOISE FLOOR' as described in Mitchell et al. - 2012.
@@ -517,11 +353,19 @@ d = d_interleaved.C
 # 
 
 
+print ndshape(d)
+print d.getaxis('vd')
+print d.getaxis('nEchoes')
+
+
+# 
+
+
 d.sum('t2')
-floor = d.imag['echo':(d.getaxis('echo')[5],d.getaxis('echo')[-1])]
+floor = d.imag['nEchoes':(d.getaxis('nEchoes')[0],d.getaxis('nEchoes')[-1])]
 devi_list = []
-for x in xrange(len(floor.getaxis('indirect'))):
-    devi_list.append(std(floor['indirect',x].data))
+for x in xrange(len(floor.getaxis('vd'))):
+    devi_list.append(std(floor['vd',x].data))
 noise_floor = sum(devi_list)/len(devi_list)
 print "Noise floor (standard deviation of imaginary channel) is ",noise_floor
 
@@ -531,14 +375,14 @@ print "Noise floor (standard deviation of imaginary channel) is ",noise_floor
 # 
 
 
-d = d_interleaved
+d = interleaved.C
 t2 = len(d.getaxis('t2'))
-n_tau2 = len(d.getaxis('echo'))
+n_tau2 = len(d.getaxis('nEchoes'))
 d_sum = d.C.sum('t2')
 d_sum = d_sum.real
 data = d_sum.C
-data.rename('indirect','tau1')
-data.rename('echo','tau2')
+data.rename('vd','tau1')
+data.rename('nEchoes','tau2')
 print ndshape(data)
 
 
@@ -576,22 +420,24 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 # 
 
 
+print t2_axis[-1]
+
+
+# 
+
+
+p90 = 0.8e-6
+transient = 500e-6
+acq_time = t2_axis[-1]
+T_E = 2*p90 + transient + acq_time
+
+
+# 
+
+
 #Note notation is consistent with that used in Venkataramanan et al. 2002, but varies from ref to ref
 #Note importance of using properly phased data as input (see Mitchell et al. 2012)
 #Implements singular value truncation at cutoff defined by noise (see Mitchell et al. 2012)
-
-#Here are several booleans which can be used to follow the algorithm
-plot_s_decay = False
-plot_projected = True
-plot_projected_3d = False
-plot_compressed = True
-plot_compressed_ordered = True
-numpy_image = False
-visualize_guess = False
-S_curve = False # Must be True to use any of the booleans below
-gen_S_curve_data = False # Time intensive
-plot_S_curve = False
-S_curve_guess = False
 
 print "Constructing kernels..."
 Nx = 40
@@ -599,7 +445,7 @@ Ny = 40
 log_Nx_ax = linspace(log10(3e-3),log10(30),Nx) # T1
 log_Ny_ax = linspace(log10(3e-3),log10(30),Ny) # T2
 tau1 = data_nd.getaxis('tau1')
-tau2 = data_nd.getaxis('tau2')
+tau2 = data_nd.getaxis('tau2')*T_E
 N1_4d = reshape(tau1,(shape(tau1)[0],1,1,1))
 N2_4d = reshape(tau2,(1,shape(tau2)[0],1,1))
 Nx_4d = reshape(10**log_Nx_ax,(1,1,shape(log_Nx_ax)[0],1))
@@ -608,6 +454,11 @@ print "Shape of parameter of interest (x) axis",shape(log_Nx_ax),shape(Nx_4d)
 print "Shape of parameter of interest (y) axis",shape(log_Ny_ax),shape(Ny_4d)
 print "Shape of indirect dimension (tau1) axis",shape(tau1),shape(N1_4d)
 print "Shape of indirect dimension (tau2) axis",shape(tau2),shape(N2_4d)
+
+
+# 
+
+
 k1 = (1.-2*exp(-N1_4d/Nx_4d))
 k2 = exp(-N2_4d/Ny_4d)
 print "Shape of K1 (relates tau1 and x)",shape(k1)
@@ -619,6 +470,10 @@ print "SVD of K1",map(lambda x: x.shape, (U1, S1_row, V1))
 U2,S2_row,V2 = np.linalg.svd(k2_sqz,full_matrices=False)
 print "SVD of K2",map(lambda x: x.shape, (U2, S2_row, V2))
 
+
+# 
+
+
 print ""
 print "*** BEGINNING COMPRESSION ***"
 print ""
@@ -626,6 +481,11 @@ data_max = amax(data_nd.data)
 print "Maximum in the data",data_max
 s_cutoff = noise_floor/data_max
 print "Cutoff singular values below",s_cutoff 
+
+
+# 
+
+
 for S1_i in xrange(shape(S1_row)[0]):
     if S1_row[S1_i] < s_cutoff:
         print "Truncate S1 at index",S1_i
@@ -636,22 +496,29 @@ for S2_i in xrange(shape(S2_row)[0]):
         print "Truncate S2 at index",S2_i
         choose_s2 = S2_i
         break
-        
-if plot_s_decay:
-    with figlist_var() as fl:
-        fl.next('singular values',figsize=(12,8))
-        semilogy(S1_row,'o-',label='S1',alpha=0.2)
-        semilogy(S2_row,'o-',label='S2',alpha=0.2)
-        for j,val in enumerate(S1_row):
-            annotate('%0.3f'%(val),(j,val),
-                    ha='left',va='bottom',rotation=10)
-        for j,val in enumerate(S2_row):
-            annotate('%0.3f'%(val),(j,val),
-                    ha='left',va='bottom',rotation=10)
-        xlabel('Index')
-        ylabel('Singular values')
-        grid(b=True)
-        legend()
+
+
+# 
+
+
+with figlist_var() as fl:
+    fl.next('singular values',figsize=(12,8))
+    semilogy(S1_row,'o-',label='S1',alpha=0.2)
+    semilogy(S2_row,'o-',label='S2',alpha=0.2)
+    for j,val in enumerate(S1_row):
+        annotate('%0.3f'%(val),(j,val),
+                ha='left',va='bottom',rotation=10)
+    for j,val in enumerate(S2_row):
+        annotate('%0.3f'%(val),(j,val),
+                ha='left',va='bottom',rotation=10)
+    xlabel('Index')
+    ylabel('Singular values')
+    grid(b=True)
+    legend()
+
+
+# 
+
 
 print "Uncompressed singular row vector for K1",S1_row.shape
 S1_row = S1_row[0:choose_s1]
@@ -661,6 +528,10 @@ U1 = U1[:,0:choose_s1]
 print "Compressed V matrix for K1",V1.shape
 print "Comrpessed U matrix for K1",U1.shape
 
+
+# 
+
+
 print "Uncompressed singular row vector for K2",S2_row.shape
 S2_row = S2_row[0:choose_s2]
 print "Compressed singular value row vector for K2",S2_row.shape
@@ -668,6 +539,10 @@ V2 = V2[0:choose_s2,:]
 U2 = U2[:,0:choose_s2]
 print "Compressed V matrix for K2",V2.shape
 print "Compressed U matrix for K2",U2.shape
+
+
+# 
+
 
 I_S1 = eye(S1_row.shape[0])
 S1 = S1_row*I_S1
@@ -678,46 +553,90 @@ S2 = S2_row*I_S2
 print "Non-zero singular value matrix for K2",S2.shape
 
 
+# 
+
+
 data_proj = U1.dot(U1.T.dot(data.dot(U2.dot(U2.T))))
 
-if plot_projected:
-    for tau1_index in xrange(shape(data_proj)[0]):
-        title('projected data')
-        plot(data_proj[tau1_index,:])
-    show()
-if plot_projected_3d:
-    nd_proj = nddata(data_proj,['N1','N2'])
-    nd_proj.name('Projected data')
-    nd_proj.setaxis('N1',data_nd.getaxis('tau1')).rename('N1',r'$\tau_{1}$')
-    nd_proj.setaxis('N2',data_nd.getaxis('tau2')).rename('N2',r'$\tau_{2}$')
-    nd_proj.meshplot(cmap=cm.viridis)
+
+# 
+
+
+for tau1_index in xrange(shape(data_proj)[0]):
+    title('projected data')
+    plot(data_proj[tau1_index,:])
+show()
+
+
+# 
+
+
+get_ipython().run_line_magic('matplotlib', 'notebook')
+
+
+# 
+
+
+nd_proj = nddata(data_proj,['N1','N2'])
+nd_proj.name('Projected data')
+nd_proj.setaxis('N1',data_nd.getaxis('tau1')).rename('N1',r'$\tau_{1}$')
+nd_proj.setaxis('N2',data_nd.getaxis('tau2')).rename('N2',r'$\tau_{2}$')
+nd_proj.meshplot(cmap=cm.viridis)
+
+
+# 
+
+
+get_ipython().run_line_magic('matplotlib', 'inline')
+
+
+# 
+
 
 print "Projected data dimensions:",shape(data_proj)
 data_compr = U1.T.dot(data.dot(U2))
 print "Compressed data dimensioins:",shape(data_compr)
 
+
+# 
+
+
 comp = data_compr
 comp = reshape(comp,(shape(data_compr))[0]*(shape(data_compr))[1])
 
-if plot_compressed:
-    figure()
-    for x in xrange((shape(data_compr))[1]):
-        plot(data_compr[:,x],'-.')
-    ylabel('Compressed data')
-    xlabel('Index')
-    show()
 
-if plot_compressed_ordered:
-    figure()
-    plot(comp,'-.')
-    ylabel('Compressed data')
-    xlabel('Index')
-    show()
+# 
+
+
+figure()
+for x in xrange((shape(data_compr))[1]):
+    plot(data_compr[:,x],'-.')
+ylabel('Compressed data')
+xlabel('Index')
+show()
+
+
+# 
+
+
+figure()
+plot(comp,'-.')
+ylabel('Compressed data')
+xlabel('Index')
+show()
+
+
+# 
+
 
 K1 = S1.dot(V1)
 K2 = S2.dot(V2)
 print "Compressed K1",shape(K1)
 print "Compressed K2",shape(K2)
+
+
+# 
+
 
 K1 = reshape(K1, (shape(K1)[0],1,shape(K1)[1],1))
 K2 = reshape(K2, (1,shape(K2)[0],1,shape(K2)[1]))
@@ -728,9 +647,16 @@ print "* Should be (",shape(S1)[0],"*",shape(S2)[0],") x (",shape(Nx_4d)[2],"*",
 #END COMPRESSION
 
 
+# 
+
+
 print ""
 print "*** FINISHED COMPRESSION ***"
 print ""
+
+
+# 
+
 
 datac_lex = []
 for m in xrange(shape(data_compr)[0]):
@@ -740,15 +666,21 @@ for m in xrange(shape(data_compr)[0]):
 print "Dimension of lexicographically ordered data:",shape(datac_lex)[0]
 print "Should match first dimension of compressed tensor kernel K0 which is",shape(K0)[0]
 
-nnls_noreg = False
-if nnls_noreg:
-    x, rnorm = nnls(K0,datac_lex)
-    solution = reshape(x,(Nx,Ny))
-    figure()
-    title('Estimate, no regularization')
-    image(solution)
-    show()
-    
+
+# 
+
+
+x, rnorm = nnls(K0,datac_lex)
+solution = reshape(x,(Nx,Ny))
+figure()
+title('Estimate, no regularization')
+image(solution)
+show()
+
+
+# 
+
+
 print ""
 print "*** BEGINNING REGULARIZATION ***"
 print ""
@@ -768,77 +700,152 @@ print "Shape of b vector",shape(b_prime)
 m_vec = datac_lex
 
 
+# 
 
-if S_curve:
-    if gen_S_curve_data:
-        lambda_range = logspace(log10(8e-4),log10(2e4),3)
-        rnorm_list = empty_like(lambda_range)
-        smoothing_list = empty_like(lambda_range)
-        alt_norm_list = empty_like(lambda_range)
-        for index,lambda_val in enumerate(lambda_range):
-            print "index",index
-            soln,temp_rn = nnls(A_prime(lambda_val,dimension),b_prime)
-            rnorm_list[index] = temp_rn
-            f_vec = soln[:,newaxis]
-            alpha = lambda_val**2
-            c_vec = dot(K0,f_vec) - m_vec
-            c_vec /= -alpha
-            alt_temp = linalg.norm(c_vec)*alpha
-            alt_norm_list[index] = alt_temp
-            smoothing_list[index] = lambda_val
-    if plot_S_curve:  
-        figure('using NNLS output norm')
-        rnorm_axis = array(rnorm_list)
-        smoothing_axis = array(smoothing_list)
-        plot(log10(smoothing_axis**2),rnorm_axis)
-        show()
-        figure();title('using LV norm')
-        altnorm_axis = array(alt_norm_list)
-        smoothing_axis = array(smoothing_list)
-        plot(log10(smoothing_axis**2),altnorm_axis,'-.',c='k')
-        xlabel(r'log($\alpha$)')
-        ylabel(r'$\chi$($\alpha$)')
-        gridandtick(gca())
-        show() 
-    if S_curve_guess:
-        heel = raw_input("heel of S curve: ")
-        heel_alpha = 10**heel
-        heel_lambda = sqrt(heel_alpha)
-        print "Alpha",heel_alpha
-        print "Lambda",heel_lambda
-        guess_lambda = heel_lambda
 
-if not S_curve:
-    guess_lambda = 600 # Set to any desired variable
-    alpha = guess_lambda**2
-    print "Alpha",alpha
-    print "Lambda",guess_lambda
+lambda_range = logspace(log10(8e-4),log10(2e4),10)
+rnorm_list = empty_like(lambda_range)
+smoothing_list = empty_like(lambda_range)
+alt_norm_list = empty_like(lambda_range)
+for index,lambda_val in enumerate(lambda_range):
+    print "index",index
+    soln,temp_rn = nnls(A_prime(lambda_val,dimension),b_prime)
+    rnorm_list[index] = temp_rn
+    f_vec = soln[:,newaxis]
+    alpha = lambda_val**2
+    c_vec = dot(K0,f_vec) - m_vec
+    c_vec /= -alpha
+    alt_temp = linalg.norm(c_vec)*alpha
+    alt_norm_list[index] = alt_temp
+    smoothing_list[index] = lambda_val
 
-if visualize_guess:
-    print "Estimating solution for guessed smoothing parameter..."
-    opt_vec = nnls_reg(guess_lambda)
-    solution = reshape(opt_vec,(Nx,Ny))
-    figure()
-    title(r'Est F(log$(T_{1}$),log$(T_{2})$, $\lambda$ = %0.3f'%(guess_lambda))
-    image(solution);show()
+
+# 
+
+
+figure('using NNLS output norm')
+rnorm_axis = array(rnorm_list)
+smoothing_axis = array(smoothing_list)
+plot(log10(smoothing_axis**2),rnorm_axis)
+show()
+figure();title('using LV norm')
+altnorm_axis = array(alt_norm_list)
+smoothing_axis = array(smoothing_list)
+plot(log10(smoothing_axis**2),altnorm_axis,'-.',c='k')
+xlabel(r'log($\alpha$)')
+ylabel(r'$\chi$($\alpha$)')
+gridandtick(gca())
+show()
+
+
+# 
+
+
+heel = 0.1
+heel_alpha = 10**heel
+heel_lambda = sqrt(heel_alpha)
+print "Alpha",heel_alpha
+print "Lambda",heel_lambda
+guess_lambda = heel_lambda
+
+
+# 
+
+
+print "Estimating solution for guessed smoothing parameter..."
+opt_vec = nnls_reg(guess_lambda)
+solution = reshape(opt_vec,(Nx,Ny))
+figure()
+title(r'Est F(log$(T_{1}$),log$(T_{2})$, $\lambda$ = %0.3f'%(guess_lambda))
+image(solution);show()
+
+
+# 
+
+
 print ""
 print "*** BEGINNING MODIFIED BRD OPTIMIZATION ***"
 print ""
 opt_val = mod_BRD(guess=guess_lambda,maxiter=20)
+
+
+# 
+
+
 print "OPTIMIZED LAMBDA:",opt_val
 print ""
 print "*** FINDING OPTIMIZED SOLUTION ***"
 print ""
 opt_vec = nnls_reg(opt_val)
 solution = reshape(opt_vec,(Nx,Ny))
-if numpy_image:
-    figure()
-    title(r'Est F(log$(T_{1}$),log$(T_{2})$, $\lambda$ = %0.2f'%(opt_val))
-    image(solution);show()
+
+
+# 
+
+
+figure()
+title(r'Est F(log$(T_{1}$),log$(T_{2})$, $\lambda$ = %0.2f'%(opt_val))
+image(solution);show()
+
+
+# 
+
+
+get_ipython().run_line_magic('matplotlib', 'notebook')
+
+
+# 
+
+
 nd_solution = nddata(solution,['log(T1)','log(T2)'])
 nd_solution.setaxis('log(T1)',log_Nx_ax.copy())
 nd_solution.setaxis('log(T2)',log_Ny_ax.copy())
-figure();title(r'Peak #1: Estimated F(log$(T_{1})$,log($T_{2}$)), $\lambda$ = %0.2f'%opt_val)
+
+
+# 
+
+
+figure();title(r'Estimated F(log$(T_{1})$,log($T_{2}$)), $\lambda$ = %g'%opt_val)
 nd_solution.contour(labels=False)
 gcf().subplots_adjust(bottom=0.15)
+
+
+# 
+
+
+print ndshape(nd_solution)
+
+
+# 
+
+
+nd_solution_trans = nddata(nd_solution.data.T,['log(T2)','log(T1)']).C
+
+
+# 
+
+
+nd_solution_trans.setaxis('log(T1)',log_Nx_ax.copy())
+nd_solution_trans.setaxis('log(T2)',log_Ny_ax.copy())
+figure();title(r'IMAGE: Estimated F(log$(T_{1})$,log($T_{2}$)), $\lambda$ = %g'%opt_val)
+image(nd_solution_trans)
+gcf().subplots_adjust(bottom=0.15)
+
+
+# 
+
+
+print "T1=",10**-1.684
+print "T2=",10**-1.319
+
+
+# 
+
+
+print "FOR ENVIRONMENT #1"
+print "T1",10**-0.8825,"s"
+print "T2",10**-1.29,"s"
+print "FOR ENVIRONMENT #1"
+print "T1",10**-0.78,"s"
+print "T2",10**-1.39,"s"
 
