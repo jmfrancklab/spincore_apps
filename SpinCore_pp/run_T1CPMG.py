@@ -39,18 +39,18 @@ from numpy import *
 import SpinCore_pp 
 import time
 fl = figlist_var()
-date = '190103'
-output_name = 'T1CPMG_ph3'
+date = '190104'
+output_name = 'T1CPMG_ph1'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-adcOffset = 47
+adcOffset = 50
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 0.8
 transient = 500.0
 repetition = 1e6
-SW_kHz = 64.0
-nPoints = 128
+SW_kHz = 20.0
+nPoints = 64
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = transient + acq_time*1e3*0.5 + tau_adjust
@@ -59,7 +59,7 @@ print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
 nScans = 4
-nEchoes = 32
+nEchoes = 64
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
