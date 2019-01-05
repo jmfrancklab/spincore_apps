@@ -39,7 +39,7 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 date = '190104'
-output_name = 'CPMG_ph1'
+output_name = 'CPMG_ph2'
 adcOffset = 50
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
