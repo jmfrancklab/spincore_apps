@@ -19,6 +19,6 @@ def API_sender(value):
     sock.close()
     print "FIELD SET TO...", MESSAGE
     return
-B0 = 3409.3 # Determine this from Field Sweep
+B0 = 3409.45 # Determine this from Field Sweep
 API_sender(B0)
 exit()

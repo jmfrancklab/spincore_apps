@@ -1,7 +1,7 @@
 from pyspecdata import *
 fl = figlist_var()
-date = '190114'
-id_string = 'FS_4'
+date = '190115'
+id_string = 'FS_1'
 filename = date+'_'+id_string+'.h5'
 nodename = 'field_sweep'
 s = nddata_hdf5(filename+'/'+nodename,

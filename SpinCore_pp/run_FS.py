@@ -61,8 +61,8 @@ def API_sender(value):
 
 field_axis = linspace(3408.8,3409.8,20,endpoint=False)
 fl = figlist_var()
-date = '190114'
-output_name = 'FS_4'
+date = '190115'
+output_name = 'FS_1'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]

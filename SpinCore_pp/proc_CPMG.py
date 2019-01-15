@@ -5,9 +5,9 @@ for date,id_string in [
         ('190114','CPMG_ph3'),
         #('190114','CPMG_ph3_m1'),
         #('190114','CPMG_ph3_m2'),
-        ('190114','CPMG_ph3_m3'),
-        ('190114','CPMG_ph3_m4'),
-        ('190114','CPMG_ph3_m5'),
+        #('190114','CPMG_ph3_m3'),
+        #('190114','CPMG_ph3_m4'),
+        #('190114','CPMG_ph3_m5'),
         ]:
     nPoints = 64
     nEchoes = 64
