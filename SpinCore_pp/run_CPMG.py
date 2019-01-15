@@ -38,14 +38,14 @@ from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
-date = '190104'
-output_name = 'CPMG_ph2'
-adcOffset = 50
+date = '190114'
+output_name = 'CPMG_ph3_m5'
+adcOffset = 48
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 0.8
-transient = 500.0
+p90 = 0.77
+transient = 50.0
 repetition = 1e6
 SW_kHz = 20.0
 nPoints = 64
@@ -56,7 +56,7 @@ pad = 2.0*tau - transient - acq_time*1e3 - 2.0*p90
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 4
+nScans = 16
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:

@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190104'
-id_string = 'nutation_1'
+date = '190114'
+id_string = 'nutation_4'
 filename = date+'_'+id_string+'.h5'
 nodename = 'nutation'
 s = nddata_hdf5(filename+'/'+nodename,

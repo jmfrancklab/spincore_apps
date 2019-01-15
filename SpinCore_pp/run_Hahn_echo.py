@@ -32,12 +32,12 @@ def verifyParams():
     return
 #}}}
 date = '190114'
-output_name = 'test_echo_2'
-adcOffset = 49
+output_name = 'test_echo_3'
+adcOffset = 48
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 10
+nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
 #{{{ note on timing
@@ -45,8 +45,8 @@ nPhaseSteps = 1
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 0.8
-transient = 500.0
+p90 = 0.77
+transient = 10.0
 repetition = 1e6
 SW_kHz = 20.0
 nPoints = 64
