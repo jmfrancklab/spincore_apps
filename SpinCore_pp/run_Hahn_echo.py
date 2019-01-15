@@ -37,7 +37,7 @@ adcOffset = 48
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 10
 nEchoes = 1
 nPhaseSteps = 1
 #{{{ note on timing
@@ -46,9 +46,9 @@ nPhaseSteps = 1
 # note that acq_time is always milliseconds
 #}}}
 p90 = 0.77
-transient = 10.0
+transient = 100.0
 repetition = 1e6
-SW_kHz = 20.0
+SW_kHz = 80.0
 nPoints = 64
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
