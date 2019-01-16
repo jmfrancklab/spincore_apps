@@ -2,17 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190114','CPMG_ph3'),
-        #('190114','CPMG_ph3_m1'),
-        #('190114','CPMG_ph3_m2'),
-        #('190114','CPMG_ph3_m3'),
-        #('190114','CPMG_ph3_m4'),
-        #('190114','CPMG_ph3_m5'),
+        ('190115','CPMG_tE1'),
         ]:
     nPoints = 64
     nEchoes = 64
     nPhaseSteps = 4
-    SW_kHz = 20.0
+    SW_kHz = 155.0
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -25,7 +20,7 @@ for date,id_string in [
     fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
     p90_s = 0.77*1e-6
-    transient_s = 500.0*1e-6
+    transient_s = 50.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
     pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s

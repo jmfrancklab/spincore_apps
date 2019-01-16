@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190114'
+date = '190115'
 id_string = 'nutation_4'
 filename = date+'_'+id_string+'.h5'
 nodename = 'nutation'
@@ -19,6 +19,9 @@ if test_plot:
     for x in r_[0:int(len(s.getaxis('p_90'))):5]:
         fl.plot(s['p_90',x],alpha=0.5,label='%d'%x)
         fl.show();quit()
+s.setaxis('t2', lambda x: x-2.55e-3)
+fl.next('image t')
+fl.image(s)
 s.ft('t2')
 #{{{
 phasing = False
@@ -53,6 +56,8 @@ if phasing:
     #}}}
 fl.next('image')
 fl.image(s)
+fl.next('image -- $B_1$ distribution')
+fl.image(abs(s.C.ft('p_90',shift=True)))
 fl.next('image abs')
 fl.image(abs(s))
 fl.show();quit()

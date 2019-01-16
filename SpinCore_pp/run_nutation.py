@@ -33,6 +33,7 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
+#{{{ for setting EPR magnet
 def API_sender(value):
     IP = "jmfrancklab-bruker.syr.edu"
     if len(sys.argv) > 1:
@@ -50,12 +51,13 @@ def API_sender(value):
     print "FIELD SET TO...", MESSAGE
     time.sleep(5)
     return
+#}}}
 set_field = False
 if set_field:
     B0 = 3409.3 # Determine this from Field Sweep
     API_sender(B0)
 date = '190115'
-output_name = 'nutation_2'
+output_name = 'nutation_6'
 adcOffset = 49
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -74,7 +76,7 @@ tau = transient + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(0.5,6.5,60,endpoint=False)
+p90_range = linspace(0.1,10.1,100,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "***"
