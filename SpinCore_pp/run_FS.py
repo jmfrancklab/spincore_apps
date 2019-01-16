@@ -62,7 +62,7 @@ def API_sender(value):
 field_axis = linspace(3408.8,3409.8,20,endpoint=False)
 fl = figlist_var()
 date = '190115'
-output_name = 'FS_1'
+output_name = 'FS_2'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -72,7 +72,7 @@ nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 0.77
-transient = 500.0
+transient = 50.0
 repetition = 1e6
 SW_kHz = 500.0
 nPoints = 2048
