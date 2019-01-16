@@ -36,47 +36,35 @@ def verifyParams():
 #}}}
 date = '190103'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-output_name = 'IR_ph2'
-adcOffset = 46
+output_name = 'IR_noph2'
+adcOffset = 50
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-# all times are in us
-# except acq_time in ms
+nScans = 10
+nEchoes = 1
+nPhaseSteps = 1
+# NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 0.8
-tau_adjust = 451.0
 transient = 500.0
 repetition = 1e6
-SW_kHz = 25.0
-nPoints = 128
-nScans = 1
-nEchoes = 1
-phase_cycling = True
+SW_kHz = 20.0
+nPoints = 64
+acq_time = nPoints/SW_kHz # ms
+tau_adjust = 0.0
+tau = transient + acq_time*1e3*0.5 + tau_adjust
+print "ACQUISITION TIME:",acq_time,"ms"
+print "TAU DELAY:",tau,"us"
+data_length = 2*nPoints*nEchoes*nPhaseSteps
+phase_cycling = False
 if phase_cycling:
     nPhaseSteps = 8 
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e3,
-        3e3,
-        5e3,
-        7e3,
-        9e3,
-        1e4,
-        3e4,
-        5e4,
-        7e4,
-        9e4,
-        1e5,
-        3e5,
-        7e5,
-        9e5,
-        1e6,
-        3e6,
-        5e6,
-        6e6]
-#vd_list = r_[1e3,3e3,5e3]
+vd_list = r_[9.5e1,5e3,
+        5e4,6e4,6.5e4,9.5e4,1e5,1.1e5,1.4e5,1.5e5,1.7e5,2e5,1e6]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -84,7 +72,6 @@ for index,val in enumerate(vd_list):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    tau = (acq_time*1000.0+transient+tau_adjust)/2.0
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
@@ -166,8 +153,12 @@ vd_data *= exp(-1j*vd_data.fromaxis('vd')*clock_correction)
 manual_taxis_zero = acq_time*1e-3/2.0 #2.29e-3
 vd_data.setaxis('t',lambda x: x-manual_taxis_zero)
 fl.image(vd_data)
+fl.next('abs raw data')
+fl.image(abs(vd_data))
 vd_data.ft('t',shift=True)
 fl.next('FT raw data')
 fl.image(vd_data)
+fl.next('FT abs raw data')
+fl.image(abs(vd_data))
 fl.show()
 

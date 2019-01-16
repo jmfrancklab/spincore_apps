@@ -2,12 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190103','CPMG_ph3')
+        ('190115','CPMG_tE1'),
         ]:
-    nPoints = 128
-    nEchoes = 32
+    nPoints = 64
+    nEchoes = 64
     nPhaseSteps = 4
-    SW_kHz = 64.0
+    SW_kHz = 155.0
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -19,8 +19,8 @@ for date,id_string in [
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
-    p90_s = 0.8*1e-6
-    transient_s = 500.0*1e-6
+    p90_s = 0.77*1e-6
+    transient_s = 50.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
     pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
@@ -68,7 +68,10 @@ for date,id_string in [
     interleaved['ph1'] = 2
     interleaved['nEchoes'] /= 2
     interleaved = interleaved.rename('ph1','evenodd').alloc()
-    interleaved.copy_props(s).setaxis('t2',s.getaxis('t2').copy()).set_units('t2',s.get_units('t2'))
+    #interleaved.copy_props(s).setaxis('t2',s.getaxis('t2').copy()).set_units('t2',s.get_units('t2'))
+    interleaved.setaxis('t2',s.getaxis('t2').copy()).set_units('t2',s.get_units('t2'))
+    interleaved.ft('t2',shift=True)
+    interleaved.ift('t2')
     interleaved['evenodd',0] = s['ph1',1]['nEchoes',0::2].C.run(conj)['t2',::-1]
     interleaved['evenodd',1] = s['ph1',-1]['nEchoes',1::2]
     interleaved.ft('t2')
@@ -99,12 +102,6 @@ for date,id_string in [
     interleaved['evenodd',1] *= zeroorder*phshift
     interleaved.smoosh(['nEchoes','evenodd'],noaxis=True).reorder('t2',first=False)
     interleaved.setaxis('nEchoes',r_[1:nEchoes+1])
-    interleaved.ift('t2')
-    fl.next('interleaved')
-    fl.image(interleaved)
-    interleaved.ft('t2')
-    fl.next('interleaved -- ft')
-    fl.image(interleaved)
     f_axis = interleaved.fromaxis('t2')
     def costfun(p):
         zeroorder_rad,firstorder = p
@@ -133,39 +130,15 @@ for date,id_string in [
             firstorder,angle(zeroorder_rad)/pi*180)
     if interleaved['nEchoes',0].data[:].sum().real < 0:
         interleaved *= -1
-    fl.next('interleaved -- phased ft')
-    fl.image(interleaved)
-    fl.next('final real data ft')
-    fl.image(interleaved.real)
-    fl.next('final imag data ft')
-    fl.image(interleaved.imag)
     print ndshape(interleaved)
-    interleaved.reorder('t2',first=True)
-    fl.next('phased echoes, real - ft')
-    fl.plot(interleaved.real)
-    fl.next('phased echoes, imag - ft')
-    fl.plot(interleaved.imag)
-    interleaved = interleaved['t2':(-4e3,4e3)].C
+    #interleaved.ift('t2')
     interleaved.ift('t2')
-    fl.next('phased echoes, real')
-    fl.plot(interleaved.real)
-    fl.next('phased echoes, imag')
-    fl.plot(interleaved.imag)
-    interleaved.rename('nEchoes','tE').setaxis('tE',tE_axis)
-    data = interleaved.C.sum('t2')
-    fl.next('Fit decay')
-    x = tE_axis 
-    ydata = data.data.real
-    ydata /= max(ydata)
-    fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
-    fitfunc = lambda p, x: exp(-x/p[0])
-    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [0.2]
-    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
-    x_fit = linspace(x.min(),x.max(),5000)
-    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
-    xlabel('t (sec)')
-    ylabel('Intensity')
-    T2 = p1[0]
-    print "T2:",T2,"s"
-fl.show();quit()
+    interleaved.reorder('t2',first=False)
+    interleaved.smoosh(['nEchoes','t2'],'t2')
+    interleaved.setaxis('t2',orig_t[0:len(orig_t)/4])
+    interleaved.set_units('t2','s')
+    fl.next('concat - ift')
+    fl.plot(interleaved.real,alpha=0.5,label='real')
+    fl.plot(interleaved.imag,alpha=0.5,label='imag')
+    fl.show();quit()
+    quit()
