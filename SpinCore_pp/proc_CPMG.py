@@ -56,6 +56,13 @@ for date,id_string in [
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
+    coh = s.C.smoosh(['ph1','tE','t2'],'t2')
+    coh.setaxis('t2',orig_t).set_units('t2','s')
+    fl.next('in coherence domain')
+    fl.plot(coh.real,alpha=0.5,label='real')
+    fl.plot(coh.imag,alpha=0.5,label='imag')
+    fl.plot(abs(coh),':',alpha=0.5,c='k',label='abs')
+    fl.show();quit()
     s = s['ph1',1].C
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
