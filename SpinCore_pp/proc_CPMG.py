@@ -2,12 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190116','CPMG_1')
+        ('190116','CPMG_3_')
         ]:
+    SW_kHz = 20.0
     nPoints = 64
     nEchoes = 64
-    nPhaseSteps = 4
-    SW_kHz = 20.0
+    nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -33,7 +33,7 @@ for date,id_string in [
     tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('t',None)
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.setaxis('ph1',r_[0.,2.]/4)
     #tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
@@ -55,6 +55,11 @@ for date,id_string in [
     fl.next(id_string+' image plot coherence -- ft')
     s.ft('t2')
     fl.image(s)
+    s.ift('t2')
+    s = s['ph1',1].C
+    fl.next('waterfall')
+    abs(s).waterfall()
+    fl.show();quit()
     s.ift('t2')
     even_echo_center = abs(s)['ph1',1]['tE',0].argmax('t2').data.item()
     odd_echo_center = abs(s)['ph1',-1]['tE',1].argmax('t2').data.item()

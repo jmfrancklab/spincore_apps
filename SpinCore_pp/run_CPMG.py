@@ -39,7 +39,7 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 date = '190116'
-output_name = 'CPMG_1'
+output_name = 'CPMG_3_'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -56,11 +56,11 @@ pad = 2.0*tau - transient - acq_time*1e3 - 2.0*p90
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 1
-nEchoes = 64
+nScans = 16
+nEchoes = 64 
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 4 
+    nPhaseSteps = 2
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
@@ -82,14 +82,14 @@ if phase_cycling:
     SpinCore_pp.load([
         ('marker','start',1),
         ('phase_reset',1),
-        ('pulse',p90,'ph1',r_[0,1,2,3]),
+        ('pulse',p90,'ph1',r_[0,2]),
         ('delay',tau),
-        ('pulse',2.0*p90,0.0),
+        ('pulse',2.0*p90,1),
         ('delay',transient),
         ('acquire',acq_time),
         ('delay',pad),
         ('marker','echo_label',(nEchoes-1)),
-        ('pulse',2.0*p90,0.0),
+        ('pulse',2.0*p90,1),
         ('delay',transient),
         ('acquire',acq_time),
         ('delay',pad),
