@@ -15,10 +15,10 @@ fl = figlist_var()
 for date,id_string in [
         ('190114','CPMG_ph3')
         ]:
+    SW_kHz = 20.0
     nPoints = 64
     nEchoes = 64
     nPhaseSteps = 4
-    SW_kHz = 20.0
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -59,10 +59,27 @@ for date,id_string in [
     s.ift('t2')
     fl.next(id_string+'raw data - chunking, clock correction')
     fl.image(s)
-    s.ft(['ph1'])
+    s.ift(['ph1'])
+    s.smoosh(['ph1','tE','t2'],'t2')
+    s.setaxis('t2',orig_t).set_units('t2','s')
+    fl.next('in coherence domain')
+    fl.plot(s.real,alpha=0.5,label='real')
+    fl.plot(s.imag,alpha=0.5,label='imag')
+    fl.plot(abs(s),':',alpha=0.5,c='k',label='abs')
+    fl.show();quit()
+    quit()
     fl.next(id_string+' image plot coherence')
     fl.image(s)
+    s.s
+    fl.show();quit()
     fl.next(id_string+' image plot coherence -- ft')
+    s = s['ph1',-1].C
+    echo_center = abs(s)['tE',0].argmax('t2').data.item()
+    s.setaxis('t2', lambda x: x-echo_center)
+    s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
+    fl.next('check center')
+    fl.image(s)
+    fl.show();quit()
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
