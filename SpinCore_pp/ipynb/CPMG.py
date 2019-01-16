@@ -186,7 +186,6 @@ fl.show()
 
 interleaved.reorder('t2',first=False)
 image(interleaved)
-show()
 
 
 # 
@@ -211,7 +210,6 @@ with figlist_var() as fl:
 data = array(d_T2.data)
 figure()
 image(data)
-show()
 
 
 # 
@@ -231,8 +229,30 @@ print "Shape of K1 (relates tau1 and x)",shape(k1)
 
 def gen_A_prime(val,dimension):
     return r_[k1, val*eye(dimension)]
-A_prime = gen_A_prime(5,k1.shape[1])
+A_prime = gen_A_prime(1,k1.shape[1])
+
+
+# 
+
+
+print shape(A_prime)
+
+
+# 
+
+
 b = zeros((data.shape[1],data.shape[0]))
+
+
+# 
+
+
+print shape(b)
+
+
+# 
+
+
 for x in xrange(data.shape[1]):
     b[x,:] = data.real[:,x]
 print shape(k1)
@@ -255,7 +275,8 @@ print shape(A_prime),shape(b_prime)
 
 
 lambda_range = logspace(log10(8e-3),log10(2e3),20)
-print shape(lambda_range)
+print shape(lambda_range)[0]
+print lambda_range.shape[0]
 rnorm_list = empty_like(lambda_range)
 smoothing_list = empty_like(lambda_range)
 for index, lambda_val in enumerate(lambda_range):

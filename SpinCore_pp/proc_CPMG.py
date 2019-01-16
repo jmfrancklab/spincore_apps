@@ -2,12 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190115','CPMG_tE1'),
+        ('190104','CPMG_ph1')
         ]:
     nPoints = 64
     nEchoes = 64
     nPhaseSteps = 4
-    SW_kHz = 155.0
+    SW_kHz = 20.0
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -131,14 +131,31 @@ for date,id_string in [
     if interleaved['nEchoes',0].data[:].sum().real < 0:
         interleaved *= -1
     print ndshape(interleaved)
-    #interleaved.ift('t2')
-    interleaved.ift('t2')
-    interleaved.reorder('t2',first=False)
-    interleaved.smoosh(['nEchoes','t2'],'t2')
-    interleaved.setaxis('t2',orig_t[0:len(orig_t)/4])
-    interleaved.set_units('t2','s')
-    fl.next('concat - ift')
-    fl.plot(interleaved.real,alpha=0.5,label='real')
-    fl.plot(interleaved.imag,alpha=0.5,label='imag')
-    fl.show();quit()
-    quit()
+    interleaved.reorder('t2',first=True)
+    fl.next('phased echoes, real - ft')
+    fl.plot(interleaved.real)
+    fl.next('phased echoes, imag - ft')
+    fl.plot(interleaved.imag)
+    interleaved = interleaved['t2':(-4e3,4e3)].C
+    fl.next('phased echoes, real')
+    fl.plot(interleaved.real)
+    fl.next('phased echoes, imag')
+    fl.plot(interleaved.imag)
+    interleaved.rename('nEchoes','tE').setaxis('tE',tE_axis)
+    data = interleaved.C.sum('t2')
+    fl.next('Fit decay')
+    x = tE_axis 
+    ydata = data.data.real
+    ydata /= max(ydata)
+    fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+    fitfunc = lambda p, x: exp(-x/p[0])
+    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
+    p0 = [0.2]
+    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+    x_fit = linspace(x.min(),x.max(),5000)
+    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
+    xlabel('t (sec)')
+    ylabel('Intensity')
+    T2 = p1[0]
+    print "T2:",T2,"s"
+fl.show();quit()
