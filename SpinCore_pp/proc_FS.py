@@ -1,6 +1,6 @@
 from pyspecdata import *
 fl = figlist_var()
-date = '190115'
+date = '190116'
 id_string = 'FS_1'
 filename = date+'_'+id_string+'.h5'
 nodename = 'field_sweep'

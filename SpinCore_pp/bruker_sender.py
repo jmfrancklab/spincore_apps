@@ -3,6 +3,7 @@ import os
 import socket
 import sys
 import time
+B0 = 3409.15 # Determine this from Field Sweep
 def API_sender(value):
     IP = "jmfrancklab-bruker.syr.edu"
     if len(sys.argv) > 1:
@@ -19,6 +20,5 @@ def API_sender(value):
     sock.close()
     print "FIELD SET TO...", MESSAGE
     return
-B0 = 3409.3 # Determine this from Field Sweep
 API_sender(B0)
 exit()

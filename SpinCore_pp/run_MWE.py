@@ -57,30 +57,31 @@ if set_field:
     B0 = 3409.3 # Determine this from Field Sweep
     API_sender(B0)
 date = '190116'
-output_name = 'nutation_3'
+output_name = 'MWE_1'
 adcOffset = 49
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 10
+nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-transient = 100.0
+RX_delay = 100.0
 repetition = 1e6
 SW_kHz = 20.0
 nPoints = 64
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
-tau = transient + acq_time*1e3*0.5 + tau_adjust
+tau = RX_delay + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(0.1,6.1,60,endpoint=False)
-for index,val in enumerate(p90_range):
-    p90 = val # us
+p90 = 0.87
+num_transients = 10
+for index in xrange(num_transients):
+    transient = index+1
     print "***"
-    print "INDEX %d - 90 TIME %f"%(index,val)
+    print "TRANSIENT NUMBER: %d"%(transient)
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
@@ -91,7 +92,7 @@ for index,val in enumerate(p90_range):
         ('pulse',p90,0.0),
         ('delay',tau),
         ('pulse',2.0*p90,0.0),
-        ('delay',transient),
+        ('delay',RX_delay),
         ('acquire',acq_time),
         ('delay',repetition),
         ('jumpto','start')
@@ -113,10 +114,10 @@ for index,val in enumerate(p90_range):
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
     if index == 0:
-        nutation_data = ndshape([len(p90_range),len(time_axis)],['p_90','t']).alloc(dtype=complex128)
-        nutation_data.setaxis('p_90',p90_range*1e-6).set_units('p_90','s')
-        nutation_data.setaxis('t',time_axis).set_units('t','s')
-    nutation_data['p_90',index] = data
+        transient_data = ndshape([num_transients,len(time_axis)],['trans_no','t']).alloc(dtype=complex128)
+        transient_data.setaxis('trans_no',transient)
+        transient_data.setaxis('t',time_axis).set_units('t','s')
+    transient_data['trans_no',index] = data
 SpinCore_pp.stopBoard();
 print "EXITING...\n"
 print "\n*** *** ***\n"
@@ -124,20 +125,20 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
-        nutation_data.name('nutation')
-        nutation_data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",nutation_data.name()
-        print "Units of saved data",nutation_data.get_units('t')
-        print "Shape of saved data",ndshape(nutation_data)
+        transient_data.name('transients')
+        transient_data.hdf5_write(date+'_'+output_name+'.h5')
+        print "Name of saved data",transient_data.name()
+        print "Units of saved data",transient_data.get_units('t')
+        print "Shape of saved data",ndshape(transient_data)
         save_file = False
     except Exception as e:
         print e
         print "FILE ALREADY EXISTS."
         save_file = False
 fl.next('raw data')
-fl.image(nutation_data)
-nutation_data.ft('t',shift=True)
+fl.image(transient_data)
+transient_data.ft('t',shift=True)
 fl.next('FT raw data')
-fl.image(nutation_data)
+fl.image(transient_data)
 fl.show()
 

@@ -41,6 +41,7 @@ import socket
 import sys
 import time
 
+#{{{ for setting EPR magnet
 def API_sender(value):
     IP = "jmfrancklab-bruker.syr.edu"
     if len(sys.argv) > 1:
@@ -58,11 +59,12 @@ def API_sender(value):
     print "FIELD SET TO...", MESSAGE
     time.sleep(3)
     return
+#}}}
 
 field_axis = linspace(3408.8,3409.8,20,endpoint=False)
 fl = figlist_var()
-date = '190115'
-output_name = 'FS_2'
+date = '190116'
+output_name = 'FS_1'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -71,8 +73,8 @@ nScans = 10
 nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 0.77
-transient = 50.0
+p90 = 0.87
+transient = 100.0
 repetition = 1e6
 SW_kHz = 500.0
 nPoints = 2048
