@@ -19,8 +19,8 @@ for date,id_string in [
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
-    p90_s = 0.77*1e-6
-    transient_s = 50.0*1e-6
+    p90_s = 0.87*1e-6
+    transient_s = 100.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
     pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
@@ -57,8 +57,75 @@ for date,id_string in [
     fl.image(s)
     s.ift('t2')
     s = s['ph1',1].C
-    fl.next('waterfall')
-    abs(s).waterfall()
+    echo_center = abs(s)['tE',0].argmax('t2').data.item()
+    s.setaxis('t2', lambda x: x-echo_center)
+    s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
+    fl.next('check center')
+    fl.image(s)
+    s.ft('t2')
+    fl.next('before phased - real ft')
+    fl.image(s.real)
+    fl.next('before phased - imag ft')
+    fl.image(s.imag)
+    f_axis = s.fromaxis('t2')
+    def costfun(p):
+        zeroorder_rad,firstorder = p
+        phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
+        phshift *= exp(-1j*2*pi*zeroorder_rad)
+        corr_test = phshift * s
+        return (abs(corr_test.data.imag)**2)[:].sum()
+    iteration = 0
+    def print_fun(x, f, accepted):
+        global iteration
+        iteration += 1
+        print (iteration, x, f, int(accepted))
+        return
+    sol = basinhopping(costfun, r_[0.,0.],
+            minimizer_kwargs={"method":'L-BFGS-B'},
+            callback=print_fun,
+            stepsize=100.,
+            niter=100,
+            T=1000.
+            )
+    zeroorder_rad, firstorder = sol.x
+    phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
+    phshift *= exp(-1j*2*pi*zeroorder_rad)
+    s *= phshift
+    print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
+            firstorder,angle(zeroorder_rad)/pi*180)
+    if s['nEchoes',0].data[:].sum().real < 0:
+        s *= -1
+    print ndshape(s)
+    fl.next('after phased - real ft')
+    fl.image(s.real)
+    fl.next('after phased - imag ft')
+    fl.image(s.imag)
+    s.ift('t2')
+    fl.next('after phased - real')
+    fl.image(s.real)
+    fl.next('after phased - imag')
+    fl.image(s.imag)
+    fl.next('real waterfall')
+    s.real.waterfall()
+    fl.next('imag waterfall')
+    s.imag.waterfall()
+    s.rename('nEchoes','tE').setaxis('tE',tE_axis)
+    data = s.C.sum('t2')
+    fl.next('Fit decay')
+    x = tE_axis 
+    ydata = data.data.real
+    ydata /= max(ydata)
+    fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+    fitfunc = lambda p, x: exp(-x/p[0])
+    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
+    p0 = [0.2]
+    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+    x_fit = linspace(x.min(),x.max(),5000)
+    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
+    xlabel('t (sec)')
+    ylabel('Intensity')
+    T2 = p1[0]
+    print "T2:",T2,"s"
     fl.show();quit()
     s.ift('t2')
     even_echo_center = abs(s)['ph1',1]['tE',0].argmax('t2').data.item()
