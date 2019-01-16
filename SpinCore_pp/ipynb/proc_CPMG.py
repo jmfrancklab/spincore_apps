@@ -13,7 +13,7 @@ from scipy.optimize import leastsq,minimize,basinhopping,nnls
 
 fl = figlist_var()
 for date,id_string in [
-        ('190114','CPMG_ph3_p1')
+        ('190114','CPMG_ph3')
         ]:
     nPoints = 64
     nEchoes = 64
