@@ -440,18 +440,24 @@ data.rename('tE','tau2') # T2 timing
 print ndshape(data)
 
 
+# Load interactive plotting
+
 # 
 
 
 image(data)
 
 
-# Load interactive plotting
+# 
+
+
+print ndshape(data)
+
 
 # 
 
 
-get_ipython().run_line_magic('matplotlib', 'notebook')
+get_ipython().run_line_magic('matplotlib', 'notebooka')
 
 
 # 
@@ -483,10 +489,10 @@ print ndshape(data_nd)
 
 
 print "Constructing kernels..."
-Nx = 50
-Ny = 50
-Nx_ax = linspace(1e-6,0.3,Nx) # T1 
-Ny_ax = linspace(3e-16,0.3,Ny) # T2
+Nx = 75
+Ny = 75
+Nx_ax = linspace(0.001,0.3,Nx) # T1 
+Ny_ax = linspace(0.001,0.3,Ny) # T2
 # USED PARAMS BELOW - GOT GOOD DATA WITHOUT ZOOMING IN ON PEAKS OF INTEREST
 # VERY GOOD PARAMS
 #log_Nx_ax = linspace(log10(0.120),log10(0.145),Nx) # T1
@@ -569,7 +575,7 @@ with figlist_var() as fl:
 
 
 choose_s1 = 7
-choose_s2 = 6
+choose_s2 = 7
 
 
 # 
@@ -677,6 +683,25 @@ print "* Should be (",shape(S1)[0],"*",shape(S2)[0],") x (",shape(Nx_4d)[2],"*",
 print ""
 print "*** FINISHED COMPRESSION ***"
 print ""
+
+
+# 
+
+
+print shape(K0)
+print shape(reshape(x,(Nx,Ny)))
+
+
+# 
+
+
+print shape(K0)
+
+
+# 
+
+
+print shape(x)
 
 
 # 
@@ -792,31 +817,17 @@ gcf().subplots_adjust(bottom=0.15)
 # 
 
 
-data_fit = K0.dot(x.T)
-
-
-# 
-
-
-nd_fit = nddata(data_fit,['tE','t2'])
-
-
-# 
-
-
-print ndshape(d)
-
-
-# 
-
-
-print ndshape(K0)
-
-
-# 
-
-
-nd_fit.setaxis('tE',d.getaxis('tE'))
-nd_fit.setaxis('t2',d.getaxis('t2'))
-nd_residual = d - nd_fit
+nd_comp = nddata(reshape(comp,(7,7)),['$\widetilde{N_{1}}$','$\widetilde{N_{2}}$'])
+nd_fit = nddata(reshape(K0.dot(x),(7,7)),['$\widetilde{N_{1}}$','$\widetilde{N_{2}}$'])
+nd_residual = nd_comp - nd_fit
+figure(figsize=(13,8));suptitle('DATASET: %s_%s'%(date,id_string))
+subplot(221);subplot(221).set_title('COMPRESSED DATA\n $\widetilde{m}$')
+image(nd_comp)
+subplot(222);subplot(222).set_title('FIT\n $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$')
+image(nd_fit)
+subplots_adjust(hspace=0.5)
+subplot(223);subplot(223).set_title('DATA - FIT\n $\widetilde{m}$ - $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$')
+image(nd_residual)
+subplot(224);subplot(224).set_title('|DATA - FIT|\n |$\widetilde{m}$ - $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$|')
+image(abs(nd_residual))
 
