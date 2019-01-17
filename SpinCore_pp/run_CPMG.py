@@ -39,7 +39,7 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 date = '190116'
-output_name = 'CPMG_phc2'
+output_name = 'CPMG_phc3'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -90,7 +90,7 @@ if phase_cycling:
         ('acquire',acq_time),
         ('delay',pad),
         ('marker','echo_label',(nEchoes-1)),
-        ('pulse',2.0*p90,1),
+        ('pulse',2.0*p90,'ph2',r_[0,1,2,3]),
         ('delay',transient),
         ('acquire',acq_time),
         ('delay',pad),
