@@ -2,11 +2,11 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190116','CPMG_3_')
+        ('190116','CPMG_phc1_1')
         ]:
     SW_kHz = 20.0
     nPoints = 64
-    nEchoes = 64
+    nEchoes = 32
     nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -62,7 +62,6 @@ for date,id_string in [
     fl.plot(coh.real,alpha=0.5,label='real')
     fl.plot(coh.imag,alpha=0.5,label='imag')
     fl.plot(abs(coh),':',alpha=0.5,c='k',label='abs')
-    fl.show();quit()
     s = s['ph1',1].C
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
@@ -133,6 +132,7 @@ for date,id_string in [
     ylabel('Intensity')
     T2 = p1[0]
     print "T2:",T2,"s"
+    fl.show();quit()
 s.reorder('t2',first=False)
 d_T2 = s.C
 data = array(d_T2.data)
