@@ -39,7 +39,7 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 date = '190116'
-output_name = 'CPMG_vTE1'
+output_name = 'CPMG_vTE2'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -47,8 +47,8 @@ amplitude = 1.0
 p90 = 0.87
 transient = 100.0
 repetition = 1e6
-SW_kHz = 20.0
-nPoints = 32
+SW_kHz = 60.0
+nPoints = 64
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = transient + acq_time*1e3*0.5 + tau_adjust

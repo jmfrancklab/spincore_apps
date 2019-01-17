@@ -2,10 +2,10 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190116','CPMG_vTE1')
+        ('190116','CPMG_vTE2')
         ]:
-    SW_kHz = 20.0
-    nPoints = 32
+    SW_kHz = 60.0
+    nPoints = 64
     nEchoes = 32
     nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
