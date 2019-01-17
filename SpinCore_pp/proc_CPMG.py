@@ -2,12 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190116','CPMG_phc3')
+        ('190116','CPMG_vTE1')
         ]:
     SW_kHz = 20.0
-    nPoints = 64
+    nPoints = 32
     nEchoes = 32
-    nPhaseSteps = 8
+    nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -32,9 +32,8 @@ for date,id_string in [
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('t',None)
-    s.chunk('t',['ph1','ph2','tE','t2'],[2,4,nEchoes,-1])
+    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('ph2',r_[0.,1.,2.,3.]/4)
     #tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
@@ -50,20 +49,19 @@ for date,id_string in [
     s.ift('t2')
     fl.next(id_string+'raw data - chunking, clock correction')
     fl.image(s)
-    s.ft(['ph1','ph2'])
+    s.ft(['ph1'])
     fl.next(id_string+' image plot coherence')
     fl.image(s)
     fl.next(id_string+' image plot coherence -- ft')
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
-    coh = s.C.smoosh(['ph1','ph2','tE','t2'],'t2')
+    coh = s.C.smoosh(['ph1','tE','t2'],'t2')
     coh.setaxis('t2',orig_t).set_units('t2','s')
     fl.next('in coherence domain')
     fl.plot(coh.real,alpha=0.5,label='real')
     fl.plot(coh.imag,alpha=0.5,label='imag')
     fl.plot(abs(coh),':',alpha=0.5,c='k',label='abs')
-    fl.show();quit()
     s = s['ph1',1].C
     echo_center = abs(s)['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
