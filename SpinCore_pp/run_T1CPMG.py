@@ -39,15 +39,15 @@ from numpy import *
 import SpinCore_pp 
 import time
 fl = figlist_var()
-date = '190104'
-output_name = 'T1CPMG_ph2'
+date = '190116'
+output_name = 'T1CPMG_2'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 adcOffset = 50
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 0.8
-transient = 500.0
+p90 = 0.87
+transient = 100.0
 repetition = 1e6
 SW_kHz = 20.0
 nPoints = 64
@@ -62,31 +62,31 @@ nScans = 4
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 2
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[9.5e1,5e3,
-        5e4,6e4,6.5e4,9.5e4,1e5,1.1e5,1.4e5,1.5e5,1.7e5,2e5,1e6]
-#vd_list = r_[1e3,
-#        3e3,
-#        5e3,
-#        7e3,
-#        9e3,
-#        1e4,
-#        3e4,
-#        5e4,
-#        7e4,
-#        9e4,
-#        1e5,
-#        3e5,
-#        7e5,
-#        9e5,
-#        1e6,
-#        3e6,
-#        5e6,
-#        6e6]
+# vd_list = r_[9.5e1,5e3,
+#        5e4,6e4,6.5e4,9.5e4,1e5,1.1e5,1.4e5,1.5e5,1.7e5,2e5,1e6]
+vd_list = r_[1e3,
+        3e3,
+        5e3,
+        7e3,
+        9e3,
+        1e4,
+        3e4,
+        5e4,
+        7e4,
+        9e4,
+        1e5,
+        3e5,
+        7e5,
+        9e5,
+        1e6,
+        3e6,
+        5e6,
+        6e6]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -101,14 +101,14 @@ for index,val in enumerate(vd_list):
             ('phase_reset',1),
             ('pulse',2.0*p90,0.0),
             ('delay',vd),
-            ('pulse',p90,'ph1',r_[0,1,2,3]),
+            ('pulse',p90,'ph1',r_[0,2]),
             ('delay',tau),
-            ('pulse',2.0*p90,0.0),
+            ('pulse',2.0*p90,1),
             ('delay',transient),
             ('acquire',acq_time),
             ('delay',pad),
             ('marker','echo_label',(nEchoes-1)),
-            ('pulse',2.0*p90,0.0),
+            ('pulse',2.0*p90,1),
             ('delay',transient),
             ('acquire',acq_time),
             ('delay',pad),

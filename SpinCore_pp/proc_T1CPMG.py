@@ -2,12 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190104','T1CPMG_ph1')
+        ('190116','T1CPMG_2')
         ]:
+    SW_kHz = 60.0
     nPoints = 64
     nEchoes = 64
-    nPhaseSteps = 4
-    SW_kHz = 20.0
+    nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -17,8 +17,8 @@ for date,id_string in [
     fl.next('raw data - no clock correction')
     fl.image(s)
     orig_t = s.getaxis('t')
-    p90_s = 0.8*1e-6
-    transient_s = 500.0*1e-6
+    p90_s = 0.87*1e-6
+    transient_s = 100.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
     pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
@@ -38,9 +38,10 @@ for date,id_string in [
     fl.image(s)
     s.setaxis('t',None)
     s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.setaxis('ph1',r_[0.,2.]/4)
     s.setaxis('nEchoes',r_[1:nEchoes+1])
     s.setaxis('t2',t2_axis).set_units('t2','s')
+    s.setaxis('vd',vd_list).set_units('vd','s')
     s.ft(['ph1'])
     print ndshape(s)
     fl.next(id_string+' image plot coherence')
@@ -49,6 +50,60 @@ for date,id_string in [
     fl.next(id_string+' image plot coherence -- ft')
     fl.image(s)
     s.ift('t2')
+    s.reorder('vd',first=False)
+    coh = s.C.smoosh(['ph1','nEchoes','t2'],'t2').reorder('t2',first=False)
+    coh.setaxis('t2',orig_t).set_units('t2','s')
+    s = s['ph1',1].C
+    s.reorder('vd',first=True)
+    echo_center = abs(s)['nEchoes',0]['vd',0].argmax('t2').data.item()
+    s.setaxis('t2', lambda x: x-echo_center)
+    fl.next('check center')
+    fl.image(s)
+    s.ft('t2')
+    fl.next('before phased - real ft')
+    fl.image(s.real)
+    fl.next('before phased - imag ft')
+    fl.image(s.imag)
+    f_axis = s.fromaxis('t2')
+    def costfun(p):
+        zeroorder_rad,firstorder = p
+        phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
+        phshift *= exp(-1j*2*pi*zeroorder_rad)
+        corr_test = phshift * s
+        return (abs(corr_test.data.imag)**2)[:].sum()
+    iteration = 0
+    def print_fun(x, f, accepted):
+        global iteration
+        iteration += 1
+        print (iteration, x, f, int(accepted))
+        return
+    sol = basinhopping(costfun, r_[0.,0.],
+            minimizer_kwargs={"method":'L-BFGS-B'},
+            callback=print_fun,
+            stepsize=100.,
+            niter=100,
+            T=1000.
+            )
+    zeroorder_rad, firstorder = sol.x
+    phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
+    phshift *= exp(-1j*2*pi*zeroorder_rad)
+    s *= phshift
+    print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
+            firstorder,angle(zeroorder_rad)/pi*180)
+    if s['nEchoes',0].data[:].sum().real < 0:
+        s *= -1
+    print ndshape(s)
+    fl.next('after phased - real ft')
+    fl.image(s.real)
+    fl.next('after phased - imag ft')
+    fl.image(s.imag)
+    s.ift('t2')
+    fl.next('after phased - real')
+    fl.image(s.real)
+    fl.next('after phased - imag')
+    fl.image(s.imag)
+    fl.show();quit()
+    ##
     even_echo_center = abs(s)['ph1',1]['vd',0]['nEchoes',0].argmax('t2').data.item()
     odd_echo_center = abs(s)['ph1',-1]['vd',0]['nEchoes',1].argmax('t2').data.item()
     print "EVEN ECHO CENTER:",even_echo_center,"s"
