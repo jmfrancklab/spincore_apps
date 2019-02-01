@@ -39,7 +39,7 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 date = '190131'
-output_name = 'CPMG_v2'
+output_name = 'CPMG_v4'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -59,7 +59,7 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90_range = linspace(6.0,10.0,80,endpoint=False)
+p90_range = linspace(5.5,15.5,100,endpoint=False)
 for index,p90 in enumerate(p90_range):
     tau = transient + acq_time*1e3*0.5 + tau_adjust
     pad = 2.0*tau - transient - acq_time*1e3 - 2.0*p90
