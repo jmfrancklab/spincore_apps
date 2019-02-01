@@ -45,7 +45,7 @@ nPhaseSteps = 1
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 7.6
+p90 = 2.0
 transient = 120.0
 repetition = 1e6
 SW_kHz = 20.0

@@ -2,19 +2,27 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190116','CPMG_6p57')
+        ('190131','CPMG_v2')
         ]:
     SW_kHz = 20.0
     nPoints = 64
-    nEchoes = 32
+    nEchoes = 64
     nPhaseSteps = 4
     filename = date+'_'+id_string+'.h5'
-    nodename = 'signal'
+    nodename = 'CPMG_data'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
     s.set_units('t','s')
     fl.next(id_string+'raw data ')
+    fl.image(s)
+    print ndshape(s)
+    fl.next('time plot')
+    abs(s).waterfall()
+    fl.show();quit()
+    for x in s.getaxis('p_90'):
+        fl.plot(s['p_90':x],alpha=0.3)
+    fl.show();quit()
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)
