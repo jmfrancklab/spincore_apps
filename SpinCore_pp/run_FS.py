@@ -61,15 +61,15 @@ def API_sender(value):
     return
 #}}}
 
-field_axis = linspace(3408.8,3409.8,20,endpoint=False)
+field_axis = linspace(3408.,3410.,20,endpoint=False)
 fl = figlist_var()
-date = '190116'
+date = '190131'
 output_name = 'FS_1'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 10
+nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps

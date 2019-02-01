@@ -38,16 +38,16 @@ from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
-date = '190116'
-output_name = 'CPMG_vTE2'
+date = '190131'
+output_name = 'CPMG_7p64_'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 0.87
-transient = 100.0
+p90 = 7.64
+transient = 120.0
 repetition = 1e6
-SW_kHz = 60.0
+SW_kHz = 20.0
 nPoints = 64
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
@@ -56,11 +56,11 @@ pad = 2.0*tau - transient - acq_time*1e3 - 2.0*p90
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 16
-nEchoes = 32
+nScans = 1
+nEchoes = 64
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 2
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
@@ -82,16 +82,14 @@ if phase_cycling:
     SpinCore_pp.load([
         ('marker','start',1),
         ('phase_reset',1),
-        ('pulse',p90,'ph1',r_[0,2]),
+        ('pulse',p90,'ph1',r_[0,1,2,3]),
         ('delay',tau),
-        ('pulse',2.0*p90,1),
-        #('pulse',2.0*p90,'ph2',r_[0,1,2,3]),
+        ('pulse',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
         ('delay',pad),
         ('marker','echo_label',(nEchoes-1)),
-        ('pulse',2.0*p90,1),
-        #('pulse',2.0*p90,'ph2',r_[0,1,2,3]),
+        ('pulse',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
         ('delay',pad),
@@ -160,11 +158,10 @@ while save_file:
 fl.next('raw data')
 fl.plot(data.real,alpha=0.8)
 fl.plot(data.imag,alpha=0.8)
-fl.plot(abs(data),':',alpha=0.8)
+#fl.plot(abs(data),':',alpha=0.8)
 data.ft('t',shift=True)
 fl.next('FT raw data')
 fl.plot(data.real,alpha=0.8)
 fl.plot(data.imag,alpha=0.8)
-fl.plot(abs(data),':',alpha=0.8)
+#fl.plot(abs(data),':',alpha=0.8)
 fl.show()
-
