@@ -56,8 +56,8 @@ set_field = False
 if set_field:
     B0 = 3409.3 # Determine this from Field Sweep
     API_sender(B0)
-date = '190131'
-output_name = 'MWE_B0OFF'
+date = '190201'
+output_name = 'MWE_GDS'
 adcOffset = 49
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -67,7 +67,7 @@ nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 RX_delay = 120.0
-repetition = 1e6
+repetition = 2.0e6
 SW_kHz = 20.0
 nPoints = 64
 acq_time = nPoints/SW_kHz # ms
@@ -77,7 +77,7 @@ print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 p90 = 10.44
-num_transients = 10
+num_transients = 100
 for index in xrange(num_transients):
     transient = index+1
     print "***"
