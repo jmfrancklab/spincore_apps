@@ -76,7 +76,7 @@ tau = RX_delay + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90 = 2.0
+p90 = 10.44
 num_transients = 10
 for index in xrange(num_transients):
     transient = index+1
