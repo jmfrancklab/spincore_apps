@@ -1,16 +1,15 @@
 from pyspecdata import *
 fl = figlist_var()
-date = '190116'
-id_string = 'FS_1'
+date = '190201'
+id_string = 'FS_2'
 filename = date+'_'+id_string+'.h5'
 nodename = 'field_sweep'
 s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type = 'test_equip' ))
 s.set_units('t','s')
 s.set_units('field','G')
-fl.next('plot')
-for x in r_[0:len(s.getaxis('field')):10]:
-    fl.plot(abs(s)['field',x],alpha=0.5,label='%d'%x)
+#for x in r_[0:len(s.getaxis('field')):10]:
+    #fl.plot(abs(s)['field',x],alpha=0.5,label='%d'%x)
 print ndshape(s)
 s.reorder('t',first=True)
 s.ft('t',shift=True)

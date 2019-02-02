@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190131','CPMG_v4')
+        ('190201','CPMG_v3')
         ]:
     SW_kHz = 20.0
     nPoints = 64
@@ -16,13 +16,14 @@ for date,id_string in [
     s.set_units('t','s')
     fl.next(id_string+'raw data ')
     fl.image(abs(s))
-    print ndshape(s)
     for i,x in enumerate(s.getaxis('p_90')):
         fl.next('time plot %d'%i)
         fl.plot(abs(s)['p_90',i],alpha=0.3)
     fl.show();quit()
+    fl.next('waterfall')
     abs(s).waterfall()
     fl.show();quit()
+    print ndshape(s)
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)

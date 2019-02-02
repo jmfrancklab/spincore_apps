@@ -31,7 +31,7 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190131'
+date = '190201'
 output_name = 'test_echo_1'
 adcOffset = 49
 carrierFreq_MHz = 14.46
