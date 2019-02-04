@@ -14,23 +14,13 @@ for date,id_string in [
             directory = getDATADIR(
                 exp_type = 'test_equip'))
     s.set_units('t','s')
-    fl.next(id_string+'raw data ')
-    fl.image(abs(s))
-    for i,x in enumerate(s.getaxis('p_90')):
-        fl.next('time plot %d'%i)
-        fl.plot(abs(s)['p_90',i],alpha=0.3)
-    fl.show();quit()
-    fl.next('waterfall')
-    abs(s).waterfall()
-    fl.show();quit()
-    print ndshape(s)
-    fl.plot(s.real,alpha=0.4)
-    fl.plot(s.imag,alpha=0.4)
-    fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
+    acq_time_s = orig_t[nPoints]
+    s.rename('p_90','PW').set_units('PW','s')
+    fl.next(id_string+'raw data ')
+    fl.image(abs(s)['t':(0,300e-3)])
     p90_s = 0.87*1e-6
     transient_s = 100.0*1e-6
-    acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
     pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
     tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
@@ -41,13 +31,20 @@ for date,id_string in [
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('t',None)
-    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
-    s.setaxis('ph1',r_[0.,2.]/4)
-    #tE_axis = r_[1:nEchoes+1]*tE_s
-    s.setaxis('tE',tE_axis)
+    s.reorder('t',first=True)
+    s.chunk('t',['ph1','t2'],[nPhaseSteps,-1])
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
-    fl.next(id_string+'raw data - chunking')
+    s.reorder('t2',first=False)
+    if 'v1' in id_string:
+        id_string = 'Exp. 1'
+    if 'v2' in id_string:
+        id_string = 'Exp. 2'
+    if 'v3' in id_string:
+        id_string = 'Exp. 3'
+    fl.next(id_string+': raw data - chunking')
     fl.image(s)
+    fl.show();quit()
     s.ft('t2', shift=True)
     fl.next(id_string+'raw data - chunking ft')
     fl.image(s)
