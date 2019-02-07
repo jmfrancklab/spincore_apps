@@ -73,8 +73,8 @@ nScans = 1
 nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 0.87
-transient = 100.0
+p90 = 1.9
+transient = 500.0
 repetition = 1e6
 SW_kHz = 500.0
 nPoints = 2048
