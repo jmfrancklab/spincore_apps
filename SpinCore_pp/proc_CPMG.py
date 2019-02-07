@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190201','CPMG_v3')
+        ('190206','CPMG_v1')
         ]:
     SW_kHz = 20.0
     nPoints = 64
@@ -17,6 +17,8 @@ for date,id_string in [
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
     s.rename('p_90','PW').set_units('PW','s')
+    fl.next('waterfall')
+    abs(s).waterfall()
     fl.next(id_string+'raw data ')
     fl.image(abs(s)['t':(0,300e-3)])
     p90_s = 0.87*1e-6
@@ -44,6 +46,8 @@ for date,id_string in [
         id_string = 'Exp. 3'
     fl.next(id_string+': raw data - chunking')
     fl.image(s)
+    fl.next('waterfall')
+    abs(s).waterfall
     fl.show();quit()
     s.ft('t2', shift=True)
     fl.next(id_string+'raw data - chunking ft')
