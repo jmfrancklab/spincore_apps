@@ -18,8 +18,6 @@ for date,id_string in [
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
     s.rename('p_90','PW').set_units('PW','s')
-    fl.next('waterfall')
-    abs(s).waterfall()
     fl.next(id_string+'raw data ')
     fl.image(abs(s))
     t2_axis = linspace(0,acq_time_s,nPoints)
@@ -33,17 +31,13 @@ for date,id_string in [
     #s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
     #s.reorder('t2',first=False)
-    if 'v1' in id_string:
-        id_string = 'Exp. 1'
-    if 'v2' in id_string:
-        id_string = 'Exp. 2'
-    if 'v3' in id_string:
-        id_string = 'Exp. 3'
-    fl.next(id_string+': raw data - chunking')
+    s.reorder('t2',first=False)
+    fl.next(date+'_'+id_string+'\nraw data - chunking')
     fl.image(s)
     s.ft(['ph1','ph2'])
-    fl.next(id_string+': raw data - chunking ft')
+    fl.next(date+'_'+id_string+'\nraw data - chunking ft ph')
     fl.image(s)
+    fl.show();quit()
     s.C.smoosh(['ph2','ph1','t2'],'t2')
     s.setaxis('t2',orig_t).set_units('t2','s')
     s.reorder('PW',first=True)
