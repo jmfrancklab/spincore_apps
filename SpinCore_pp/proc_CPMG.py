@@ -2,40 +2,35 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190201','CPMG_v3')
+        ('190206','CPMG_v4')
         ]:
     SW_kHz = 20.0
-    nPoints = 64
-    nEchoes = 64
-    nPhaseSteps = 4
+    nPoints = 32
+    nEchoes = 32
+    nPhaseSteps = 16
     filename = date+'_'+id_string+'.h5'
     nodename = 'CPMG_data'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
+    print ndshape(s)
     s.set_units('t','s')
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
     s.rename('p_90','PW').set_units('PW','s')
     fl.next(id_string+'raw data ')
-    fl.image(abs(s)['t':(0,300e-3)])
-    p90_s = 0.87*1e-6
-    transient_s = 100.0*1e-6
-    tau_s = transient_s + acq_time_s*0.5
-    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
-    tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
-    print "ACQUISITION TIME:",acq_time_s,"s"
-    print "TAU DELAY:",tau_s,"s"
-    print "TWICE TAU:",2.0*tau_s,"s"
-    print "ECHO TIME:",tE_s,"s"
+    fl.image(abs(s))
     t2_axis = linspace(0,acq_time_s,nPoints)
-    tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('t',None)
     s.reorder('t',first=True)
-    s.chunk('t',['ph1','t2'],[nPhaseSteps,-1])
+    s.chunk('t',['ph2','ph1','t2'],[4,4,-1])
+    s.setaxis('ph2',r_[0.,1.,2.,3.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    # for only 1 phase cylced pulse
+    #s.chunk('t',['ph1','t2'],[nPhaseSteps,-1])
+    #s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
-    s.reorder('t2',first=False)
+    #s.reorder('t2',first=False)
     if 'v1' in id_string:
         id_string = 'Exp. 1'
     if 'v2' in id_string:
@@ -43,6 +38,25 @@ for date,id_string in [
     if 'v3' in id_string:
         id_string = 'Exp. 3'
     fl.next(id_string+': raw data - chunking')
+    fl.image(s)
+    s.ft(['ph1','ph2'])
+    fl.next(id_string+': raw data - chunking ft')
+    fl.image(s)
+    s.C.smoosh(['ph2','ph1','t2'],'t2')
+    s.setaxis('t2',orig_t).set_units('t2','s')
+    s.reorder('PW',first=True)
+    fl.next('next')
+    fl.image(abs(s))
+    fl.next('next2')
+    fl.image(abs(s['PW',0]))
+    fl.show();quit()
+    for x in r_[0:100]:
+        fl.next('plot for PW %0.10f'%s.getaxis('PW')[x])
+        fl.plot(abs(s)['PW',x]['ph2',0]['ph1',-1].setaxis('t2',orig_t[1024]),alpha=0.3)
+        fl.plot(abs(s)['PW',x]['ph2',2]['ph1',1].setaxis('t2',orig_t[1024]),alpha=0.3)
+    fl.show();quit()
+    s.reorder('t2',first=True)
+    fl.next('image smoosh?')
     fl.image(s)
     fl.show();quit()
     s.ft('t2', shift=True)
