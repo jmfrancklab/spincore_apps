@@ -18,6 +18,8 @@ for date,id_string in [
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
     s.rename('p_90','PW').set_units('PW','s')
+    fl.next('waterfall')
+    abs(s).waterfall()
     fl.next(id_string+'raw data ')
     fl.image(abs(s))
     t2_axis = linspace(0,acq_time_s,nPoints)
