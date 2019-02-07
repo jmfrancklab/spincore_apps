@@ -1,15 +1,17 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
-for date,id_string in [
-        ('190206','CPMG_v3'),
-        ('190206','CPMG_v4'),
-        ('190206','CPMG_v6')
+for date,id_string,phcyc_info in [
+        #('190206','CPMG_v3'),
+        ('190206','CPMG_v4',[('ph1',r_[0:4]/4.),
+            ('ph2',r_[0:4]/4.)]),
+        #('190206','CPMG_v6')
         ]:
+    phcyc_names, phcyc_cycles = zip(*phcyc_info)
     SW_kHz = 20.0
     nPoints = 32
     nEchoes = 32
-    nPhaseSteps = 16
+    nPhaseSteps = prod(map(len,phcyc_cycles))
     filename = date+'_'+id_string+'.h5'
     nodename = 'CPMG_data'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -18,38 +20,41 @@ for date,id_string in [
     print ndshape(s)
     s.set_units('t','s')
     orig_t = s.getaxis('t')
-    acq_time_s = orig_t[nPoints]
+    t2_axis = orig_t[:nPoints]
+    assert len(orig_t) == nPoints*nEchoes*nPhaseSteps, "data doesn't appear to be the right shape"
     s.rename('p_90','PW').set_units('PW','s')
-    fl.next(id_string+'raw data ')
-    fl.image(abs(s))
-    t2_axis = linspace(0,acq_time_s,nPoints)
     s.setaxis('t',None)
-    s.reorder('t',first=True)
-    s.chunk('t',['ph2','ph1','t2'],[4,4,-1])
-    s.setaxis('ph2',r_[0.,1.,2.,3.]/4)
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    # for only 1 phase cylced pulse
-    #s.chunk('t',['ph1','t2'],[nPhaseSteps,-1])
-    #s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.chunk('t',['ph2','ph1','echo','t2'],[4,4,nEchoes,-1])
     s.setaxis('t2',t2_axis)
-    #s.reorder('t2',first=False)
-    s.reorder('t2',first=False)
+    s.reorder(['ph2','ph1','PW','echo','t2'])
+    for axname, axlabels in phcyc_info:
+        s.setaxis(axname,axlabels)
     fl.next(date+'_'+id_string+'\nraw data - chunking')
     fl.image(s)
-    s.ft('t2',shift=True)
+    fl.next(date+'_'+id_string+'\nraw data - smooshed echoes')
+    s_smooshed = s.C.setaxis('t2',None).smoosh(['echo','t2'],'t',noaxis=True).setaxis('t',orig_t[:nPoints*nEchoes]).set_units('t','s')
+    print "check sizes of everything",len(s.data.shape),len(s.axis_coords_units),len(s.axis_coords_error),len(s.axis_coords_units),len(s.dimlabels)
+    # comment out these and then debug
+    s_smooshed.axis_coords = [None] * len(s_smooshed.dimlabels)
+    s_smooshed.axis_coords_units = [None] * len(s_smooshed.dimlabels)
+    s_smooshed.axis_coords_error = [None] * len(s_smooshed.dimlabels)
+    fl.image(s_smooshed)
     fl.next(date+'_'+id_string+'\nraw data - chunking FT')
+    s.ft('t2',shift=True)
     fl.image(s)
-    s.ft(['ph1','ph2'])
-    fl.next(date+'_'+id_string+'\nraw data - chunking ft ph')
-    fl.image(s)
-    s.C.smoosh(['ph2','ph1','t2'],'t2')
-    s.setaxis('t2',orig_t).set_units('t2','s')
-    s.reorder('PW',first=True)
-    fl.next(date+'_'+id_string+'\nsmooshed')
-    fl.image(abs(s))
-    fl.next(date+'_'+id_string+'\nsmooshed+sliced')
-    fl.image(abs(s['PW',0]))
+    if 'ph2' in phcyc_names:
+        s.ft('ph2')
+        fl.next(date+'_'+id_string+'\nraw data - chunking ft ph2')
+        fl.image(s)
+    #s.C.smoosh(['ph2','ph1','t2'],'t2')
+    #s.setaxis('t2',orig_t).set_units('t2','s')
+    #s.reorder('PW',first=True)
+    #fl.next(date+'_'+id_string+'\nsmooshed')
+    #fl.image(abs(s))
+    #fl.next(date+'_'+id_string+'\nsmooshed+sliced')
+    #fl.image(abs(s['PW',0]))
 fl.show();quit()
+
 #    for x in r_[0:100]:
 #        fl.next('plot for PW %0.10f'%s.getaxis('PW')[x])
 #        fl.plot(abs(s)['PW',x]['ph2',0]['ph1',-1].setaxis('t2',orig_t[1024]),alpha=0.3)
