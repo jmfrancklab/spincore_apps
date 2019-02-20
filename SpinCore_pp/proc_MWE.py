@@ -17,7 +17,7 @@ for date,id_string,PW in [
     trans_no = len(s.getaxis('trans_no'))
     s.setaxis('trans_no',r_[1:trans_no+1])
     fl.next('Raw data: %s, Pulse Width = %s $\mu$s'%(id_string,PW))
-    fl.image(s)
+    fl.image(abs(s))
     #fl.next('real')
     #s.real.waterfall()
     #fl.next('imag')
