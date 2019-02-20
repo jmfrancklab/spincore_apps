@@ -61,20 +61,24 @@ def API_sender(value):
     return
 #}}}
 
-field_axis = linspace(3408.,3411.,20,endpoint=False)
+field_axis = linspace(3300.,3500.,100,endpoint=False)
 fl = figlist_var()
-date = '190206'
-output_name = 'FS_1'
+date = '190220'
+output_name = 'FS_5'
 adcOffset = 49
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-nPhaseSteps = 1
+phase_cycling = True
+if phase_cycling:
+    nPhaseSteps = 8
+if not phase_cycling:
+    nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 1.9
-transient = 500.0
+p90 = 2.5
+transient = 100.0
 repetition = 1e6
 SW_kHz = 500.0
 nPoints = 2048
@@ -93,19 +97,37 @@ for index,val in enumerate(field_axis):
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
     print "ACQUISITION TIME IS",acq_time,"ms"
     SpinCore_pp.init_ppg();
-    SpinCore_pp.load([
-        ('marker','start',nScans),
-        ('phase_reset',1),
-        ('pulse',p90,0.0),
-        ('delay',tau),
-        ('pulse',2.0*p90,0.0),
-        ('delay',transient),
-        ('acquire',acq_time),
-        ('delay',repetition),
-        ('jumpto','start')
-        ])
+    if phase_cycling:
+        SpinCore_pp.load([
+            ('marker','start',nScans),
+            ('phase_reset',1),
+            ('pulse',p90,'ph1',r_[0,1,2,3]),
+            ('delay',tau),
+            ('pulse',2.0*p90,'ph2',r_[0,2]),
+            ('delay',transient),
+            ('acquire',acq_time),
+            ('delay',repetition),
+            ('jumpto','start')
+            ])
+    if not phase_cycling:    
+        SpinCore_pp.load([
+            ('marker','start',nScans),
+            ('phase_reset',1),
+            ('pulse',p90,0.0),
+            ('delay',tau),
+            ('pulse',2.0*p90,0.0),
+            ('delay',transient),
+            ('acquire',acq_time),
+            ('delay',repetition),
+            ('jumpto','start')
+            ])
     SpinCore_pp.stop_ppg();
-    SpinCore_pp.runBoard();
+    if phase_cycling:
+        for x in xrange(nScans):
+            print "SCAN NO. %d"%(x+1)
+            SpinCore_pp.runBoard();
+    if not phase_cycling:
+        SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
     data = []
