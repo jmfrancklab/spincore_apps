@@ -61,15 +61,15 @@ def API_sender(value):
     return
 #}}}
 
-field_axis = linspace(3300.,3500.,100,endpoint=False)
+field_axis = linspace(3402.,3404.,20,endpoint=False)
 fl = figlist_var()
 date = '190220'
-output_name = 'FS_5'
-adcOffset = 49
+output_name = 'FS_11'
+adcOffset = 47
 carrierFreq_MHz = 14.46 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 1#4
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -77,7 +77,7 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 2.5
+p90 = 5.0 
 transient = 100.0
 repetition = 1e6
 SW_kHz = 500.0
@@ -99,7 +99,7 @@ for index,val in enumerate(field_axis):
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
-            ('marker','start',nScans),
+            ('marker','start',1),
             ('phase_reset',1),
             ('pulse',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
