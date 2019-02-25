@@ -41,7 +41,7 @@ def collect(date,id_string,captures,wait):
     print "shape of data",ndshape(s)
     return
 
-date = '190201'
-id_string = 'pulses_2'
-captures = linspace(1,100,100)
+date = '190220'
+id_string = 'tunematch'
+captures = linspace(1,5,5)
 collect(date,id_string,captures,1.5)
