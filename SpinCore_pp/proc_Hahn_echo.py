@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190115','test_echo_1'),
+        ('190116','test_echo_1'),
         ]:
     nPoints = 64
     nEchoes = 1
@@ -20,7 +20,7 @@ for date,id_string in [
     fl.plot(abs(s),':',c='k',alpha=0.4)
     s.ft('t',shift=True)
     fl.next('comp raw data - FT')
-    fl.plot(s.real,alpha=0.4)
-    fl.plot(s.imag,alpha=0.4)
-    fl.plot(abs(s),':',c='k',alpha=0.4)
+    #fl.plot(s.real,alpha=0.4)
+    #fl.plot(s.imag,alpha=0.4)
+    fl.plot(abs(s),c='red')
 fl.show()
