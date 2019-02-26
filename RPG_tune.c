@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     // Initialize MRI SpinAPI
     ERROR_CATCH( spmri_init() );
 
-    printf("SpinAPI initialized.");
+    printf("SpinAPI initialized.\n");
     // Set all values on board to default values
     ERROR_CATCH( spmri_set_defaults() );
 
@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
     
     // ** Program Board **
     printf("RPG match/tune in time domain \n\n");
+    printf("FREQUENCY: %lf \n",freq[0]);
     // Signal board that ready to start sending it instructions
     ERROR_CATCH( spmri_start_programming() );
     // Read current memory address for ability to return back to this point later on in the program
@@ -94,7 +95,7 @@ int main(int argc, char *argv[])
     ERROR_CATCH(spmri_mri_inst(
                 // DAC Information
                 0.0, // Amplitude
-                ALL_DACS, // DAC Select
+                ALL_DACS, // DAC Select  
                 DO_WRITE, // Write
                 DO_UPDATE, // Update
                 DONT_CLEAR, // Clear
