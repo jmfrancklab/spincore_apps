@@ -83,16 +83,17 @@ double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, uns
 
 int init_ppg(){
 	BOARD_INFO* cur_board = spmri_get_current_board();
-    printf("information for this board:\n");
-	printf("imw_dac_amp_bits: %d\n",cur_board->imw_dac_amp_bits);
-	printf("imw_dac_addr_bits: %d\n",cur_board->imw_dac_addr_bits);
-	printf("imw_carrier_freq_bits: %d\n",cur_board->imw_carrier_freq_bits);
-	printf("imw_envelope_freq_bits: %d\n",cur_board->imw_envelope_freq_bits);
-	printf("imw_tx_phase_bits: %d\n",cur_board->imw_tx_phase_bits);
-	printf("imw_amp_bits: %d\n",cur_board->imw_amp_bits);
-	printf("imw_sin_phase_bits: %d\n",cur_board->imw_sin_phase_bits);
-	printf("imw_cos_phase_bits: %d\n",cur_board->imw_cos_phase_bits);
+    // printf("information for this board:\n");
+	// printf("imw_dac_amp_bits: %d\n",cur_board->imw_dac_amp_bits);
+	// printf("imw_dac_addr_bits: %d\n",cur_board->imw_dac_addr_bits);
+	// printf("imw_carrier_freq_bits: %d\n",cur_board->imw_carrier_freq_bits);
+	// printf("imw_envelope_freq_bits: %d\n",cur_board->imw_envelope_freq_bits);
+	// printf("imw_tx_phase_bits: %d\n",cur_board->imw_tx_phase_bits);
+	// printf("imw_amp_bits: %d\n",cur_board->imw_amp_bits);
+	// printf("imw_sin_phase_bits: %d\n",cur_board->imw_sin_phase_bits);
+	// printf("imw_cos_phase_bits: %d\n",cur_board->imw_cos_phase_bits);
     ERROR_CATCH(spmri_start_programming());
+    printf("Initializing pulse programming...\n");
     return 0;
 }
 

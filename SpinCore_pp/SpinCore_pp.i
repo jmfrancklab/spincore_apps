@@ -76,8 +76,7 @@ def apply_cycles(ppg_in,list_of_cycles_found):
         all_cycles = [ppg_element[3] for ppg_element in ppg_in if ((ppg_element[0] == 'pulse' and ppg_element[2] == cycle_name) if len(ppg_element)>3 else False )]
         maxlen = max(map(len,all_cycles))
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
-        print "LIST OF CYCLES FOUND NOW",list_of_cycles_found
-        print "ALL CYCLES ARE",all_cycles,"WITH MAX LEN",maxlen
+        print "LIST OF CYCLES FOUND NOW"
         ppg_out = []
         for j in xrange(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
@@ -99,22 +98,18 @@ def apply_cycles(ppg_in,list_of_cycles_found):
 def load(args):
     ppg_list = []
     for a_tuple in args:
-        print "READING NEXT TUPLE"
         if a_tuple[0] == 'marker':
             a_tuple = list(a_tuple)
             marker_idx = len(marker_names)
-            print "for marker, converting name",a_tuple[1].upper(),"to index",marker_idx
             marker_names[a_tuple[1]] = marker_idx 
             a_tuple[1] = marker_idx
             a_tuple = tuple(a_tuple)
         elif a_tuple[0] == 'jumpto':
             a_tuple = list(a_tuple)
             marker_idx = marker_names[a_tuple[1]]
-            print "for jump, converting name",a_tuple[1].upper(),"to index",marker_idx
             a_tuple[1] = marker_idx
             a_tuple = tuple(a_tuple)
         ppg_list.append(a_tuple)
-    print ppg_list
     ppg_list,list_of_cycles_found = apply_cycles(ppg_list,[])
     for a_tuple in ppg_list:
         ppg_element(*a_tuple)
