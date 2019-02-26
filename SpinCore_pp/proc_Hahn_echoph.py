@@ -2,7 +2,8 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190220','test_echo_1'),
+        ('190225','echo_2'),
+        ('190225','echo_3'),
         ]:
     nPoints = 64
     nEchoes = 1
@@ -32,14 +33,12 @@ for date,id_string in [
     fl.next('raw data - chunking')
     fl.image(s)
     s.ft(['ph1','ph2'])
-    fl.next('raw data - chunking coh')
+    fl.next(id_string+'raw data - chunking coh')
     fl.image(s)
-    fl.next('data')
-    fl.plot(s['ph2',0]['ph1',1])
-    fl.show();quit()
-    s.ft('t',shift=True)
-    fl.next('comp raw data - FT')
-    fl.plot(s.real,alpha=0.4)
-    fl.plot(s.imag,alpha=0.4)
-    fl.plot(abs(s),':',c='k',alpha=0.4)
+    print ndshape(s)
+    #fl.next('data')
+    #fl.plot(s['ph2',0]['ph1',1])
+    s.ft('t2',shift=True)
+    fl.next(id_string+'comp raw data - FT')
+    fl.image(abs(s))
 fl.show()

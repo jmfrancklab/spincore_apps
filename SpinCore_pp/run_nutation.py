@@ -56,13 +56,13 @@ set_field = False
 if set_field:
     B0 = 3409.5 # Determine this from Field Sweep
     API_sender(B0)
-date = '190220'
+date = '190225'
 output_name = 'nutation_1'
 adcOffset = 47
 carrierFreq_MHz = 14.46
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:

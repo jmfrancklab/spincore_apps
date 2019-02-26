@@ -61,9 +61,9 @@ def API_sender(value):
     return
 #}}}
 
-field_axis = linspace(3402.,3404.,20,endpoint=False)
+field_axis = linspace(3402.,3420.,20,endpoint=False)
 fl = figlist_var()
-date = '190220'
+date = '190225'
 output_name = 'FS_11'
 adcOffset = 47
 carrierFreq_MHz = 14.46 
