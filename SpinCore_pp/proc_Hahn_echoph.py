@@ -5,10 +5,10 @@ for date,id_string in [
         ('190226','echo_8'),
         #('190225','echo_3'),
         ]:
-    nPoints = 64
+    nPoints = 128 
     nEchoes = 1
     nPhaseSteps = 8
-    SW_kHz = 40.0
+    SW_kHz = 80.0
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -32,13 +32,29 @@ for date,id_string in [
     s.reorder('t2',first=False)
     fl.next('raw data - chunking')
     fl.image(s)
+    s.ft('t2',shift=True)
+    s.setaxis('t2',lambda f: f+35e3)
     s.ft(['ph1','ph2'])
     fl.next(id_string+'raw data - chunking coh')
     fl.image(s)
-    print ndshape(s)
-    #fl.next('data')
-    #fl.plot(s['ph2',0]['ph1',1])
+    s *= exp(-1j*2*pi*s.fromaxis('t2')*0.045)
+    ph0 = s.real.sum('t2').C
+    s /= ph0
+    s = s['t2':(-5e3,5e3)].C
+    #s.ift('t2')
+    fl.next('view')
+    fl.plot(s.real['ph2',0]['ph1',1],'.')
+    fl.plot(s.imag['ph2',0]['ph1',1],'.')
+
+    fl.show();quit()
+    fl.next('time domain data')
+    fl.plot(s.real['ph2',0]['ph1',1])
+    fl.plot(s.imag['ph2',0]['ph1',1])
     s.ft('t2',shift=True)
-    fl.next(id_string+'comp raw data - FT')
-    fl.image(abs(s))
+    fl.next(id_string+'data - FT')
+    fl.image(s)
+    s = s['ph2',0]['ph1',1].C
+    fl.next(id_string+'data time')
+    fl.plot(s.real)
+    fl.plot(s.imag)
 fl.show()
