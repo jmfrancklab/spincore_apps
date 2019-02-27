@@ -61,15 +61,15 @@ def API_sender(value):
     return
 #}}}
 
-field_axis = linspace(3402.,3420.,20,endpoint=False)
+field_axis = linspace(3500.,3508.,8,endpoint=False)
 fl = figlist_var()
-date = '190225'
-output_name = 'FS_11'
-adcOffset = 47
-carrierFreq_MHz = 14.46 
+date = '190226'
+output_name = 'FS_3'
+adcOffset = 48
+carrierFreq_MHz = 14.86 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1#4
+nScans = 8
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:

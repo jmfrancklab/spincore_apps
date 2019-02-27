@@ -1,7 +1,7 @@
 from pyspecdata import *
 fl = figlist_var()
 for date,id_string in [
-        ('190220','FS_11'),
+        ('190226','FS_2'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'field_sweep'
@@ -35,5 +35,7 @@ for date,id_string in [
     fl.next('image, all coherence channels')
     fl.image(s_offset[r'$\frac{\Omega}{\gamma_{H}}$':(-3,3)])
     fl.next('image, $\Delta c_{1}$ = 1, $\Delta c_{2}$ = 0')
-    fl.image(s_offset[r'$\frac{\Omega}{\gamma_{H}}$':(-3,3)]['ph2',0]['ph1',1])
+    fl.image(s_offset['ph2',0]['ph1',1])
+    fl.next('not offset')
+    fl.image(s['ph2',0]['ph1',1])
 fl.show();quit()

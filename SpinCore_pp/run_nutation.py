@@ -54,15 +54,15 @@ def API_sender(value):
 #}}}
 set_field = False
 if set_field:
-    B0 = 3409.5 # Determine this from Field Sweep
+    B0 = 3503 # Determine this from Field Sweep
     API_sender(B0)
-date = '190225'
+date = '190226'
 output_name = 'nutation_1'
-adcOffset = 47
-carrierFreq_MHz = 14.46
+adcOffset = 48
+carrierFreq_MHz = 14.86
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -72,8 +72,8 @@ if not phase_cycling:
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 transient = 100.0
 repetition = 1e6
-SW_kHz = 20.0
-nPoints = 64
+SW_kHz = 80.0
+nPoints = 128
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = transient + acq_time*1e3*0.5 + tau_adjust

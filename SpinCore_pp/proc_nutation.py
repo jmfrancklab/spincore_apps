@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190220'
+date = '190226'
 for id_string in [
     'nutation_1',
     ]:
@@ -11,7 +11,7 @@ for id_string in [
             directory = getDATADIR(exp_type = 'test_equip' ))
     orig_t = s.getaxis('t')
     s.set_units('p_90','s')
-    nPoints = 64
+    nPoints = 128
     acq_time_s = orig_t[nPoints]
     t2_axis = linspace(0,acq_time_s,nPoints)
     s.setaxis('t',None)
@@ -22,18 +22,18 @@ for id_string in [
     s.setaxis('t2',t2_axis)
     s.reorder('t2',first=False)
     s.ft('t2',shift=True)
-    s *= exp(1j*2*pi*0.42) # manually determined ph correction
+    #s *= exp(1j*2*pi*0.42) # manually determined ph correction
     fl.next('image, raw')
     fl.image(s)
     s.ft(['ph2','ph1'])
     fl.next('image, all coherence channels')
     fl.image(s)
     fl.next('image, $\Delta c_{1}$ = 1,$\Delta c_{2}$ = 0')
-    fl.image(s['ph2',0]['ph1',1])
+    fl.image(s['t2':(None,-30000)]['ph2',0]['ph1',1])
     fl.next('image, $\Delta c_{1}$ = 0,$\Delta c_{2}$ = -1')
     fl.image(s['ph2',1]['ph1',0])
     fl.next('image, $\Delta c_{1}$ = -1,$\Delta c_{2}$ = 0')
-    fl.image(s['ph2',0]['ph1',-1])
+    fl.image(s['t2':(None,-30e-3)]['ph2',0]['ph1',-1])
     s = s['ph2',0]['ph1',1].C
     manual_ph = False 
     #{{{ do something like the following to approx proper ph (0th) 
@@ -49,10 +49,6 @@ for id_string in [
     #}}}
     print ndshape(s)
     s.ift('t2')
-    s.reorder('t2',first=True)
-    fl.next('signal, time')
-    fl.plot(s['p_90',4])
-    fl.plot(s['p_90',-6])
     fl.show();quit()
     #s.ft('t2',shift=True)
     #f_axis = s.getaxis('t2')
