@@ -33,7 +33,7 @@ for date,id_string in [
     s.reorder('t2',first=False)
     #fl.next('raw data - chunking')
     #fl.image(s)
-    s.ft('t2',shift=True)
+    s.ft('t2',shift=True,pad=256)
     s.setaxis('t2',lambda f: f+35e3)
     s.ft(['ph1','ph2'])
     #fl.next(id_string+'raw data - chunking coh')
@@ -45,11 +45,12 @@ for date,id_string in [
     #s = s['t2':(None,72e3)].C
     if id_string is 'echo_7':
         id_string = 'unenhanced'
+        kwargs = {'c' : 'blue'}
     elif id_string is 'echo_8':
         id_string = 'enhanced'
-    fl.next('signal, FT')
-    fl.plot(s.real['t2':(-5e3,5e3)]['ph2',0]['ph1',1],label=id_string+',real',alpha=0.6)
-    fl.plot(s.imag['t2':(-5e3,5e3)]['ph2',0]['ph1',1],label=id_string+',imag',alpha=0.6)
-    fl.next('signal')
-    fl.plot(s.real['t2':(-5e3,5e3)]['ph2',0]['ph1',1],label=id_string)
+        kwargs = {'c' : 'red'}
+    fl.next('ODNP Enhancement of H$_{2}$O')
+    #fl.plot(x.real['ph2',0]['ph1',1],**kwargs)
+    s *= -1
+    fl.plot(s.real['t2':(-3e3,3e3)]['ph2',0]['ph1',1],**kwargs)
 fl.show()
