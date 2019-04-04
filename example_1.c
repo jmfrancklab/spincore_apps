@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 		0, // amp register
 		0, // cyclops phase
 	  // Pulse Blaster Information
-		0x03, // flags
+		0x02, // flags
 		0, // data
 		CONTINUE, // opcode
 		500.0 * ms // delay
