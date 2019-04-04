@@ -61,16 +61,17 @@ if phase_cycling:
         ('marker','start',1),
         ('phase_reset',1),
         ('delay_TTL',100.0),
-        #('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+        ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
         ('delay',100.0)
         ])
 if not phase_cycling:
     SpinCore_pp.load([
-        ('marker','start',1),
+        ('marker','start',3),
         ('phase_reset',1),
-        ('delay_TTL',1e6),
-        #('pulse_TTL',p90,0.0),
-        ('delay',100.0)
+        ('delay_TTL',0.095),
+        ('pulse_TTL',p90,0.0),
+        ('delay',3e6),
+        ('jumpto','start')
         ])
 SpinCore_pp.stop_ppg();
 if phase_cycling:
