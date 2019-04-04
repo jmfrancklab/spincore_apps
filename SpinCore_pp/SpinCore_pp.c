@@ -133,6 +133,18 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
                     // PB: flags = TTL low (off), data, opcode -- listed in radioprocessor g manual, delay
                     0x00,0,CONTINUE,firstarg*us
                     ));
+    }else if (strcmp(str_label,"pulse_TTL")==0){
+        error_status = 0;
+        printf("TRIGGERED PULSE: length %0.1f us phase %0.1f\n",firstarg,secondarg);
+        /* COMMAND FOR PROGRAMMING RF PULSE */
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC: Amplitude, DAC Select, Write, Update, Clear
+                    0.0,ALL_DACS,DONT_WRITE,DONT_UPDATE,DONT_CLEAR,
+                    // RF: freq register, phase register, tx enable, phase reset, rx enable, envelope freq (default), amp register, cyclops (default),
+                    0,(int) secondarg,1,0,0,7,0,0,
+                    // PB: flags = TTL high BNC1, data, opcode -- listed in radioprocessor g manual, delay
+                    0x01,0,CONTINUE,firstarg*us
+                    ));
     }else if (strcmp(str_label,"phase_reset")==0){
         error_status = 0;
         if(secondarg != 0){
@@ -190,6 +202,22 @@ int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 v
                     0,0,0,0,0,7,0,0,
                     // PB: flags = TTL low (off), data, opcode -- listed in radioprocessor g manual, delay
                     0x00,0,CONTINUE,firstarg*us
+                    ));
+    }else if (strcmp(str_label,"delay_TTL")==0){
+        error_status = 0;
+        if(secondarg != 0){
+            error_status = 1;
+            error_message = "DELAY tuples should only be 'delay' followed by the delay";
+        }
+        printf("TRIGGERED DELAY: length %g s\n",firstarg/1e6);
+        /* COMMAND FOR PROGRAMMING DELAY */
+        ERROR_CATCH(spmri_mri_inst(
+                    // DAC: Amplitude, DAC Select, Write, Update, Clear
+                    0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
+                    // RF: freq register, phase register, tx enable, phase reset, rx enable, envelope freq (default), amp register, cyclops (default),
+                    0,0,0,0,0,7,0,0,
+                    // PB: flags = TTL high BNC1, data, opcode -- listed in radioprocessor g manual, delay
+                    0x01,0,CONTINUE,firstarg*us
                     ));
     }else if (strcmp(str_label,"marker")==0){
         error_status = 0;

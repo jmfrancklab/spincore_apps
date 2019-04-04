@@ -1,147 +1,83 @@
-#{{{ note on phase cycling
-'''
-FOR PHASE CYCLING: Provide both a phase cycle label (e.g.,
-'ph1', 'ph2') as str and an array containing the indices
-(i.e., registers) of the phases you which to use that are
-specified in the numpy array 'tx_phases'.  Note that
-specifying the same phase cycle label will loop the
-corresponding phase steps together, regardless of whether
-the indices are the same or not.
-    e.g.,
-    The following:
-        ('pulse',2.0,'ph1',r_[0,1]),
-        ('delay',1.5),
-        ('pulse',2.0,'ph1',r_[2,3]),
-    will provide two transients with phases of the two pulses (p1,p2):
-        (0,2)
-        (1,3)
-    whereas the following:
-        ('pulse',2.0,'ph1',r_[0,1]),
-        ('delay',1.5),
-        ('pulse',2.0,'ph2',r_[2,3]),
-    will provide four transients with phases of the two pulses (p1,p2):
-        (0,2)
-        (0,3)
-        (1,2)
-        (1,3)
-FURTHER: The total number of transients that will be
-collected are determined by both nScans (determined when
-calling the appropriate marker) and the number of steps
-calculated in the phase cycle as shown above.  Thus for
-nScans = 1, the SpinCore will trigger 2 times in the first
-case and 4 times in the second case.  for nScans = 2, the
-SpinCore will trigger 4 times in the first case and 8 times
-in the second case.
-'''
-#}}}
 from pyspecdata import *
-from numpy import *
-import SpinCore_pp 
-import socket
+import os
 import sys
-def API_sender(value):
-    IP = "jmfrancklab-bruker.syr.edu"
-    if len(sys.argv) > 1:
-        IP = sys.argv[1]
-    PORT = 6001
-    print "target IP:", IP
-    print "target port:", PORT
-    MESSAGE = str(value)
-    print "SETTING FIELD TO...", MESSAGE
-    sock = socket.socket(socket.AF_INET, # Internet
-            socket.SOCK_STREAM) # TCP
-    sock.connect((IP, PORT))
-    sock.send(MESSAGE)
-    sock.close()
-    print "FIELD SET TO...", MESSAGE
-    return
-field_axis = linspace(3407.0,3411.0,3)
+import SpinCore_pp
 fl = figlist_var()
-date = '181220'
+#{{{ Verify arguments compatible with board
+def verifyParams():
+    if (nPoints > 16*1024 or nPoints < 1):
+        print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED NUMBER OF POINTS."
+    if (nScans < 1):
+        print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED NUMBER OF SCANS."
+    if (p90 < 0.065):
+        print "ERROR: PULSE TIME TOO SMALL."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED PULSE TIME."
+    if (tau < 0.065):
+        print "ERROR: DELAY TIME TOO SMALL."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED DELAY TIME."
+    return
+#}}}
+date = '190404'
 output_name = 'test'
-adcOffset = 46
-carrierFreq_MHz = 14.46 
+adcOffset = 48
+carrierFreq_MHz = 14.86
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-SW_kHz = 25.0
-nPoints = 128
-nScans = 3
+tau = 10.0
+nScans = 1
 nEchoes = 1
-nPhaseSteps =  8
-# NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 5.0 
-tau = 2800.0
-transient = 500.0
-repetition = 2e6 # us
-print "\n*** *** ***\n"
-print "CONFIGURING TRANSMITTER..."
-SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-print "\nTRANSMITTER CONFIGURED."
-print "***"
-print "CONFIGURING RECEIVER..."
-acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-print "\nRECEIVER CONFIGURED."
-print "***"
-print "\nINITIALIZING PROG BOARD...\n"
-SpinCore_pp.init_ppg();
-print "\nLOADING PULSE PROG...\n"
-SpinCore_pp.load([
-    ('marker','start',nScans),
-    ('phase_reset',1),
-    ('pulse',p90,0.0),
-    #('pulse',p90,'ph1',0.0),
-    #('delay',tau),
-    #('pulse',2.0*p90,'ph2',0.0),
-    ('delay',transient),
-    ('acquire',acq_time),
-    ('delay',repetition),
-    ('jumpto','start')
-    ])
-print "\nSTOPPING PROG BOARD...\n"
-SpinCore_pp.stop_ppg();
-print "\nRUNNING BOARD...\n"
+phase_cycling = False 
+if phase_cycling:
+    nPhaseSteps = 1
+if not phase_cycling:
+    nPhaseSteps = 1
+p90 = 5.0
+RX_delay = 100.0
+repetition = 1e6
+SW_kHz = 80.0
+nPoints = 128
+acq_time = nPoints/SW_kHz
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-for index,val in enumerate(field_axis):
-    print "***"
-    print "INDEX NO.",index
-    print "***"
-    API_sender(val)
+SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
+verifyParams()
+SpinCore_pp.init_ppg();
+if phase_cycling:
+    SpinCore_pp.load([
+        ('marker','start',1),
+        ('phase_reset',1),
+        ('delay_TTL',100.0),
+        #('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+        ('delay',100.0)
+        ])
+if not phase_cycling:
+    SpinCore_pp.load([
+        ('marker','start',1),
+        ('phase_reset',1),
+        ('delay_TTL',1e6),
+        #('pulse_TTL',p90,0.0),
+        ('delay',100.0)
+        ])
+SpinCore_pp.stop_ppg();
+if phase_cycling:
+    for x in xrange(nScans):
+        print "SCAN NO. %d"%(x+1)
+        SpinCore_pp.runBoard();
+if not phase_cycling:
     SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-    raw_data.astype(float)
-    data = []
-    # according to JF, this commented out line
-    # should work same as line below and be more effic
-    #data = raw_data.view(complex128)
-    data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
-    dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-    data = nddata(array(data),'t')
-    data.setaxis('t',time_axis).set_units('t','s')
-    data.name('signal')
-    if index == 0:
-        field_sweep = ndshape([len(field_axis),len(time_axis)],['field','t']).alloc(dtype=complex128)
-        field_sweep.setaxis('field',field_axis).set_units('field','G')
-        field_sweep.setaxis('t',time_axis).set_units('t','s')
-    field_sweep['field',index] = data
 SpinCore_pp.stopBoard();
 print "EXITING..."
-print "\n*** *** ***\n"
-save_file = True
-while save_file:
-    try:
-        print "SAVING FILE..."
-        data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",data.name()
-        print "Units of saved data",data.get_units('t')
-        print "Shape of saved data",ndshape(field_sweep)
-        save_file = False
-    except Exception as e:
-        print e
-        print "FILE ALREADY EXISTS."
-        save_file = False
-fl.next('image test')
-fl.image(field_sweep)
-fl.show()

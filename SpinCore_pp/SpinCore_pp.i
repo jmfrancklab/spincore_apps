@@ -67,13 +67,13 @@ def apply_cycles(ppg_in,list_of_cycles_found):
     pulse_cycles = []
     found_cycle = False
     for cycled_idx, ppg_element in enumerate(ppg_in):
-        if (len(ppg_element)>3) and (ppg_element[0] == 'pulse') and (type(ppg_element[2]) is str):
+        if (len(ppg_element)>3) and (ppg_element[0] == 'pulse' or ppg_element[0] == 'pulse_TTL') and (type(ppg_element[2]) is str):
             cycle_name = ppg_element[2]
             found_cycle = True
             break
     if found_cycle:
         print "found phase cycle named",cycle_name
-        all_cycles = [ppg_element[3] for ppg_element in ppg_in if ((ppg_element[0] == 'pulse' and ppg_element[2] == cycle_name) if len(ppg_element)>3 else False )]
+        all_cycles = [ppg_element[3] for ppg_element in ppg_in if (((ppg_element[0] == 'pulse' or ppg_element[0] == 'pulse_TTL') and ppg_element[2] == cycle_name) if len(ppg_element)>3 else False )]
         maxlen = max(map(len,all_cycles))
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
         print "LIST OF CYCLES FOUND NOW"
