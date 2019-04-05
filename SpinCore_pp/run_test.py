@@ -66,9 +66,9 @@ if phase_cycling:
         ])
 if not phase_cycling:
     SpinCore_pp.load([
-        ('marker','start',3),
+        ('marker','start',1),
         ('phase_reset',1),
-        ('delay_TTL',0.095),
+        ('delay_TTL',1.0),
         ('pulse_TTL',p90,0.0),
         ('delay',3e6),
         ('jumpto','start')
