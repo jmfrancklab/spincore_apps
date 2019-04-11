@@ -2,14 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190226','echo_7'),
-        ('190226','echo_8'),
-        #('190225','echo_3'),
+        ('190410','echo_11'),
         ]:
-    nPoints = 128 
+    nPoints = 525 
     nEchoes = 1
     nPhaseSteps = 8
-    SW_kHz = 80.0
+    SW_kHz = 3.0
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -19,10 +17,6 @@ for date,id_string in [
     s.set_units('t','s')
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
-    #fl.next('raw data')
-    #fl.plot(s.real,alpha=0.4)
-    #fl.plot(s.imag,alpha=0.4)
-    #fl.plot(abs(s),':',c='k',alpha=0.4)
     t2_axis = linspace(0,acq_time_s,nPoints)
     s.setaxis('t',None)
     s.reorder('t',first=True)
@@ -33,24 +27,16 @@ for date,id_string in [
     s.reorder('t2',first=False)
     #fl.next('raw data - chunking')
     #fl.image(s)
-    s.ft('t2',shift=True,pad=256)
-    s.setaxis('t2',lambda f: f+35e3)
+    s.ft('t2',shift=True)
+    #s.setaxis('t2',lambda f: f+35e3)
     s.ft(['ph1','ph2'])
-    #fl.next(id_string+'raw data - chunking coh')
-    #fl.image(s)
-    s *= exp(-1j*2*pi*s.fromaxis('t2')*0.495)
-    s *= exp(-1j*pi)
-    #s *= exp(1j*2*pi*s.fromaxis('t2')*0.505)
-    #s['t2':(8e3,75e3)] = 0
-    #s = s['t2':(None,72e3)].C
-    if id_string is 'echo_7':
-        id_string = 'unenhanced'
-        kwargs = {'c' : 'blue'}
-    elif id_string is 'echo_8':
-        id_string = 'enhanced'
-        kwargs = {'c' : 'red'}
-    fl.next('ODNP Enhancement of H$_{2}$O')
-    #fl.plot(x.real['ph2',0]['ph1',1],**kwargs)
-    s *= -1
-    fl.plot(s.real['t2':(-3e3,3e3)]['ph2',0]['ph1',1],**kwargs)
+    fl.next(id_string+'raw data - chunking coh')
+    fl.image(s)
+    s = s['ph1',1]['ph2',0].C
+    fl.next('freq-signal')
+    fl.plot(s)
+    s.ift('t2')
+    fl.next('time-signal')
+    fl.plot(s)
+    fl.show();quit()
 fl.show()

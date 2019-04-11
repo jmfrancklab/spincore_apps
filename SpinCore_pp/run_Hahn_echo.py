@@ -31,15 +31,15 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190226'
-output_name = 'echo_8'
-adcOffset = 48
+date = '190410'
+output_name = 'echo_11'
+adcOffset = 42
 carrierFreq_MHz = 14.86
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 8
+nScans = 4
 nEchoes = 1
-phase_cycling = True 
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -49,11 +49,11 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.2
-transient = 100.0
-repetition = 1e6
-SW_kHz = 80.0
-nPoints = 128
+p90 = 4.6
+transient = 10.0
+repetition = 3e6
+SW_kHz = 3.0
+nPoints = 525
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = transient + acq_time*1e3*0.5 + tau_adjust
@@ -82,9 +82,11 @@ if phase_cycling:
     SpinCore_pp.load([
         ('marker','start',1),
         ('phase_reset',1),
-        ('pulse',p90,'ph1',r_[0,1,2,3]),
+        ('delay_TTL',1.0),
+        ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
         ('delay',tau),
-        ('pulse',2.0*p90,'ph2',r_[0,2]),
+        ('delay_TTL',1.0),
+        ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
         ('delay',transient),
         ('acquire',acq_time),
         ('delay',pad),
@@ -95,9 +97,11 @@ if not phase_cycling:
     SpinCore_pp.load([
         ('marker','start',nScans),
         ('phase_reset',1),
-        ('pulse',p90,0.0),
+        ('delay_TTL',1.0),
+        ('pulse_TTL',p90,0.0),
         ('delay',tau),
-        ('pulse',2.0*p90,0.0),
+        ('delay_TTL',1.0),
+        ('pulse_TTL',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
         ('delay',pad),

@@ -54,11 +54,11 @@ def API_sender(value):
 #}}}
 set_field = False
 if set_field:
-    B0 = 3503 # Determine this from Field Sweep
+    B0 = 3497.25 # Determine this from Field Sweep
     API_sender(B0)
-date = '190226'
-output_name = 'nutation_1'
-adcOffset = 48
+date = '190410'
+output_name = 'nutation_4'
+adcOffset = 42
 carrierFreq_MHz = 14.86
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -80,7 +80,7 @@ tau = transient + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(0.1,20.1,20,endpoint=False)
+p90_range = linspace(1.0,20.0,20,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "***"
@@ -93,9 +93,11 @@ for index,val in enumerate(p90_range):
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            ('pulse',p90,'ph1',r_[0,1,2,3]),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
-            ('pulse',2.0*p90,'ph2',r_[0,2]),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
             ('delay',transient),
             ('acquire',acq_time),
             ('delay',repetition),
@@ -105,9 +107,11 @@ for index,val in enumerate(p90_range):
         SpinCore_pp.load([
             ('marker','start',nScans),
             ('phase_reset',1),
-            ('pulse',p90,0.0),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',p90,0.0),
             ('delay',tau),
-            ('pulse',2.0*p90,0.0),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',2.0*p90,0.0),
             ('delay',transient),
             ('acquire',acq_time),
             ('delay',repetition),
