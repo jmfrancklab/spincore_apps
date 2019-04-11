@@ -34,29 +34,29 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190103'
+date = '190410'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-output_name = 'IR_noph2'
-adcOffset = 50
-carrierFreq_MHz = 14.46 
+output_name = 'IR_1'
+adcOffset = 42
+carrierFreq_MHz = 14.86 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 10
+nScans = 4
 nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 0.8
-transient = 500.0
-repetition = 1e6
-SW_kHz = 20.0
-nPoints = 64
+p90 = 4.6
+transient = 10.0
+repetition = 5e6
+SW_kHz = 10.0
+nPoints = 128
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = transient + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8 
 if not phase_cycling:
@@ -64,7 +64,7 @@ if not phase_cycling:
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 vd_list = r_[9.5e1,5e3,
-        5e4,6e4,6.5e4,9.5e4,1e5,1.1e5,1.4e5,1.5e5,1.7e5,2e5,1e6]
+        5e4,1.4e5,1e6]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -77,11 +77,14 @@ for index,val in enumerate(vd_list):
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            ('pulse',2.0*p90,'ph1',r_[0,2]),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',2.0*p90,'ph1',r_[0,2]),
             ('delay',vd),
-            ('pulse',p90,'ph2',r_[0,1,2,3]),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',p90,'ph2',r_[0,1,2,3]),
             ('delay',tau),
-            ('pulse',2.0*p90,0.0),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',2.0*p90,0.0),
             ('delay',transient),
             ('acquire',acq_time),
             ('delay',repetition),
@@ -91,11 +94,14 @@ for index,val in enumerate(vd_list):
         SpinCore_pp.load([
             ('marker','start',nScans),
             ('phase_reset',1),
-            ('pulse',2.0*p90,0.0),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',2.0*p90,0.0),
             ('delay',vd),
-            ('pulse',p90,0.0),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',p90,0.0),
             ('delay',tau),
-            ('pulse',2.0*p90,0.0),
+            ('delay_TTL',1.0),
+            ('pulse_TTL',2.0*p90,0.0),
             ('delay',transient),
             ('acquire',acq_time),
             ('delay',repetition),
