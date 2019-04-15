@@ -32,14 +32,14 @@ def verifyParams():
     return
 #}}}
 date = '190415'
-output_name = 'echo_3_4'
+output_name = 'echo_4'
 adcOffset = 44
 carrierFreq_MHz = 14.86
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 8
+nScans = 16
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -52,10 +52,11 @@ if not phase_cycling:
 p90 = 4.15
 transient = 30.0
 repetition = 1e6
-SW_kHz = 75.0
+SW_kHz = 30.0
 nPoints = 2048
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
+deblank = 1.0
 tau = transient + acq_time*1e3*0.5 + tau_adjust
 pad = 2.0*tau - transient - acq_time*1e3
 print "ACQUISITION TIME:",acq_time,"ms"
@@ -82,10 +83,10 @@ if phase_cycling:
     SpinCore_pp.load([
         ('marker','start',1),
         ('phase_reset',1),
-        ('delay_TTL',1.0),
+        ('delay_TTL',deblank),
         ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
         ('delay',tau),
-        ('delay_TTL',1.0),
+        ('delay_TTL',deblank),
         ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
         ('delay',transient),
         ('acquire',acq_time),
@@ -97,10 +98,10 @@ if not phase_cycling:
     SpinCore_pp.load([
         ('marker','start',nScans),
         ('phase_reset',1),
-        ('delay_TTL',1.0),
+        ('delay_TTL',deblank),
         ('pulse_TTL',p90,0.0),
         ('delay',tau),
-        ('delay_TTL',1.0),
+        ('delay_TTL',deblank),
         ('pulse_TTL',2.0*p90,0.0),
         ('delay',transient),
         ('acquire',acq_time),
