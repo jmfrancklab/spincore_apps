@@ -2,11 +2,11 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190415','CPMG_1_3')
+        ('190415','CPMG_2')
         ]:
     SW_kHz = 30.0
     nPoints = 64
-    nEchoes = 32
+    nEchoes = 64
     nPhaseSteps = 4
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -14,6 +14,7 @@ for date,id_string in [
             directory = getDATADIR(
                 exp_type = 'test_equip'))
     s.set_units('t','s')
+    print ndshape(s)
     fl.next(id_string+'raw data ')
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
@@ -56,10 +57,17 @@ for date,id_string in [
     s.ft('t2')
     fl.image(s)
     s.ift('t2')
+    coh = s.C.smoosh(['ph1','tE','t2'],'t2')
+    coh_1 = s['ph1',-1].C
+    coh_2 = s['ph1',1].C
+    coh_1 = coh_1.C.smoosh(['tE','t2'],'t2')
+    coh_2 = coh_2.C.smoosh(['tE','t2'],'t2')
+    coh_1.setaxis('t2',orig_t[nPoints])
+    coh_2.setaxis('t2',orig_t[nPoints])
+    fl.next('plot')
+    fl.plot(abs(coh_1),alpha=0.5)
+    fl.plot(abs(coh_2),alpha=0.5)
     fl.show();quit()
-    #coh = s.C.smoosh(['ph1','tE','t2'],'t2')
-    coh = s['ph1',-1].C
-    coh = coh.C.smoosh(['tE','t2'],'t2')
     #print orig_t[:len(orig_t)/2];quit()
     coh.setaxis('t2',orig_t[:len(orig_t)/2]).set_units('t2','s')
     fl.next('CPMG')

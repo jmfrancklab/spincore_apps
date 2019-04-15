@@ -2,11 +2,11 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190116','T1CPMG_2')
+        ('190415','T1CPMG_1')
         ]:
-    SW_kHz = 60.0
+    SW_kHz = 30.0
     nPoints = 64
-    nEchoes = 64
+    nEchoes = 32
     nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -17,8 +17,8 @@ for date,id_string in [
     fl.next('raw data - no clock correction')
     fl.image(s)
     orig_t = s.getaxis('t')
-    p90_s = 0.87*1e-6
-    transient_s = 100.0*1e-6
+    p90_s = 4.15*1e-6
+    transient_s = 30.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
     pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
