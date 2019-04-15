@@ -56,8 +56,8 @@ set_field = False
 if set_field:
     B0 = 3497.25 # Determine this from Field Sweep
     API_sender(B0)
-date = '190410'
-output_name = 'nutation_4'
+date = '190415'
+output_name = 'nutation_2'
 adcOffset = 42
 carrierFreq_MHz = 14.86
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -80,7 +80,7 @@ tau = transient + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.0,20.0,20,endpoint=False)
+p90_range = linspace(1.0,8.0,20,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "***"
