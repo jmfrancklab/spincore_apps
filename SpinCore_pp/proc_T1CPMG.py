@@ -1,11 +1,15 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
+
 fl = figlist_var()
+plt.rcParams['figure.figsize'] = (8,6)
 for date,id_string in [
         ('190416','T1CPMG_3')
         ]:
+
     SW_kHz = 30.0
     nPoints = 64
+
     nEchoes = 32
     nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
@@ -19,9 +23,10 @@ for date,id_string in [
     orig_t = s.getaxis('t')
     p90_s = 4.15*1e-6
     transient_s = 30.0*1e-6
+    deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
-    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
+    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s - deblank
     tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
     print "ACQUISITION TIME:",acq_time_s,"s"
     print "TAU DELAY:",tau_s,"s"
@@ -103,7 +108,7 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag')
     fl.image(s.imag)
-    fit_T2 = False
+    fit_T2 = True
     if fit_T2:
         for index in r_[0:len(vd_list):1]:
             data_T2 = s['vd',index].C.sum('t2')
