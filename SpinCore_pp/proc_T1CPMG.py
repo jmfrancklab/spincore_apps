@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190415','T1CPMG_1')
+        ('190416','T1CPMG_3')
         ]:
     SW_kHz = 30.0
     nPoints = 64
@@ -64,6 +64,7 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('before phased - imag ft')
     fl.image(s.imag)
+    fl.show();quit()
     f_axis = s.fromaxis('t2')
     def costfun(p):
         zeroorder_rad,firstorder = p

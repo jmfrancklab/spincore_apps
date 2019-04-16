@@ -31,13 +31,13 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190415'
-output_name = 'echo_4_3'
-adcOffset = 44
+date = '190416'
+output_name = 'echo_2'
+adcOffset = 38 
 carrierFreq_MHz = 14.86
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 16
+nScans = 8 
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -49,7 +49,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.15
+p90 = 3.85
 transient = 30.0
 repetition = 1e6
 SW_kHz = 60.0
