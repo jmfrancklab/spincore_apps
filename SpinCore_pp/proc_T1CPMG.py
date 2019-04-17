@@ -4,11 +4,11 @@ from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 plt.rcParams['figure.figsize'] = (8,6)
 for date,id_string in [
-        ('190416','T1CPMG_3')
+        ('190416','T1CPMG_6_1')
         ]:
 
-    SW_kHz = 30.0
-    nPoints = 64
+    SW_kHz = 15.0
+    nPoints = 256
 
     nEchoes = 32
     nPhaseSteps = 2
@@ -21,8 +21,8 @@ for date,id_string in [
     fl.next('raw data - no clock correction')
     fl.image(s)
     orig_t = s.getaxis('t')
-    p90_s = 4.15*1e-6
-    transient_s = 30.0*1e-6
+    p90_s = 4.0*1e-6
+    transient_s = 500.0*1e-6
     deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
@@ -47,13 +47,16 @@ for date,id_string in [
     s.setaxis('nEchoes',r_[1:nEchoes+1])
     s.setaxis('t2',t2_axis).set_units('t2','s')
     s.setaxis('vd',vd_list).set_units('vd','s')
+    fl.next('before ph ft')
+    fl.image(s['t2':(2.5e-3,None)])
     s.ft(['ph1'])
     print ndshape(s)
     fl.next(id_string+' image plot coherence')
-    fl.image(s)
+    fl.image(s['t2':(2.5e-3,None)])
     s.ft('t2',shift=True)
     fl.next(id_string+' image plot coherence -- ft')
-    fl.image(s)
+    fl.image(s['t2':(2.5e-3,None)])
+    fl.show();quit()
     s.ift('t2')
     s.reorder('vd',first=False)
     coh = s.C.smoosh(['ph1','nEchoes','t2'],'t2').reorder('t2',first=False)

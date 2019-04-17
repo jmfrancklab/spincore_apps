@@ -2,12 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190415','CPMG_2')
+        ('190416','CPMG_4')
         ]:
-    SW_kHz = 30.0
-    nPoints = 64
-    nEchoes = 64
-    nPhaseSteps = 4
+    SW_kHz = 15.0
+    nPoints = 256
+    nEchoes = 32
+    nPhaseSteps =2 
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
