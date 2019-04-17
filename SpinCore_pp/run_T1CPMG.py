@@ -41,7 +41,7 @@ import time
 fl = figlist_var()
 
 date = '190416'
-output_name = 'T1CPMG_3'
+output_name = 'T1CPMG_4'
 clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 adcOffset = 38
 carrierFreq_MHz = 14.86 
