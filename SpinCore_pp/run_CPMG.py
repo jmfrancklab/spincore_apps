@@ -39,18 +39,18 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 
-date = '190415'
-output_name = 'CPMG_2'
-adcOffset = 44
+date = '190416'
+output_name = 'CPMG_4'
+adcOffset = 41
 carrierFreq_MHz = 14.86 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.15
-transient = 30.0
+p90 = 4.0
+transient = 100.0
 repetition = 1e6
 
-SW_kHz = 30.0
-nPoints = 64
+SW_kHz = 15.0
+nPoints = 256
 
 deblank = 1.0
 acq_time = nPoints/SW_kHz # ms
@@ -61,10 +61,10 @@ print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
 nScans = 4
-nEchoes = 64
+nEchoes = 32
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 2
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
@@ -87,16 +87,16 @@ if phase_cycling:
         ('marker','start',1),
         ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph1',r_[0,2]),
             ('delay',tau),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
+            ('pulse_TTL',2.0*p90,1),
             ('delay',transient),
             ('acquire',acq_time),
             ('delay',pad),
             ('marker','echo_label',(nEchoes-1)),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
+            ('pulse_TTL',2.0*p90,1),
             ('delay',transient),
             ('acquire',acq_time),
             ('delay',pad),
