@@ -4,7 +4,7 @@ fl = figlist_var()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 
 for date,id_string in [
-        ('190418','T1CPMG')
+        ('190418','T1CPMG_2')
         ]:
     SW_kHz = 15.0
     nPoints = 256
@@ -34,17 +34,19 @@ for date,id_string in [
     vd_list = s.getaxis('vd')
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
+    #{{{ for applying clock correction
+    clock_correction = False 
+    if clock_correction:
+        s.ft('t',shift=True)
+        clock_correction = -2.27/10. # radians per sec
+        s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+        s.ift('t')
+        fl.next('raw data - clock correction')
+        fl.image(s)
+    #}}}
     s.setaxis('t',None)
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
-    #{{{ for applying clock correction
-    #s.ft('t',shift=True)
-    #clock_correction = -10.51/6 # radians per second
-    #s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-    #s.ift('t')
-    #fl.next('raw data - clock correction')
-    #fl.image(s)
-    #}}}
     s.setaxis('tE',tE_axis).set_units('tE','s')
     s.setaxis('t2',t2_axis).set_units('t2','s')
     s.setaxis('vd',vd_list).set_units('vd','s')
@@ -56,7 +58,10 @@ for date,id_string in [
     s.ft('t2',shift=True)
     fl.next(id_string+' image plot coherence -- ft')
     fl.image(s)
+    s = s['ph1',1].C
+    fl.next('signal')
     s.ift('t2')
+    fl.image(s)
     s.reorder('vd',first=False)
     fl.show();quit()
     coh = s.C.smoosh(['ph1','nEchoes','t2'],'t2').reorder('t2',first=False)
