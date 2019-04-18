@@ -34,10 +34,10 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190410'
-clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-output_name = 'IR_1'
-adcOffset = 42
+date = '190417'
+clock_correction = -2.012266/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
+output_name = 'IR_3'
+adcOffset = 41
 carrierFreq_MHz = 14.86 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -45,10 +45,10 @@ nScans = 4
 nEchoes = 1
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.6
-transient = 10.0
-repetition = 5e6
-SW_kHz = 10.0
+p90 = 4.0
+transient = 100.0
+repetition = 1e6
+SW_kHz = 80.0
 nPoints = 128
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
@@ -63,8 +63,9 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[9.5e1,5e3,
-        5e4,1.4e5,1e6]
+#vd_list = r_[9.5e1,5e3,5e4,1.4e5,1e6]
+vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
+        
 for index,val in enumerate(vd_list):
     vd = val
     print "***"

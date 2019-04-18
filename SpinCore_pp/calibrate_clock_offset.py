@@ -1,3 +1,9 @@
+#To use, copy vd_list from an inversion recovery experiment,
+#and hook up TX into scope and make sure RX is covered with 50 ohm resistor
+#then run this program. The final data point will be the time-dependent
+#phase error of the board which can then be used to correct the signal acquired
+#in the inversion recovery experiment.
+
 from pyspecdata import *
 import os
 import SpinCore_pp
@@ -34,38 +40,34 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190103'
-clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-#clock_correction = 0
+date = '190417'
+#clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
+#clock_correction = -3.8/1.6
+#clock_correction = -0.05/10. + -3.55793/998.7
+clock_correction = 0
+#clock_correction = 1.20097294/10. - 7.09889739/10.
 output_name = 'calibrate_clock'
-adcOffset = 46
-carrierFreq_MHz = 14.46 
+adcOffset = 41
+carrierFreq_MHz = 14.86 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 # all times are in us
 # except acq_time in ms
-p90 = 0.8
-tau_adjust = 451.0
-transient = 500.0
+p90 = 4.0
+tau_adjust = 0.0
+transient = 100.0
 repetition = 1e6
-SW_kHz = 25.0
-nPoints = 128
+#SW_kHz = 80.0
+#nPoints = 128
+SW_kHz = 15.0
+nPoints = 256
 nScans = 1
 nEchoes = 1
 nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e3,
-        0.25e6,
-        0.5e6,
-        0.75e6,
-        1e6,
-        1.1e6,
-        1.5e6,
-        1.6e6,
-        3e6,
-        4.5e6,
-        6e6]
+#vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,5e6]
+vd_list = r_[9.5e1,5e3,6.5e4,8e4,9.2e4,1e5,1.7e5,1e6,3e6,5e6]
 #vd_list = r_[1e3,
 #        1e6,
 #        6e6,
@@ -150,4 +152,5 @@ vd_data = vd_data.angle.name('signal phase').set_units('rad')
 vd_data.data = vd_data.data.cumsum()
 fl.plot(vd_data,'o')
 fl.show()
+print vd_data
 
