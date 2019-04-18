@@ -13,7 +13,8 @@ fl.image(s)
 s.ft('t2',shift=True)
 #clock_correction = -2.012266/10. # radians per second
 #clock_correction = 5.35738828/10. # radians per second
-clock_correction = 5.76093969/10. # radians per second
+#clock_correction = 5.76093969/10. # radians per second
+clock_correction = -1.28/10. # radians per second
 #clock_correction = 0 # radians per second
 s *= exp(-1j*s.fromaxis('vd')*clock_correction)
 s.ift('t2')
