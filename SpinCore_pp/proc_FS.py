@@ -1,7 +1,7 @@
 from pyspecdata import *
 fl = figlist_var()
 for date,id_string in [
-        ('190417','FS'),
+        ('190418','FS_2'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'field_sweep'

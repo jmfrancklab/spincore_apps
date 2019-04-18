@@ -4,7 +4,7 @@ fl = figlist_var()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 
 for date,id_string in [
-        ('190416','T1CPMG_6_1')
+        ('190418','T1CPMG')
         ]:
     SW_kHz = 15.0
     nPoints = 256
@@ -20,44 +20,45 @@ for date,id_string in [
     fl.next('raw data - no clock correction')
     fl.image(s)
     orig_t = s.getaxis('t')
-    p90_s = 4.0*1e-6
-    transient_s = 100.0*1e-6
+    p90_s = 3.75*1e-6
+    transient_s = 50.0*1e-6
     deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
-    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
+    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s - deblank
     tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
     print "ACQUISITION TIME:",acq_time_s,"s"
     print "TAU DELAY:",tau_s,"s"
     print "TWICE TAU:",2.0*tau_s,"s"
     print "ECHO TIME:",tE_s,"s"
     vd_list = s.getaxis('vd')
-    t2_axis = linspace(0,s.getaxis('t')[nPoints],nPoints)
+    t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
-    s.ft('t',shift=True)
-    clock_correction = -10.51/6 # radians per second
-    s *= exp(-1j*s.fromaxis('vd')*clock_correction)
-    s.ift('t')
-    fl.next('raw data - clock correction')
-    fl.image(s)
     s.setaxis('t',None)
-    s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
+    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('nEchoes',r_[1:nEchoes+1])
+    #{{{ for applying clock correction
+    #s.ft('t',shift=True)
+    #clock_correction = -10.51/6 # radians per second
+    #s *= exp(-1j*s.fromaxis('vd')*clock_correction)
+    #s.ift('t')
+    #fl.next('raw data - clock correction')
+    #fl.image(s)
+    #}}}
+    s.setaxis('tE',tE_axis).set_units('tE','s')
     s.setaxis('t2',t2_axis).set_units('t2','s')
     s.setaxis('vd',vd_list).set_units('vd','s')
     fl.next('before ph ft')
-    fl.image(s['t2':(2.5e-3,None)])
+    fl.image(s)
     s.ft(['ph1'])
-    print ndshape(s)
     fl.next(id_string+' image plot coherence')
-    fl.image(s['t2':(2.5e-3,None)])
+    fl.image(s)
     s.ft('t2',shift=True)
     fl.next(id_string+' image plot coherence -- ft')
-    fl.image(s['t2':(2.5e-3,None)])
-    fl.show();quit()
+    fl.image(s)
     s.ift('t2')
     s.reorder('vd',first=False)
+    fl.show();quit()
     coh = s.C.smoosh(['ph1','nEchoes','t2'],'t2').reorder('t2',first=False)
     coh.setaxis('t2',orig_t).set_units('t2','s')
     s = s['ph1',1].C

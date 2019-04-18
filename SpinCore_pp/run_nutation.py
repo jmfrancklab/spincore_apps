@@ -52,14 +52,16 @@ def API_sender(value):
     time.sleep(5)
     return
 #}}}
-set_field = True
+#{{{ Edit here to set the actual field
+set_field = False
 if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
-date = '190417'
-output_name = 'nutation_3_1'
-adcOffset = 41
-carrierFreq_MHz = 14.86
+#}}}
+date = '190418'
+output_name = 'nutation_1_1'
+adcOffset = 38
+carrierFreq_MHz = 14.859884
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 2

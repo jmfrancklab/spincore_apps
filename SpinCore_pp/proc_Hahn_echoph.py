@@ -2,12 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190417','echo'),
+        ('190418','echo_5_1'),
         ]:
-    nPoints = 256
+    nPoints = 128
     nEchoes = 1
     nPhaseSteps = 8
-    SW_kHz = 2.0
+    SW_kHz = 15.0
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -32,7 +32,7 @@ for date,id_string in [
     fl.next(id_string+'raw data - chunking coh')
     fl.image(s)
     s = s['ph1',1]['ph2',0].C
-    s.setaxis('t2',s.getaxis('t2')+280)
+    s.setaxis('t2',s.getaxis('t2'))
     fl.next('freq-signal')
     fl.plot(s.real)
     fl.plot(s.imag)

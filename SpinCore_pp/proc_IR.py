@@ -1,8 +1,8 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190417'
-id_string = 'IR_3'
+date = '190418'
+id_string = 'IR_1'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
@@ -14,8 +14,8 @@ s.ft('t2',shift=True)
 #clock_correction = -2.012266/10. # radians per second
 #clock_correction = 5.35738828/10. # radians per second
 #clock_correction = 5.76093969/10. # radians per second
-clock_correction = -1.28/10. # radians per second
-#clock_correction = 0 # radians per second
+#clock_correction = -1.28/10. # radians per second
+clock_correction = 0 # radians per second
 s *= exp(-1j*s.fromaxis('vd')*clock_correction)
 s.ift('t2')
 fl.next('raw data - clock correction')
@@ -34,7 +34,7 @@ print ndshape(s)
 fl.next('image')
 fl.image(s)
 s.ft(['ph2','ph1'])
-#s.ft('t2')
+s.ft('t2')
 fl.next('image coherence')
 fl.image(s)
 data = s['ph2',1]['ph1',0].C

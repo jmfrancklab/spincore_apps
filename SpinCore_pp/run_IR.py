@@ -34,11 +34,12 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190417'
-clock_correction = -2.012266/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
-output_name = 'IR_3'
-adcOffset = 41
-carrierFreq_MHz = 14.86 
+date = '190418'
+#clock_correction = 4.275439/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
+clock_correction = 0
+output_name = 'IR_2'
+adcOffset = 40
+carrierFreq_MHz = 14.859807 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 4

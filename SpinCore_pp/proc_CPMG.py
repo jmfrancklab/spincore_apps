@@ -2,12 +2,12 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190416','CPMG_4')
+        ('190418','CPMG_1_1')
         ]:
     SW_kHz = 15.0
-    nPoints = 256
-    nEchoes = 32
-    nPhaseSteps =2 
+    nPoints = 128
+    nEchoes = 64
+    nPhaseSteps = 2 
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -20,11 +20,12 @@ for date,id_string in [
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
-    p90_s = 4.16*1e-6
-    transient_s = 30.0*1e-6
+    p90_s = 3.75*1e-6
+    transient_s = 50.0*1e-6
+    deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
-    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s
+    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s - deblank
     tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
     print "ACQUISITION TIME:",acq_time_s,"s"
     print "TAU DELAY:",tau_s,"s"
@@ -43,20 +44,19 @@ for date,id_string in [
     s.ft('t2', shift=True)
     fl.next(id_string+'raw data - chunking ft')
     fl.image(s)
-    clock_correction = -10.51/6 # radians per second
-    s * exp(-1j*s.fromaxis('tE')*clock_correction)
-    fl.next(id_string+'raw data - chunking, clock correction ft')
-    fl.image(s)
-    s.ift('t2')
-    fl.next(id_string+'raw data - chunking, clock correction')
-    fl.image(s)
+    #clock_correction = -10.51/6 # radians per second
+    #s * exp(-1j*s.fromaxis('tE')*clock_correction)
+    #fl.next(id_string+'raw data - chunking, clock correction ft')
+    #fl.image(s)
+    #s.ift('t2')
+    #fl.next(id_string+'raw data - chunking, clock correction')
+    #fl.image(s)
     s.ft(['ph1'])
-    fl.next(id_string+' image plot coherence')
-    fl.image(s)
-    fl.next(id_string+' image plot coherence -- ft')
-    s.ft('t2')
+    fl.next(id_string+' image plot coherence-- ft ')
     fl.image(s)
     s.ift('t2')
+    fl.next(id_string+' image plot coherence ')
+    fl.image(s)
     coh = s.C.smoosh(['ph1','tE','t2'],'t2')
     coh_1 = s['ph1',-1].C
     coh_2 = s['ph1',1].C
