@@ -3,7 +3,7 @@ from scipy.optimize import minimize
 fl = figlist_var()
 date = '190419'
 for id_string in [
-    'nutation_1',
+    'nutation_2_1',
     ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'nutation'

@@ -59,9 +59,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = '190419'
-output_name = 'nutation_1'
+output_name = 'nutation_2_1'
 adcOffset = 42
-carrierFreq_MHz = 14.861117
+carrierFreq_MHz = 14.861029
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 2
@@ -72,7 +72,7 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-deadtime = 100.0
+deadtime = 50.0
 repetition = 4e6
 SW_kHz = 80.0
 nPoints = 128
@@ -82,7 +82,7 @@ tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.0,20.0,20,endpoint=False)
+p90_range = linspace(5.0,10.0,10,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "***"

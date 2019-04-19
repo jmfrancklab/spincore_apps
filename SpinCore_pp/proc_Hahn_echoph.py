@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190419','echo_2_1'),
+        ('190419','echo_4_3'),
         ]:
     nPoints = 256
     nEchoes = 1
@@ -36,9 +36,11 @@ for date,id_string in [
     fl.next('freq-signal')
     fl.plot(s.real)
     fl.plot(s.imag)
+    fl.plot(abs(s),':')
     s.ift('t2')
     fl.next('time-signal')
     fl.plot(s.real)
     fl.plot(s.imag)
+    fl.plot(abs(s),':')
     fl.show();quit()
 fl.show()

@@ -37,15 +37,15 @@ def verifyParams():
 date = '190419'
 #clock_correction = 4.275439/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
 clock_correction = 0
-output_name = 'IR_1'
+output_name = 'IR_2_2'
 adcOffset = 42
-carrierFreq_MHz = 14.861117
+carrierFreq_MHz = 14.860888
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 4
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 3.9
+p90 = 3.75
 deadtime = 50.0
 repetition = 4e6
 SW_kHz = 15.0
@@ -66,7 +66,8 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 #vd_list = r_[6e4,6.5e4,7e4,7.5e4,8e4,8.5e4,9e4,9.5e4,1e5,1.5e5,2e5,2.5e5]
 #vd_list = r_[1e4,3e4,5e4,7e4,9e4,1e5,3e5,5e5,7e5,9e5,1e6]
 #vd_list = r_[1e1,1e2,1e3,1e4,1e5,1.3e5,2e5,5e5,8e5,1e6,2e6]
-vd_list = r_[5e4,8e4,9.5e4,1e5,1.3e5]
+#vd_list = r_[5e4,8e4,9.5e4,1e5,3e5,4e5,5e5,7e5]
+vd_list = r_[1e0,1e6]
 #vd_list = r_[1e0,1e1,1e2,1e3,1e4,3e4,6e4,6.5e4,7e4,7.5e4,8e4,8.5e4,9e4,9.5e4,1e5,1.5e5,2e5,2.5e5,3e5,6e5,1e6,2e6,6e6]
 for index,val in enumerate(vd_list):
     vd = val
