@@ -4,12 +4,12 @@ fl = figlist_var()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 
 for date,id_string in [
-        ('190418','T1CPMG_4')
+        ('190419','T1CPMG_1_1')
         ]:
     SW_kHz = 15.0
-    nPoints = 256
+    nPoints = 128
 
-    nEchoes = 32
+    nEchoes = 64
     nPhaseSteps = 2
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -35,10 +35,10 @@ for date,id_string in [
     t2_axis = linspace(0,acq_time_s,nPoints)
     tE_axis = r_[1:nEchoes+1]*tE_s
     #{{{ for applying clock correction
-    clock_correction = False 
-    if clock_correction:
+    clock_corr = True 
+    if clock_corr:
         s.ft('t',shift=True)
-        clock_correction = -2.27/10. # radians per sec
+        clock_correction = -12.4/10. # radians per sec
         s *= exp(-1j*s.fromaxis('vd')*clock_correction)
         s.ift('t')
         fl.next('raw data - clock correction')
