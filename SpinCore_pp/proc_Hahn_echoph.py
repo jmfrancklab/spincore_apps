@@ -2,9 +2,9 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190418','echo_6'),
+        ('190418','echo_8_1'),
         ]:
-    nPoints = 128
+    nPoints = 256
     nEchoes = 1
     nPhaseSteps = 8
     SW_kHz = 15.0

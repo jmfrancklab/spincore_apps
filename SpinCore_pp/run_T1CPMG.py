@@ -41,11 +41,12 @@ import time
 fl = figlist_var()
 
 date = '190418'
-output_name = 'T1CPMG_2'
+output_name = 'T1CPMG_3'
 #clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-clock_correction = 4.27/10.
-adcOffset = 40
-carrierFreq_MHz = 14.859807
+#clock_correction = 4.27/10.
+clock_correction = 0
+adcOffset = 41
+carrierFreq_MHz = 14.859665
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.75
@@ -63,7 +64,7 @@ pad = 2.0*tau - transient - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 4
+nScans = 16
 nEchoes = 32
 phase_cycling = True
 if phase_cycling:
@@ -74,7 +75,8 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 ##vd_list = r_[9.5e1,5e3,
 ##       5e4,6e4,6.5e4,9.5e4,1e5,1.1e5,1.4e5,1.5e5,1.7e5,2e5,1e6]
-vd_list = r_[2e1,9.5e1,1e2,5e3,6.5e4,8e4,9.2e4,1e5,1.7e5,1e6,3e6,5e6,1e7]
+#vd_list = r_[2e1,9.5e1,1e2,5e3,6.5e4,8e4,9.2e4,1e5,1.7e5,1e6,3e6,5e6,1e7]
+vd_list = r_[1e0,1e1,1e2,1e3,1e4,3e4,5e4,8e4,9.5e4,1e5,1.3e5,2e5,3e5,6e5,1e6,2e6,5e6]
 #vd_list = r_[9.5e1,5e3,1e6]
 for index,val in enumerate(vd_list):
     vd = val
