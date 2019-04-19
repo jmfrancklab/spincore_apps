@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190418','CPMG_1_1')
+        ('190418','CPMG_2')
         ]:
     SW_kHz = 15.0
     nPoints = 128

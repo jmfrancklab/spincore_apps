@@ -59,9 +59,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = '190418'
-output_name = 'nutation_1_1'
-adcOffset = 38
-carrierFreq_MHz = 14.859884
+output_name = 'nutation_2'
+adcOffset = 44
+carrierFreq_MHz = 14.86
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 2

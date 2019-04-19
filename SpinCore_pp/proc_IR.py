@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
 date = '190418'
-id_string = 'IR_5'
+id_string = 'IR_7_2'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
