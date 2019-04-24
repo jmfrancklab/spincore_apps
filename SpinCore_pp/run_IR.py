@@ -37,9 +37,9 @@ def verifyParams():
 date = '190423'
 #clock_correction = 4.275439/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
 clock_correction = 0
-output_name = 'IR_1'
+output_name = 'IR_4'
 adcOffset = 42
-carrierFreq_MHz = 14.860428
+carrierFreq_MHz = 14.860135
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 4
@@ -62,7 +62,10 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
+#vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
+#vd_list = r_[5e4,7e4,9e4,1e5,3e5,7e5,9e5]
+#vd_list = r_[7e4,7.5e4,8e4,8.5e4,9e4,9.5e4,9.8e4]
+vd_list = r_[9.8e4,9.9e4,1e5]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"

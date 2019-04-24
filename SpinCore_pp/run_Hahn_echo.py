@@ -32,12 +32,12 @@ def verifyParams():
     return
 #}}}
 date = '190423'
-output_name = 'echo_0'
+output_name = 'echo_1_1'
 adcOffset = 42
-carrierFreq_MHz = 14.860428
+carrierFreq_MHz = 14.860135
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:

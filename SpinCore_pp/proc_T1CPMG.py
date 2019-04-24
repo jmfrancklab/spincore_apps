@@ -4,7 +4,7 @@ fl = figlist_var()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 
 for date,id_string in [
-        ('190419','T1CPMG_1_1')
+        ('190423','T1CPMG_1')
         ]:
     SW_kHz = 15.0
     nPoints = 128

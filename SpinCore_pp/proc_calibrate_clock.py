@@ -2,9 +2,7 @@ from pyspecdata import *
 fl = figlist_var()
 date = '190423'
 for id_string in [
-        ('calibrate_clock_7'),
-        ('calibrate_clock_8'),
-        ('calibrate_clock_9'),
+        ('calibrate_clock_10'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
