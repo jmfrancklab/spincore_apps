@@ -11,9 +11,8 @@ s.rename('t','t2').set_units('t2','s')
 fl.next('raw data - no clock correction')
 fl.image(s)
 s.ft('t2',shift=True)
-#clock_correction = 11.99/4.99
 clock_correction = 0 # radians per second
-#clock_correction = 1.1/0.3 # radians per second
+clock_correction = 1.78/0.99
 s *= exp(-1j*s.fromaxis('vd')*clock_correction)
 s.ift('t2')
 fl.next('raw data - clock correction')

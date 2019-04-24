@@ -1,9 +1,19 @@
-#{{{
-#To use, copy vd_list from an inversion recovery experiment,
-#and hook up TX into scope and make sure RX is covered with 50 ohm resistor
-#then run this program. The final data point will be the time-dependent
-#phase error of the board which can then be used to correct the signal acquired
-#in the inversion recovery experiment.
+#{{{ Program doc
+r'''Use this program to determine the time-dependent phase error of the SpinCore
+board, specifically between the transmit clock (which gives the phase of the rf
+pulses) and the receiver clock (which mixes down the signal to give the acquired
+data).
+
+This program requires the spectrometer to be fully up and
+running, ready for signal acquisition (i.e., magnet on, amplifiers on).
+
+It collects data for a pulse sequence that consists of a phase reset - variable
+delay - spin echo.
+
+For best results, the variable delay list should match that
+of an inversion recovery or other similar experiment. It is for these types of experiments,
+during which long delays occur within the pulse sequence itself, that this phase drift can occur.
+'''
 #}}}
 from pyspecdata import *
 import os
@@ -41,10 +51,10 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190422'
+date = '190423'
 #clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 clock_correction = 0
-output_name = 'calibrate_clock_5_3'
+output_name = 'calibrate_clock_3'
 adcOffset = 42
 carrierFreq_MHz = 14.860428
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -52,8 +62,6 @@ amplitude = 1.0
 nScans = 1
 nEchoes = 1
 nPhaseSteps = 1 
-# all times are in us
-# except acq_time in ms
 p90 = 3.75
 deadtime = 50.0
 repetition = 4e6
@@ -87,8 +95,6 @@ for index,val in enumerate(vd_list):
     SpinCore_pp.load([
         ('marker','start',nScans),
         ('phase_reset',1),
-        ('delay_TTL',deblank),
-        ('pulse_TTL',2.0*p90,0.0),
         ('delay',vd),
         ('delay_TTL',deblank),
         ('pulse_TTL',p90,0.0),
@@ -158,5 +164,4 @@ vd_data = vd_data.angle.name('signal phase').set_units('rad')
 vd_data.data = vd_data.data.cumsum()
 fl.plot(vd_data,'o')
 fl.show()
-print vd_data
 

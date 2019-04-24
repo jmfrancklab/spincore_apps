@@ -1,11 +1,10 @@
 from pyspecdata import *
 fl = figlist_var()
-date = '190422'
+date = '190423'
 for id_string in [
-        ('calibrate_clock_5'),
-        ('calibrate_clock_5_1'),
-        ('calibrate_clock_5_2'),
-        ('calibrate_clock_5_3'),
+        ('calibrate_clock_1'),
+        ('calibrate_clock_2'),
+        ('calibrate_clock_3'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -13,6 +12,8 @@ for id_string in [
             directory = getDATADIR(exp_type = 'test_equip' ))
     s.rename('t','t2').set_units('t2','s')
     clock_correction = 0
+    #clock_correction = 1.78/0.99
+    #clock_correction = 0.486
     fl.next('image raw')
     fl.image(s)
     s *= exp(-1j*s.fromaxis('vd')*clock_correction)
