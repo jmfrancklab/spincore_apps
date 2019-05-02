@@ -45,9 +45,9 @@ for date,id_string in [
         fl.image(s)
     #}}}
     s.setaxis('t',None)
-    s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
+    s.chunk('t',['ph1','nEchoes','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
-    s.setaxis('tE',tE_axis).set_units('tE','s')
+    s.setaxis('nEchoes',r_[1:nEchoes+1])
     s.setaxis('t2',t2_axis).set_units('t2','s')
     s.setaxis('vd',vd_list).set_units('vd','s')
     fl.next('before ph ft')
@@ -58,27 +58,16 @@ for date,id_string in [
     s.ft('t2',shift=True)
     fl.next(id_string+' image plot coherence -- ft')
     fl.image(s)
-    s = s['ph1',1].C
-    fl.next('signal')
     s.ift('t2')
-    fl.image(s)
     s.reorder('vd',first=False)
-    fl.show();quit()
     coh = s.C.smoosh(['ph1','nEchoes','t2'],'t2').reorder('t2',first=False)
     coh.setaxis('t2',orig_t).set_units('t2','s')
     s = s['ph1',1].C
     s.reorder('vd',first=True)
     echo_center = abs(s)['nEchoes',0]['vd',0].argmax('t2').data.item()
-    #fl.next('bitch')
-    #for x,y in enumerate(vd_list):
-    #    fl.plot(s['nEchoes',0]['vd',x],label='%s'%x)
-    #fl.next('bitch imag')
-    #for x,y in enumerate(vd_list):
-    #    fl.plot(s.imag['nEchoes',0]['vd',x],label='%s'%x)
-    #fl.show();quit()
-    #s.setaxis('t2', lambda x: x-echo_center)
-    #fl.next('check center')
-    #fl.image(s)
+    s.setaxis('t2', lambda x: x-echo_center)
+    fl.next('check center')
+    fl.image(s)
     s.ft('t2')
     fl.next('before phased - real ft')
     fl.image(s.real)
@@ -101,7 +90,7 @@ for date,id_string in [
             minimizer_kwargs={"method":'L-BFGS-B'},
             callback=print_fun,
             stepsize=100.,
-            niter=100,
+            niter=200,
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
@@ -122,14 +111,14 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag')
     fl.image(s.imag)
-    fl.next('bitch')
-    for x,y in enumerate(vd_list):
-        fl.plot(s['nEchoes',0]['vd',x],label='%s'%x)
-    fl.next('bitch imag')
-    for x,y in enumerate(vd_list):
-        fl.plot(s.imag['nEchoes',0]['vd',x],label='%s'%x)
-    fl.show();quit()
-    fl.show();quit()
+    fl.next('echoes')
+    view_echoes = False
+    if view_echoes:
+        for x,y in enumerate(vd_list):
+            fl.plot(s['nEchoes',0]['vd',x],label='%s'%x)
+        fl.next('echoes imag')
+        for x,y in enumerate(vd_list):
+            fl.plot(s.imag['nEchoes',0]['vd',x],label='%s'%x)
     ##
     even_echo_center = abs(s)['ph1',1]['vd',0]['nEchoes',0].argmax('t2').data.item()
     odd_echo_center = abs(s)['ph1',-1]['vd',0]['nEchoes',1].argmax('t2').data.item()
