@@ -31,13 +31,13 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190418'
-output_name = 'echo_6'
-adcOffset = 40
-carrierFreq_MHz = 14.859807
+date = '190423'
+output_name = 'echo_1_1'
+adcOffset = 42
+carrierFreq_MHz = 14.860135
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -50,15 +50,15 @@ if not phase_cycling:
 # note that acq_time is always milliseconds
 #}}}
 p90 = 3.75
-transient = 50.0
-repetition = 1e6
+deadtime = 50.0
+repetition = 4e6
 SW_kHz = 15.0
-nPoints = 128
+nPoints = 256
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-tau = transient + acq_time*1e3*0.5 + tau_adjust
-pad = 2.0*tau - transient - acq_time*1e3 - deblank
+tau = deadtime + acq_time*1e3*0.5 + tau_adjust
+pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
@@ -88,7 +88,7 @@ if phase_cycling:
         ('delay',tau),
         ('delay_TTL',deblank),
         ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
-        ('delay',transient),
+        ('delay',deadtime),
         ('acquire',acq_time),
         ('delay',pad),
         ('delay',repetition),
@@ -103,7 +103,7 @@ if not phase_cycling:
         ('delay',tau),
         ('delay_TTL',deblank),
         ('pulse_TTL',2.0*p90,0.0),
-        ('delay',transient),
+        ('delay',deadtime),
         ('acquire',acq_time),
         ('delay',pad),
         ('delay',repetition),

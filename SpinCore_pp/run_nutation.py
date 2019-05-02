@@ -58,10 +58,10 @@ if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
 #}}}
-date = '190418'
-output_name = 'nutation_1_1'
-adcOffset = 38
-carrierFreq_MHz = 14.859884
+date = '190422'
+output_name = 'nutation_1'
+adcOffset = 42
+carrierFreq_MHz = 14.860888
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 2
@@ -72,17 +72,17 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-transient = 100.0
-repetition = 1e6
+deadtime = 50.0
+repetition = 4e6
 SW_kHz = 80.0
 nPoints = 128
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
-tau = transient + acq_time*1e3*0.5 + tau_adjust
+tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.0,20.0,20,endpoint=False)
+p90_range = linspace(5.0,10.0,10,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "***"
@@ -100,7 +100,7 @@ for index,val in enumerate(p90_range):
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
-            ('delay',transient),
+            ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
             ('jumpto','start')
@@ -114,7 +114,7 @@ for index,val in enumerate(p90_range):
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,0.0),
-            ('delay',transient),
+            ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
             ('jumpto','start')

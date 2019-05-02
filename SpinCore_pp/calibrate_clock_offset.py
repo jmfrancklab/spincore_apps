@@ -1,16 +1,27 @@
-#To use, copy vd_list from an inversion recovery experiment,
-#and hook up TX into scope and make sure RX is covered with 50 ohm resistor
-#then run this program. The final data point will be the time-dependent
-#phase error of the board which can then be used to correct the signal acquired
-#in the inversion recovery experiment.
+#{{{ Program doc
+r'''Use this program to determine the time-dependent phase error of the SpinCore
+board, specifically between the transmit clock (which gives the phase of the rf
+pulses) and the receiver clock (which mixes down the signal to give the acquired
+data).
 
+This program requires the spectrometer to be fully up and
+running, ready for signal acquisition (i.e., magnet on, amplifiers on).
+
+It collects data for a pulse sequence that consists of a phase reset - variable
+delay - spin echo.
+
+For best results, the variable delay list should match that
+of an inversion recovery or other similar experiment. It is for these types of experiments,
+during which long delays occur within the pulse sequence itself, that this phase drift can occur.
+'''
+#}}}
 from pyspecdata import *
 import os
 import SpinCore_pp
 import socket
 import sys
 import time
-init_logging(level='debug')
+#init_logging(level='debug')
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -40,35 +51,31 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190417'
+date = '190423'
 #clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 clock_correction = 0
-#clock_correction = 4.275439/10. # radians per second
-output_name = 'calibrate_clock'
-adcOffset = 41
-carrierFreq_MHz = 14.86 
+output_name = 'calibrate_clock_11'
+adcOffset = 42
+carrierFreq_MHz = 14.860135
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-# all times are in us
-# except acq_time in ms
-p90 = 4.0
-tau_adjust = 0.0
-transient = 100.0
-repetition = 1e6
-SW_kHz = 80.0
-nPoints = 128
 nScans = 1
 nEchoes = 1
 nPhaseSteps = 1 
+p90 = 3.75
+deadtime = 50.0
+repetition = 4e6
+deblank = 1.0
+SW_kHz = 15.0
+nPoints = 128
+acq_time = nPoints/SW_kHz
+tau_adjust = 0.0
+tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 data_length = 2*nPoints*nEchoes*nPhaseSteps
+print "ACQUISITION TIME:",acq_time,"ms"
+print "TAU DELAY:",tau,"us"
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
-#vd_list = r_[9.5e1,5e3,6.5e4,8e4,9.2e4,1e5,1.7e5,1e6,3e6,5e6]
-#vd_list = r_[1e3,
-#        1e6,
-#        6e6,
-#        9e6]
-#vd_list = r_[1e3,3e3,5e3]
+vd_list = r_[1e0,1e1,1e2,5e3,5e4,7.5e4,8.5e4,9e4,9.5e4,9.6e4,9.7e4,9.8e4,9.9e4,1e5,3e5,7e5,1e6]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -76,16 +83,17 @@ for index,val in enumerate(vd_list):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    tau = (acq_time*1000.0+transient+tau_adjust)/2.0
     SpinCore_pp.init_ppg();
     SpinCore_pp.load([
         ('marker','start',nScans),
         ('phase_reset',1),
         ('delay',vd),
-        ('pulse',p90,0.0),
+        ('delay_TTL',deblank),
+        ('pulse_TTL',p90,0.0),
         ('delay',tau),
-        ('pulse',2.0*p90,0.0),
-        ('delay',transient),
+        ('delay_TTL',deblank),
+        ('pulse_TTL',2.0*p90,0.0),
+        ('delay',deadtime),
         ('acquire',acq_time),
         ('delay',repetition),
         ('jumpto','start')
@@ -148,5 +156,4 @@ vd_data = vd_data.angle.name('signal phase').set_units('rad')
 vd_data.data = vd_data.data.cumsum()
 fl.plot(vd_data,'o')
 fl.show()
-print vd_data
 

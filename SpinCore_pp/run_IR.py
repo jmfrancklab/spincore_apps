@@ -34,29 +34,27 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190418'
+date = '190423'
 #clock_correction = 4.275439/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
 clock_correction = 0
-output_name = 'IR_2'
-adcOffset = 40
-carrierFreq_MHz = 14.859807 
+output_name = 'IR_4'
+adcOffset = 42
+carrierFreq_MHz = 14.860135
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 4
 nEchoes = 1
-nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.0
-transient = 100.0
-repetition = 1e6
-SW_kHz = 80.0
+p90 = 3.75
+deadtime = 50.0
+repetition = 4e6
+SW_kHz = 15.0
 nPoints = 128
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
-tau = transient + acq_time*1e3*0.5 + tau_adjust
+tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
-data_length = 2*nPoints*nEchoes*nPhaseSteps
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8 
@@ -64,9 +62,10 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list = r_[9.5e1,5e3,5e4,1.4e5,1e6]
-vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
-        
+#vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
+#vd_list = r_[5e4,7e4,9e4,1e5,3e5,7e5,9e5]
+#vd_list = r_[7e4,7.5e4,8e4,8.5e4,9e4,9.5e4,9.8e4]
+vd_list = r_[9.8e4,9.9e4,1e5]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -87,7 +86,7 @@ for index,val in enumerate(vd_list):
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,0.0),
-            ('delay',transient),
+            ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
             ('jumpto','start')
@@ -104,7 +103,7 @@ for index,val in enumerate(vd_list):
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,0.0),
-            ('delay',transient),
+            ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
             ('jumpto','start')
