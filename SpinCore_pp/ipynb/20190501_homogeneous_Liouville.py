@@ -1,14 +1,14 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[8]:
 
 
 from pyspecdata import *
 from scipy.linalg import expm
 
 
-# In[ ]:
+# In[9]:
 
 
 Iz = 0.5*array([[1,0],[0,-1]],dtype=complex128)
@@ -17,11 +17,11 @@ Iy = 0.5*array([[0,-1j],[1j,0]],dtype=complex128)
 E = array([[1,0],[0,1]],dtype=complex128)
 
 
-# In[ ]:
+# In[39]:
 
 
-# E, X, Y, Z, this time based off of Cavanagh (p264, [5.63])
-# specifically an x-pulse
+#E, X, Y, Z, this time based off of Cavanagh (p264, [5.63])
+#specifically an x-pulse
 def pulse(th):
     matrix_rep = array( [ [1,0,0,0]
                         , [0,cos(th),0,-sin(th)]
@@ -30,7 +30,20 @@ def pulse(th):
     return matrix_rep
 
 
-# In[ ]:
+# In[40]:
+
+
+#E, X, Y, Z, this time based off of Cavanagh (p264, [5.63])
+#specifically an x-pulse, including relaxation
+def pulse_imp(th,T1,T2):
+    matrix_rep = array( [ [1,0,0,0]
+                        , [0,cos(th)+(1./T2),0,-sin(th)]
+                        , [0,0,1+(1./T2),0]
+                        , [-1./T1,sin(th),0,cos(th)+(1./T1)]], dtype=complex128 )
+    return matrix_rep
+
+
+# In[41]:
 
 
 def gamma(T1,T2):
@@ -41,15 +54,37 @@ def gamma(T1,T2):
                  ], dtype=complex128)
 
 
-# In[ ]:
+# In[42]:
+
+
+#Note, can either re-arrange the upper 4x4 in [30] of Allard and Hard 2001
+#or can rearrange the general form provided on p13 in Cavanagh,
+#either way, working in the rotating frame
+#offset refers to amount off resonance (function of B0)
+#freq is a function of B1
+
+
+# In[43]:
+
+
+def gamma_imp(T1,T2,offset,freq):
+    return array([ [0,0,0,0]
+                  ,[0,1./T2,-offset,-freq]
+                  ,[0,offset,1./T2,freq]
+                  ,[-1./T1+freq,-freq,0,1./T1]
+                 ], dtype=complex128)
+
+
+# In[44]:
 
 
 Liou_vec = array([[1],[0],[0],[1]],dtype=complex128)
 
 
-# In[ ]:
+# In[55]:
 
 
+# just relaxation
 T1_grid = logspace(-3,0,30)
 T2_grid = linspace(1e-3,2,30)
 results = ndshape([len(T1_grid),len(T2_grid)],['T1','T2']).alloc()
@@ -57,10 +92,12 @@ results.setaxis('T1',log10(T1_grid))
 results.setaxis('T2',T2_grid)
 delay = 10e-3
 n_sat = 20
-counter = 0
-P = pulse(pi/2)
+offset = 0
+freq = 0
+#P = pulse_imp(pi/2,T1,T2)
 for i,T1 in enumerate(T1_grid):
     for j,T2 in enumerate(T2_grid):
+        P = pulse(pi/2)
         R = expm(-delay*gamma(T1,T2))
         R = complex128(R)
         equil_vec = array([[1],[0],[0],[1]],dtype=complex128)
@@ -76,19 +113,47 @@ with figlist_var() as fl:
     fl.image(abs(results))
 
 
-# In[ ]:
+# In[56]:
+
+
+# still just relaxation, using improved relaxation superoperator
+T1_grid = logspace(-3,0,30)
+T2_grid = linspace(1e-3,2,30)
+results = ndshape([len(T1_grid),len(T2_grid)],['T1','T2']).alloc()
+results.setaxis('T1',log10(T1_grid))
+results.setaxis('T2',T2_grid)
+delay = 10e-3
+n_sat = 20
+offset = 0
+freq = 0
+#P = pulse_imp(pi/2,T1,T2)
+for i,T1 in enumerate(T1_grid):
+    for j,T2 in enumerate(T2_grid):
+        P = pulse(pi/2)
+        R = expm(-delay*gamma_imp(T1,T2,offset,freq))
+        R = complex128(R)
+        equil_vec = array([[1],[0],[0],[1]],dtype=complex128)
+        result = equil_vec
+        for k in xrange(n_sat-1):
+            result = P.dot(result)
+            result = R.dot(result)
+        results['T1',i]['T2',j] = P.dot(result)[1]-1j*P.dot(result)[2]
+
+results.rename('T1','$log_{10}(T_1)$')
+with figlist_var() as fl:
+    fl.next('results')
+    fl.image(abs(results))
 
 
 # Got expected result using Cavanagh rotation matrix
 
-
-# In[ ]:
+# In[7]:
 
 
 Liou_vec = array([[1],[0],[0],[1]],dtype=complex128)
 
 
-# In[ ]:
+# In[8]:
 
 
 interpulse = 1
