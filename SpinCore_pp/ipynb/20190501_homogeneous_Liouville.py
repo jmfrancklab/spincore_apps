@@ -1,15 +1,17 @@
 
 # coding: utf-8
 
-# In[8]:
+# In[ ]:
 
 
 from pyspecdata import *
 from scipy.linalg import expm
 
 
-# In[9]:
+# In[ ]:
 
+
+# Operators
 
 Iz = 0.5*array([[1,0],[0,-1]],dtype=complex128)
 Ix = 0.5*array([[0,1],[1,0]],dtype=complex128)
@@ -17,9 +19,10 @@ Iy = 0.5*array([[0,-1j],[1j,0]],dtype=complex128)
 E = array([[1,0],[0,1]],dtype=complex128)
 
 
-# In[39]:
+# In[ ]:
 
 
+# RF pulse matrix in rotating frame
 #E, X, Y, Z, this time based off of Cavanagh (p264, [5.63])
 #specifically an x-pulse
 def pulse(th):
@@ -30,11 +33,43 @@ def pulse(th):
     return matrix_rep
 
 
-# In[40]:
+# In[ ]:
 
 
-#E, X, Y, Z, this time based off of Cavanagh (p264, [5.63])
-#specifically an x-pulse, including relaxation
+# RF pulse matrix in rotating frame, for 4-step phase cycle
+def pulse(phase,theta):
+    if 'x' in phase:
+        matrix_rep = array([ [1,0,0,0]
+                           , [0,cos(theta),0,-sin(theta)]
+                           , [0,0,1,0]
+                           , [0,sin(theta),0,cos(theta)]], dtype=complex128)
+
+        if phase == '-x':
+            matrix_rep[1,-1] = matrix_rep[1,-1]*-1
+            matrix_rep[-1,1] = matrix_rep[1,-1]*-1
+            return matrix_rep
+        else:
+            return matrix_rep
+    elif 'y' in phase:
+        matrix_rep = array( [ [1,0,0,0]
+            , [0,1,0,0]
+            , [0,0,cos(theta),-sin(theta)]
+            , [0,0,sin(theta),cos(theta)]], dtype=complex128 )
+        if phase == '-y':
+            matrix_rep[2,-1] = matrix_rep[2,-1]*-1
+            matrix_rep[-1,2] = matrix_rep[2,-1]*-1
+            return matrix_rep
+        else:
+            return matrix_rep
+    else:
+        print "Cannot understand specified phase of rf pulse"
+
+
+# In[ ]:
+
+
+# RF pulse matrix with relaxation, in rotating frame
+#including relaxation
 def pulse_imp(th,T1,T2):
     matrix_rep = array( [ [1,0,0,0]
                         , [0,cos(th)+(1./T2),0,-sin(th)]
@@ -43,9 +78,11 @@ def pulse_imp(th,T1,T2):
     return matrix_rep
 
 
-# In[41]:
+# In[ ]:
 
 
+# Relaxation matrix
+#standard relaxation superoperator
 def gamma(T1,T2):
     return array([ [0,0,0,0]
                   ,[0,1./T2,0,0]
@@ -54,66 +91,65 @@ def gamma(T1,T2):
                  ], dtype=complex128)
 
 
-# In[42]:
+# In[ ]:
 
 
+# Improved relaxation matrix
+#Improved relaxation superoperator
 #Note, can either re-arrange the upper 4x4 in [30] of Allard and Hard 2001
 #or can rearrange the general form provided on p13 in Cavanagh,
 #either way, working in the rotating frame
 #offset refers to amount off resonance (function of B0)
 #freq is a function of B1
 
-
-# In[43]:
-
-
-def gamma_imp(T1,T2,offset,freq):
+def gamma_imp(T1,T2,offset,omega1):
     return array([ [0,0,0,0]
-                  ,[0,1./T2,-offset,-freq]
-                  ,[0,offset,1./T2,freq]
-                  ,[-1./T1+freq,-freq,0,1./T1]
+                  ,[0,1./T2,-offset,-omega1]
+                  ,[0,offset,1./T2,omega1]
+                  ,[-1./T1+omega1,-omega1,0,1./T1]
                  ], dtype=complex128)
 
 
-# In[44]:
+# In[ ]:
 
 
 Liou_vec = array([[1],[0],[0],[1]],dtype=complex128)
 
 
-# In[55]:
+# In[ ]:
 
 
 # just relaxation
 T1_grid = logspace(-3,0,30)
 T2_grid = linspace(1e-3,2,30)
-results = ndshape([len(T1_grid),len(T2_grid)],['T1','T2']).alloc()
+results = ndshape([len(T1_grid),len(T2_grid),4],['T1','T2','ph']).alloc()
 results.setaxis('T1',log10(T1_grid))
 results.setaxis('T2',T2_grid)
+results.setaxis('ph',r_[0:4])
 delay = 10e-3
 n_sat = 20
 offset = 0
 freq = 0
 #P = pulse_imp(pi/2,T1,T2)
-for i,T1 in enumerate(T1_grid):
-    for j,T2 in enumerate(T2_grid):
-        P = pulse(pi/2)
-        R = expm(-delay*gamma(T1,T2))
-        R = complex128(R)
-        equil_vec = array([[1],[0],[0],[1]],dtype=complex128)
-        result = equil_vec
-        for k in xrange(n_sat-1):
-            result = P.dot(result)
-            result = R.dot(result)
-        results['T1',i]['T2',j] = P.dot(result)[1]-1j*P.dot(result)[2]
+for h,rf_phase in enumerate(['x','y','-x','-y']):
+    for i,T1 in enumerate(T1_grid):
+        for j,T2 in enumerate(T2_grid):
+            P = pulse(rf_phase,pi/2)
+            R = expm(-delay*gamma(T1,T2))
+            R = complex128(R)
+            equil_vec = array([[1],[0],[0],[1]],dtype=complex128)
+            result = equil_vec
+            for k in xrange(n_sat-1):
+                result = P.dot(result)
+                result = R.dot(result)
+            results['T1',i]['T2',j]['ph',h] = P.dot(result)[1]-1j*P.dot(result)[2]
+    #results.rename('T1','$log_{10}(T_1)$')
+    with figlist_var() as fl:
+        fl.next('results'+rf_phase)
+        fl.image((results['ph',h]))
 
-results.rename('T1','$log_{10}(T_1)$')
-with figlist_var() as fl:
-    fl.next('results')
-    fl.image(abs(results))
 
-
-# In[56]:
+# In[ ]:
 
 
 # still just relaxation, using improved relaxation superoperator
@@ -129,7 +165,7 @@ freq = 0
 #P = pulse_imp(pi/2,T1,T2)
 for i,T1 in enumerate(T1_grid):
     for j,T2 in enumerate(T2_grid):
-        P = pulse(pi/2)
+        P = pulse('x',pi/2)
         R = expm(-delay*gamma_imp(T1,T2,offset,freq))
         R = complex128(R)
         equil_vec = array([[1],[0],[0],[1]],dtype=complex128)
@@ -147,13 +183,13 @@ with figlist_var() as fl:
 
 # Got expected result using Cavanagh rotation matrix
 
-# In[7]:
+# In[ ]:
 
 
 Liou_vec = array([[1],[0],[0],[1]],dtype=complex128)
 
 
-# In[8]:
+# In[ ]:
 
 
 interpulse = 1
