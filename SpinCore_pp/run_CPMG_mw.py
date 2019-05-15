@@ -45,28 +45,26 @@ import time
 fl = figlist_var()
 
 # Parameters for Bridge12
-#powers = r_[1e-3:1.:20j]
-#dB_settings = round_(2*log10(powers/1e-3)*10.)/2
-#dB_settings = unique(dB_settings)
-#def check_for_3dB_step(x):
-#    assert len(x.shape) == 1
-#    if any(diff(x) > 3.0):
-#        idx = nonzero(diff(x) > 3)[0][0]
-#        x = insert(x,idx+1,r_[x[idx]:x[idx+1]:3.0][1:])
-#        x = check_for_3dB_step(x)
-#        return x
-#    else:
-#        return x
-#ini_len = len(dB_settings)
-#dB_settings = check_for_3dB_step(dB_settings)
-#print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
-#powers = 1e-3*10**(dB_settings/10.)
-powers = r_[0:4]
-dB_settings = powers
+powers = r_[1e-3:1.:20j]
+dB_settings = round_(2*log10(powers/1e-3)*10.)/2
+dB_settings = unique(dB_settings)
+def check_for_3dB_step(x):
+    assert len(x.shape) == 1
+    if any(diff(x) > 3.0):
+        idx = nonzero(diff(x) > 3)[0][0]
+        x = insert(x,idx+1,r_[x[idx]:x[idx+1]:3.0][1:])
+        x = check_for_3dB_step(x)
+        return x
+    else:
+        return x
+ini_len = len(dB_settings)
+dB_settings = check_for_3dB_step(dB_settings)
+print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
+powers = 1e-3*10**(dB_settings/10.)
 
 
 date = '190515'
-output_name = 'CPMG_DNP_test_1'
+output_name = 'CPMG_DNP_1'
 adcOffset = 42
 carrierFreq_MHz = 14.892200
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -180,14 +178,24 @@ with Bridge12() as b:
     DNP_data.setaxis('t',time_axis).set_units('t','s')
     DNP_data['power',0] = data
     # Begin actual Bridge12 amplifier set up
-    # MORE CODE GOES HERE
+    b.lock_on_dip(ini_range=(9.81e9,9.83e9))
+    for j in xrange(3):
+        b.zoom(dBm_increment=3)
+    zoom_return = b.zoom(dBm_increment=2)
+    dip_f = zoom_return[2] # frequency of MW radiation needed
+    b.set_freq(dip_f)
+    rx_array = empty_like(dB_settings)
     for j,this_power in enumerate(dB_settings):
+        print "\n*** *** *** *** ***\n"
+        print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
+        b.set_power(this_power)
+        rx_array[j] = b.rxpowermv_float()
+        print "\n*** *** *** *** ***\n"
         print "\n*** *** ***\n"
         print "CONFIGURING TRANSMITTER..."
         SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         print "\nTRANSMITTER CONFIGURED."
         print "***"
-        print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         print "CONFIGURING RECEIVER..."
         acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
         # acq_time is in msec!
@@ -262,6 +270,7 @@ with Bridge12() as b:
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
         DNP_data['power',j+1] = data
+DNP_data.set_prop('rx_array',rx_array)
 SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
