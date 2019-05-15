@@ -5,19 +5,52 @@
 # ``jmfranck-pi2.syr.edu`` (if on the internet) or ``192.168.1.20`` (if on local network)
 from serial.tools.list_ports import comports
 from serial import Serial
+from scipy.interpolate import interp1d
+from numpy import *
 import time
+
+def generate_beep(f,dur):
+    # do nothing -- can be used to generate a beep, but platform-dependent
+    return
+def convert_to_mv(x):
+    "Go from dB values back to mV values"
+    y = r_[0.:600.:1000j]
+    func = interp1d(convert_to_power(y),y)
+    retval = func(x)
+    if retval.size == 1:
+        return retval.item()
+    else:
+        return retval
+def convert_to_power(x):
+    "Convert Rx mV values to powers (dBm)"
+    y = 0
+    c = r_[2.78135,25.7302,5.48909]
+    for j in range(len(c)):
+        y += c[j] * (x*1e-3)**(len(c)-j)
+    return log10(y)*10.0+2.2
 
 class Bridge12 (Serial):
     def __init__(self, *args, **kwargs):
         # Grab the port labeled as Arduino (since the Bridge12 microcontroller is an Arduino)
-        portlist = [j.device for j in comports() if u'Arduino Due' in j.description]
+        cport = comports()
+        if type(cport) is list and hasattr(cport[0],'device'):
+            portlist = [j.device for j in comports() if u'Arduino Due' in j.description]
+        elif type(cport.next()) is tuple:
+            print "using fallback comport method"
+            portlist = [j[0] for j in comports() if u'Arduino Due' in j[1]]
+        else:
+            raise RuntimeError("Not sure how how to grab the USB ports!!!")
         assert len(portlist)==1, "I need to see exactly one Arduino Due hooked up to the Raspberry Pi"
         thisport = portlist[0]
         super(self.__class__, self).__init__(thisport, timeout=3, baudrate=115200)
         # this number represents the highest possible reasonable value for the
         # Rx power -- it is lowered as we observe the Tx values
-        self.safe_rx_level_int = 80
+        self.safe_rx_level_int = int(convert_to_mv(12.)*10+0.5)# i.e. a setting of 12 dB for the absolute threshold
+        if self.safe_rx_level_int > 5000: self.safe_rx_level_int = 5000 # a 7 dBm setting shoudn't exceed this
         self.frq_sweep_10dBm_has_been_run = False
+        self.tuning_curve_data = {}
+        self._inside_with_block = False
+        self.fit_data = {}
     def bridge12_wait(self):
         #time.sleep(5)
         def look_for(this_str):
@@ -31,6 +64,7 @@ class Bridge12 (Serial):
                     break
         look_for('MPS Started')
         look_for('System Ready')
+        look_for('Synthesizer detected')
         return
     def help(self):
         self.write("help\r") #command for "help"
@@ -152,7 +186,7 @@ class Bridge12 (Serial):
             i = self.power_int_singletry()
         return h
     def set_power(self,dBm):
-        """set *and check* power
+        """set *and check* power.  On successful completion, set `self.cur_pwr_int` to 10*(power in dBm).
 
         Need to have 2 safeties for set_power:
 
@@ -166,32 +200,39 @@ class Bridge12 (Serial):
         dBm: float
             power values -- give a dBm (not 10*dBm) as a floating point number
         """
-        setting = int(10*dBm+0.5)
-        if setting > 150:
-            raise ValueError("You are not allowed to use this function to set a power of greater than 15 dBm for safety reasons")
+        if not self._inside_with_block: raise ValueError("you MUST use a with block so the error handling works well")
+        setting = int(10*round(dBm*2)/2.+0.5)# find closest 0.5 dBm, and round
+        if setting > 400:
+            raise ValueError("You are not allowed to use this function to set a power of greater than 40 dBm for safety reasons")
         elif setting < 0:
             raise ValueError("Negative dBm -- not supported")
-        elif setting >= 100:
+        elif setting > 100:
             if not self.frq_sweep_10dBm_has_been_run:
                 raise RuntimeError("Before you try to set the power above 10 dBm, you must first run a tuning curve at 10 dBm!!!")
             if not hasattr(self,'cur_pwr_int'):
                 raise RuntimeError("Before you try to set the power above 10 dBm, you must first set a lower power!!!")
             if setting > 30+self.cur_pwr_int: 
-                raise RuntimeError("Cannot raise power by this much! We are over 10dBm.")
+                raise RuntimeError("Once you are above 10 dBm, you must raise the power in MAX 3 dB increments.  The power is currently %g, and you tried to set it to %g -- this is not allowed!"%(self.cur_pwr_int/10.,setting/10.))
         self.write('power %d\r'%setting)
+        if setting > 0: self.rxpowermv_int_singletry() # doing this just for safety interlock
         for j in range(10):
             result = self.power_int()
+            if setting > 0: self.rxpowermv_int_singletry() # doing this just for safety interlock
             if result == setting:
                 self.cur_pwr_int = result
                 return
-        raise RuntimeError("After checking status 10 times, I can't get the power to change")
+            time.sleep(10e-3)
+        raise RuntimeError(("After checking status 10 times, I can't get the"
+            "power to change: I'm trying to set to %d/10 dBm, but the Bridge12"
+            "keeps replying saying that it's set to %d/10"
+            "dBm")%(setting,result))
     def rxpowermv_int_singletry(self):
+        """read the integer value for the Rx power (which is 10* the value in mV).  Also has a software interlock so that if the Rx power ever exceeds self.safe_rx_level_int, then the amp shuts down."""
         self.write('rxpowermv?\r')
         retval = self.readline()
         retval = int(retval)
         if retval > self.safe_rx_level_int:
-            self.safe_shutdown()
-            raise RuntimeError("Read an unsafe Rx level of %0.fmV"%(retval/10))
+            raise RuntimeError("Read an unsafe Rx level of %0.1fmV"%(retval/10.))
         return retval
     def rxpowermv_float(self):
         "need two consecutive responses that match"
@@ -228,6 +269,9 @@ class Bridge12 (Serial):
         Hz: float
             frequency values -- give a Hz as a floating point number
         """
+        if hasattr(self,'freq_bounds'):
+            assert Hz >= self.freq_bounds[0]
+            assert Hz <= self.freq_bounds[1]
         setting = int(Hz/1e3+0.5)
         self.write('freq %d\r'%(setting))
         if self.freq_int() != setting:
@@ -241,10 +285,13 @@ class Bridge12 (Serial):
         "return the frequency, in kHz (since it's set as an integer kHz)"
         self.write('freq?\r')
         return int(self.readline())
-    def freq_sweep(self,freq):
+    def freq_sweep(self,freq,dummy_readings=1,fast_run=True):
         """Sweep over an array of frequencies.
+        **Must** be run at 10 dBm the first time around; will fail otherwise.
 
-        Also includes a safety for the return power. 
+        Add arrays to the `self.tuning_curve_data` dictionary,
+        stored with keys XXXdBm_rx XXXdBm_tx and XXXdBm_freq
+        which store the tuning curve data.
 
         Parameters
         ==========
@@ -263,69 +310,161 @@ class Bridge12 (Serial):
         txvalues = zeros(len(freq))
         if not self.frq_sweep_10dBm_has_been_run:
             if self.cur_pwr_int != 100:
-                self.safe_shutdown()
                 raise ValueError("You must run the frequency sweep for the first time at 10 dBm")
         #FREQUENCY AND RXPOWER SWEEP
+        for j in range(dummy_readings):
+            self.set_freq(freq[0])  #is this what I would put here (the 'f')?
+            time.sleep(10e-3) # allow synthesizer to settle
+            _ = self.txpowermv_float()
+            _ = self.rxpowermv_float()
         for j,f in enumerate(freq):
             generate_beep(500, 300)
-            b.set_freq(f)  #is this what I would put here (the 'f')?
+            self.set_freq(f)  #is this what I would put here (the 'f')?
+            time.sleep(1e-3) # determined this by making sure 11 dB and 10 dB curves line up
             txvalues[j] = self.txpowermv_float()
-            # here is where I include the rxpower safety: is this a good spot, or should I include it right before the return function? 
-            # I put it here so that if any of the values are too high WHILE reading, it will immediately turn off.
-            if self.rxpowermv_float() < (self.txpowermv_float()/1.2): 
+            if fast_run:
                 rxvalues[j] = self.rxpowermv_float()
-            else:                     
-                self.safe_shutdown()
-                raise RuntimeError("Ratio of Rxpower to Txpower is too high!!!"),
+            else:
+                # the rxpowermv itself demands two consecutive responses to match
+                # this then makes sure that three of those measurements match (so essentially, six in a row must match)
+                def grab_consist_power():
+                    rx_try1 = self.rxpowermv_float()
+                    rx_try2 = self.rxpowermv_float()
+                    for j in range(20):
+                        rx_try3 = self.rxpowermv_float()
+                        if rx_try1 == rx_try2 and rx_try2 == rx_try3:
+                            return rx_try1
+                        else:
+                            rx_try1,rx_try2 = rx_try2,rx_try3
+                    raise ValueError("I tried 20 times to grab a consistent power, and could not (most recent %f, %f, %f)"%(rx_try1,rx_try2,rx_try3))
+                rxvalues[j] = grab_consist_power()
         if self.cur_pwr_int == 100:
             self.frq_sweep_10dBm_has_been_run = True
             # reset the safe rx level to the top of the tuning curve at 10 dBm
             # (this is the condition where we are reflecting 10 dBm onto the Rx diode)
-            self.safe_rx_level_int = int(10*rxvalues.max())
+            #self.safe_rx_level_int = int(10*rxvalues.max())
+        sweep_name = '%gdBm'%(self.cur_pwr_int/10.)
+        self.tuning_curve_data[sweep_name+'_tx'] = txvalues
+        self.tuning_curve_data[sweep_name+'_rx'] = rxvalues
+        self.tuning_curve_data[sweep_name+'_freq'] = freq
+        self.last_sweep_name = sweep_name
         return rxvalues, txvalues
-    # ### Need an increase_power_zoom function for zooming in on the tuning dip:
-    def increase_power_zoom(self, dBm, freq):
-         """Zoom in on freqs at half maximum of previous RX power, increase power by 3dBm, and run freq_sweep again.
-        Parameters
-        ==========
-        s: Serial object
-            gives the connection
-        dBm: power value in dBm
-        freq: array of floats
-            frequencies in Hz
-        Returns
-        =======
-        rxvalues: array
-            An array of floats, same length as freq, containing the receiver (reflected) power in dBm at each frequency.
-        txvalues: array
-            An array of floats, same length as freq, containing the transmitted power in dBm at each frequency.
-        """    
-        rx = ['rx'].flatten()
-        fq = ['freq'].flatten
-        rx1 = rx[1:]
-        fq1 = fq[1:]
-        md = (max(rx1)+min(rx1))/2
-        crossovers = diff(rx1<md)
-        halfway_idx = argwhere(diff(rx1<md))
-        x_crossings = fq1[halfway_idx].flatten()
-        freq = linspace(x_crossings[0], x_crossings[1], 1000)
-        self.set_power(30+self.cur_pwr_int)#will this even work? wouldn't the current power be 0 after the first tuning curve is obtained?
-        self.freq_sweep(freq)
-        #if this is good, we could make a loop to run this iteratively, zooming in and ramping up the power each time :)
+    def lock_on_dip(self, ini_range=(9.81e9,9.83e9),
+            ini_step=0.5e6,# should be half 3 dB width for Q=10,000
+            dBm_increment=3, n_freq_steps=15):
+        """Locks onto the main dip, and finds the first polynomial fit also sets the current frequency bounds."""    
+        if not self.frq_sweep_10dBm_has_been_run:
+            print "Did not find previous 10 dBm run, running now"
+            self.set_wg(True)
+            self.set_rf(True)
+            self.set_amp(True)
+            self.set_power(10.0)
+            freq = r_[ini_range[0]:ini_range[1]:ini_step]
+            rx, tx = self.freq_sweep(freq)
+        assert self.frq_sweep_10dBm_has_been_run, "I should have run the 10 dBm curve -- not sure what happened"
+        rx,freq = [self.tuning_curve_data['%gdBm_%s'%(10.0,j)] for j in ['rx','freq']]
+        rx_dBm = convert_to_power(rx)
+        rx_midpoint = (max(rx_dBm) + min(rx_dBm))/2.0
+        over_bool = rx_dBm > rx_midpoint # Contains False everywhere rx_dBm is under
+        if not over_bool[0]:
+            raise ValueError("Tuning curve doesn't start over the midpoint, which doesn't make sense -- check %gdBm_%s"%(10.0,'rx'))
+        over_diff = r_[0,diff(int32(over_bool))]# should indicate whether this position has lifted over (+1) or dropped under (-1) the midpoint
+        over_idx = r_[0:len(over_diff)]
+        # store the indices at the start and stop of a dip
+        start_dip = over_idx[over_diff == -1] -1 # because this identified the point *after* the crossing
+        stop_dip = over_idx[over_diff == 1]
+        # be sure to check for the condition where we end on a dip
+        # i.e., if we find more than one -1 to +1 region in over_diff
+        if (len(stop_dip) < len(start_dip) and stop_dip[-1] < start_dip[-1]):
+            stop_dip = r_[stop_dip,over_idx[-1]] # end on a dip
+        if len(stop_dip) != len(start_dip):
+            raise ValueError("the dip starts and stops don't line up, and I'm not sure why!!")
+        largest_dip_idx = (stop_dip-start_dip).argmax()
+        if (largest_dip_idx == len(start_dip)-1) and (stop_dip[-1] == over_idx[-1]):
+            raise ValueError("The trace ends in the largest dip -- this is not allowed -- check %gdBm_%s"%(10.0,'rx'))
+        self.set_power(11.0) # move to 11 dBm, just to distinguish the trace name
+        self.freq_bounds = freq[r_[start_dip[largest_dip_idx],stop_dip[largest_dip_idx]]]
+        freq_axis = r_[self.freq_bounds[0]:self.freq_bounds[1]:15j]
+        rx, tx = self.freq_sweep(freq_axis, fast_run=True)
+        return self.zoom(dBm_increment=2,n_freq_steps=n_freq_steps)
+    def zoom(self, dBm_increment=2, n_freq_steps=15):
+        "please write a docstring here"
+        assert self.frq_sweep_10dBm_has_been_run, "You're trying to run zoom before you ran a frequency sweep at 10 dBm -- something is wonky!!!"
+        assert hasattr(self,'freq_bounds'), "you probably haven't run lock_on_dip, which you need to do before zoom"
+        # start by pulling the data from the last tuning curve
+        rx, tx, freq = [self.tuning_curve_data[self.last_sweep_name + '_' + j] for j in ['rx','tx','freq']]
+        p = polyfit(freq,rx,2)
+        c,b,a = p 
+        # polynomial of form a+bx+cx^2
+        self.fit_data[self.last_sweep_name + '_func'] = lambda x: a+b*x+c*x**2
+        self.fit_data[self.last_sweep_name + '_range'] = freq[r_[0,-1]]
+        # the following should be decided from doing algebra (I haven't double-checked them)
+        center = -b/2/c
+        print "Predicted center frequency:",center*1e-9
+        safe_rx = 6.0 # dBm, setting based off of values seeing in tests
+        # MISSING (lower priority than the rest) --> we could probably raise
+        # this but we need to interpolate from dBm values back to rx mV values
+        # using the calibration curve (convert_to_power)
+        #
+        # Actually, once you have done such an interpolation, it allows you to
+        # set your intercept using an mV value.  I believe that you will find
+        # that the mV rx curves fit better to a polynomial than after you
+        # convert them to a dB value
+        a_new = a - convert_to_mv(safe_rx-dBm_increment) # this allows us to find the x values where a_new+bx+cx^2=safe_rx-dBm_increment
+        safe_crossing = (-b+r_[-sqrt(b**2-4*a_new*c),sqrt(b**2-4*a_new*c)])/2/c
+        safe_crossing.sort()
+        start_f,stop_f = safe_crossing
+        if start_f < self.freq_bounds[0]: start_f = self.freq_bounds[0]
+        if stop_f > self.freq_bounds[1]: stop_f = self.freq_bounds[1]
+        freq = linspace(start_f,stop_f,n_freq_steps)
+        self.set_power(dBm_increment+self.cur_pwr_int/10.)
+        # with the new time constant added for freq_sweep, should we eliminate fast_run?
+        rx, tx = self.freq_sweep(freq, fast_run=True)
+        # MISSING -- DO BEFORE MOVING TO HIGHER POWERS!
+        # test to see if any of the powers actually exceed the safety limit
+        # if they do, then contract freq_bounds to include those powers
+        min_f = freq[rx.argmin()]
+        return rx, tx, min_f
     def __enter__(self):
         self.bridge12_wait()
+        self._inside_with_block = True
         return self
     def safe_shutdown(self):
         try:
             self.set_power(0)
-            self.set_rf(False)
-            self.set_wg(False)
-        except:
-            print "error on standard shutdown -- running fallback shutdown"
+        except Exception as e:
+            print "error on standard shutdown during set_power -- running fallback shutdown"
+            print "original error:"
+            print e
             self.write('power %d\r'%0)
             self.write('rfstatus %d\r'%0)
             self.write('wgstatus %d\r'%0)
+            self.close()
+            return
+        try:
+            self.set_rf(False)
+        except Exception as e:
+            print "error on standard shutdown during set_rf -- running fallback shutdown"
+            print "original error:"
+            print e
+            self.write('power %d\r'%0)
+            self.write('rfstatus %d\r'%0)
+            self.write('wgstatus %d\r'%0)
+            self.close()
+            return
+        try:
+            self.set_wg(False)
+        except Exception as e:
+            print "error on standard shutdown during set_wg -- running fallback shutdown"
+            print "original error:"
+            print e
+            self.write('power %d\r'%0)
+            self.write('rfstatus %d\r'%0)
+            self.write('wgstatus %d\r'%0)
+            self.close()
+            return
         self.close()
+        return
     def __exit__(self, exception_type, exception_value, traceback):
         self.safe_shutdown()
         return
