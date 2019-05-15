@@ -2,9 +2,9 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190423','CPMG_1')
+        ('190515','CPMG_5')
         ]:
-    SW_kHz = 15.0
+    SW_kHz = 9.0
     nPoints = 128
     nEchoes = 64
     nPhaseSteps = 2 
@@ -20,7 +20,7 @@ for date,id_string in [
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
-    p90_s = 3.75*1e-6
+    p90_s = 4.0*1e-6
     transient_s = 50.0*1e-6
     deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
@@ -99,6 +99,7 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag')
     fl.image(s.imag)
+    fl.show();quit()
     fl.next('real waterfall')
     s.real.waterfall()
     fl.next('imag waterfall')

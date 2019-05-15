@@ -32,7 +32,7 @@ def verifyParams():
     return
 #}}}
 date = '190515'
-output_name = 'echo_5'
+output_name = 'echo_6_2'
 adcOffset = 42
 carrierFreq_MHz = 14.892200
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -52,8 +52,10 @@ if not phase_cycling:
 p90 = 4.0
 deadtime = 50.0
 repetition = 4e6
-SW_kHz = 90.0
-nPoints = 256
+
+SW_kHz = 9.0
+nPoints = 128
+
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
