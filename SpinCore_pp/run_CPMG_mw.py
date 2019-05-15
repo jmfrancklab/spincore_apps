@@ -37,10 +37,15 @@ in the second case.
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
+
+from Instruments import Bridge12
+from serial import Serial
+import time
+
 fl = figlist_var()
 
 date = '190515'
-output_name = 'CPMG_6'
+output_name = 'CPMG_DNP_test'
 adcOffset = 42
 carrierFreq_MHz = 14.892200
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -128,47 +133,55 @@ if phase_cycling:
             ])
 print "\nSTOPPING PROG BOARD...\n"
 SpinCore_pp.stop_ppg();
-print "\nRUNNING BOARD...\n"
-if phase_cycling:
-    for x in xrange(nScans):
-        print "SCAN NO. %d"%(x+1)
-        SpinCore_pp.runBoard();
-if not phase_cycling:
-    SpinCore_pp.runBoard(); 
-raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+for k in xrange(5):
+    print "FAKE POWER LIST...",k
+    print "\nRUNNING BOARD...\n"
+    if phase_cycling:
+        for x in xrange(nScans):
+            print "SCAN NO. %d"%(x+1)
+            SpinCore_pp.runBoard();
+    if not phase_cycling:
+        SpinCore_pp.runBoard(); 
+    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+    raw_data.astype(float)
+    data = []
+    data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+    print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
+    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+    dataPoints = float(shape(data)[0])
+    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+    data = nddata(array(data),'t')
+    data.setaxis('t',time_axis).set_units('t','s')
+    data.name('signal')
+    if k == 0:
+        DNP_data = ndshape([5,len(time_axis)],['power','t']).alloc(dtype=complex128)
+        DNP_data.setaxis('power',r_[0:5])
+        DNP_data.setaxis('t',time_axis)
+    DNP_data['power',k] = data
 SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
-raw_data.astype(float)
-data = []
-data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
-dataPoints = float(shape(data)[0])
-time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-data = nddata(array(data),'t')
-data.setaxis('t',time_axis).set_units('t','s')
-data.name('signal')
 save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
-        data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",data.name()
-        print "Units of saved data",data.get_units('t')
-        print "Shape of saved data",ndshape(data)
+        DNP_data.name('signal')
+        DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+        print "Name of saved data",DNP_data.name()
+        print "Units of saved data",DNP_data.get_units('t')
+        print "Shape of saved data",ndshape(DNP_data)
         save_file = False
     except Exception as e:
         print e
         print "FILE ALREADY EXISTS."
         save_file = False
 fl.next('raw data')
-fl.plot(data.real,alpha=0.8)
-fl.plot(data.imag,alpha=0.8)
-fl.plot(abs(data),':',alpha=0.8)
+fl.image(DNP_data)
+fl.next('abs raw data')
+fl.image(abs(DNP_data))
 data.ft('t',shift=True)
-fl.next('FT raw data')
-fl.plot(data.real,alpha=0.8)
-fl.plot(data.imag,alpha=0.8)
-fl.plot(abs(data),':',alpha=0.8)
+fl.next('raw data - ft')
+fl.image(DNP_data)
+fl.next('abs raw data - ft')
+fl.image(abs(DNP_data))
 fl.show()

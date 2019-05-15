@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190515','CPMG_6')
+        ('190515','CPMG_DNP_test')
         ]:
     SW_kHz = 9.0
     nPoints = 128
@@ -15,7 +15,10 @@ for date,id_string in [
                 exp_type = 'test_equip'))
     s.set_units('t','s')
     print ndshape(s)
+    quit()
     fl.next(id_string+'raw data ')
+    fl.image(s)
+    fl.show();quit()
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)
