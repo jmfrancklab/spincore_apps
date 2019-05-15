@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190423'
+date = '190515'
 id_string = 'IR_3'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'

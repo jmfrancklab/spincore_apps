@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190422'
+date = '190515'
 for id_string in [
     'nutation_1',
     ]:
