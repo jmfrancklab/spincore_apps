@@ -58,10 +58,10 @@ if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
 #}}}
-date = '190515'
+date = '190516'
 output_name = 'nutation_1'
 adcOffset = 42
-carrierFreq_MHz = 14.892200
+carrierFreq_MHz = 14.894200
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 2

@@ -63,7 +63,7 @@ print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3
 powers = 1e-3*10**(dB_settings/10.)
 
 
-date = '190515'
+date = '190516'
 output_name = 'CPMG_DNP_2'
 adcOffset = 42
 carrierFreq_MHz = 14.892200
@@ -84,7 +84,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 16
+nScans = 4
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -94,94 +94,95 @@ if not phase_cycling:
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 # Insert B12 block here
-with Bridge12() as b:
-    print "\n*** *** ***\n"
-    print "CONFIGURING TRANSMITTER..."
-    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    print "\nTRANSMITTER CONFIGURED."
-    print "***"
-    print "CONFIGURING RECEIVER..."
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    # acq_time is in msec!
-    print "\nRECEIVER CONFIGURED."
-    print "***"
-    print "\nINITIALIZING PROG BOARD...\n"
-    SpinCore_pp.init_ppg();
-    print "\nLOADING PULSE PROG...\n"
-    if phase_cycling:
-        SpinCore_pp.load([
-            ('marker','start',1),
-            ('phase_reset',1),
-                ('delay_TTL',deblank),
-                ('pulse_TTL',p90,'ph1',r_[0,2]),
-                ('delay',tau),
-                ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,1),
-                ('delay',deadtime),
-                ('acquire',acq_time),
-                ('delay',pad),
-                ('marker','echo_label',(nEchoes-1)),
-                ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,1),
-                ('delay',deadtime),
-                ('acquire',acq_time),
-                ('delay',pad),
-                ('jumpto','echo_label'),
-                ('delay',repetition),
-                ('jumpto','start')
-                ])
-        if not phase_cycling:
-            SpinCore_pp.load([
-                ('marker','start',nScans),
-                ('phase_reset',1),
-                ('delay_TTL',deblank),
-                ('pulse_TTL',p90,0.0),
-                ('delay',tau),
-                ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,0.0),
-                ('delay',deadtime),
-                ('acquire',acq_time),
-                ('delay',pad),
-                ('marker','echo_label',(nEchoes-1)),
-                ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,0.0),
-                ('delay',deadtime),
-                ('acquire',acq_time),
-                ('delay',pad),
-                ('jumpto','echo_label'),
-                ('delay',repetition),
-                ('jumpto','start')
-                ])
-    print "\nSTOPPING PROG BOARD...\n"
-    SpinCore_pp.stop_ppg();
-    print "\nRUNNING BOARD...\n"
-    if phase_cycling:
-        for x in xrange(nScans):
-            print "SCAN NO. %d"%(x+1)
-            SpinCore_pp.runBoard();
+print "\n*** *** ***\n"
+print "CONFIGURING TRANSMITTER..."
+SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+print "\nTRANSMITTER CONFIGURED."
+print "***"
+print "CONFIGURING RECEIVER..."
+acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+# acq_time is in msec!
+print "\nRECEIVER CONFIGURED."
+print "***"
+print "\nINITIALIZING PROG BOARD...\n"
+SpinCore_pp.init_ppg();
+print "\nLOADING PULSE PROG...\n"
+if phase_cycling:
+    SpinCore_pp.load([
+        ('marker','start',1),
+        ('phase_reset',1),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('delay',tau),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',2.0*p90,1),
+            ('delay',deadtime),
+            ('acquire',acq_time),
+            ('delay',pad),
+            ('marker','echo_label',(nEchoes-1)),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',2.0*p90,1),
+            ('delay',deadtime),
+            ('acquire',acq_time),
+            ('delay',pad),
+            ('jumpto','echo_label'),
+            ('delay',repetition),
+            ('jumpto','start')
+            ])
     if not phase_cycling:
-        SpinCore_pp.runBoard(); 
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-    raw_data.astype(float)
-    data = []
-    data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
-    dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-    data = nddata(array(data),'t')
-    data.setaxis('t',time_axis).set_units('t','s')
-    data.name('signal')
-    # Define nddata to store along the new power dimension
-    DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=complex128)
-    DNP_data.setaxis('power',r_[0,powers]).set_units('W')
-    DNP_data.setaxis('t',time_axis).set_units('t','s')
-    DNP_data['power',0] = data
+        SpinCore_pp.load([
+            ('marker','start',nScans),
+            ('phase_reset',1),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',p90,0.0),
+            ('delay',tau),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',2.0*p90,0.0),
+            ('delay',deadtime),
+            ('acquire',acq_time),
+            ('delay',pad),
+            ('marker','echo_label',(nEchoes-1)),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',2.0*p90,0.0),
+            ('delay',deadtime),
+            ('acquire',acq_time),
+            ('delay',pad),
+            ('jumpto','echo_label'),
+            ('delay',repetition),
+            ('jumpto','start')
+            ])
+print "\nSTOPPING PROG BOARD...\n"
+SpinCore_pp.stop_ppg();
+print "\nRUNNING BOARD...\n"
+if phase_cycling:
+    for x in xrange(nScans):
+        print "SCAN NO. %d"%(x+1)
+        SpinCore_pp.runBoard();
+if not phase_cycling:
+    SpinCore_pp.runBoard(); 
+raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+raw_data.astype(float)
+data = []
+data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
+print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+dataPoints = float(shape(data)[0])
+time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+data = nddata(array(data),'t')
+data.setaxis('t',time_axis).set_units('t','s')
+data.name('signal')
+# Define nddata to store along the new power dimension
+DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=complex128)
+DNP_data.setaxis('power',r_[0,powers]).set_units('W')
+DNP_data.setaxis('t',time_axis).set_units('t','s')
+DNP_data['power',0] = data
+raw_input("CONNECT AND TURN ON BRIDGE12...")
+with Bridge12() as b:
     # Begin actual Bridge12 amplifier set up
     b.lock_on_dip(ini_range=(9.81e9,9.83e9))
     for j in xrange(3):
         b.zoom(dBm_increment=3)
-    zoom_return = b.zoom(dBm_increment=2)
+    zoom_return = b.zoom(dBm_increment=2) #Ends at 24 dBm
     dip_f = zoom_return[2] # frequency of MW radiation needed
     b.set_freq(dip_f)
     rx_array = empty_like(dB_settings)
@@ -189,6 +190,8 @@ with Bridge12() as b:
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
+        if this_power >= 29.0:
+            raw_input("ADJUST IRIS TO MINIMIZE RX...")
         rx_array[j] = b.rxpowermv_float()
         print "\n*** *** *** *** ***\n"
         print "\n*** *** ***\n"
