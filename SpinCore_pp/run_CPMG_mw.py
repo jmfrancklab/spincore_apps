@@ -64,7 +64,7 @@ powers = 1e-3*10**(dB_settings/10.)
 
 
 date = '190515'
-output_name = 'CPMG_DNP_1'
+output_name = 'CPMG_DNP_2'
 adcOffset = 42
 carrierFreq_MHz = 14.892200
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -84,7 +84,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 4 
+nScans = 16
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
