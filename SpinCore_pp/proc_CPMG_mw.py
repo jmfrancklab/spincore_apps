@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190515','CPMG_DNP_test')
+        ('190515','CPMG_DNP_1')
         ]:
     SW_kHz = 9.0
     nPoints = 128
@@ -15,21 +15,16 @@ for date,id_string in [
                 exp_type = 'test_equip'))
     s.set_units('t','s')
     print ndshape(s)
-    quit()
     fl.next(id_string+'raw data ')
     fl.image(s)
-    fl.show();quit()
-    fl.plot(s.real,alpha=0.4)
-    fl.plot(s.imag,alpha=0.4)
-    fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
     p90_s = 4.0*1e-6
-    transient_s = 50.0*1e-6
+    deadtime_s = 100.0*1e-6
     deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
-    tau_s = transient_s + acq_time_s*0.5
-    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s - deblank
-    tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
+    tau_s = deadtime_s + acq_time_s*0.5
+    pad_s = 2.0*tau_s - deadtime_s - acq_time_s - 2.0*p90_s - deblank
+    tE_s = 2.0*p90_s + deadtime_s + acq_time_s + pad_s
     print "ACQUISITION TIME:",acq_time_s,"s"
     print "TAU DELAY:",tau_s,"s"
     print "TWICE TAU:",2.0*tau_s,"s"
@@ -54,7 +49,9 @@ for date,id_string in [
     fl.next(id_string+' image plot coherence ')
     fl.image(s)
     s = s['ph1',1].C
-    echo_center = abs(s)['tE',0].argmax('t2').data.item()
+    fl.next(id_string+' image plot signal')
+    fl.image(s)
+    echo_center = abs(s)['power',0]['tE',0].argmax('t2').data.item()
     s.setaxis('t2', lambda x: x-echo_center)
     s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
     fl.next('check center')
@@ -81,7 +78,7 @@ for date,id_string in [
             minimizer_kwargs={"method":'L-BFGS-B'},
             callback=print_fun,
             stepsize=100.,
-            niter=10,
+            niter=100,
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
@@ -90,8 +87,8 @@ for date,id_string in [
     s *= phshift
     print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
             firstorder,angle(zeroorder_rad)/pi*180)
-    if s['nEchoes',0].data[:].sum().real < 0:
-        s *= -1
+    #if s['nEchoes',0].data[:].sum().real < 0:
+        #s *= -1
     print ndshape(s)
     fl.next('after phased - real ft')
     fl.image(s.real)
@@ -102,28 +99,48 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag')
     fl.image(s.imag)
-    fl.show();quit()
-    fl.next('real waterfall')
-    s.real.waterfall()
-    fl.next('imag waterfall')
-    s.imag.waterfall()
+    s.ft('t2')
     s.rename('nEchoes','tE').setaxis('tE',tE_axis)
-    data = s.C.sum('t2')
-    fl.next('Fit decay')
-    x = tE_axis 
-    ydata = data.data.real
-    ydata /= max(ydata)
-    fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
-    fitfunc = lambda p, x: exp(-x/p[0])
-    errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [0.2]
-    p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
-    x_fit = linspace(x.min(),x.max(),5000)
-    fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
-    xlabel('t (sec)')
-    ylabel('Intensity')
-    T2 = p1[0]
-    print "T2:",T2,"s"
+    data = s['t2':(0.1e3,0.2e3)].C
+    fl.next('sliced, after phased - real')
+    fl.image(data)
+    fl.next('sliced, after phased - imag')
+    fl.image(data)
+    data = data.real.C.sum('t2')
+    fl.next('power plot')
+    fl.plot(data['tE',0],'.')
+    fl.show();quit()
+    power_list = s.getaxis('power')
+    power_function = ndshape([len(power_list)],['power']).alloc()
+    power_function.setaxis('power',power_list).set_units('power','W')
+    for i,k in enumerate(power_list):
+        temp = data['power',i].C
+        #fl.next('Fit decay %f'%k)
+        x = tE_axis 
+        ydata = temp.data.real
+        ydata /= max(ydata)
+        #fl.plot(x,ydata, '.', alpha=0.4, label='data', human_units=False)
+        fl.next('DECAY DATA')
+        fl.plot(x,ydata, '.', alpha=0.4, label='%f'%k, human_units=False)
+        fitfunc = lambda p, x: p[0]*exp(-x/p[1])
+        errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
+        p0 = [1.0,0.6]
+        p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
+        x_fit = linspace(x.min(),x.max(),5000)
+        #fl.next('Fit decay %f'%k)
+        #fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
+        fl.next('DECAY FITS')
+        fl.plot(x_fit, fitfunc(p1, x_fit),':', label='fit (T2 = %0.2f ms)'%(p1[0]*1e3), human_units=False)
+        xlabel('t (sec)')
+        ylabel('Intensity')
+        print p1[0]
+        T2 = p1[1]
+        print "T2:",T2,"s"
+        power_function['power',i] = p1[0]
+    print power_function
+    power_function['power',6] = 0
+    fl.next('Power function')
+    fl.plot(power_function,'.')
     fl.show();quit()
     s.ift('t2')
     even_echo_center = abs(s)['ph1',1]['tE',0].argmax('t2').data.item()
