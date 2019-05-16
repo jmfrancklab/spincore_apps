@@ -87,8 +87,8 @@ for date,id_string in [
     s *= phshift
     print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
             firstorder,angle(zeroorder_rad)/pi*180)
-    #if s['nEchoes',0].data[:].sum().real < 0:
-        #s *= -1
+    if s['power',-1]['nEchoes',0].data[:].sum().real > 0:
+        s *= -1
     print ndshape(s)
     fl.next('after phased - real ft')
     fl.image(s.real)
