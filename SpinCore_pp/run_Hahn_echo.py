@@ -32,12 +32,12 @@ def verifyParams():
     return
 #}}}
 date = '190516'
-output_name = 'echo_3'
+output_name = 'echo_3_2'
 adcOffset = 42
-carrierFreq_MHz = 14.894200
+carrierFreq_MHz = 14.894339
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -50,7 +50,7 @@ if not phase_cycling:
 # note that acq_time is always milliseconds
 #}}}
 p90 = 4.1
-deadtime = 50.0
+deadtime = 100.0
 repetition = 4e6
 
 SW_kHz = 9.0

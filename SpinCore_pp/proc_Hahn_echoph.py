@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190516','echo_3'),
+        ('190516','echo_3_2'),
         ]:
     nPoints = 128
     nEchoes = 1
