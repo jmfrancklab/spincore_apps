@@ -186,6 +186,7 @@ with Bridge12() as b:
     dip_f = zoom_return[2] # frequency of MW radiation needed
     b.set_freq(dip_f)
     rx_array = empty_like(dB_settings)
+    tx_array = empty_like(dB_settings) #inserted tx here
     for j,this_power in enumerate(dB_settings):
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
@@ -193,6 +194,7 @@ with Bridge12() as b:
         if this_power >= 29.0:
             raw_input("ADJUST IRIS TO MINIMIZE RX...")
         rx_array[j] = b.rxpowermv_float()
+        tx_array[j] = b.txpowermv_float() #inserted tx here
         print "\n*** *** *** *** ***\n"
         print "\n*** *** ***\n"
         print "CONFIGURING TRANSMITTER..."
@@ -273,7 +275,7 @@ with Bridge12() as b:
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
         DNP_data['power',j+1] = data
-DNP_data.set_prop('rx_array',rx_array)
+DNP_data.set_prop('rx_array',rx_array,'tx_array',tx_array) #added ", 'tx_array', tx_array" here
 SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
