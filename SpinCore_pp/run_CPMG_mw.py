@@ -45,7 +45,7 @@ import time
 fl = figlist_var()
 
 # Parameters for Bridge12
-powers = r_[1e-3:1.:20j]
+powers = r_[1e-3:4.:20j]
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 def check_for_3dB_step(x):
@@ -66,10 +66,10 @@ powers = 1e-3*10**(dB_settings/10.)
 date = '190516'
 output_name = 'CPMG_DNP_2'
 adcOffset = 42
-carrierFreq_MHz = 14.892200
+carrierFreq_MHz = 14.894339
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.0
+p90 = 4.1
 deadtime = 100.0
 repetition = 4e6
 
@@ -192,6 +192,7 @@ with Bridge12() as b:
         b.set_power(this_power)
         if this_power >= 29.0:
             raw_input("ADJUST IRIS TO MINIMIZE RX...")
+            print "ADJUSTMENT ACCEPTED."
         rx_array[j] = b.rxpowermv_float()
         print "\n*** *** *** *** ***\n"
         print "\n*** *** ***\n"
