@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190515','CPMG_DNP_2')
+        ('190516','CPMG_DNP_2')
         ]:
     SW_kHz = 9.0
     nPoints = 128
@@ -18,7 +18,7 @@ for date,id_string in [
     fl.next(id_string+'raw data ')
     fl.image(s)
     orig_t = s.getaxis('t')
-    p90_s = 4.0*1e-6
+    p90_s = 4.1*1e-6
     deadtime_s = 100.0*1e-6
     deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
@@ -101,7 +101,7 @@ for date,id_string in [
     fl.image(s.imag)
     s.ft('t2')
     s.rename('nEchoes','tE').setaxis('tE',tE_axis)
-    data = s['t2':(-250,250)].C
+    data = s['t2':(s.getaxis('t2')[63],s.getaxis('t2')[65])].C
     fl.next('sliced, after phased - real')
     fl.image(data)
     fl.next('sliced, after phased - imag')
@@ -132,9 +132,38 @@ for date,id_string in [
     power_data = ndshape([len(power_list)],['power']).alloc()
     power_data.setaxis('power',power_list).set_units('power','W')
     power_data['power',:] = amplitude_r[:]
-    baseline = power_data['power',0].data
-    corrected = power_data.C
-    corrected['power',:] = corrected.data/baseline
-    fl.next('power plot: 1.25 mM 4-AT')
-    fl.plot(corrected,'.')
+    T2_data = ndshape([len(power_list)],['power']).alloc()
+    T2_data.setaxis('power',power_list).set_units('power','W')
+    T2_data['power',:] = T2_r[:]
+    baseline_p = power_data['power',0].data
+    corrected_p = power_data.C
+    corrected_p['power',:] = corrected_p.data/baseline_p
+    baseline_T2 = T2_data['power',0].data
+    corrected_T2 = T2_data.C
+    corrected_T2['power',:] = corrected_T2.data/baseline_T2
+    fl.next('Enhancement vs power: 1.25 mM 4-AT')
+    fl.plot(corrected_p,'.',human_units=False)
+    fl.next('T2 vs power: 1.25 mM 4-AT')
+    fl.plot(corrected_T2,'.')
+    rx_list = s.get_prop('rx_array')
+    rx_list[0] = 0
+    rx_r = zeros(len(rx_list)+1)
+    def convert_to_power(x):
+        "Convert Rx mV values to powers (dBm)"
+        y = 0
+        c = r_[2.78135,25.7302,5.48909]
+        for j in range(len(c)):
+            y += c[j] * (x*1e-3)**(len(c)-j)
+        return log10(y)*10.0+2.2
+    for x in xrange(len(rx_list)):
+        #rx_r[x+1] = ((rx_list[x])**2/70000)*4
+        rx_r[x+1] = 1e-3*10**((convert_to_power(rx_list[x])+29)/10.)
+    rx_data = ndshape([len(rx_r)],['rx']).alloc()
+    rx_data.setaxis('rx',array(rx_r)).set_units('rx','W')
+    rx_data['rx',:] = amplitude_r[:]
+    baseline_rx = rx_data['rx',0].data
+    corrected_rx = rx_data.C
+    corrected_rx['rx',:] = corrected_rx.data/baseline_rx
+    fl.next('Enhancement vs power: 1.25 mM 4-AT')
+    fl.plot(corrected_rx,'.',human_units=False)
     fl.show();quit()
