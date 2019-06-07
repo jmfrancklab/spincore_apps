@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190516','CPMG_DNP_2')
+        ('190604','CPMG_DNP_1')
         ]:
     SW_kHz = 9.0
     nPoints = 128
@@ -76,7 +76,7 @@ for date,id_string in [
         return
     sol = basinhopping(costfun, r_[0.,0.],
             minimizer_kwargs={"method":'L-BFGS-B'},
-            callback=print_fun,
+            #callback=print_fun,
             stepsize=100.,
             niter=100,
             T=1000.
