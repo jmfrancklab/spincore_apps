@@ -177,8 +177,8 @@ p2.plot()
 # first, I define a grid of ones that covers the x,y,
 # and z points I want
 x_points = r_[0]
-y_points = r_[-1*y_dist1:y_dist1:5j]
-z_points = r_[-width/2:width/2:20j]
+y_points = r_[-0.5*y_dist1:0.5*y_dist1:20j]
+z_points = r_[-width/2:width/2:10j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
