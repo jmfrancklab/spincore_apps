@@ -39,7 +39,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-powers = r_[1e-3:2.:15j]
+powers = r_[1e-3:4.:20j]
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 def check_for_3dB_step(x):
@@ -56,10 +56,10 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '190604'
+date = '190609'
 output_name = 'echo_DNP'
 adcOffset = 42
-carrierFreq_MHz = 14.894539
+carrierFreq_MHz = 14.894439
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 4
@@ -181,7 +181,7 @@ with Bridge12() as b:
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
-        if this_power >= 29.0:
+        if this_power >= 32.0:
             raw_input("ADJUST IRIS TO MINIMIZE RX...")
             print "ADJUSTMENT ACCEPTED."
         rx_array[j] = b.rxpowermv_float()
