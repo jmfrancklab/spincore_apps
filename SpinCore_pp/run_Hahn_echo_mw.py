@@ -261,19 +261,19 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
-        data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",data.name()
-        print "Units of saved data",data.get_units('t')
-        print "Shape of saved data",ndshape(data)
+        DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+        print "Name of saved data",DNP_data.name()
+        print "Units of saved data",DNP_data.get_units('t')
+        print "Shape of saved data",ndshape(DNP_data)
         save_file = False
     except Exception as e:
         print e
         print "FILE ALREADY EXISTS."
         save_file = False
 fl.next('abs raw data')
-fl.image(abs(data),':',alpha=0.8)
+fl.image(abs(DNP_data),':',alpha=0.8)
 data.ft('t',shift=True)
 fl.next('abs FT raw data')
-fl.image(abs(data),':',alpha=0.8)
+fl.image(abs(DNP_data),':',alpha=0.8)
 fl.show()
 
