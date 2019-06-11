@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# 
-
-
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
@@ -178,9 +172,8 @@ s.reorder('nEchoes',first=False)
 # 
 
 
-with figlist_var() as fl:
-    fl.next('Echoes at maximum power')
-    fl.plot(s['power',-1]['t2':(-500,900)])
+fl.next('Echoes at maximum power')
+fl.plot(s['power',-1]['t2':(-500,900)])
 
 
 # 
@@ -189,11 +182,10 @@ with figlist_var() as fl:
 s.reorder('t2',first=False)
 s.rename('nEchoes','tE').setaxis('tE',tE_axis)
 data = s['t2':(-500,900)].C
-with figlist_var() as fl:
-    fl.next('sliced, after phased - real')
-    fl.image(data)
-    fl.next('sliced, after phased - imag')
-    fl.image(data)
+fl.next('sliced, after phased - real')
+fl.image(data)
+fl.next('sliced, after phased - imag')
+fl.image(data)
 
 
 # 
@@ -249,11 +241,10 @@ corrected_p['power',:] = corrected_p.data/baseline_p
 baseline_T2 = T2_data['power',0].data
 corrected_T2 = T2_data.C
 corrected_T2['power',:] = corrected_T2.data/baseline_T2
-with figlist_var() as fl:
-    fl.next('Enhancement vs power: 1.25 mM 4-AT')
-    fl.plot(corrected_p,'.',human_units=False)
-    fl.next('T2 vs power: 1.25 mM 4-AT')
-    fl.plot(corrected_T2,'.')
+fl.next('CPMG DNP, Enhancement vs power: 1.25 mM 4-AT')
+fl.plot(corrected_p,'.',label='programmed power',human_units=False)
+fl.next('T2 vs power: 1.25 mM 4-AT')
+fl.plot(corrected_T2,'.')
     
 
 
@@ -279,7 +270,7 @@ rx_data['rx',:] = amplitude_r[:]
 baseline_rx = rx_data['rx',0].data
 corrected_rx = rx_data.C
 corrected_rx['rx',:] = corrected_rx.data/baseline_rx
-with figlist_var() as fl:
-    fl.next('Enhancement vs power: 1.25 mM 4-AT')
-    fl.plot(corrected_rx,'.',human_units=False)
+fl.next('CPMG DNP, Enhancement vs power: 1.25 mM 4-AT')
+fl.plot(corrected_rx,'.',label='Bridge 12 RX readout',human_units=False)
 
+fl.show();quit()
