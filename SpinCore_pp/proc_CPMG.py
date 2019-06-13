@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190609','CPMG_1')
+        ('190612','CPMG_1')
         ]:
     SW_kHz = 9.0
     nPoints = 128
@@ -99,11 +99,6 @@ for date,id_string in [
     fl.image(s.real)
     fl.next('after phased - imag')
     fl.image(s.imag)
-    fl.show();quit()
-    fl.next('real waterfall')
-    s.real.waterfall()
-    fl.next('imag waterfall')
-    s.imag.waterfall()
     s.rename('nEchoes','tE').setaxis('tE',tE_axis)
     data = s.C.sum('t2')
     fl.next('Fit decay')
