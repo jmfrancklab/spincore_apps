@@ -32,12 +32,12 @@ def verifyParams():
     return
 #}}}
 date = '190614'
-output_name = 'echo_1'
+output_name = 'echo_2'
 adcOffset = 34 
-carrierFreq_MHz = 14.894639
+carrierFreq_MHz = 14.895216
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -49,7 +49,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.1
+p90 = 3.2
 deadtime = 100.0
 repetition = 4e6
 
@@ -151,14 +151,46 @@ while save_file:
         print e
         print "FILE ALREADY EXISTS."
         save_file = False
-fl.next('raw data')
-fl.plot(data.real,alpha=0.8)
-fl.plot(data.imag,alpha=0.8)
-fl.plot(abs(data),':',alpha=0.8)
-data.ft('t',shift=True)
-fl.next('FT raw data')
-fl.plot(data.real,alpha=0.8)
-fl.plot(data.imag,alpha=0.8)
-fl.plot(abs(data),':',alpha=0.8)
+if not phase_cycling:
+    fl.next('raw data')
+    fl.plot(data.real,alpha=0.8)
+    fl.plot(data.imag,alpha=0.8)
+    fl.plot(abs(data),':',alpha=0.8)
+    data.ft('t',shift=True)
+    fl.next('FT raw data')
+    fl.plot(data.real,alpha=0.8)
+    fl.plot(data.imag,alpha=0.8)
+    fl.plot(abs(data),':',alpha=0.8)
+if phase_cycling:
+    s = data.C
+    s.set_units('t','s')
+    orig_t = s.getaxis('t')
+    acq_time_s = orig_t[nPoints]
+    t2_axis = linspace(0,acq_time_s,nPoints)
+    s.setaxis('t',None)
+    s.reorder('t',first=True)
+    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.setaxis('ph2',r_[0.,2.]/4)
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.setaxis('t2',t2_axis)
+    s.reorder('t2',first=False)
+    #fl.next('raw data - chunking')
+    #fl.image(s)
+    s.ft('t2',shift=True)
+    s.ft(['ph1','ph2'])
+    fl.next('raw data - chunking coh')
+    fl.image(s)
+    s = s['ph1',1]['ph2',0].C
+    s.setaxis('t2',s.getaxis('t2'))
+    fl.next('freq-signal')
+    fl.plot(s.real)
+    fl.plot(s.imag)
+    fl.plot(abs(s),':')
+    s.ift('t2')
+    fl.next('time-signal')
+    fl.plot(s.real)
+    fl.plot(s.imag)
+    fl.plot(abs(s),':')
+    fl.show();quit()
 fl.show()
 
