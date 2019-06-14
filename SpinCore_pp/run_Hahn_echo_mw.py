@@ -56,13 +56,13 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '190609'
+date = '190614'
 output_name = 'echo_DNP'
-adcOffset = 42
-carrierFreq_MHz = 14.894439
+adcOffset = 34
+carrierFreq_MHz = 14.895151
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -74,19 +74,20 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.1
-deadtime = 100.0
+p90 = 3.2
+deadtime = 25.0
 repetition = 4e6
 
-SW_kHz = 9.0
-nPoints = 128
+SW_kHz = 2.04
+nPoints = 2048
 
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
+#pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
+pad = deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
@@ -169,10 +170,16 @@ raw_input("CONNECT AND TURN ON BRIDGE12...")
 
 with Bridge12() as b:
     # Begin actual Bridge12 amplifier set up
-    b.lock_on_dip(ini_range=(9.81e9,9.83e9))
-    for j in xrange(3):
-        b.zoom(dBm_increment=3)
-    zoom_return = b.zoom(dBm_increment=2) #Ends at 24 dBm
+    b.lock_on_dip(ini_range=(9.80e9,9.83e9))
+    b.zoom(dBm_increment=3)
+    b.zoom(dBm_increment=3)
+    b.zoom(dBm_increment=3)
+    b.zoom(dBm_increment=3)
+    b.zoom(dBm_increment=3)
+    b.zoom(dBm_increment=3)
+    b.zoom(dBm_increment=3)
+    b.zoom(dBm_increment=1)
+    zoom_return = b.zoom(dBm_increment=1) #Ends at 36 dBm
     dip_f = zoom_return[2] # frequency of MW radiation needed
     b.set_freq(dip_f)
     rx_array = empty_like(dB_settings)
@@ -181,9 +188,6 @@ with Bridge12() as b:
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
-        if this_power >= 32.0:
-            raw_input("ADJUST IRIS TO MINIMIZE RX...")
-            print "ADJUSTMENT ACCEPTED."
         rx_array[j] = b.rxpowermv_float()
         tx_array[j] = b.txpowermv_float() #inserted tx here
         print "\n*** *** *** *** ***\n"
@@ -252,6 +256,7 @@ with Bridge12() as b:
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
         DNP_data['power',j+1] = data
+DNP_data.name('signal')
 DNP_data.set_prop('rx_array',rx_array)
 DNP_data.set_prop('tx_array',tx_array) #added ", 'tx_array', tx_array" here
 SpinCore_pp.stopBoard();
@@ -272,7 +277,7 @@ while save_file:
         save_file = False
 fl.next('abs raw data')
 fl.image(abs(DNP_data),':',alpha=0.8)
-data.ft('t',shift=True)
+DNP_data.ft('t',shift=True)
 fl.next('abs FT raw data')
 fl.image(abs(DNP_data),':',alpha=0.8)
 fl.show()
