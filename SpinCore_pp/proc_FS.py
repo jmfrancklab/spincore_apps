@@ -1,13 +1,14 @@
 from pyspecdata import *
 fl = figlist_var()
 for date,id_string in [
-        ('190515','FS_1'),
+        ('190614','FS_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'field_sweep'
     s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type = 'test_equip' ))
     s.set_units('t','s')
+    print s.getaxis('field')
     nPoints = 2048 # copy from pp
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
