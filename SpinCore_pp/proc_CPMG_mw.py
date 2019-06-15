@@ -1,3 +1,9 @@
+
+# coding: utf-8
+
+# 
+
+
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
@@ -7,7 +13,7 @@ rcParams['figure.figsize'] = [10,6]
 # 
 
 
-date,id_string = '190609','CPMG_DNP_1'
+date,id_string = '190612','CPMG_DNP_1'
 
 
 # 
@@ -36,8 +42,37 @@ fl.image(s)
 # 
 
 
+def convert_to_power(x,which_cal='Rx'):
+    "Convert Rx mV values to powers (dBm)"
+    "Takes values in units of mV and converts to dBm"
+    y = 0
+    if which_cal == 'Rx':
+        c = r_[2.78135,25.7302,5.48909]
+    elif which_cal == 'Tx':
+        c =r_[5.6378,38.2242,6.33419]
+    for j in range(len(c)):
+        y += c[j] * (x*1e-3)**(len(c)-j)
+    return log10(y)*10.0+2.2
+
+tx_mon = r_[0.0,0.0,1.66e-3,2.33e-3,4.33e-3,9.66e-3,18.3e-3,35.0e-3,61.6e-3,90e-3,135e-3,176e-3,221e-3,236e-3,268e-3,293e-3,
+           343e-3,371e-3,406e-3,426e-3,460e-3,486e-3,533e-3,563e-3]
+tx_mon_corr = zeros_like(tx_mon)
+for x in xrange(len(tx_mon)):
+    tx_mon_corr[x] = 1e-3*10**((convert_to_power(tx_mon[x],'Tx')+29)/10.)
+
+
+# 
+
+
+s.setaxis('power',tx_mon_corr*1e3)
+print s.getaxis('power')
+
+
+# 
+
+
 orig_t = s.getaxis('t')
-p90_s = 4.1*1e-6
+p90_s = 4.0*1e-6
 deadtime_s = 100.0*1e-6
 deblank = 1.0*1e-6
 acq_time_s = orig_t[nPoints]
@@ -53,11 +88,21 @@ tE_axis = r_[1:nEchoes+1]*tE_s
 s.setaxis('t',None)
 s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
 s.setaxis('ph1',r_[0.,2.]/4)
-#tE_axis = r_[1:nEchoes+1]*tE_s
 s.setaxis('tE',tE_axis)
 s.setaxis('t2',t2_axis)
 fl.next(id_string+'raw data - chunking')
 fl.image(s)
+
+
+# 
+
+
+print ndshape(s)
+
+
+# 
+
+
 s.ft('t2', shift=True)
 fl.next(id_string+'raw data - chunking ft')
 fl.image(s)
@@ -85,7 +130,7 @@ fl.image(s)
 # 
 
 
-echo_center = abs(s)['power',0]['tE',0].argmax('t2').data.item()
+echo_center = abs(s)['power',-1]['tE',0].argmax('t2').data.item()
 s.setaxis('t2', lambda x: x-echo_center)
 s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
 fl.next('check center')
@@ -136,9 +181,19 @@ print "RELATIVE PHASE SHIFT WAS {:0.1f}\us and {:0.1f}$^\circ$".format(
 # 
 
 
-#if s['power',-1]['nEchoes',0].data[:].sum().real > 0:
-#    s *= -1
-s *= -1.0
+checkpoint = s.C
+
+
+# 
+
+
+# GO FROM HERE
+
+
+# 
+
+
+s = checkpoint.C
 
 
 # 
@@ -160,20 +215,45 @@ s.ft('t2')
 # 
 
 
-print ndshape(s)
+checkpoint = s.C
+
+
+# 
+
+
+# RUN FROM HERE
+
+
+# 
+
+
+s = checkpoint.C
+
+
+# 
+
+
+fl.next('highest power')
+fl.plot(s['power',-1]['nEchoes',0])
+fl.plot(s['power',-1]['nEchoes',-1])
+fl.next('lowest power')
+fl.plot(s['power',2]['nEchoes',0])
+fl.plot(s['power',2]['nEchoes',-1])
+s.convolve('t2',2)
+fl.next('highest power')
+fl.plot(s['power',-1]['nEchoes',0])
+fl.plot(s['power',-1]['nEchoes',-1])
+fl.next('lowest power')
+fl.plot(s['power',2]['nEchoes',0])
+fl.plot(s['power',2]['nEchoes',-1])
 
 
 # 
 
 
 s.reorder('nEchoes',first=False)
-
-
-# 
-
-
 fl.next('Echoes at maximum power')
-fl.plot(s['power',-1]['t2':(-500,900)])
+fl.plot(s['power',-1]['t2':(-600,900)],',')
 
 
 # 
@@ -181,7 +261,7 @@ fl.plot(s['power',-1]['t2':(-500,900)])
 
 s.reorder('t2',first=False)
 s.rename('nEchoes','tE').setaxis('tE',tE_axis)
-data = s['t2':(-500,900)].C
+data = s['t2':(-600,900)].C
 fl.next('sliced, after phased - real')
 fl.image(data)
 fl.next('sliced, after phased - imag')
@@ -197,9 +277,25 @@ data = data.real.C.sum('t2')
 # 
 
 
+fl.next('plotting first echo')
+for x in xrange(shape(s.getaxis('power'))[0]):
+    fl.plot(s['tE',0]['power',x]['t2':(-600,900)])
+
+
+# 
+
+
 power_list = s.getaxis('power')
+print power_list
 amplitude_r = empty_like(power_list)
 T2_r = empty_like(power_list)
+
+
+# 
+
+
+for x in xrange(shape(s.getaxis('power'))[0]):
+    print abs(s['tE',0]['power',x].data).max()
 
 
 # 
@@ -213,7 +309,7 @@ for i,k in enumerate(power_list):
     fl.plot(x,ydata, '.', alpha=0.4, label='%f'%k, human_units=False)
     fitfunc = lambda p, x: p[0]*exp(-x/p[1])
     errfunc = lambda p_arg, x_arg, y_arg: fitfunc(p_arg, x_arg) - y_arg
-    p0 = [1000.0,0.6]
+    p0 = [11102.0,0.6]
     p1, success = leastsq(errfunc, p0[:], args=(x, ydata))
     x_fit = linspace(x.min(),x.max(),20000)
     fl.next('DECAY FITS')
@@ -222,8 +318,7 @@ for i,k in enumerate(power_list):
     ylabel('Intensity')
     print "FOR POWER:",power_list[i],"W \tAMPLITUDE:",p1[0],"\tT2:",p1[1]
     amplitude_r[i] = p1[0]
-    T2_r[i] = p1[1]
-    
+    T2_r[i] = p1[1]  
 
 
 # 
@@ -238,39 +333,11 @@ T2_data['power',:] = T2_r[:]
 baseline_p = power_data['power',0].data
 corrected_p = power_data.C
 corrected_p['power',:] = corrected_p.data/baseline_p
-baseline_T2 = T2_data['power',0].data
-corrected_T2 = T2_data.C
-corrected_T2['power',:] = corrected_T2.data/baseline_T2
-fl.next('CPMG DNP, Enhancement vs power: 1.25 mM 4-AT')
-fl.plot(corrected_p,'.',label='programmed power',human_units=False)
+fl.next('Enhancement vs power: 1.25 mM 4-AT')
+fl.plot(corrected_p,'.',human_units=False)
+T2_data.set_units('s')
 fl.next('T2 vs power: 1.25 mM 4-AT')
-fl.plot(corrected_T2,'.')
-    
+fl.plot(T2_data,'.',human_units=False)
 
-
-# 
-
-
-rx_list = s.get_prop('rx_array')
-rx_list[0] = 0
-rx_r = zeros(len(rx_list)+1)
-def convert_to_power(x):
-    "Convert Rx mV values to powers (dBm)"
-    y = 0
-    c = r_[2.78135,25.7302,5.48909]
-    for j in range(len(c)):
-        y += c[j] * (x*1e-3)**(len(c)-j)
-    return log10(y)*10.0+2.2
-for x in xrange(len(rx_list)):
-    #rx_r[x+1] = ((rx_list[x])**2/70000)*4
-    rx_r[x+1] = 1e-3*10**((convert_to_power(rx_list[x])+29)/10.)
-rx_data = ndshape([len(rx_r)],['rx']).alloc()
-rx_data.setaxis('rx',array(rx_r)).set_units('rx','W')
-rx_data['rx',:] = amplitude_r[:]
-baseline_rx = rx_data['rx',0].data
-corrected_rx = rx_data.C
-corrected_rx['rx',:] = corrected_rx.data/baseline_rx
-fl.next('CPMG DNP, Enhancement vs power: 1.25 mM 4-AT')
-fl.plot(corrected_rx,'.',label='Bridge 12 RX readout',human_units=False)
 
 fl.show();quit()
