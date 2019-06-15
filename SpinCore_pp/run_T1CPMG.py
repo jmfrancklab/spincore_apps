@@ -40,17 +40,15 @@ import SpinCore_pp
 import time
 fl = figlist_var()
 
-date = '190423'
-output_name = 'T1CPMG_1'
-#clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
-#clock_correction = 4.27/10.
-clock_correction = 0
-adcOffset = 42
-carrierFreq_MHz = 14.860135
+date = '190614'
+output_name = 'ipa_T1CPMG_1'
+clock_correction = -0.399405/9.969
+adcOffset = 35
+carrierFreq_MHz = 14.894351
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.75
-deadtime = 50.0
+p90 = 3.2
+deadtime = 100.0
 repetition = 4e6
 
 SW_kHz = 15.0
@@ -64,7 +62,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 4
+nScans = 2
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -73,7 +71,7 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e0,1e1,1e2,5e3,5e4,7.5e4,8.5e4,9e4,9.5e4,9.6e4,9.7e4,9.8e4,9.9e4,1e5,3e5,7e5,1e6]
+vd_list = r_[1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,8.7e5,9.5e5,1e6,2e6,3e6]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"

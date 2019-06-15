@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
 date = '190614'
-id_string = 'ipa_IR_1'
+id_string = 'ipa_IR_5'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
@@ -13,7 +13,7 @@ fl.next('raw data - no clock correction')
 fl.image(s)
 s.ft('t2',shift=True)
 clock_correction = 0 # radians per second
-clock_correction = 0.38/10.0
+clock_correction = -0.399405/9.969
 #clock_correction = 1.78/0.99
 s *= exp(-1j*s.fromaxis('vd')*clock_correction)
 s.ift('t2')

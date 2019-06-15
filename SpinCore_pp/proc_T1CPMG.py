@@ -4,7 +4,7 @@ fl = figlist_var()
 mpl.rcParams['figure.figsize'] = [8.0, 6.0]
 
 for date,id_string in [
-        ('190423','T1CPMG_1')
+        ('190614','ipa_T1CPMG_1')
         ]:
     SW_kHz = 15.0
     nPoints = 128
@@ -20,8 +20,8 @@ for date,id_string in [
     fl.next('raw data - no clock correction')
     fl.image(s)
     orig_t = s.getaxis('t')
-    p90_s = 3.75*1e-6
-    transient_s = 50.0*1e-6
+    p90_s = 3.2*1e-6
+    transient_s = 100.0*1e-6
     deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
@@ -38,7 +38,7 @@ for date,id_string in [
     clock_corr = True 
     if clock_corr:
         s.ft('t',shift=True)
-        clock_correction = -12.4/10. # radians per sec
+        clock_correction = -0.399405/9.969 # rad/sec
         s *= exp(-1j*s.fromaxis('vd')*clock_correction)
         s.ift('t')
         fl.next('raw data - clock correction')
@@ -90,7 +90,7 @@ for date,id_string in [
             minimizer_kwargs={"method":'L-BFGS-B'},
             callback=print_fun,
             stepsize=100.,
-            niter=200,
+            niter=50,
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
@@ -120,6 +120,7 @@ for date,id_string in [
         for x,y in enumerate(vd_list):
             fl.plot(s.imag['nEchoes',0]['vd',x],label='%s'%x)
     ##
+    fl.show();quit()
     even_echo_center = abs(s)['ph1',1]['vd',0]['nEchoes',0].argmax('t2').data.item()
     odd_echo_center = abs(s)['ph1',-1]['vd',0]['nEchoes',1].argmax('t2').data.item()
     print "EVEN ECHO CENTER:",even_echo_center,"s"
