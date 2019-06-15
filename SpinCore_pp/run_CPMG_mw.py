@@ -64,12 +64,12 @@ powers = 1e-3*10**(dB_settings/10.)
 
 
 date = '190612'
-output_name = 'CPMG_DNP_1'
-adcOffset = 42
-carrierFreq_MHz = 14.894639
+output_name = 'ipa_CPMG_DNP_1'
+adcOffset = 35
+carrierFreq_MHz = 14.894351
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.0
+p90 = 3.2
 deadtime = 100.0
 repetition = 4e6
 
@@ -84,7 +84,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 12
+nScans = 2
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -191,9 +191,6 @@ with Bridge12() as b:
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
-        if this_power >= 29.0:
-            raw_input("ADJUST IRIS TO MINIMIZE RX...")
-            print "ADJUSTMENT ACCEPTED."
         rx_array[j] = b.rxpowermv_float()
         tx_array[j] = b.txpowermv_float() #inserted tx here
         print "\n*** *** *** *** ***\n"

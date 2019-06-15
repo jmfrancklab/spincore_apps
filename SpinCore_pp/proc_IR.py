@@ -1,13 +1,14 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190515'
-id_string = 'IR_2'
+date = '190614'
+id_string = 'ipa_IR_1'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(exp_type = 'test_equip' ))
 s.rename('t','t2').set_units('t2','s')
+print s.getaxis('vd')
 fl.next('raw data - no clock correction')
 fl.image(s)
 s.ft('t2',shift=True)

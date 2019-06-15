@@ -59,9 +59,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = '190614'
-output_name = 'nutation_2'
-adcOffset = 34 
-carrierFreq_MHz = 14.895216
+output_name = 'ipa_nutation_1'
+adcOffset = 35 
+carrierFreq_MHz = 14.894351
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 2
@@ -73,7 +73,7 @@ if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 100.0
-repetition = 4e6
+repetition = 5e6
 SW_kHz = 80.0
 nPoints = 128
 acq_time = nPoints/SW_kHz # ms

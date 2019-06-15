@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190612','CPMG_1')
+        ('190614','ipa_CPMG_1')
         ]:
     SW_kHz = 9.0
     nPoints = 128
@@ -20,8 +20,8 @@ for date,id_string in [
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
-    p90_s = 4.1*1e-6
-    transient_s = 50.0*1e-6
+    p90_s = 3.2*1e-6
+    transient_s = 100.0*1e-6
     deblank = 1.0*1e-6
     acq_time_s = orig_t[nPoints]
     tau_s = transient_s + acq_time_s*0.5
