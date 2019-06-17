@@ -152,7 +152,6 @@ fl.next('after phased - real')
 fl.image(s.real)
 fl.next('after phased - imag')
 fl.image(s.imag)
-fl.show()
 
 
 # 
@@ -169,7 +168,6 @@ fl.next('after phased - real')
 fl.image(s.real)
 fl.next('after phased - imag')
 fl.image(s.imag)
-fl.show()
 
 
 # 
@@ -263,6 +261,6 @@ x.setaxis('T2',Ny_ax.data).set_units('T2','s')
 # 
 
 
-fl.next('T1-T2 distribution for Water/IPA with Ni(II)')
+fl.next('T1,T2 distribution for Water and IPA with Ni(II)')
 fl.image(x)
-
+fl.show()
