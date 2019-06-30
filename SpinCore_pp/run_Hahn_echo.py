@@ -32,9 +32,9 @@ def verifyParams():
     return
 #}}}
 date = '190630'
-output_name = 'echo_4'
+output_name = 'echo_5_1'
 adcOffset = 42 
-carrierFreq_MHz = 14.894377
+carrierFreq_MHz = 14.894517
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 2 
@@ -49,7 +49,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.2
+p90 = 3.419
 deadtime = 60.0
 repetition = 4e6
 

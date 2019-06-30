@@ -1,9 +1,9 @@
 from pyspecdata import *
 from scipy.optimize import minimize
 fl = figlist_var()
-date = '190614'
+date = '190630'
 for id_string in [
-    'ipa_nutation_1',
+    'nutation',
     ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'nutation'

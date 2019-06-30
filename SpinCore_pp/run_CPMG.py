@@ -39,14 +39,14 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 
-date = '190614'
-output_name = 'ipa_CPMG_1'
-adcOffset = 35
-carrierFreq_MHz = 14.894351
+date = '190630'
+output_name = 'CPMG_2'
+adcOffset = 42
+carrierFreq_MHz = 14.894517
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.2
-deadtime = 100.0
+p90 = 3.419
+deadtime = 60.0
 repetition = 4e6
 
 SW_kHz = 9.0
@@ -60,13 +60,32 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 4 
+nScans = 8 
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 2
 if not phase_cycling:
     nPhaseSteps = 1 
+#{{{ setting acq_params dictionary
+acq_params = {}
+acq_params['adcOffset'] = adcOffset
+acq_params['carrierFreq_MHz'] = carrierFreq_MHz
+acq_params['amplitude'] = amplitude
+acq_params['nScans'] = nScans
+acq_params['nEchoes'] = nEchoes
+acq_params['p90_us'] = p90
+acq_params['deadtime_us'] = deadtime
+acq_params['repetition_us'] = repetition
+acq_params['SW_kHz'] = SW_kHz
+acq_params['nPoints'] = nPoints
+acq_params['tau_adjust_us'] = tau_adjust
+acq_params['deblank_us'] = deblank
+acq_params['tau_us'] = tau
+acq_params['pad_us'] = pad 
+if phase_cycling:
+    acq_params['nPhaseSteps'] = nPhaseSteps
+#}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 print "\n*** *** ***\n"
@@ -76,7 +95,7 @@ print "\nTRANSMITTER CONFIGURED."
 print "***"
 print "CONFIGURING RECEIVER..."
 acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-# acq_time is in msec!
+acq_params['acq_time_ms'] = acq_time
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"
@@ -153,6 +172,7 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
+        data.set_prop('acq_params',acq_params)
         data.hdf5_write(date+'_'+output_name+'.h5')
         print "Name of saved data",data.name()
         print "Units of saved data",data.get_units('t')
