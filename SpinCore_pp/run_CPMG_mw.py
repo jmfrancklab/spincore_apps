@@ -62,12 +62,10 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-high_powers = r_[dB_settings[-3],dB_settings[-2],dB_settings[-1]]
-
 date = '190630'
-output_name = 'CPMG_DNP_E_test_5_1'
+output_name = 'CPMG_DNP_1'
 adcOffset = 42 
-carrierFreq_MHz = 14.894787
+carrierFreq_MHz = 14.894370
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.419
@@ -191,8 +189,8 @@ data = nddata(array(data),'t')
 data.setaxis('t',time_axis).set_units('t','s')
 data.name('signal')
 # Define nddata to store along the new power dimension
-DNP_data = ndshape([len(high_powers)+1,len(time_axis)],['power','t']).alloc(dtype=complex128)
-DNP_data.setaxis('power',r_[0,high_powers]).set_units('W')
+DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=complex128)
+DNP_data.setaxis('power',r_[0,powers]).set_units('W')
 DNP_data.setaxis('t',time_axis).set_units('t','s')
 DNP_data['power',0] = data
 #raw_input("CONNECT AND TURN ON BRIDGE12...")
@@ -206,10 +204,9 @@ with Bridge12() as b:
     b.set_freq(dip_f)
     rx_array = empty_like(dB_settings)
     tx_array = empty_like(dB_settings) #inserted tx here
-    high_power = r_[dB_settings[-3],dB_settings[-2],dB_settings[-1]]
-    for j,this_power in enumerate(high_power):
+    for j,this_power in enumerate(dB_settings):
         print "\n*** *** *** *** ***\n"
-        print "SETTING THIS POWER",this_power,"(",high_powers[j],"W)"
+        print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
         rx_array[j] = b.rxpowermv_float()
         tx_array[j] = b.txpowermv_float() #inserted tx here
