@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # coding: utf-8
 
 # 
@@ -10,11 +10,7 @@ from scipy.optimize import minimize,basinhopping,nnls
 #init_logging(level='debug')
 
 
-# 
-
-
 # Initializing dataset
-
 
 # 
 
@@ -170,11 +166,7 @@ fl.next('after phased - imag')
 fl.image(s.imag)
 
 
-# 
-
-
 # CHECKPOINT
-
 
 # 
 
@@ -182,11 +174,7 @@ fl.image(s.imag)
 checkpoint = s.C
 
 
-# 
-
-
 # IF WANTING TO FIND T2 DECAY
-
 
 # 
 
@@ -232,12 +220,12 @@ d = d.real
 
 
 print "Constructing kernels..."
-Nx = 60
-Ny = 60
+Nx = 30
+Ny = 30
 #Nx_ax = nddata(linspace(0.02,0.2,Nx),'T1') # T1 
 #Ny_ax = nddata(linspace(0.02,0.2,Ny),'T2') # T2
-Nx_ax = nddata(linspace(0.001,1.0,Nx),'T1')
-Ny_ax = nddata(linspace(0.001,1.0,Ny),'T2')
+T1_axis = nddata(logspace(-3,1,Nx),'T1')
+T2_axis = nddata(logspace(-3,1,Ny),'T2')
 data = d.C
 data.rename('vd','tau1').setaxis('tau1',vd_list)
 data.rename('nEchoes','tau2').setaxis('tau2',tE_axis)
@@ -249,13 +237,62 @@ data.rename('nEchoes','tau2').setaxis('tau2',tE_axis)
 this = lambda x1,x2,y1,y2: (1-2*exp(-x1/y1),exp(-x2/y2))
 
 x = data.C.nnls(('tau1','tau2'),
-       (Nx_ax,Ny_ax),
+       (T1_axis,T2_axis),
        (lambda x1,x2: 1.-2*exp(-x1/x2),
         lambda y1,y2: exp(-y1/y2)),
                  l='BRD')
+# why is the following necessary?? it shouldn't be necessary!
+x.setaxis('T1',T1_axis.data).set_units('T1','s')
+x.setaxis('T2',T2_axis.data).set_units('T2','s')
+# the following overrides, anyways, and is needed for the log-log plot
+x.setaxis('T1',log10(T1_axis.data)).set_units('T1',None)
+x.setaxis('T2',log10(T1_axis.data)).set_units('T2',None)
 
-x.setaxis('T1',Nx_ax.data).set_units('T1','s')
-x.setaxis('T2',Ny_ax.data).set_units('T2','s')
+
+# 
+
+
+
+fl.next('T1-T2 distribution for Water-IPA with Ni(II)')
+fl.image(x,human_units=False)
+
+
+# 
+
+
+from matplotlib.colors import ListedColormap
+from matplotlib.tri import Triangulation, TriAnalyzer, UniformTriRefiner
+cmdata = load(getDATADIR(exp_type='test_equip')+'contourcm.npz')
+cm = ListedColormap(cmdata['cm'],
+        name='test')
+figure(figsize=(8,6),facecolor=(1,1,1,0))
+# {{{ I do this very manually,  but we should just integrate into pyspecdata;
+# probably wait for after
+tri_x = (x.getaxis('T2')[newaxis,:]*ones(
+    (len(x.getaxis('T1')),1))).ravel()
+tri_y = (x.getaxis('T1')[:,newaxis]*ones(
+    (1,len(x.getaxis('T2'))))).ravel()
+tri_z = x.reorder('T1').data.ravel()
+tri = Triangulation(tri_x,
+        tri_y)
+refiner = UniformTriRefiner(tri)
+subdiv = 3  # Number of recursive subdivisions of the initial mesh for smooth
+            # plots. Values >3 might result in a very high number of triangles
+            # for the refine mesh: new triangles numbering = (4**subdiv)*ntri
+tri_refi, tri_z_refi = refiner.refine_field(tri_z, subdiv=subdiv)
+#mask = TriAnalyzer(tri_refi).get_flat_tri_mask(10)
+#tri_refi = tri_refi.set_mask(~mask)
+tri_z_refi[tri_z_refi<0] = 0
+tricontourf(tri_refi,tri_z_refi,
+        levels=linspace(tri_z_refi.min(),tri_z_refi.max(),100),
+        cmap=cm
+        )
+colorbar()
+xlabel(r'$log(T_2/$s$)$')
+ylabel(r'$log(T_1/$s$)$')
+# }}}
+savefig(r"water_IPA.png",
+        dpi=300,facecolor=(1,1,1,0),bbox_inches='tight')
 
 
 # 

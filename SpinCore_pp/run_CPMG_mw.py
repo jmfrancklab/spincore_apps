@@ -62,15 +62,14 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-
-date = '190612'
-output_name = 'ipa_CPMG_DNP_1'
-adcOffset = 35
-carrierFreq_MHz = 14.894351
+date = '190630'
+output_name = 'CPMG_DNP_1'
+adcOffset = 42 
+carrierFreq_MHz = 14.894370
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.2
-deadtime = 100.0
+p90 = 3.419
+deadtime = 60.0
 repetition = 4e6
 
 SW_kHz = 9.0
@@ -84,7 +83,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 2
+nScans = 8
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -93,7 +92,25 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-# Insert B12 block here
+#{{{ setting acq_params dictionary
+acq_params = {}
+acq_params['adcOffset'] = adcOffset
+acq_params['carrierFreq_MHz'] = carrierFreq_MHz
+acq_params['amplitude'] = amplitude
+acq_params['nScans'] = nScans
+acq_params['nEchoes'] = nEchoes
+acq_params['p90_us'] = p90
+acq_params['deadtime_us'] = deadtime
+acq_params['repetition_us'] = repetition
+acq_params['SW_kHz'] = SW_kHz
+acq_params['nPoints'] = nPoints
+acq_params['tau_adjust_us'] = tau_adjust
+acq_params['deblank_us'] = deblank
+acq_params['tau_us'] = tau
+acq_params['pad_us'] = pad 
+if phase_cycling:
+    acq_params['nPhaseSteps'] = nPhaseSteps
+#}}}
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
 SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
@@ -101,7 +118,7 @@ print "\nTRANSMITTER CONFIGURED."
 print "***"
 print "CONFIGURING RECEIVER..."
 acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-# acq_time is in msec!
+acq_params['acq_time_ms'] = acq_time
 print "\nRECEIVER CONFIGURED."
 print "***"
 print "\nINITIALIZING PROG BOARD...\n"
@@ -176,13 +193,13 @@ DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=com
 DNP_data.setaxis('power',r_[0,powers]).set_units('W')
 DNP_data.setaxis('t',time_axis).set_units('t','s')
 DNP_data['power',0] = data
-raw_input("CONNECT AND TURN ON BRIDGE12...")
+#raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
     # Begin actual Bridge12 amplifier set up
     b.lock_on_dip(ini_range=(9.81e9,9.83e9))
-    for j in xrange(3):
+    for j in xrange(7):
         b.zoom(dBm_increment=3)
-    zoom_return = b.zoom(dBm_increment=2) #Ends at 24 dBm
+    zoom_return = b.zoom(dBm_increment=2) #Ends at 36 dBm
     dip_f = zoom_return[2] # frequency of MW radiation needed
     b.set_freq(dip_f)
     rx_array = empty_like(dB_settings)
@@ -282,6 +299,7 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
+        DNP_data.set_prop('acq_params',acq_params)
         DNP_data.name('signal')
         DNP_data.hdf5_write(date+'_'+output_name+'.h5')
         print "Name of saved data",DNP_data.name()

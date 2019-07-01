@@ -2,17 +2,17 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190614','ipa_CPMG_1')
+        ('190630','CPMG_8')
         ]:
-    SW_kHz = 9.0
-    nPoints = 128
-    nEchoes = 64
-    nPhaseSteps = 2 
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
+    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    nPoints = s.get_prop('acq_params')['nPoints']
+    nEchoes = s.get_prop('acq_params')['nEchoes']
+    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     s.set_units('t','s')
     print ndshape(s)
     fl.next(id_string+'raw data ')
@@ -20,12 +20,12 @@ for date,id_string in [
     fl.plot(s.imag,alpha=0.4)
     fl.plot(abs(s),':',c='k',alpha=0.4)
     orig_t = s.getaxis('t')
-    p90_s = 3.2*1e-6
-    transient_s = 100.0*1e-6
-    deblank = 1.0*1e-6
+    p90_s = s.get_prop('acq_params')['p90_us']*1e-6
+    transient_s = s.get_prop('acq_params')['deadtime_us']*1e-6
+    deblank = s.get_prop('acq_params')['deblank_us']*1e-6
     acq_time_s = orig_t[nPoints]
-    tau_s = transient_s + acq_time_s*0.5
-    pad_s = 2.0*tau_s - transient_s - acq_time_s - 2.0*p90_s - deblank
+    tau_s = s.get_prop('acq_params')['tau_us']*1e-6
+    pad_s = s.get_prop('acq_params')['pad_us']*1e-6
     tE_s = 2.0*p90_s + transient_s + acq_time_s + pad_s
     print "ACQUISITION TIME:",acq_time_s,"s"
     print "TAU DELAY:",tau_s,"s"
@@ -36,7 +36,6 @@ for date,id_string in [
     s.setaxis('t',None)
     s.chunk('t',['ph1','tE','t2'],[nPhaseSteps,nEchoes,-1])
     s.setaxis('ph1',r_[0.,2.]/4)
-    #tE_axis = r_[1:nEchoes+1]*tE_s
     s.setaxis('tE',tE_axis)
     s.setaxis('t2',t2_axis)
     fl.next(id_string+'raw data - chunking')

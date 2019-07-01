@@ -58,10 +58,10 @@ if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
 #}}}
-date = '190614'
-output_name = 'ipa_nutation_1'
-adcOffset = 35 
-carrierFreq_MHz = 14.894351
+date = '190630'
+output_name = 'nutation'
+adcOffset = 42 
+carrierFreq_MHz = 14.894377
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 2
@@ -83,6 +83,25 @@ print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 p90_range = linspace(1.0,10.0,20,endpoint=False)
+#{{{ setting acq_params dictionary
+acq_params = {}
+acq_params['adcOffset'] = adcOffset
+acq_params['carrierFreq_MHz'] = carrierFreq_MHz
+acq_params['amplitude'] = amplitude
+acq_params['nScans'] = nScans
+acq_params['nEchoes'] = nEchoes
+acq_params['p90_us'] = p90_range
+acq_params['deadtime_us'] = deadtime
+acq_params['repetition_us'] = repetition
+acq_params['SW_kHz'] = SW_kHz
+acq_params['nPoints'] = nPoints
+acq_params['tau_adjust_us'] = tau_adjust
+acq_params['deblank_us'] = 1.0
+acq_params['tau_us'] = tau
+acq_params['pad_us'] = pad 
+if phase_cycling:
+    acq_params['nPhaseSteps'] = nPhaseSteps
+#}}}
 for index,val in enumerate(p90_range):
     p90 = val # us
     print "***"
@@ -90,6 +109,7 @@ for index,val in enumerate(p90_range):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    acq_params['acq_time_ms'] = acq_time
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
@@ -152,6 +172,7 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
+        nutation_data.set_prop('acq_params',acq_params)
         nutation_data.name('nutation')
         nutation_data.hdf5_write(date+'_'+output_name+'.h5')
         print "Name of saved data",nutation_data.name()
