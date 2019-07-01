@@ -62,15 +62,16 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
+high_powers = r_[dB_settings[-3],dB_settings[-2],dB_settings[-1]]
 
-date = '190612'
-output_name = 'ipa_CPMG_DNP_1'
-adcOffset = 35
-carrierFreq_MHz = 14.894351
+date = '190630'
+output_name = 'CPMG_DNP_E_test_5_1'
+adcOffset = 42 
+carrierFreq_MHz = 14.894787
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.2
-deadtime = 100.0
+p90 = 3.419
+deadtime = 60.0
 repetition = 4e6
 
 SW_kHz = 9.0
@@ -84,7 +85,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 2
+nScans = 8
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -190,24 +191,25 @@ data = nddata(array(data),'t')
 data.setaxis('t',time_axis).set_units('t','s')
 data.name('signal')
 # Define nddata to store along the new power dimension
-DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=complex128)
-DNP_data.setaxis('power',r_[0,powers]).set_units('W')
+DNP_data = ndshape([len(high_powers)+1,len(time_axis)],['power','t']).alloc(dtype=complex128)
+DNP_data.setaxis('power',r_[0,high_powers]).set_units('W')
 DNP_data.setaxis('t',time_axis).set_units('t','s')
 DNP_data['power',0] = data
-raw_input("CONNECT AND TURN ON BRIDGE12...")
+#raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
     # Begin actual Bridge12 amplifier set up
     b.lock_on_dip(ini_range=(9.81e9,9.83e9))
-    for j in xrange(3):
+    for j in xrange(7):
         b.zoom(dBm_increment=3)
-    zoom_return = b.zoom(dBm_increment=2) #Ends at 24 dBm
+    zoom_return = b.zoom(dBm_increment=2) #Ends at 36 dBm
     dip_f = zoom_return[2] # frequency of MW radiation needed
     b.set_freq(dip_f)
     rx_array = empty_like(dB_settings)
     tx_array = empty_like(dB_settings) #inserted tx here
-    for j,this_power in enumerate(dB_settings):
+    high_power = r_[dB_settings[-3],dB_settings[-2],dB_settings[-1]]
+    for j,this_power in enumerate(high_power):
         print "\n*** *** *** *** ***\n"
-        print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
+        print "SETTING THIS POWER",this_power,"(",high_powers[j],"W)"
         b.set_power(this_power)
         rx_array[j] = b.rxpowermv_float()
         tx_array[j] = b.txpowermv_float() #inserted tx here

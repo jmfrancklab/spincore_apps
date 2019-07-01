@@ -40,9 +40,9 @@ import SpinCore_pp
 fl = figlist_var()
 
 date = '190630'
-output_name = 'CPMG_2'
+output_name = 'CPMG_7'
 adcOffset = 42
-carrierFreq_MHz = 14.894517
+carrierFreq_MHz = 14.894787
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.419

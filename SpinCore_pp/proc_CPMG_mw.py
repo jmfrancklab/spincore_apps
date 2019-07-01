@@ -13,21 +13,21 @@ rcParams['figure.figsize'] = [10,6]
 # 
 
 
-date,id_string = '190612','CPMG_DNP_1'
+date,id_string = '190630','CPMG_DNP_E_test_1'
 
 
 # 
 
 
-SW_kHz = 9.0
-nPoints = 128
-nEchoes = 64
-nPhaseSteps = 2 
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
         directory = getDATADIR(
             exp_type = 'test_equip'))
+SW_kHz = s.get_prop('acq_params')['SW_kHz']
+nPoints = s.get_prop('acq_params')['nPoints']
+nEchoes = s.get_prop('acq_params')['nEchoes']
+nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
 s.set_units('t','s')
 print ndshape(s)
 
@@ -54,30 +54,30 @@ def convert_to_power(x,which_cal='Rx'):
         y += c[j] * (x*1e-3)**(len(c)-j)
     return log10(y)*10.0+2.2
 
-tx_mon = r_[0.0,0.0,1.66e-3,2.33e-3,4.33e-3,9.66e-3,18.3e-3,35.0e-3,61.6e-3,90e-3,135e-3,176e-3,221e-3,236e-3,268e-3,293e-3,
-           343e-3,371e-3,406e-3,426e-3,460e-3,486e-3,533e-3,563e-3]
-tx_mon_corr = zeros_like(tx_mon)
-for x in xrange(len(tx_mon)):
-    tx_mon_corr[x] = 1e-3*10**((convert_to_power(tx_mon[x],'Tx')+29)/10.)
+#tx_mon = r_[0.0,0.0,1.66e-3,2.33e-3,4.33e-3,9.66e-3,18.3e-3,35.0e-3,61.6e-3,90e-3,135e-3,176e-3,221e-3,236e-3,268e-3,293e-3,
+#           343e-3,371e-3,406e-3,426e-3,460e-3,486e-3,533e-3,563e-3]
+#tx_mon_corr = zeros_like(tx_mon)
+#for x in xrange(len(tx_mon)):
+#    tx_mon_corr[x] = 1e-3*10**((convert_to_power(tx_mon[x],'Tx')+29)/10.)
 
 
 # 
 
 
-s.setaxis('power',tx_mon_corr*1e3)
-print s.getaxis('power')
+#s.setaxis('power',tx_mon_corr*1e3)
+#print s.getaxis('power')
 
 
 # 
 
 
 orig_t = s.getaxis('t')
-p90_s = 4.0*1e-6
-deadtime_s = 100.0*1e-6
-deblank = 1.0*1e-6
+p90_s = s.get_prop('acq_params')['p90_us']*1e-6
+deadtime_s = s.get_prop('acq_params')['deadtime_us']*1e-6
+deblank = s.get_prop('acq_params')['deblank_us']*1e-6
 acq_time_s = orig_t[nPoints]
-tau_s = deadtime_s + acq_time_s*0.5
-pad_s = 2.0*tau_s - deadtime_s - acq_time_s - 2.0*p90_s - deblank
+tau_s = s.get_prop('acq_params')['tau_us']*1e-6
+pad_s = s.get_prop('acq_params')['pad_us']*1e-6
 tE_s = 2.0*p90_s + deadtime_s + acq_time_s + pad_s
 print "ACQUISITION TIME:",acq_time_s,"s"
 print "TAU DELAY:",tau_s,"s"
@@ -117,8 +117,6 @@ fl.image(s)
 s.ift('t2')
 fl.next(id_string+' image plot coherence ')
 fl.image(s)
-
-
 # 
 
 
@@ -135,6 +133,8 @@ s.setaxis('t2', lambda x: x-echo_center)
 s.rename('tE','nEchoes').setaxis('nEchoes',r_[1:nEchoes+1])
 fl.next('check center')
 fl.image(s)
+
+
 
 
 # 
@@ -167,7 +167,7 @@ sol = basinhopping(costfun, r_[0.,0.],
         minimizer_kwargs={"method":'L-BFGS-B'},
         callback=print_fun,
         stepsize=100.,
-        niter=100,
+        niter=10,
         T=1000.
         )
 zeroorder_rad, firstorder = sol.x
@@ -211,7 +211,7 @@ fl.next('after phased - imag')
 fl.image(s.imag)
 s.ft('t2')
 
-
+fl.show();quit()
 # 
 
 
