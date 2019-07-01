@@ -176,9 +176,9 @@ p2.plot()
 # 
 # first, I define a grid of ones that covers the x,y,
 # and z points I want
-x_points = r_[0]
-y_points = r_[-0.5*y_dist1:0.5*y_dist1:20j]
-z_points = r_[-width/2:width/2:10j]
+x_points = r_[-0.5*y_dist1:0.5*y_dist1:15j]
+y_points = r_[0]
+z_points = r_[-width:width:15j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -193,15 +193,10 @@ point_grid = stack((x_points*ones_grid,
             (1,2,3,0) # put the outer (stack) dimension on the inside
             ).reshape((-1,3))
 # }}}
-fields1 = p1.calculate_biot(point_grid)
-fields2 = p2.calculate_biot(point_grid)
+fields1 = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid)
 ax.quiver(*(
     [point_grid[:,j] for j in xrange(3)]
-    +[100*fields1[:,j] for j in xrange(3)]
-    ))
-ax.quiver(*(
-    [point_grid[:,j] for j in xrange(3)]
-    +[100*fields2[:,j] for j in xrange(3)]
+    +[500*fields1[:,j] for j in xrange(3)]
     ))
 # {{{ all of this is to get equal sized axes
 max_width = max(diff(stack((
