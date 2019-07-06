@@ -31,10 +31,10 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190701'
-output_name = 'echo_1_2'
-adcOffset = 45
-carrierFreq_MHz = 14.894249
+date = '190706'
+output_name = 'echo_2_2'
+adcOffset = 39
+carrierFreq_MHz = 14.897134
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -49,9 +49,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.419
+p90 = 3.25
 deadtime = 60.0
-repetition = 10e6
+repetition = 15e6
 
 SW_kHz = 9.0
 nPoints = 128
@@ -61,7 +61,6 @@ tau_adjust = 0.0
 deblank = 1.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
-#pad = deblank 
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset

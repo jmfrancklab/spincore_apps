@@ -62,15 +62,15 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '190630'
+date = '190706'
 output_name = 'CPMG_DNP_1'
-adcOffset = 42 
-carrierFreq_MHz = 14.894370
+adcOffset = 39 
+carrierFreq_MHz = 14.897134
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.419
+p90 = 3.25
 deadtime = 60.0
-repetition = 4e6
+repetition = 15e6
 
 SW_kHz = 9.0
 nPoints = 128
@@ -83,7 +83,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 8
+nScans = 4
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -193,7 +193,7 @@ DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=com
 DNP_data.setaxis('power',r_[0,powers]).set_units('W')
 DNP_data.setaxis('t',time_axis).set_units('t','s')
 DNP_data['power',0] = data
-#raw_input("CONNECT AND TURN ON BRIDGE12...")
+raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
     # Begin actual Bridge12 amplifier set up
     b.lock_on_dip(ini_range=(9.81e9,9.83e9))

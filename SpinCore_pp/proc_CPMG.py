@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 for date,id_string in [
-        ('190701','CPMG_2')
+        ('190706','CPMG_3')
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -77,7 +77,7 @@ for date,id_string in [
             minimizer_kwargs={"method":'L-BFGS-B'},
             callback=print_fun,
             stepsize=100.,
-            niter=10,
+            niter=100,
             T=1000.
             )
     zeroorder_rad, firstorder = sol.x
