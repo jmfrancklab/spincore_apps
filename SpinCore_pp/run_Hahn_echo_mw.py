@@ -56,15 +56,15 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '190614'
+date = '190707'
 output_name = 'echo_DNP'
-adcOffset = 34
-carrierFreq_MHz = 14.895151
+adcOffset = 44
+carrierFreq_MHz = 14.897738
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = True
+phase_cycling = False
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -74,20 +74,37 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.2
-deadtime = 25.0
-repetition = 4e6
+p90 = 3.25
+deadtime = 60.0
+repetition = 15e6
 
-SW_kHz = 2.04
-nPoints = 2048
-
+SW_kHz = 3.0
+nPoints = 128
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
-pad = deblank
+#{{{ setting acq_params dictionary
+acq_params = {}
+acq_params['adcOffset'] = adcOffset
+acq_params['carrierFreq_MHz'] = carrierFreq_MHz
+acq_params['amplitude'] = amplitude
+acq_params['nScans'] = nScans
+acq_params['nEchoes'] = nEchoes
+acq_params['p90_us'] = p90
+acq_params['deadtime_us'] = deadtime
+acq_params['repetition_us'] = repetition
+acq_params['SW_kHz'] = SW_kHz
+acq_params['nPoints'] = nPoints
+acq_params['tau_adjust_us'] = tau_adjust
+acq_params['deblank_us'] = deblank
+acq_params['tau_us'] = tau
+acq_params['pad_us'] = pad 
+if phase_cycling:
+    acq_params['nPhaseSteps'] = nPhaseSteps
+#}}}
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
@@ -99,7 +116,7 @@ print "\nTRANSMITTER CONFIGURED."
 print "***"
 print "CONFIGURING RECEIVER..."
 acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
-# acq_time is in msec!
+acq_params['acq_time_ms'] = acq_time
 print "ACQUISITION TIME IS",acq_time,"ms"
 verifyParams()
 print "\nRECEIVER CONFIGURED."
@@ -119,7 +136,7 @@ if phase_cycling:
         ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
         ('delay',deadtime),
         ('acquire',acq_time),
-        ('delay',pad),
+        #('delay',pad),
         ('delay',repetition),
         ('jumpto','start')
         ])
@@ -134,7 +151,7 @@ if not phase_cycling:
         ('pulse_TTL',2.0*p90,0.0),
         ('delay',deadtime),
         ('acquire',acq_time),
-        ('delay',pad),
+        #('delay',pad),
         ('delay',repetition),
         ('jumpto','start')
         ])
@@ -161,6 +178,7 @@ time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
 data = nddata(array(data),'t')
 data.setaxis('t',time_axis).set_units('t','s')
 data.name('signal')
+data.set_prop('acq_params',acq_params)
 # Define nddata to store along the new power dimension
 DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=complex128)
 DNP_data.setaxis('power',r_[0,powers]).set_units('W')
@@ -188,6 +206,7 @@ with Bridge12() as b:
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
+        time.sleep(7)
         rx_array[j] = b.rxpowermv_float()
         tx_array[j] = b.txpowermv_float() #inserted tx here
         print "\n*** *** *** *** ***\n"
@@ -198,10 +217,8 @@ with Bridge12() as b:
         print "***"
         print "CONFIGURING RECEIVER..."
         acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-        # acq_time is in msec!
         print "\nRECEIVER CONFIGURED."
         print "***"
-        # MORE CODE GOES HERE
         print "\nINITIALIZING PROG BOARD...\n"
         SpinCore_pp.init_ppg();
         print "\nLOADING PULSE PROG...\n"
@@ -216,7 +233,7 @@ with Bridge12() as b:
                 ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
                 ('delay',deadtime),
                 ('acquire',acq_time),
-                ('delay',pad),
+                #('delay',pad),
                 ('delay',repetition),
                 ('jumpto','start')
                 ])
@@ -231,7 +248,7 @@ with Bridge12() as b:
                 ('pulse_TTL',2.0*p90,0.0),
                 ('delay',deadtime),
                 ('acquire',acq_time),
-                ('delay',pad),
+                #('delay',pad),
                 ('delay',repetition),
                 ('jumpto','start')
                 ])
@@ -281,4 +298,3 @@ DNP_data.ft('t',shift=True)
 fl.next('abs FT raw data')
 fl.image(abs(DNP_data),':',alpha=0.8)
 fl.show()
-
