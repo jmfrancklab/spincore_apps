@@ -34,24 +34,26 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190614'
+date = '190709'
 #clock_correction = 4.275439/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
-clock_correction = -0.399405/9.969
-output_name = 'ipa_IR_5'
-adcOffset = 35
-carrierFreq_MHz = 14.894351
+#clock_correction = -0.399405/9.969
+clock_correction = 1.0829/998.253
+output_name = 'IR_4'
+adcOffset = 37
+carrierFreq_MHz = 14.897316
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 3.2
+p90 = 3.35
 deadtime = 100.0
 repetition = 4e6
-SW_kHz = 15.0
+SW_kHz = 9.0
 nPoints = 128
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
+deblank = 1.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
@@ -61,9 +63,28 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
+#{{{ setting acq_params dictionary
+acq_params = {}
+acq_params['adcOffset'] = adcOffset
+acq_params['carrierFreq_MHz'] = carrierFreq_MHz
+acq_params['amplitude'] = amplitude
+acq_params['nScans'] = nScans
+acq_params['nEchoes'] = nEchoes
+acq_params['p90_us'] = p90
+acq_params['deadtime_us'] = deadtime
+acq_params['repetition_us'] = repetition
+acq_params['SW_kHz'] = SW_kHz
+acq_params['nPoints'] = nPoints
+acq_params['tau_adjust_us'] = tau_adjust
+acq_params['deblank_us'] = deblank
+acq_params['tau_us'] = tau
+acq_params['pad_us'] = pad 
+if phase_cycling:
+    acq_params['nPhaseSteps'] = nPhaseSteps
+#}}}
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
-vd_list = r_[1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,3e6,3e6,6e6]
+vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
+#vd_list = r_[3e1,1e2,1e3,3e3,5e3,1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,3e6,3e6,6e6]
 #vd_list = r_[7e4,7.5e4,8e4,8.5e4,9e4,9.5e4,9.8e4]
 #vd_list = r_[4.55e5,5e5,6e5,7e5,8e5,9e5,1e6]
 #vd_list = r_[7e5,7.1e5,7.2e5,7.3e5,7.4e5,7.5e5,7.6e5,7.7e5,7.8e5,7.9e5,8e5]
@@ -74,6 +95,7 @@ for index,val in enumerate(vd_list):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    acq_params['acq_time_ms'] = acq_time
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
@@ -134,6 +156,7 @@ for index,val in enumerate(vd_list):
     data = nddata(array(data),'t')
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
+    data.set_prop('acq_params',acq_params)
     if index == 0:
         vd_data = ndshape([len(vd_list),len(time_axis)],['vd','t']).alloc(dtype=complex128)
         vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
