@@ -51,22 +51,22 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190709'
+date = '190710'
 #clock_correction = -10.51/6 # clock correction in radians per second (additional phase accumulated after phase_reset)
 clock_correction = 0
-output_name = 'calibrate_clock_1'
-adcOffset = 37
-carrierFreq_MHz = 14.897316
+output_name = 'calibrate_clock_1_2'
+adcOffset = 34
+carrierFreq_MHz = 14.897206
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 8
 nEchoes = 1
 nPhaseSteps = 1 
-p90 = 3.2
+p90 = 3.35
 deadtime = 100.0
 repetition = 4e6
 deblank = 1.0
-SW_kHz = 15.0
+SW_kHz = 9.0
 nPoints = 128
 acq_time = nPoints/SW_kHz
 tau_adjust = 0.0
@@ -75,7 +75,7 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e0,5e1,6e2,4e3,8e4,3e5,5e5,7e5,9e5,1e6]
+vd_list = r_[3e1,1e2,1e3,3e3,5e3,1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,3e6,3e6,6e6]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
