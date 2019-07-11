@@ -10,12 +10,6 @@ from scipy.optimize import minimize,basinhopping,nnls
 init_logging(level='debug')
 
 
-# In[3]:
-
-
-get_ipython().magic(u'pinfo nddata.nnls')
-
-
 # In[2]:
 
 
@@ -224,13 +218,13 @@ fl.show()
 checkpoint = s.C
 
 
-# In[17]:
+# In[ ]:
 
 
 # IF WANTING TO FIND T2 DECAY
 
 
-# In[ ]:
+# In[17]:
 
 
 T2_fits = True
@@ -262,7 +256,7 @@ if T2_fits:
 
 # CHECKPOINT
 
-# In[43]:
+# In[18]:
 
 
 d = checkpoint.C
@@ -270,14 +264,12 @@ d = d.C.sum('t2')
 d = d.real
 
 
-# In[44]:
+# In[36]:
 
 
 print "Constructing kernels..."
 Nx = 100
 Ny = 100
-#Nx_ax = nddata(linspace(0.02,0.2,Nx),'T1') # T1 
-#Ny_ax = nddata(linspace(0.02,0.2,Ny),'T2') # T2
 Nx_ax = nddata(logspace(-3,1,Nx),'T1')
 Ny_ax = nddata(logspace(-3,1,Ny),'T2')
 data = d.C
@@ -285,7 +277,7 @@ data.rename('vd','tau1').setaxis('tau1',vd_list)
 data.rename('nEchoes','tau2').setaxis('tau2',tE_axis)
 
 
-# In[45]:
+# In[51]:
 
 
 this = lambda x1,x2,y1,y2: (1-2*exp(-x1/y1),exp(-x2/y2))
@@ -300,7 +292,7 @@ x.setaxis('T1',log10(Nx_ax.data)).set_units('T1',None)
 x.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
 
 
-# In[46]:
+# In[52]:
 
 
 image(x)
@@ -309,69 +301,106 @@ ylabel(r'$log(T_1/$s$)$')
 title('Higher SNR, repeat July 9, 2019 T1-T2 measurement')
 
 
-# In[47]:
+# In[53]:
 
 
-soln_vec = array(x.data)
-data_lex = []
-for m in xrange(shape(soln_vec)[0]):
-    for l in xrange(shape(soln_vec)[1]):
-        temp = soln_vec[m][l]
-        data_lex.append(temp)
-print "Dimension of lexicographically ordered data:",shape(data_lex)[0]
+print ndshape(x)
 
 
-# In[51]:
+# In[76]:
 
 
-data_compressed = nddata(x.get_prop('compressed_data'),
-                         ['$\widetilde{N_{1}}$','$\widetilde{N_{2}}$'])
-data_fit = nddata(reshape(x.get_prop('nnls_kernel').dot(data_lex),
-                          (x.get_prop('s1'),x.get_prop('s2'))),
-                  ['$\widetilde{N_{1}}$','$\widetilde{N_{2}}$'])
-data_residual = data_compressed - data_fit
-
-
-# In[52]:
-
-
-figure(figsize=(13,8));suptitle('DATASET: %s_%s'%(date,id_string))
-subplot(221);subplot(221).set_title('COMPRESSED DATA\n $\widetilde{m}$')
-image(data_compressed)
-subplot(222);subplot(222).set_title('FIT\n $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$')
-image(data_fit)
-subplots_adjust(hspace=0.5)
-subplot(223);subplot(223).set_title('DATA - FIT\n $\widetilde{m}$ - $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$')
-image(data_residual)
-subplot(224);subplot(224).set_title('|DATA - FIT|\n |$\widetilde{m}$ - $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$|')
-image(abs(data_residual))
-
-
-# In[ ]:
-
-
-from matplotlib.colors import ListedColormap
-from matplotlib.tri import Triangulation, TriAnalyzer, UniformTriRefiner
-#cmdata = load(getDATADIR(exp_type='test_equip')+'contourcm.npz')
-#cm = ListedColormap(cmdata['cm'],name='test')
-figure(figsize=(8,6),facecolor=(1,1,1,0))
-tri_x = (x.getaxis('T2')[newaxis,:]*ones(
-    (len(x.getaxis('T1')),1))).ravel()
-tri_y = (x.getaxis('T1')[:,newaxis]*ones((1,len(x.getaxis('T2'))))).ravel()
-tri_z = x.reorder('T1').data.ravel()
-tri = Triangulation(tri_x,tri_y)
-refiner = UniformTriRefiner(tri)
-subdiv = 3
-tri_refi, tri_z_refi = refiner.refine_field(tri_z,subdiv=subdiv)
-tri_z_refi[tri_z_refi<0] = 0
-tricontourf(tri_refi,tri_z_refi,
-           levels=linspace(tri_z_refi.min(),tri_z_refi.max(),100),
-           
-           )
-colorbar()
+image(x)
 xlabel(r'$log(T_2/$s$)$')
 ylabel(r'$log(T_1/$s$)$')
-title('T1-T2 Distribution for Ni-doped Water/IPA mixture (July 9, 2019)')
+title('Higher SNR, repeat July 9, 2019 T1-T2 measurement')
+fit = x.C.get_prop('K1').dot(x.C.dot(x.C.get_prop('K2')))
+residual  = data - fit
+figure(figsize=(13,8));suptitle('DATASET: %s_%s'%(date,id_string))
+subplot(221);subplot(221).set_title('DATA\n $ m $')
+image(data)
+subplot(222);subplot(222).set_title('FIT\n $K_{1}$ $f$ $K_{2}$')
+image(fit)
+subplots_adjust(hspace=0.5)
+subplot(223);subplot(223).set_title('DATA - FIT\n $ m $ - $K_{1}$ $f$ $K_{2}$')
+image(residual)
+subplot(224);subplot(224).set_title('|DATA - FIT|\n |$ m $ - $K_{1}$ $f$ $K_{2}$|')
+image(abs(residual))
+
+
+# In[60]:
+
+
+x_test = x.C
+x_test['T1':(None,-0.5)] = 0
+x_test['T2':(-0.9,None)] = 0
+
+
+# In[77]:
+
+
+title('Only cross peak')
+image(x_test)
+xlabel(r'$log(T_2/$s$)$')
+ylabel(r'$log(T_1/$s$)$')
+fit = x.C.get_prop('K1').dot(x_test.C.dot(x.C.get_prop('K2')))
+residual  = data - fit
+figure(figsize=(13,8));suptitle('DATASET: ONLY CROSSPEAK, %s_%s'%(date,id_string))
+subplot(221);subplot(221).set_title('DATA\n $ m $')
+image(data)
+subplot(222);subplot(222).set_title('FIT\n $K_{1}$ $f$ $K_{2}$')
+image(fit)
+subplots_adjust(hspace=0.5)
+subplot(223);subplot(223).set_title('DATA - FIT\n $ m $ - $K_{1}$ $f$ $K_{2}$')
+image(residual)
+subplot(224);subplot(224).set_title('|DATA - FIT|\n |$ m $ - $K_{1}$ $f$ $K_{2}$|')
+image(abs(residual))
+
+
+# In[81]:
+
+
+x_test2 = x.C
+x_test2['T1':(-0.5,None)] = 0
+x_test2['T2':(-1,None)] = 0
+title('Bottom left peak')
+image(x_test2)
+xlabel(r'$log(T_2/$s$)$')
+ylabel(r'$log(T_1/$s$)$')
+fit = x.C.get_prop('K1').dot(x_test2.C.dot(x.C.get_prop('K2')))
+residual  = data - fit
+figure(figsize=(13,8));suptitle('DATASET: BOTTOM LEFT PEAK, %s_%s'%(date,id_string))
+subplot(221);subplot(221).set_title('DATA\n $ m $')
+image(data)
+subplot(222);subplot(222).set_title('FIT\n $K_{1}$ $f$ $K_{2}$')
+image(fit)
+subplots_adjust(hspace=0.5)
+subplot(223);subplot(223).set_title('DATA - FIT\n $ m $ - $K_{1}$ $f$ $K_{2}$')
+image(residual)
+subplot(224);subplot(224).set_title('|DATA - FIT|\n |$ m $ - $K_{1}$ $f$ $K_{2}$|')
+image(abs(residual))
+
+
+# In[80]:
+
+
+x_test3 = x.C
+#x_test3['T1':(None,-1)] = 0
+x_test3['T2':(None,-1)] = 0
+title('Upper right peak')
+image(x_test3)
+fit = x.C.get_prop('K1').dot(x_test3.C.dot(x.C.get_prop('K2')))
+residual  = data - fit
+figure(figsize=(13,8));suptitle('DATASET: UPPER RIGHT PEAK, %s_%s'%(date,id_string))
+subplot(221);subplot(221).set_title('DATA\n $ m $')
+image(data)
+subplot(222);subplot(222).set_title('FIT\n $K_{1}$ $f$ $K_{2}$')
+image(fit)
+subplots_adjust(hspace=0.5)
+subplot(223);subplot(223).set_title('DATA - FIT\n $ m $ - $K_{1}$ $f$ $K_{2}$')
+image(residual)
+subplot(224);subplot(224).set_title('|DATA - FIT|\n |$ m $ - $K_{1}$ $f$ $K_{2}$|')
+image(abs(residual))
 
 
 # In[ ]:
