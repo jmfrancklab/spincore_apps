@@ -31,10 +31,10 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190707'
-output_name = 'echo_1'
-adcOffset = 44
-carrierFreq_MHz = 14.897738
+date = '190710'
+output_name = 'echo_2'
+adcOffset = 35
+carrierFreq_MHz = 14.897264
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -49,18 +49,18 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.25
-deadtime = 60.0
-repetition = 15e6
+p90 = 3.35
+deadtime = 50.0
+repetition = 4e6
 
-SW_kHz = 3.0
+SW_kHz = 7.5
 nPoints = 128
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-#pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
+tau = deadtime + acq_time*1e3*0.5 + tau_adjust
+pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -112,7 +112,7 @@ if phase_cycling:
         ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
         ('delay',deadtime),
         ('acquire',acq_time),
-        #('delay',pad),
+        ('delay',pad),
         ('delay',repetition),
         ('jumpto','start')
         ])
@@ -127,7 +127,7 @@ if not phase_cycling:
         ('pulse_TTL',2.0*p90,0.0),
         ('delay',deadtime),
         ('acquire',acq_time),
-        #('delay',pad),
+        ('delay',pad),
         ('delay',repetition),
         ('jumpto','start')
         ])

@@ -40,18 +40,19 @@ import SpinCore_pp
 import time
 fl = figlist_var()
 
-date = '190614'
-output_name = 'ipa_T1CPMG_1'
-clock_correction = -0.399405/9.969
+date = '190710'
+output_name = 'T1CPMG_3'
+#clock_correction = 1.0829/998.253
 adcOffset = 35
-carrierFreq_MHz = 14.894351
+carrierFreq_MHz = 14.897206
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.2
-deadtime = 100.0
+p90 = 3.35
+deadtime = 60.0
 repetition = 4e6
 
-SW_kHz = 15.0
+SW_kHz = 9.0
+#SW_kHz = 15.0
 nPoints = 128
 
 deblank = 1.0
@@ -62,7 +63,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 2
+nScans = 16
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -71,7 +72,26 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,8.7e5,9.5e5,1e6,2e6,3e6]
+vd_list = r_[3e1,1e2,1e3,3e3,5e3,1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,3e6,3e6,6e6]
+#{{{ setting acq_params dictionary
+acq_params = {}
+acq_params['adcOffset'] = adcOffset
+acq_params['carrierFreq_MHz'] = carrierFreq_MHz
+acq_params['amplitude'] = amplitude
+acq_params['nScans'] = nScans
+acq_params['nEchoes'] = nEchoes
+acq_params['p90_us'] = p90
+acq_params['deadtime_us'] = deadtime
+acq_params['repetition_us'] = repetition
+acq_params['SW_kHz'] = SW_kHz
+acq_params['nPoints'] = nPoints
+acq_params['tau_adjust_us'] = tau_adjust
+acq_params['deblank_us'] = deblank
+acq_params['tau_us'] = tau
+acq_params['pad_us'] = pad 
+if phase_cycling:
+    acq_params['nPhaseSteps'] = nPhaseSteps
+#}}}
 for index,val in enumerate(vd_list):
     vd = val
     print "***"
@@ -79,6 +99,7 @@ for index,val in enumerate(vd_list):
     print "***"
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    acq_params['acq_time_ms'] = acq_time
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
@@ -165,6 +186,7 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
+        data_2d.set_prop('acq_params',acq_params)
         data_2d.name('signal')
         data_2d.hdf5_write(date+'_'+output_name+'.h5')
         print "Name of saved data",data_2d.name()
