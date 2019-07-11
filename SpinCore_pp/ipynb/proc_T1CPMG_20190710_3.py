@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 
 #%load_ext pyspecdata.ipy
@@ -10,13 +10,13 @@ from scipy.optimize import minimize,basinhopping,nnls
 init_logging(level='debug')
 
 
-# In[2]:
+# In[3]:
 
 
 # Initializing dataset
 
 
-# In[3]:
+# In[4]:
 
 
 fl = figlist_var()
@@ -24,7 +24,7 @@ date = '190710'
 id_string = 'T1CPMG_3'
 
 
-# In[4]:
+# In[5]:
 
 
 filename = date+'_'+id_string+'.h5'
@@ -43,7 +43,7 @@ fl.next('raw data - no clock correction')
 fl.image(s)
 
 
-# In[5]:
+# In[6]:
 
 
 clock_corr = True 
@@ -59,7 +59,7 @@ if clock_corr:
     fl.image(s)
 
 
-# In[6]:
+# In[7]:
 
 
 orig_t = s.getaxis('t')
@@ -88,13 +88,13 @@ with figlist_var() as fl:
     fl.image(s)
 
 
-# In[7]:
+# In[8]:
 
 
 print ndshape(s)
 
 
-# In[8]:
+# In[9]:
 
 
 s.ft(['ph1'])
@@ -103,7 +103,7 @@ with figlist_var() as fl:
     fl.image(s)
 
 
-# In[9]:
+# In[10]:
 
 
 s.ft('t2',shift=True)
@@ -111,7 +111,7 @@ fl.next(id_string+' image plot coherence -- ft')
 fl.image(s)
 
 
-# In[10]:
+# In[11]:
 
 
 s.ift('t2')
@@ -121,7 +121,7 @@ coh.setaxis('t2',orig_t).set_units('t2','s')
 s = s['ph1',1].C
 
 
-# In[11]:
+# In[12]:
 
 
 with figlist_var() as fl:
@@ -133,7 +133,7 @@ with figlist_var() as fl:
     fl.plot(s['nEchoes',0]['vd',0])
 
 
-# In[12]:
+# In[13]:
 
 
 s.reorder('vd',first=True)
@@ -144,7 +144,7 @@ with figlist_var() as fl:
     fl.image(s)
 
 
-# In[13]:
+# In[14]:
 
 
 with figlist_var() as fl:
@@ -156,7 +156,7 @@ with figlist_var() as fl:
     s.ift('t2')
 
 
-# In[14]:
+# In[15]:
 
 
 s.ft('t2')
@@ -206,25 +206,25 @@ fl.image(s.imag)
 fl.show()
 
 
-# In[15]:
+# In[16]:
 
 
 # CHECKPOINT
 
 
-# In[16]:
+# In[17]:
 
 
 checkpoint = s.C
 
 
-# In[ ]:
+# In[18]:
 
 
 # IF WANTING TO FIND T2 DECAY
 
 
-# In[17]:
+# In[ ]:
 
 
 T2_fits = True
@@ -256,7 +256,7 @@ if T2_fits:
 
 # CHECKPOINT
 
-# In[18]:
+# In[19]:
 
 
 d = checkpoint.C
@@ -264,7 +264,7 @@ d = d.C.sum('t2')
 d = d.real
 
 
-# In[36]:
+# In[20]:
 
 
 print "Constructing kernels..."
@@ -277,7 +277,7 @@ data.rename('vd','tau1').setaxis('tau1',vd_list)
 data.rename('nEchoes','tau2').setaxis('tau2',tE_axis)
 
 
-# In[51]:
+# In[21]:
 
 
 this = lambda x1,x2,y1,y2: (1-2*exp(-x1/y1),exp(-x2/y2))
@@ -292,53 +292,48 @@ x.setaxis('T1',log10(Nx_ax.data)).set_units('T1',None)
 x.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
 
 
-# In[52]:
-
-
-image(x)
-xlabel(r'$log(T_2/$s$)$')
-ylabel(r'$log(T_1/$s$)$')
-title('Higher SNR, repeat July 9, 2019 T1-T2 measurement')
-
-
-# In[53]:
+# In[ ]:
 
 
 print ndshape(x)
 
 
-# In[76]:
+# In[24]:
 
 
 image(x)
 xlabel(r'$log(T_2/$s$)$')
 ylabel(r'$log(T_1/$s$)$')
 title('Higher SNR, repeat July 9, 2019 T1-T2 measurement')
+
 fit = x.C.get_prop('K1').dot(x.C.dot(x.C.get_prop('K2')))
 residual  = data - fit
 figure(figsize=(13,8));suptitle('DATASET: %s_%s'%(date,id_string))
 subplot(221);subplot(221).set_title('DATA\n $ m $')
 image(data)
+maxval=abs(data.data).max()
+clim(-maxval,maxval)
+
 subplot(222);subplot(222).set_title('FIT\n $K_{1}$ $f$ $K_{2}$')
 image(fit)
+clim(-maxval,maxval)
+
 subplots_adjust(hspace=0.5)
 subplot(223);subplot(223).set_title('DATA - FIT\n $ m $ - $K_{1}$ $f$ $K_{2}$')
 image(residual)
+clim(-maxval,maxval)
+
 subplot(224);subplot(224).set_title('|DATA - FIT|\n |$ m $ - $K_{1}$ $f$ $K_{2}$|')
 image(abs(residual))
+clim(-maxval,maxval)
 
 
-# In[60]:
+# In[25]:
 
 
 x_test = x.C
 x_test['T1':(None,-0.5)] = 0
 x_test['T2':(-0.9,None)] = 0
-
-
-# In[77]:
-
-
 title('Only cross peak')
 image(x_test)
 xlabel(r'$log(T_2/$s$)$')
@@ -348,16 +343,21 @@ residual  = data - fit
 figure(figsize=(13,8));suptitle('DATASET: ONLY CROSSPEAK, %s_%s'%(date,id_string))
 subplot(221);subplot(221).set_title('DATA\n $ m $')
 image(data)
+maxval=abs(data.data).max()
+clim(-maxval,maxval)
 subplot(222);subplot(222).set_title('FIT\n $K_{1}$ $f$ $K_{2}$')
 image(fit)
+clim(-maxval,maxval)
 subplots_adjust(hspace=0.5)
 subplot(223);subplot(223).set_title('DATA - FIT\n $ m $ - $K_{1}$ $f$ $K_{2}$')
 image(residual)
+clim(-maxval,maxval)
 subplot(224);subplot(224).set_title('|DATA - FIT|\n |$ m $ - $K_{1}$ $f$ $K_{2}$|')
 image(abs(residual))
+clim(-maxval,maxval)
 
 
-# In[81]:
+# In[26]:
 
 
 x_test2 = x.C
@@ -372,16 +372,23 @@ residual  = data - fit
 figure(figsize=(13,8));suptitle('DATASET: BOTTOM LEFT PEAK, %s_%s'%(date,id_string))
 subplot(221);subplot(221).set_title('DATA\n $ m $')
 image(data)
+maxval=abs(data.data).max()
+clim(-maxval,maxval)
 subplot(222);subplot(222).set_title('FIT\n $K_{1}$ $f$ $K_{2}$')
 image(fit)
+clim(-maxval,maxval)
+
 subplots_adjust(hspace=0.5)
 subplot(223);subplot(223).set_title('DATA - FIT\n $ m $ - $K_{1}$ $f$ $K_{2}$')
 image(residual)
+clim(-maxval,maxval)
+
 subplot(224);subplot(224).set_title('|DATA - FIT|\n |$ m $ - $K_{1}$ $f$ $K_{2}$|')
 image(abs(residual))
+clim(-maxval,maxval)
 
 
-# In[80]:
+# In[27]:
 
 
 x_test3 = x.C
@@ -394,13 +401,20 @@ residual  = data - fit
 figure(figsize=(13,8));suptitle('DATASET: UPPER RIGHT PEAK, %s_%s'%(date,id_string))
 subplot(221);subplot(221).set_title('DATA\n $ m $')
 image(data)
+maxval=abs(data.data).max()
+clim(-maxval,maxval)
 subplot(222);subplot(222).set_title('FIT\n $K_{1}$ $f$ $K_{2}$')
 image(fit)
+clim(-maxval,maxval)
+
 subplots_adjust(hspace=0.5)
 subplot(223);subplot(223).set_title('DATA - FIT\n $ m $ - $K_{1}$ $f$ $K_{2}$')
 image(residual)
+clim(-maxval,maxval)
+
 subplot(224);subplot(224).set_title('|DATA - FIT|\n |$ m $ - $K_{1}$ $f$ $K_{2}$|')
 image(abs(residual))
+clim(-maxval,maxval)
 
 
 # In[ ]:
