@@ -10,6 +10,12 @@ from scipy.optimize import minimize,basinhopping,nnls
 init_logging(level='debug')
 
 
+# In[3]:
+
+
+get_ipython().magic(u'pinfo nddata.nnls')
+
+
 # In[2]:
 
 
@@ -256,7 +262,7 @@ if T2_fits:
 
 # CHECKPOINT
 
-# In[18]:
+# In[43]:
 
 
 d = checkpoint.C
@@ -264,7 +270,7 @@ d = d.C.sum('t2')
 d = d.real
 
 
-# In[19]:
+# In[44]:
 
 
 print "Constructing kernels..."
@@ -279,7 +285,7 @@ data.rename('vd','tau1').setaxis('tau1',vd_list)
 data.rename('nEchoes','tau2').setaxis('tau2',tE_axis)
 
 
-# In[20]:
+# In[45]:
 
 
 this = lambda x1,x2,y1,y2: (1-2*exp(-x1/y1),exp(-x2/y2))
@@ -294,7 +300,7 @@ x.setaxis('T1',log10(Nx_ax.data)).set_units('T1',None)
 x.setaxis('T2',log10(Ny_ax.data)).set_units('T2',None)
 
 
-# In[21]:
+# In[46]:
 
 
 image(x)
@@ -303,134 +309,42 @@ ylabel(r'$log(T_1/$s$)$')
 title('Higher SNR, repeat July 9, 2019 T1-T2 measurement')
 
 
-# In[32]:
-
-
-# Pull this from the log file, for now
-s1 = 12
-s2 = 7
-
-
-# In[72]:
-
-
-# In order to generate the residual, need the compressed data
-# however this relies on being given the individual compressed kernels,
-# which right now I do not return, thus this needs to be added into the method
-# for now, I construct the kernels separately ( and redundantly )
-
-
-# In[29]:
+# In[47]:
 
 
 soln_vec = array(x.data)
-datac_lex = []
+data_lex = []
 for m in xrange(shape(soln_vec)[0]):
     for l in xrange(shape(soln_vec)[1]):
         temp = soln_vec[m][l]
-        datac_lex.append(temp)
-print "Dimension of lexicographically ordered data:",shape(datac_lex)[0]
-K0 = x.get_prop('nnls_kernel')
+        data_lex.append(temp)
+print "Dimension of lexicographically ordered data:",shape(data_lex)[0]
 
 
-# In[59]:
+# In[51]:
 
 
-tau1 = data.getaxis('tau1')
-tau2 = data.getaxis('tau2')
-N1_4d = reshape(tau1,(shape(tau1)[0],1,1,1))
-N2_4d = reshape(tau2,(1,shape(tau2)[0],1,1))
-Nx_4d = reshape(logspace(-3,1,Nx),(1,1,shape(logspace(-3,1,Nx))[0],1))
-Ny_4d = reshape(logspace(-3,1,Ny),(1,1,1,shape(logspace(-3,1,Ny))[0]))
+data_compressed = nddata(x.get_prop('compressed_data'),
+                         ['$\widetilde{N_{1}}$','$\widetilde{N_{2}}$'])
+data_fit = nddata(reshape(x.get_prop('nnls_kernel').dot(data_lex),
+                          (x.get_prop('s1'),x.get_prop('s2'))),
+                  ['$\widetilde{N_{1}}$','$\widetilde{N_{2}}$'])
+data_residual = data_compressed - data_fit
 
 
-# In[61]:
-
-
-k1 = (1.-2*exp(-1*N1_4d/Nx_4d))
-k2 = exp(-N2_4d/Ny_4d)
-print "Shape of K1 (relates tau1 and x)",shape(k1)
-print "Shape of K2 (relates tau2 and y)",shape(k2)
-k1_sqz = squeeze(k1)
-k2_sqz = squeeze(k2)
-U1,S1_row,V1 = np.linalg.svd(k1_sqz,full_matrices=False)
-print "SVD of K1",map(lambda x: x.shape, (U1, S1_row, V1))
-U2,S2_row,V2 = np.linalg.svd(k2_sqz,full_matrices=False)
-print "SVD of K2",map(lambda x: x.shape, (U2, S2_row, V2))
-
-
-# In[62]:
-
-
-print "Uncompressed singular row vector for K1",S1_row.shape
-S1_row = S1_row[0:s1]
-print "Compressed singular value row vector for K1",S1_row.shape
-V1 = V1[0:s1,:]
-U1 = U1[:,0:s1]
-print "Compressed V matrix for K1",V1.shape
-print "Comrpessed U matrix for K1",U1.shape
-
-print "Uncompressed singular row vector for K2",S2_row.shape
-S2_row = S2_row[0:s2]
-print "Compressed singular value row vector for K2",S2_row.shape
-V2 = V2[0:s2,:]
-U2 = U2[:,0:s2]
-print "Compressed V matrix for K2",V2.shape
-print "Compressed U matrix for K2",U2.shape
-
-I_S1 = eye(S1_row.shape[0])
-S1 = S1_row*I_S1
-print "Non-zero singular value matrix for K1",S1.shape
-
-I_S2 = eye(S2_row.shape[0])
-S2 = S2_row*I_S2
-print "Non-zero singular value matrix for K2",S2.shape
-
-
-# In[67]:
-
-
-data_compr = U1.T.dot(data.data.dot(U2))
-print "Compressed data dimensioins:",shape(data_compr)
-
-comp = reshape(data_compr,(shape(data_compr))[0]*(shape(data_compr))[1])
-
-figure()
-title("S2 plotted against S1 kernel")
-for x in xrange((shape(data_compr))[1]):
-    plot(data_compr[:,x],'-.',label='%d'%x)
-ylabel('Compressed data')
-xlabel('Index')
-legend()
-show()
-
-
-# In[68]:
-
-
-nd_comp = nddata(reshape(comp,(s1,s2)),['$\widetilde{N_{1}}$','$\widetilde{N_{2}}$'])
-nd_fit = nddata(reshape(K0.dot(datac_lex),(s1,s2)),['$\widetilde{N_{1}}$','$\widetilde{N_{2}}$'])
-
-
-# In[69]:
-
-
-nd_residual = nd_comp - nd_fit
-
-
-# In[70]:
+# In[52]:
 
 
 figure(figsize=(13,8));suptitle('DATASET: %s_%s'%(date,id_string))
 subplot(221);subplot(221).set_title('COMPRESSED DATA\n $\widetilde{m}$')
-image(nd_comp)
+image(data_compressed)
 subplot(222);subplot(222).set_title('FIT\n $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$')
-image(nd_fit)
+image(data_fit)
 subplots_adjust(hspace=0.5)
 subplot(223);subplot(223).set_title('DATA - FIT\n $\widetilde{m}$ - $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$')
-image(nd_residual)
+image(data_residual)
 subplot(224);subplot(224).set_title('|DATA - FIT|\n |$\widetilde{m}$ - $(\widetilde{K_{1}}\otimes\widetilde{K_{2}})x$|')
-image(abs(nd_residual))
+image(abs(data_residual))
 
 
 # In[ ]:
