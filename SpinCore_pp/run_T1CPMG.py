@@ -40,11 +40,11 @@ import SpinCore_pp
 import time
 fl = figlist_var()
 
-date = '190709'
-output_name = 'T1CPMG_1'
-clock_correction = 1.0829/998.253
-adcOffset = 37
-carrierFreq_MHz = 14.897316
+date = '190710'
+output_name = 'T1CPMG_3'
+#clock_correction = 1.0829/998.253
+adcOffset = 35
+carrierFreq_MHz = 14.897206
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.35
@@ -52,6 +52,7 @@ deadtime = 60.0
 repetition = 4e6
 
 SW_kHz = 9.0
+#SW_kHz = 15.0
 nPoints = 128
 
 deblank = 1.0
@@ -62,7 +63,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 4
+nScans = 16
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:

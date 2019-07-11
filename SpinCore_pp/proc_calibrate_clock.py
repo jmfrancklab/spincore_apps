@@ -2,12 +2,13 @@ from pyspecdata import *
 fl = figlist_var()
 date = '190710'
 for id_string in [
-        ('calibrate_clock_1_2'),
+        ('calibrate_clock_1_1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(exp_type = 'test_equip' ))
+
     s.rename('t','t2').set_units('t2','s')
     clock_correction = 0
     #clock_correction = -9.7/3
