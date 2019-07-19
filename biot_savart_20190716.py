@@ -9,6 +9,10 @@ width = 3.0e-2 # width of one rectangular array
 length = 6.0e-2 # length of one rectangular array
 y_dist1 = 2.5e-2
 
+#width += 6.0e-2
+#length -= 3.0e-2
+
+
 degrees_to_radians = pi/180.
 min_theta=5 # in degrees
 max_theta=175 # in degrees
@@ -149,12 +153,13 @@ atan2_array = zeros_like(x_len)
 for x in xrange(len(x_len)):
     atan2_array[x] = atan2(y_dist1,x_len[x])
 #p1 = path_obj(sqrt(x_len**2 + y_dist1**2),atan2_array*(1./degrees_to_radians),0.25e-2)
-theta_val = 28.0
-z_val = 0.25e-2
+theta_val = 50.0
+z_val = 3.5e-2
 p1 = path_obj(y_dist1,r_[-theta_val:theta_val:200j],z_val)
 p1 += (y_dist1,theta_val,r_[z_val,width+z_val])
 p1 += (y_dist1,r_[theta_val:-theta_val:200j],width+z_val)
 p1 += (y_dist1,-theta_val,r_[width+z_val,z_val])
+
 p2 = path_obj(y_dist1,r_[-theta_val:theta_val:200j],-z_val)
 p2 += (y_dist1,theta_val,r_[-z_val,-width-z_val])
 p2 += (y_dist1,r_[theta_val:-theta_val:200j],-width-z_val)
@@ -178,6 +183,8 @@ p1.plot()
 p2.plot()
 p3.plot()
 p4.plot()
+
+
 # {{{ again, this would be more legible/compact w/ pyspec:
 # x = nddata(r_[-R:R:10j],'x')
 # ...
@@ -190,8 +197,9 @@ p4.plot()
 # first, I define a grid of ones that covers the x,y,
 # and z points I want
 x_points = r_[0]
-y_points = r_[-y_dist1:y_dist1:10j]
-z_points = r_[-width-z_val:width+z_val:26j]
+y_points = r_[-y_dist1:y_dist1:11j]
+#y_points = r_[0]
+z_points = r_[-width-z_val:width+z_val:106j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -206,31 +214,25 @@ point_grid = stack((x_points*ones_grid,
             (1,2,3,0) # put the outer (stack) dimension on the inside
             ).reshape((-1,3))
 # }}}
-#fields1 = p1.calculate_biot(point_grid)
-#fields2 = p2.calculate_biot(point_grid)
-#fields3 = p3.calculate_biot(point_grid)
-#fields4 = p4.calculate_biot(point_grid)
 fields = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid) + p3.calculate_biot(point_grid) + p4.calculate_biot(point_grid)
+x_fields = (fields[:,0].reshape(106,-1))
+
+plot_distance = True
+if plot_distance:
+    figure()
+    plot(x_fields[:,5],z_points.squeeze()*1e2)
+    xlabel(r'$B_{0,z}$ \ $\frac{T}{turn}$')
+    ylabel(r'$z$ \ cm')
+    savefig('20190719_distance_gradients_curved.pdf',
+            transparent=True,
+            bbox_inches='tight',
+            pad_inches=0)
+    show()
+
 ax.quiver(*(
     [point_grid[:,j] for j in xrange(3)]
-    +[500*fields[:,j] for j in xrange(3)]
+    +[1338*fields[:,j] for j in xrange(3)]
     ))
-#ax.quiver(*(
-#    [point_grid[:,j] for j in xrange(3)]
-#    +[100*fields1[:,j] for j in xrange(3)]
-#    ))
-#ax.quiver(*(
-#    [point_grid[:,j] for j in xrange(3)]
-#    +[100*fields2[:,j] for j in xrange(3)]
-#    ))
-#ax.quiver(*(
-#    [point_grid[:,j] for j in xrange(3)]
-#    +[100*fields3[:,j] for j in xrange(3)]
-#    ))
-#ax.quiver(*(
-#    [point_grid[:,j] for j in xrange(3)]
-#    +[100*fields4[:,j] for j in xrange(3)]
-#    ))
 # {{{ all of this is to get equal sized axes
 max_width = max(diff(stack((
         array(ax.get_xlim()),
