@@ -6,7 +6,7 @@ ax = subplot(111, projection='3d')
 
 width = 3.0e-2 # width of one rectangular array
 length = 6.0e-2 # length of one rectangular array
-y_dist1 = 2.75e-2
+y_dist1 = 2.5e-2
 
 def cyl_to_cart(r,theta,z):
     r"""cylindrical to cartesian, using **degrees** for
@@ -154,6 +154,7 @@ p1 += (length/2,y_dist1,-1*r_[0.25e-2,3.25e-2])
 p1 += (r_[length/2,-length/2],y_dist1,-1*3.25e-2)
 p1 += (-length/2,y_dist1,-1*r_[3.25e-2,0.25e-2])
 p1.small_pieces()
+
 p2 = path_obj(r_[-length/2,length/2],-1*y_dist1,0.25e-2)
 p2 += (length/2,-1*y_dist1,r_[0.25e-2,3.25e-2])
 p2 += (r_[length/2,-length/2],-1*y_dist1,3.25e-2)
@@ -176,9 +177,9 @@ p2.plot()
 # 
 # first, I define a grid of ones that covers the x,y,
 # and z points I want
-x_points = r_[-0.5*y_dist1:0.5*y_dist1:15j]
+x_points = r_[0] #r_[-0.5*y_dist1:0.5*y_dist1:11j]
 y_points = r_[0]
-z_points = r_[-width:width:15j]
+z_points = r_[-width:width:106j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -194,6 +195,26 @@ point_grid = stack((x_points*ones_grid,
             ).reshape((-1,3))
 # }}}
 fields1 = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid)
+
+
+print x_points
+print z_points
+y_fields = (fields1[:,1].reshape(106,-1))
+print shape(y_fields)
+print shape(z_points)
+plot_distance = False
+if plot_distance:
+    figure()
+    plot(y_fields[:,1],z_points.squeeze()*1e2)
+    xlabel(r'$B_{0,z}$ \ $\frac{T}{turn}$')
+    ylabel(r'$z$ \ cm')
+    savefig('20190719_distance_gradients_planar.pdf',
+            transparent=True,
+            bbox_inches='tight',
+            pad_inches=0)
+    show()
+    quit()
+
 ax.quiver(*(
     [point_grid[:,j] for j in xrange(3)]
     +[500*fields1[:,j] for j in xrange(3)]
