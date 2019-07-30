@@ -274,12 +274,14 @@ class Bridge12 (Serial):
             assert Hz >= self.freq_bounds[0]
             assert Hz <= self.freq_bounds[1]
         setting = int(Hz/1e3+0.5)
-        self.write('freq %d\r'%(setting))
-        if self.freq_int() != setting:
-            for j in range(10):
-                result = self.freq_int()
-                if result == setting:
-                    return
+        with HP8672A(gpibaddress=19) as h:
+            h.set_frequency(setting/1e3)
+        #self.write('freq %d\r'%(setting))
+        #if self.freq_int() != setting:
+        #    for j in range(10):
+        #        result = self.freq_int()
+        #        if result == setting:
+        #            return
             raise RuntimeError("After checking status 10 times, I can't get the "
                            "frequency to change -- result is %d setting is %d"%(result,setting))
     def freq_int(self):
