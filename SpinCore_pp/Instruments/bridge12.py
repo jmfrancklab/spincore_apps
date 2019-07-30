@@ -8,6 +8,7 @@ from serial import Serial
 from scipy.interpolate import interp1d
 from numpy import *
 import time
+from Instruments import HP8672A
 
 def generate_beep(f,dur):
     # do nothing -- can be used to generate a beep, but platform-dependent
