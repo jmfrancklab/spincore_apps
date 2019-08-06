@@ -32,14 +32,14 @@ def verifyParams():
     return
 #}}}
 date = '190805'
-output_name = 'echo_2'
-adcOffset = 36
-carrierFreq_MHz = 14.896843
+output_name = 'echo_3_2'
+adcOffset = 33
+carrierFreq_MHz = 14.897844
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -51,16 +51,16 @@ if not phase_cycling:
 #}}}
 p90 = 3.37
 deadtime = 50.0
-repetition = 4e6
+repetition = 15e6
 
-SW_kHz = 7.5
+SW_kHz = 3.0
 nPoints = 128
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
+tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
+#pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -112,7 +112,7 @@ if phase_cycling:
         ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
         ('delay',deadtime),
         ('acquire',acq_time),
-        ('delay',pad),
+        #('delay',pad),
         ('delay',repetition),
         ('jumpto','start')
         ])
@@ -127,7 +127,7 @@ if not phase_cycling:
         ('pulse_TTL',2.0*p90,0.0),
         ('delay',deadtime),
         ('acquire',acq_time),
-        ('delay',pad),
+        #('delay',pad),
         ('delay',repetition),
         ('jumpto','start')
         ])

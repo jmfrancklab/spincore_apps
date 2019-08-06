@@ -39,7 +39,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-powers = r_[1e-3:4.:20j]
+powers = r_[1e-3:1.6:20j]
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 def check_for_3dB_step(x):
@@ -64,7 +64,7 @@ tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -74,9 +74,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.25
-deadtime = 60.0
-repetition = 15e6
+p90 = 3.37
+deadtime = 50.0
+repetition = 45e6
 
 SW_kHz = 3.0
 nPoints = 128
@@ -84,7 +84,7 @@ nPoints = 128
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-tau = deadtime + acq_time*1e3*0.5 + tau_adjust
+tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
 acq_params = {}
@@ -187,18 +187,12 @@ DNP_data['power',0] = data
 raw_input("CONNECT AND TURN ON BRIDGE12...")
 
 with Bridge12() as b:
-    # Begin actual Bridge12 amplifier set up
-    b.lock_on_dip(ini_range=(9.80e9,9.83e9))
-    b.zoom(dBm_increment=3)
-    b.zoom(dBm_increment=3)
-    b.zoom(dBm_increment=3)
-    b.zoom(dBm_increment=3)
-    b.zoom(dBm_increment=3)
-    b.zoom(dBm_increment=3)
-    b.zoom(dBm_increment=3)
-    b.zoom(dBm_increment=1)
-    zoom_return = b.zoom(dBm_increment=1) #Ends at 36 dBm
-    dip_f = zoom_return[2] # frequency of MW radiation needed
+    b.set_wg(True)
+    b.set_rf(True)
+    b.set_amp(True)
+    this_return = b.lock_on_dip(ini_range=(9.81e9,9.83e9))
+    dip_f = this_return[2]
+    print "Frequency",dip_f
     b.set_freq(dip_f)
     rx_array = empty_like(dB_settings)
     tx_array = empty_like(dB_settings) #inserted tx here
@@ -206,7 +200,7 @@ with Bridge12() as b:
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
-        time.sleep(7)
+        time.sleep(5)
         rx_array[j] = b.rxpowermv_float()
         tx_array[j] = b.txpowermv_float() #inserted tx here
         print "\n*** *** *** *** ***\n"
@@ -283,6 +277,8 @@ save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
+        DNP_data.set_prop('acq_params',acq_params)
+        DNP_data.name('signal')
         DNP_data.hdf5_write(date+'_'+output_name+'.h5')
         print "Name of saved data",DNP_data.name()
         print "Units of saved data",DNP_data.get_units('t')
@@ -292,9 +288,13 @@ while save_file:
         print e
         print "FILE ALREADY EXISTS."
         save_file = False
+fl.next('raw data')
+fl.image(DNP_data)
 fl.next('abs raw data')
-fl.image(abs(DNP_data),':',alpha=0.8)
-DNP_data.ft('t',shift=True)
-fl.next('abs FT raw data')
-fl.image(abs(DNP_data),':',alpha=0.8)
+fl.image(abs(DNP_data))
+data.ft('t',shift=True)
+fl.next('raw data - ft')
+fl.image(DNP_data)
+fl.next('abs raw data - ft')
+fl.image(abs(DNP_data))
 fl.show()
