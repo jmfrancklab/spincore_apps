@@ -45,7 +45,7 @@ import time
 fl = figlist_var()
 
 # Parameters for Bridge12
-powers = r_[1e-3:4.:20j]
+powers = r_[1e-3:2.:20j]
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 def check_for_3dB_step(x):
@@ -62,15 +62,15 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '190706'
+date = '190805'
 output_name = 'CPMG_DNP_1'
-adcOffset = 39 
-carrierFreq_MHz = 14.897134
+adcOffset = 36 
+carrierFreq_MHz = 14.896843
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.25
+p90 = 3.37
 deadtime = 60.0
-repetition = 15e6
+repetition = 45e6
 
 SW_kHz = 9.0
 nPoints = 128
@@ -195,12 +195,12 @@ DNP_data.setaxis('t',time_axis).set_units('t','s')
 DNP_data['power',0] = data
 raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
-    # Begin actual Bridge12 amplifier set up
-    b.lock_on_dip(ini_range=(9.81e9,9.83e9))
-    for j in xrange(7):
-        b.zoom(dBm_increment=3)
-    zoom_return = b.zoom(dBm_increment=2) #Ends at 36 dBm
-    dip_f = zoom_return[2] # frequency of MW radiation needed
+    b.set_wg(True)
+    b.set_rf(True)
+    b.set_amp(True)
+    this_return = b.lock_on_dip(ini_range=(9.81e9,9.83e9))
+    dip_f = this_return[2]
+    print "Frequency",dip_f
     b.set_freq(dip_f)
     rx_array = empty_like(dB_settings)
     tx_array = empty_like(dB_settings) #inserted tx here
@@ -208,6 +208,7 @@ with Bridge12() as b:
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
+        time.sleep(5)
         rx_array[j] = b.rxpowermv_float()
         tx_array[j] = b.txpowermv_float() #inserted tx here
         print "\n*** *** *** *** ***\n"

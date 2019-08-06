@@ -58,10 +58,10 @@ if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
 #}}}
-date = '190710'
-output_name = 'nutation'
-adcOffset = 34
-carrierFreq_MHz = 14.897085
+date = '190805'
+output_name = 'nutation_2'
+adcOffset = 36
+carrierFreq_MHz = 14.897182
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -98,7 +98,7 @@ acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = 1.0
 acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
+#acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
