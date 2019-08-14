@@ -56,10 +56,10 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '190707'
+date = '190813'
 output_name = 'echo_DNP'
-adcOffset = 44
-carrierFreq_MHz = 14.897738
+adcOffset = 38
+carrierFreq_MHz = 14.898295
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -74,7 +74,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.37
+p90 = 3.5
 deadtime = 50.0
 repetition = 45e6
 
@@ -101,13 +101,13 @@ acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = deblank
 acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
+#acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
-print "PAD DELAY:",pad,"us"
+#print "PAD DELAY:",pad,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 print "\n*** *** ***\n"
 print "CONFIGURING TRANSMITTER..."
@@ -190,7 +190,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.81e9,9.83e9))
+    this_return = b.lock_on_dip(ini_range=(9.815e9,9.83e9))
     dip_f = this_return[2]
     print "Frequency",dip_f
     b.set_freq(dip_f)

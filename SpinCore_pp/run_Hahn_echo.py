@@ -33,13 +33,13 @@ def verifyParams():
 #}}}
 date = '190805'
 output_name = 'echo_3_2'
-adcOffset = 33
-carrierFreq_MHz = 14.897844
+adcOffset = 38
+carrierFreq_MHz = 14.898295
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = True
+phase_cycling = False
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -49,9 +49,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.37
+p90 = 3.5
 deadtime = 50.0
-repetition = 15e6
+repetition = 1e6
 
 SW_kHz = 3.0
 nPoints = 128

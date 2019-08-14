@@ -58,10 +58,10 @@ if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
 #}}}
-date = '190805'
-output_name = 'nutation_2'
-adcOffset = 36
-carrierFreq_MHz = 14.897182
+date = '190813'
+output_name = 'nutation_1'
+adcOffset = 38
+carrierFreq_MHz = 14.898057
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -82,7 +82,7 @@ tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(5.0,10.0,10,endpoint=False)
+p90_range = linspace(4.5,8.5,8,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
