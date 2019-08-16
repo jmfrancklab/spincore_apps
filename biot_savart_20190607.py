@@ -145,27 +145,37 @@ class path_obj (object):
         return retval
 
 # starting with bottom piece, from halfway-point
-p1 = path_obj(r_[-length/2,length/2],y_dist1,0.25e-2)
-p1 += (length/2,y_dist1,r_[0.25e-2,3.25e-2])
-p1 += (r_[length/2,-length/2],y_dist1,3.25e-2)
-p1 += (-length/2,y_dist1,r_[3.25e-2,0.25e-2])
-p1 += (r_[-length/2,length/2],y_dist1,-1*0.25e-2)
-p1 += (length/2,y_dist1,-1*r_[0.25e-2,3.25e-2])
-p1 += (r_[length/2,-length/2],y_dist1,-1*3.25e-2)
-p1 += (-length/2,y_dist1,-1*r_[3.25e-2,0.25e-2])
-p1.small_pieces()
+z_val = 3.5e-2
 
-p2 = path_obj(r_[-length/2,length/2],-1*y_dist1,0.25e-2)
-p2 += (length/2,-1*y_dist1,r_[0.25e-2,3.25e-2])
-p2 += (r_[length/2,-length/2],-1*y_dist1,3.25e-2)
-p2 += (-length/2,-1*y_dist1,r_[3.25e-2,0.25e-2])
-p2 += (r_[-length/2,length/2],-1*y_dist1,-1*0.25e-2)
-p2 += (length/2,-1*y_dist1,-1*r_[0.25e-2,3.25e-2])
-p2 += (r_[length/2,-length/2],-1*y_dist1,-1*3.25e-2)
-p2 += (-length/2,-1*y_dist1,-1*r_[3.25e-2,0.25e-2])
+p1 = path_obj(r_[-length/2,length/2],y_dist1,z_val)
+p1 += (length/2,y_dist1,r_[z_val,width+z_val])
+p1 += (r_[length/2,-length/2],y_dist1,width+z_val)
+p1 += (-length/2,y_dist1,r_[width+z_val,z_val])
+
+p2 = path_obj(r_[-length/2,length/2],y_dist1,-1*z_val)
+p2 += (length/2,y_dist1,-1*r_[z_val,width+z_val])
+p2 += (r_[length/2,-length/2],y_dist1,-1*(width+z_val))
+p2 += (-length/2,y_dist1,-1*r_[width+z_val,z_val])
+
+p3 = path_obj(r_[-length/2,length/2],-1*y_dist1,z_val)
+p3 += (length/2,-1*y_dist1,r_[z_val,width+z_val])
+p3 += (r_[length/2,-length/2],-1*y_dist1,width+z_val)
+p3 += (-length/2,-1*y_dist1,r_[width+z_val,z_val])
+
+p4 = path_obj(r_[-length/2,length/2],-1*y_dist1,-1*z_val)
+p4 += (length/2,-1*y_dist1,-1*r_[z_val,width+z_val])
+p4 += (r_[length/2,-length/2],-1*y_dist1,-1*(width+z_val))
+p4 += (-length/2,-1*y_dist1,-1*r_[width+z_val,z_val])
+
+p1.small_pieces()
 p2.small_pieces()
+p3.small_pieces()
+p4.small_pieces()
+
 p1.plot()
 p2.plot()
+p3.plot()
+p4.plot()
 # {{{ again, this would be more legible/compact w/ pyspec:
 # x = nddata(r_[-R:R:10j],'x')
 # ...
@@ -177,9 +187,11 @@ p2.plot()
 # 
 # first, I define a grid of ones that covers the x,y,
 # and z points I want
-x_points = r_[0] #r_[-0.5*y_dist1:0.5*y_dist1:11j]
+#x_points = r_[-0.5*y_dist1:0.5*y_dist1:11j]
+#x_points = r_[0] 
+x_points = r_[-0.5*y_dist1:0.5*y_dist1:11j]
 y_points = r_[0]
-z_points = r_[-width:width:106j]
+z_points = r_[-width-z_val:width+z_val:106j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -194,7 +206,7 @@ point_grid = stack((x_points*ones_grid,
             (1,2,3,0) # put the outer (stack) dimension on the inside
             ).reshape((-1,3))
 # }}}
-fields1 = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid)
+fields1 = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid) + p3.calculate_biot(point_grid) + p4.calculate_biot(point_grid)
 
 
 print x_points
@@ -202,22 +214,25 @@ print z_points
 y_fields = (fields1[:,1].reshape(106,-1))
 print shape(y_fields)
 print shape(z_points)
-plot_distance = False
+plot_distance = True
 if plot_distance:
     figure()
-    plot(y_fields[:,1],z_points.squeeze()*1e2)
-    xlabel(r'$B_{0,z}$ \ $\frac{T}{turn}$')
+    plot(y_fields[:,5]*1e3,z_points.squeeze()*1e2)
+    np.savez('planar_gradient',
+            field=y_fields[:,5]*1e3,
+            points=z_points.squeeze()*1e2)
+    xlabel(r'$B_{z}$ \ $\frac{mT}{turn}$')
     ylabel(r'$z$ \ cm')
-    savefig('20190719_distance_gradients_planar.pdf',
-            transparent=True,
-            bbox_inches='tight',
-            pad_inches=0)
+    #savefig('20190719_distance_gradients_planar.pdf',
+    #       transparent=True,
+    #       bbox_inches='tight',
+    #       pad_inches=0)
     show()
     quit()
 
 ax.quiver(*(
     [point_grid[:,j] for j in xrange(3)]
-    +[500*fields1[:,j] for j in xrange(3)]
+    +[1783*fields1[:,j] for j in xrange(3)]
     ))
 # {{{ all of this is to get equal sized axes
 max_width = max(diff(stack((
