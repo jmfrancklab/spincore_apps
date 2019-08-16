@@ -1,12 +1,16 @@
 from pyspecdata import *
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp1d
+from math import atan2
 clf()
 ax = subplot(111, projection='3d')
 
-width = 3.0e-2 # width of one rectangular array
-length = 6.0e-2 # length of one rectangular array
-y_dist1 = 2.5e-2
+# See MRI 1992 Callaghan
+length = 4.0e-2
+Z0 = 2.5e-2
+width = 1.55*Z0
+y_c = 1.19*Z0
+
 
 def cyl_to_cart(r,theta,z):
     r"""cylindrical to cartesian, using **degrees** for
@@ -145,28 +149,58 @@ class path_obj (object):
         return retval
 
 # starting with bottom piece, from halfway-point
-z_val = 3.5e-2
 
-p1 = path_obj(y_dist1,r_[-length/2,length/2],z_val)
-p1 += (y_dist1,length/2,r_[z_val,width+z_val])
-p1 += (y_dist1,r_[length/2,-length/2],width+z_val)
-p1 += (y_dist1,-length/2,r_[width+z_val,z_val])
+p1 = path_obj(Z0,
+        r_[-length/2, length/2],
+        y_c/2)
+p1 += (Z0,
+        length/2,
+        r_[y_c/2, width+y_c/2])
+p1 += (Z0,
+        r_[length/2, -length/2],
+        width+y_c/2)
+p1 += (Z0,
+        -length/2,
+        r_[width+y_c/2,y_c/2])
 
-p2 = path_obj(y_dist1,r_[-length/2,length/2],-1*z_val)
-p2 += (y_dist1,length/2,-1*r_[z_val,width+z_val])
-p2 += (y_dist1,r_[length/2,-length/2],-1*(width+z_val))
-p2 += (y_dist1,-length/2,-1*r_[width+z_val,z_val])
+p2 = path_obj(Z0,
+        r_[-length/2, length/2],
+        -1*y_c/2)
+p2 += (Z0,
+        length/2,
+        -1*r_[y_c/2, width+y_c/2])
+p2 += (Z0,
+        r_[length/2, -length/2],
+        -1*(width+y_c/2))
+p2 += (Z0,
+        -length/2,
+        -1*r_[width+y_c/2,y_c/2])
 
-p3 = path_obj(-1*y_dist1,r_[-length/2,length/2],z_val)
-p3 += (-1*y_dist1,length/2,r_[z_val,width+z_val])
-p3 += (-1*y_dist1,r_[length/2,-length/2],width+z_val)
-p3 += (-1*y_dist1,-length/2,r_[width+z_val,z_val])
+p3 = path_obj(-1*Z0,
+        r_[-length/2, length/2],
+        y_c/2)
+p3 += (-1*Z0,
+        length/2,
+        r_[y_c/2, width+y_c/2])
+p3 += (-1*Z0,
+        r_[length/2, -length/2],
+        width+y_c/2)
+p3 += (-1*Z0,
+        -length/2,
+        r_[width+y_c/2,y_c/2])
 
-p4 = path_obj(-1*y_dist1,r_[-length/2,length/2],-1*z_val)
-p4 += (-1*y_dist1,length/2,-1*r_[z_val,width+z_val])
-p4 += (-1*y_dist1,r_[length/2,-length/2],-1*(width+z_val))
-p4 += (-1*y_dist1,-length/2,-1*r_[width+z_val,z_val])
-
+p4 = path_obj(-1*Z0,
+        r_[-length/2, length/2],
+        -1*y_c/2)
+p4 += (-1*Z0,
+        length/2,
+        -1*r_[y_c/2, width+y_c/2])
+p4 += (-1*Z0,
+        r_[length/2, -length/2],
+        -1*(width+y_c/2))
+p4 += (-1*Z0,
+        -length/2,
+        -1*r_[width+y_c/2,y_c/2])
 p1.small_pieces()
 p2.small_pieces()
 p3.small_pieces()
@@ -189,8 +223,8 @@ p4.plot()
 # and z points I want
 x_points = r_[0]
 #y_points = r_[-0.5*y_dist1:0.5*y_dist1:11j]
-y_points = r_[0]
-z_points = r_[-width-z_val:width+z_val:106j]
+y_points = r_[-Z0,0,Z0]
+z_points = r_[-1*(y_c+width):y_c+width:106j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -205,30 +239,14 @@ point_grid = stack((x_points*ones_grid,
             (1,2,3,0) # put the outer (stack) dimension on the inside
             ).reshape((-1,3))
 # }}}
-fields1 = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid) + p3.calculate_biot(point_grid) + p4.calculate_biot(point_grid)
-
-
-y_fields = (fields1[:,0].reshape(106,-1))
-plot_distance = False
-if plot_distance:
-    figure()
-    plot(y_fields[:,5]*1e3,z_points.squeeze()*1e2)
-    np.savez('planar_gradient',
-            field=y_fields[:,5]*1e3,
-            points=z_points.squeeze()*1e2)
-    xlabel(r'$B_{z}$ \ $\frac{mT}{turn}$')
-    ylabel(r'$z$ \ cm')
-    #savefig('20190719_distance_gradients_planar.pdf',
-    #       transparent=True,
-    #       bbox_inches='tight',
-    #       pad_inches=0)
-    show()
-    quit()
+fields = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid) + p3.calculate_biot(point_grid) + p4.calculate_biot(point_grid)
+print shape(fields.reshape(x_points.size,y_points.size,z_points.size,3))
+fields_asgrid = fields.reshape(x_points.size,y_points.size,z_points.size,3) # a 3D grid -- with vector components for each as the last (inner) dim
 
 ax.quiver(*(
     [point_grid[:,j] for j in xrange(3)]
-    +[1783*fields1[:,j] for j in xrange(3)]
-    ),color='navy')
+    +[500*fields[:,j] for j in xrange(3)]
+    ))
 # {{{ all of this is to get equal sized axes
 max_width = max(diff(stack((
         array(ax.get_xlim()),
@@ -243,16 +261,30 @@ newlims = stack((midpoint-max_width/2,
 ax.set_xlim(newlims[:,0])
 ax.set_ylim(newlims[:,1])
 ax.set_zlim(newlims[:,2])
-ax.set_xlim(newlims[:,0])
-ax.set_ylim(newlims[:,1])
-ax.set_zlim(newlims[:,2])
-ax.set_xticks([-0.05,0,0.05])
-ax.set_yticks([-0.05,0,0.05])
-ax.set_zticks([-0.05,0,0.05])
-ax.set_ylabel(r'$x$ \ $m$', rotation=0)
-ax.set_xlabel(r'$z$ \ $m$', rotation=0)
-ax.set_zlabel(r'$y$ \ $m$', rotation=0)
-ax.zaxis.set_rotate_label(False)
-ax.yaxis.set_rotate_label(False)
+#ax.set_xlim(-0.01,0.01)
+#ax.set_ylim(-0.01,0.01)
+#ax.set_zlim(-0.01,0.01)
+print newlims
+# }}}
+figure(2)
+# {{{ to reduce to a 2d grid, index 0 along the x dimension, which is only 1
+#     point thick -- for the vector component, select the x component
+y_2d = y_points[0,:,:]
+z_2d = z_points[0,:,:]
+contourf(y_2d*ones_like(z_2d),z_2d*ones_like(y_2d),fields_asgrid[0,:,:,0],
+        100)
+colorbar()
+# }}}
+figure(3)
+# {{{ now, to reduce to 1d, just select the central index along y
+y_idx = int(0.5*fields_asgrid.shape[1]+0.5) # use the int(x + 0.5) trick to round + int convert
+plot(z_points[0,0,:]/1e-3,fields_asgrid[0,y_idx,:,0]/1e-6,'k')
+ylabel(r'field / $\mu$T')
+xlabel('position / mm')
+axvspan(-10,10,alpha=0.3,color='b')
+#savefig('20190722_gradients_planar.pdf',
+#        transparent=True,
+#        bbox_inches='tight',
+#        pad_inches=0)
 # }}}
 show()
