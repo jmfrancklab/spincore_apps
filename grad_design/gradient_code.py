@@ -151,9 +151,32 @@ point_grid = stack((
 fields = p1.calculate_biot(point_grid) #+ p2.calculate_biot(point_grid)
 fields_asgrid = fields.reshape(x_points.size,y_points.size,z_points.size,3)
 
+figure(1)
 ax.quiver(*(
     [point_grid[:,j] for j in xrange(3)]
     +[500*fields[:,j] for j in xrange(3)]
     ),
     pivot = 'middle')
+figure(2)
+title('Field Map, vertical cavity slice')
+y_2d = y_points[0,:,:]
+z_2d = z_points[0,:,:]
+print "Y-axis starts at",y_points[0,0,0]
+print "Z-axis starts at",z_points[0,0,0]
+contourf(y_2d*ones_like(z_2d)/1e-3, # grid providing the y-axis dimensions
+        z_2d*ones_like(y_2d)/1e-3, # grid providing the z-axis dimensions
+        fields_asgrid[0,:,:,0], # grid of the field as a function of y,z
+        100)
+xlabel(r'x axis (normal to axis of $B_0$) / mm')
+ylabel(r'z axis (upward, lab frame) / mm')
+colorbar()
+figure(3)
+y_index = int(0.5*fields_asgrid.shape[1]+0.5)
+plot(z_points[0,0,:]/1e-3, # grid of the z-axis dimensions
+        fields_asgrid[0,y_index,:,0]/1e-6, # grid of the field as a function of z (taken through central y)
+        'k')
+xlabel(r'position / mm')
+ylabel(r'field / $\mu$T A$^{-1}$')
+
+
 show()
