@@ -167,7 +167,7 @@ contourf(y_2d*ones_like(z_2d)/1e-3, # grid providing the y-axis dimensions
         z_2d*ones_like(y_2d)/1e-3, # grid providing the z-axis dimensions
         fields_asgrid[0,:,:,0], # grid of the field as a function of y,z
         100)
-xlabel(r'x axis (normal to axis of $B_0$) / mm')
+xlabel(r'x axis (in plane of and normal to $B_0$) / mm')
 ylabel(r'z axis (upward, lab frame) / mm')
 colorbar()
 figure(3)
