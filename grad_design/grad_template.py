@@ -1,17 +1,72 @@
 from solid import *
 from solid.utils import *
 
+#def prism(l,w,h):
+#    z = 0.08
+#    separation = 2
+#    border = 0.2
+#    polyhedron(
+#        points = [[0,0,0],[1,0,0],[l,w,0],[0,w,0],[0,w,h],[l,w,h]],
+#        faces = [[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
+#        )
+#    left(w+separation)(cube([l,w,z]))
+#    left(w+separation+w+border)(cube([l,sqrt(w*w+h*h),z]))
+#    left(w+separation+w+border+h+border)(cube([l,sqrt(w*w+h*h),z]))
+#    up(l+border)(left(w+separation+w+border+h+border)(
+#        polyhedron(
+#            points=[[0,0,0],[0-h,0,0],[0,sqrt(w*w*+h*h),0],[0,0,z],[0-h,0,z],
+#            [0,sqrt(w*w+h*h),z]],
+#        faces=[[1,0,2],[5,3,4],[0,1,4,3],[1,2,5,4],[2,0,3,5]]
+#        )))
+#    up(0-border)(left(w+separation+w+border+h+border)(
+#        polyhedron(
+#            points=[[0,0,0],[0-h,0,0],[0,sqrt(w*w+h*h),0],[0,0,z],[0-h,0,z],
+#            [0,sqrt(w*w+h*h),z]],
+#            faces=[[1,0,2],[5,3,4],[0,1,4,3],[1,2,5,4],[2,0,3,5]]
+#                )))
+#    return
+
+#####l = 10.0
+#####w = 5.0
+#####h = 3.0
+#####z = 0.08
+#####separation = 2
+#####border = 0.2
+#####k = polyhedron(
+#####    points = [[0,0,0],[1,0,0],[l,w,0],[0,w,0],[0,w,h],[l,w,h]],
+#####    faces = [[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
+#####    )
+#####k += left(w+separation)(cube([l,w,z]))
+#####k += left(w+separation+w+border)(cube([l,sqrt(w*w+h*h),z]))
+#####k += left(w+separation+w+border+h+border)(cube([l,sqrt(w*w+h*h),z]))
+#####k += up(l+border)(left(w+separation+w+border+h+border)(
+#####    polyhedron(
+#####        points=[[0,0,0],[0-h,0,0],[0,sqrt(w*w*+h*h),0],[0,0,z],[0-h,0,z],
+#####        [0,sqrt(w*w+h*h),z]],
+#####    faces=[[1,0,2],[5,3,4],[0,1,4,3],[1,2,5,4],[2,0,3,5]]
+#####    )))
+#####k += up(0-border)(left(w+separation+w+border+h+border)(
+#####    polyhedron(
+#####        points=[[0,0,0],[0-h,0,0],[0,sqrt(w*w+h*h),0],[0,0,z],[0-h,0,z],
+#####        [0,sqrt(w*w+h*h),z]],
+#####        faces=[[1,0,2],[5,3,4],[0,1,4,3],[1,2,5,4],[2,0,3,5]]
+#####            )))
+
 # units of mm
 thickness = 3.0 # hereafter t
 width = 60.0 # hereafter w
 height = 127.60 # hereafter h
 
-k = polyhedron(
-        points=[[0,0,0],[10,0,0],[10,7,0],[0,7,0],[0,0,5],[10,0,5],
-        [10,7,5],[0,7,5]],
-        faces=[[0,1,2,3],[4,5,1,0],[7,6,5,4],[5,6,2,1],[6,7,3,2],
-        [7,4,0,3]])
-
+def prism(l,w,h):
+    return polyhedron(
+            points=[
+                [0,0,0],[l,0,0],[0,w,0],
+                [0,w,h],[l,0,h],[0,0,h]],
+            faces=[[0,1,2],[2,3,4,1],
+                   [4,3,5],[5,4,1,0],
+                   [0,5,3,2]]
+            )
+k = prism(15,7,3)
 #d = cube([thickness,width,height], center=True)
 #
 #arm1_t = 26.0
