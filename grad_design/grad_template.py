@@ -7,14 +7,29 @@ thickness = 3.0 # hereafter t
 width = 60.0 # hereafter w
 height = 127.60 # hereafter h
 
+
+def prism_2(l,w,h):
+    return polyhedron(
+            points=[[0,0,0],[l,0,0],[l,w,0],[0,w,0],[0,w,h],[l,w,h]],
+            faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
+            )
+
 def prism(l,w,h):
     return polyhedron(
             points=[
                 [0,0,0],[l,0,0],[0,w,0],
                 [0,w,h],[l,0,h],[0,0,h]],
-            faces=[[0,1,2],[2,3,4,1],
-                   [4,3,5],[5,4,1,0],
-                   [0,5,3,2]]
+            faces=[[0,2,1],
+                [1,0,5,4],
+                [4,5,3],
+                [3,4,1,2],
+                [2,3,4,0]
+                ]
+#            faces=[[2,3,4,1],
+#                   [5,4,1,0],
+#                   [0,5,3,2],
+#                   [0,1,2],
+#                   [4,3,5]]
             )
 d = cube([thickness,width,height], center=True)
 
@@ -104,8 +119,8 @@ for this_path in all_paths:
 d += down(prism_h/2.0)(
         right(thickness/2.0)(
             back(width/2.0-arm1_w)(
-    prism(prism_t,prism_w,prism_h))))
+    prism_2(prism_t,prism_w,prism_h))))
 
-a = scad_render(d, file_header='$fa=5;$fs=0.1;')
+a = scad_render(d, file_header='$fa=5;$fs=0.01;')
 with open('grad_temp.scad','w') as fp:
     fp.write(a)
