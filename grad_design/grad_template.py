@@ -10,7 +10,7 @@ height = 127.60 # hereafter h
 
 def prism_2(l,w,h):
     return polyhedron(
-            points=[[0,0,0],[l,0,0],[l,w,0],[0,w,0],[0,w,h],[l,w,h]],
+            points=[[0,0,0],[l,0,0],[l,-w,0],[0,-w,0],[0,-w,-h],[l,-w,-h]],
             faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
             )
 
@@ -116,9 +116,9 @@ for this_path in all_paths:
     d += hole()(this_path)
 
 
-d += down(prism_h/2.0)(
-        right(thickness/2.0)(
-            back(width/2.0-arm1_w)(
+d += up(prism_h/2.0)(
+       right(thickness/2.0)(
+            back(width/2.0-arm1_w-prism_w)(
     prism_2(prism_t,prism_w,prism_h))))
 
 a = scad_render(d, file_header='$fa=5;$fs=0.01;')
