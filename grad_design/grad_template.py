@@ -7,30 +7,21 @@ thickness = 3.0 # hereafter t
 width = 60.0 # hereafter w
 height = 127.60 # hereafter h
 
-
 def prism_2(l,w,h):
     return polyhedron(
-            points=[[0,0,0],[l,0,0],[l,-w,0],[0,-w,0],[0,-w,-h],[l,-w,-h]],
+            points=[[0,0,0],[l,0,0],[l,w,0],[0,w,0],[0,w,h],[l,w,h]],
             faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
             )
-
-def prism(l,w,h):
+def prism_3(l,w,h):
+    # taking prism_2 and rotating it
     return polyhedron(
-            points=[
-                [0,0,0],[l,0,0],[0,w,0],
-                [0,w,h],[l,0,h],[0,0,h]],
-            faces=[[0,2,1],
-                [1,0,5,4],
-                [4,5,3],
-                [3,4,1,2],
-                [2,3,4,0]
-                ]
-#            faces=[[2,3,4,1],
-#                   [5,4,1,0],
-#                   [0,5,3,2],
-#                   [0,1,2],
-#                   [4,3,5]]
+            points=[[0,0,0],[0,0,l],[0,w,l],[0,w,0],[h,w,0],[h,w,l]],
+            faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
             )
+prism_t = 12.0 # this becomes the height
+prism_w = 4.0
+prism_h = 2.32 # this becomes the thickness
+    #{{{
 d = cube([thickness,width,height], center=True)
 
 arm1_t = 26.0
@@ -47,10 +38,6 @@ arm2 = back((arm2_w+width)/2.0)(
         right(-arm2_t+arm1_t+(arm2_t+thickness)/2.0)(
         cube([arm2_t,arm2_w,arm2_h],center=True)))
 d += arm1 + arm2
-
-prism_t = 2.32
-prism_w = 4.0
-prism_h = 12.0
 
 path_offset_h = 8.90
 path_offset_w = arm1_w + prism_w
@@ -116,11 +103,17 @@ for this_path in all_paths:
     d += hole()(this_path)
 
 
-d += up(prism_h/2.0)(
-       right(thickness/2.0)(
-            back(width/2.0-arm1_w-prism_w)(
-    prism_2(prism_t,prism_w,prism_h))))
+#d += up(prism_h/2.0)(
+#       right(thickness/2.0)(
+#            back(width/2.0-arm1_w-prism_w)(
+#    prism_(prism_t,prism_w,prism_h))))
+#}}}
 
+#d = (prism_2(prism_h,prism_w,prism_t))
+d += back(width/2.0-arm1_w-prism_w)(
+        right(thickness/2.0)(
+        down(prism_t/2.0)(
+        (prism_3(prism_t,-1*prism_w,prism_h)))))
 a = scad_render(d, file_header='$fa=5;$fs=0.01;')
 with open('grad_temp.scad','w') as fp:
     fp.write(a)
