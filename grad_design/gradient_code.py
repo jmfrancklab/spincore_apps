@@ -86,12 +86,15 @@ class path_obj(object):
         rprime_len = sqrt((rprime**2
             ).sum(axis=-1,keepdims=True))
         rprime_len[rprime_len < threshold] = nan
+        print shape(rprime)
+        print shape(rprime_len)
         retval = mu_0/4/pi*(cross(dl,rprime)/rprime_len**3).sum(axis=1)
         print "EXITING CALCULATE_BIOT FUNCTION..."
         return retval
 cable = -1*(length/2.+length/4.)
 p1 = path_obj(Z0, 
         r_[cable,-length/2],
+
         y_c/2) # input wire for RF connector
 p1 += (Z0,
         r_[-length/2,length/2],
@@ -149,7 +152,54 @@ point_grid = stack((
             ).reshape((-1,3))
 
 fields = p1.calculate_biot(point_grid) #+ p2.calculate_biot(point_grid)
+print "***"
+print shape(fields)
+print shape(point_grid)
+print "***"
 fields_asgrid = fields.reshape(x_points.size,y_points.size,z_points.size,3)
+point_grid_ = point_grid.reshape(x_points.size,y_points.size,z_points.size,3)
+#{{{ The following is for determining the partial area, as discussed in Volkmar
+#et al. 2013, however given that we use an equally spaced grid of x,y,z points,
+#all the work I am doing is highly redundant, because the objective is to
+#calculate the area defined by the mesh grid into which the B vector enters
+#(perpendicularly), and due to the evenly spaced grid, the area defined by the
+#mesh is constant and unchanging. Thus it suffices to determine simply the
+#difference between any two y points and any two z points, for example, and then
+#calculate the area from those differences, and then this area would be used for
+#the remainder of the problem (i.e., eq 13 in Volkmar et al. 2013)
+print "*** ***"
+print shape(fields_asgrid)
+print shape(point_grid_)
+y_halfpoints = (point_grid_[:,:-1,:,:] + point_grid_[:,1:,:,:]) / 2.
+z_halfpoints = (point_grid_[:,:,:-1,:] + point_grid_[:,:,1:,:]) / 2.
+print shape(y_halfpoints)
+print shape(z_halfpoints)
+print "*** *** FOR Y POINTS *** ***"
+print point_grid_[0,:,0,:]
+print y_halfpoints[0,:,0,:]
+print "*** *** FOR Z POINTS *** ***"
+print "*** *** ***"
+y_diff = y_halfpoints[:,:,:,:]-point_grid_[:,:-1,:,:]
+z_diff = z_halfpoints[:,:,:,:]-point_grid_[:,:,:-1,:]
+print shape(y_diff),shape(z_diff)
+print y_diff[0,0,0,:],z_diff[0,0,0,:]
+dA = y_diff[0,0,0,1]*z_diff[0,0,0,-1]
+print dA
+#}}}
+quit()
+
+
+
+print shape(fields_asgrid)
+print "*** *** ***\n"
+print fields_asgrid[0,0,:,0]
+print "*** *** ***\n"
+print fields_asgrid[0,0,:,1]
+print "*** *** ***\n"
+print fields_asgrid[0,0,:,2]
+print "*** *** ***\n"
+
+quit()
 
 figure(1)
 ax.quiver(*(
