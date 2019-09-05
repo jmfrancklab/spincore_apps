@@ -182,7 +182,7 @@ fields_normal *= dA
 fields_normal[isnan(fields_normal)] = 0
 flux = (fields_normal.sum(axis=2)).sum(axis=1)[0]
 print "*** *** ***"
-print "Calculated self-inductance =",flux
+print "CALCULATED SELF INDUCTANCE AS",flux,"HENRIES PER AMPERE"
 print "*** *** ***"
 figure(1)
 ax.quiver(*(
