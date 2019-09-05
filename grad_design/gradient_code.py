@@ -85,7 +85,8 @@ class path_obj(object):
         rprime = grid-centerpoint
         rprime_len = sqrt((rprime**2
             ).sum(axis=-1,keepdims=True))
-        rprime_len[rprime_len < threshold] = nan
+        if threshold != None:
+            rprime_len[rprime_len < threshold] = nan
         print shape(rprime)
         print shape(rprime_len)
         retval = mu_0/4/pi*(cross(dl,rprime)/rprime_len**3).sum(axis=1)
@@ -134,7 +135,7 @@ p1.plot()
 
 #x_points = r_[-Z0,0,Z0]
 #x_points = r_[0:Z0:16j]
-x_points = r_[0]
+x_points = r_[Z0]
 y_points = r_[-length/2.,-length/4.,0,length/4.,length/2.]
 z_points = r_[-1*(y_c+width):y_c+width:49j]
 ones_grid = ones((len(x_points),
@@ -167,40 +168,22 @@ point_grid_ = point_grid.reshape(x_points.size,y_points.size,z_points.size,3)
 #difference between any two y points and any two z points, for example, and then
 #calculate the area from those differences, and then this area would be used for
 #the remainder of the problem (i.e., eq 13 in Volkmar et al. 2013)
-print "*** ***"
-print shape(fields_asgrid)
-print shape(point_grid_)
 y_halfpoints = (point_grid_[:,:-1,:,:] + point_grid_[:,1:,:,:]) / 2.
 z_halfpoints = (point_grid_[:,:,:-1,:] + point_grid_[:,:,1:,:]) / 2.
-print shape(y_halfpoints)
-print shape(z_halfpoints)
-print "*** *** FOR Y POINTS *** ***"
-print point_grid_[0,:,0,:]
-print y_halfpoints[0,:,0,:]
-print "*** *** FOR Z POINTS *** ***"
-print "*** *** ***"
 y_diff = y_halfpoints[:,:,:,:]-point_grid_[:,:-1,:,:]
 z_diff = z_halfpoints[:,:,:,:]-point_grid_[:,:,:-1,:]
-print shape(y_diff),shape(z_diff)
-print y_diff[0,0,0,:],z_diff[0,0,0,:]
 dA = y_diff[0,0,0,1]*z_diff[0,0,0,-1]
-print dA
 #}}}
-quit()
-
-
-
-print shape(fields_asgrid)
-print "*** *** ***\n"
-print fields_asgrid[0,0,:,0]
-print "*** *** ***\n"
-print fields_asgrid[0,0,:,1]
-print "*** *** ***\n"
-print fields_asgrid[0,0,:,2]
-print "*** *** ***\n"
-
-quit()
-
+fields_nothresh = p1.calculate_biot(point_grid,threshold=None)
+fields_nothresh_grid = fields_nothresh.reshape(x_points.size,
+        y_points.size,z_points.size,3)
+fields_normal = fields_nothresh_grid[:,:,:,0]
+fields_normal *= dA
+fields_normal[isnan(fields_normal)] = 0
+flux = (fields_normal.sum(axis=2)).sum(axis=1)[0]
+print "*** *** ***"
+print "Calculated self-inductance =",flux
+print "*** *** ***"
 figure(1)
 ax.quiver(*(
     [point_grid[:,j] for j in xrange(3)]
