@@ -178,7 +178,8 @@ p2.plot()
 
 x_points = r_[0]
 y_points = r_[-length/2.:length/2.:5j]
-z_points = r_[-1*(y_c/2.+width):(y_c/2.+width):49j]
+#z_points = r_[-1*(y_c/2.+width):(y_c/2.+width):49j]
+z_points = r_[-1*(y_c/2.+width):-1*(y_c/2.):49j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -215,7 +216,7 @@ y_diff = y_halfpoints[:,:,:,:]-point_grid_[:,:-1,:,:]
 z_diff = z_halfpoints[:,:,:,:]-point_grid_[:,:,:-1,:]
 dA = y_diff[0,0,0,1]*z_diff[0,0,0,-1]
 #}}}
-self_inductance = False
+self_inductance = True
 if self_inductance:
     fields_nothresh = p1.calculate_biot(point_grid,threshold=None)
     fields_nothresh_grid = fields_nothresh.reshape(x_points.size,
