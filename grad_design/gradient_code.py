@@ -133,11 +133,9 @@ p1 += (Z0,
 p1.small_pieces()
 p1.plot()
 
-#x_points = r_[-Z0,0,Z0]
-#x_points = r_[0:Z0:16j]
-x_points = r_[Z0]
-y_points = r_[-length/2.,-length/4.,0,length/4.,length/2.]
-z_points = r_[-1*(y_c+width):y_c+width:49j]
+x_points = r_[0]
+y_points = r_[-length/2.:length/2.:5j]
+z_points = r_[-1*(y_c/2.+width):-1*(y_c/2.):49j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -174,16 +172,18 @@ y_diff = y_halfpoints[:,:,:,:]-point_grid_[:,:-1,:,:]
 z_diff = z_halfpoints[:,:,:,:]-point_grid_[:,:,:-1,:]
 dA = y_diff[0,0,0,1]*z_diff[0,0,0,-1]
 #}}}
-fields_nothresh = p1.calculate_biot(point_grid,threshold=None)
-fields_nothresh_grid = fields_nothresh.reshape(x_points.size,
-        y_points.size,z_points.size,3)
-fields_normal = fields_nothresh_grid[:,:,:,0]
-fields_normal *= dA
-fields_normal[isnan(fields_normal)] = 0
-flux = (fields_normal.sum(axis=2)).sum(axis=1)[0]
-print "*** *** ***"
-print "CALCULATED SELF INDUCTANCE AS",flux,"HENRIES PER AMPERE"
-print "*** *** ***"
+self_inductance = True
+if self_inductance:
+    fields_nothresh = p1.calculate_biot(point_grid,threshold=None)
+    fields_nothresh_grid = fields_nothresh.reshape(x_points.size,
+            y_points.size,z_points.size,3)
+    fields_normal = fields_nothresh_grid[:,:,:,0]
+    fields_normal *= dA
+    fields_normal[isnan(fields_normal)] = 0
+    flux = (fields_normal.sum(axis=2)).sum(axis=1)[0]
+    print "*** *** ***"
+    print "CALCULATED SELF INDUCTANCE AS",abs(flux),"HENRIES / AMPERE"
+    print "*** *** ***"
 figure(1)
 ax.quiver(*(
     [point_grid[:,j] for j in xrange(3)]
