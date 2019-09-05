@@ -4,7 +4,7 @@ from solid.utils import *
 # units of mm
 
 thickness = 3.0 # hereafter t
-width = 60.0 # hereafter w
+width = 70.0 # hereafter w
 height = 127.60 # hereafter h
 
 def prism_2(l,w,h):
@@ -37,7 +37,24 @@ arm2_h = 12.0
 arm2 = back((arm2_w+width)/2.0)(
         right(-arm2_t+arm1_t+(arm2_t+thickness)/2.0)(
         cube([arm2_t,arm2_w,arm2_h],center=True)))
-d += arm1 + arm2
+
+arm3_t = 26.00 
+arm3_w = 8.00
+arm3_h = 12.0
+arm3 = back((-width+arm3_w)/2.0)(
+        right((arm3_t+thickness)/2.0)(
+            up((90.-height/2.)+arm3_h/2.)(
+                cube([arm3_t,arm3_w,arm3_h], center=True))))
+
+arm4_t = 10.0
+arm4_w = 10.0
+arm4_h = 12.0
+arm4 = back((-width-arm4_w)/2.0)(
+        right(-arm4_t+arm3_t+(arm4_t+thickness)/2.0)(
+            up((90.-height/2.)+arm4_h/2.)(
+            cube([arm4_t,arm4_w,arm4_h],center=True))))
+
+d += arm1 + arm2 + arm3 + arm4
 
 path_offset_h = 8.90
 path_offset_w = arm1_w + prism_w
@@ -88,6 +105,7 @@ path6 = back((-path6_w+width)/2.0-path_offset_w-0.01-path1_w+path6_w)(
         right(thickness/2.0)(
             down((-path6_h+height)/2.0 - path_offset_h)(
                 cube([path6_t,path6_w,path6_h],center=True))))
+print (-path6_w+width)/2.0 - path_offset_w-0.01 - path1_w + path6_w
 
 path7_t = 3.0
 path7_w = 42.55
