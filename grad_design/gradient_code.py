@@ -92,6 +92,7 @@ class path_obj(object):
         retval = mu_0/4/pi*(cross(dl,rprime)/rprime_len**3).sum(axis=1)
         print "EXITING CALCULATE_BIOT FUNCTION..."
         return retval
+#{{{ defining wire segments for gradient coils
 cable = -1*(length/2.+length/4.)
 p1 = path_obj(Z0, 
         r_[cable,-length/2],
@@ -130,12 +131,54 @@ p1 += (Z0,
 p1 += (Z0,
         r_[-length/2,cable],
         y_c/2) # output for RF connector
+
+p2 = path_obj(-1*Z0, 
+        r_[cable,-length/2],
+
+        y_c/2) # input wire for RF connector
+p2 += (-1*Z0,
+        r_[-length/2,length/2],
+        y_c/2)
+p2 += (-1*Z0,
+        length/2,
+        r_[y_c/2, width+y_c/2])
+p2 += (-1*Z0,
+        r_[length/2,-length/2],
+        width+y_c/2)
+p2 += (-1*Z0,
+        -length/2,
+        r_[width+y_c/2,y_c/2])
+p2 += (-1*Z0,
+        -length/2,
+        r_[y_c/2,-y_c/2]) # connects top loop to bottom
+p2 += (-1*Z0,
+        r_[-length/2,length/2],
+        -1*y_c/2)
+p2 += (-1*Z0,
+        length/2,
+        -1*r_[y_c/2, width+y_c/2])
+p2 += (-1*Z0,
+        r_[length/2,-length/2],
+        -1*(width+y_c/2))
+p2 += (-1*Z0,
+        -length/2,
+        r_[-1*(width+y_c/2),-y_c/2])
+p2 += (-1*Z0,
+        -length/2,
+        r_[-y_c/2,y_c/2]) # connects bottom loop to top
+p2 += (-1*Z0,
+        r_[-length/2,cable],
+        y_c/2) # output for RF connector
+#}}}
 p1.small_pieces()
+p2.small_pieces()
+
 p1.plot()
+p2.plot()
 
 x_points = r_[0]
 y_points = r_[-length/2.:length/2.:5j]
-z_points = r_[-1*(y_c/2.+width):-1*(y_c/2.):49j]
+z_points = r_[-1*(y_c/2.+width):(y_c/2.+width):49j]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -150,7 +193,7 @@ point_grid = stack((
             (1,2,3,0)
             ).reshape((-1,3))
 
-fields = p1.calculate_biot(point_grid) #+ p2.calculate_biot(point_grid)
+fields = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid)
 print "***"
 print shape(fields)
 print shape(point_grid)
@@ -172,7 +215,7 @@ y_diff = y_halfpoints[:,:,:,:]-point_grid_[:,:-1,:,:]
 z_diff = z_halfpoints[:,:,:,:]-point_grid_[:,:,:-1,:]
 dA = y_diff[0,0,0,1]*z_diff[0,0,0,-1]
 #}}}
-self_inductance = True
+self_inductance = False
 if self_inductance:
     fields_nothresh = p1.calculate_biot(point_grid,threshold=None)
     fields_nothresh_grid = fields_nothresh.reshape(x_points.size,
