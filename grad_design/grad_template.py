@@ -133,7 +133,7 @@ d += back(width/2.0-arm1_w-prism_w)(
 # in the x plane, so it is a hole in the x plan
 # whose position can be manipulated by altering
 # the x,y,z variables in extrude_along_path
-nut_radius = 3.0
+nut_radius = 2.1844
 nut_thickness = 100.0
 
 points = []
