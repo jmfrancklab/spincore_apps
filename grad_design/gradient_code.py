@@ -30,10 +30,9 @@ def stack_cart(x,y,z):
         x = x*ones_like(y)
     return stack((x,y,z)).T
 
-
 #{{{ class object for constructions specified in cylindrical coordinates
 class path_obj_cyl(object):
-    def __init__(self,r,tehta,z):
+    def __init__(self,r,theta,z):
         self.current_path = cyl_to_cart(r,theta,z)
         return
     def addpath(self,r,theta,z):
@@ -48,21 +47,18 @@ class path_obj_cyl(object):
                 color='k')
         return
     def small_pieces(self,piece_length=0.01e-3):
-        print "Printing current path..."
-        print self.current_path
+        print shape(self.current_path)
         dl = diff(self.current_path,axis=0)
         print "Printing dl"
-        print dl
+        print shape(dl)
         dl_size = sqrt((dl**2).sum(axis=1))
+        print shape(dl_size)
         print "Printing dl_size..."
-        print dl_size
         dl_size = r_[0,dl_size]
         print "Printing new dl_size..."
-        print dl_size
         progress_along_length = cumsum(dl_size)
         print "Printing progress_along_length..."
-        print progress_along_length
-
+        print shape(progress_along_length)
         print "*** *** ***"
         print "LENGTH OF WIRE:",progress_along_length[-1]
         print "WAS INPUT IN",len(progress_along_length),"PIECES"
@@ -124,21 +120,10 @@ class path_obj_cart(object):
                 color='k')
         return
     def small_pieces(self,piece_length=0.01e-3):
-        print "Printing current path..."
-        print self.current_path
         dl = diff(self.current_path,axis=0)
-        print "Printing dl"
-        print dl
         dl_size = sqrt((dl**2).sum(axis=1))
-        print "Printing dl_size..."
-        print dl_size
         dl_size = r_[0,dl_size]
-        print "Printing new dl_size..."
-        print dl_size
         progress_along_length = cumsum(dl_size)
-        print "Printing progress_along_length..."
-        print progress_along_length
-
         print "*** *** ***"
         print "LENGTH OF WIRE:",progress_along_length[-1]
         print "WAS INPUT IN",len(progress_along_length),"PIECES"
@@ -183,94 +168,21 @@ class path_obj_cart(object):
         return retval
 #}}}
 
-#{{{ defining wire segments for gradient coils
-cable = -1*(length/2.+length/4.)
-p1 = path_obj_cart(Z0, 
-        r_[cable,-length/2],
-        y_c/2) # input wire for RF connector
-p1 += (Z0,
-        r_[-length/2,length/2],
-        y_c/2)
-p1 += (Z0,
-        length/2,
-        r_[y_c/2, width+y_c/2])
-p1 += (Z0,
-        r_[length/2,-length/2],
-        width+y_c/2)
-p1 += (Z0,
-        -length/2,
-        r_[width+y_c/2,y_c/2])
-p1 += (Z0,
-        -length/2,
-        r_[y_c/2,-y_c/2]) # connects top loop to bottom
-p1 += (Z0,
-        r_[-length/2,length/2],
-        -1*y_c/2)
-p1 += (Z0,
-        length/2,
-        -1*r_[y_c/2, width+y_c/2])
-p1 += (Z0,
-        r_[length/2,-length/2],
-        -1*(width+y_c/2))
-p1 += (Z0,
-        -length/2,
-        r_[-1*(width+y_c/2),-y_c/2])
-p1 += (Z0,
-        -length/2,
-        r_[-y_c/2,y_c/2]) # connects bottom loop to top
-p1 += (Z0,
-        r_[-length/2,cable],
-        y_c/2) # output for RF connector
+#{{{ defining solenoid
+solenoid_r = 0.1
+solenoid_l = 0.5
+n_turns = 8
 
-p2 = path_obj_cart(-1*Z0, 
-        r_[cable,-length/2],
-
-        y_c/2) # input wire for RF connector
-p2 += (-1*Z0,
-        r_[-length/2,length/2],
-        y_c/2)
-p2 += (-1*Z0,
-        length/2,
-        r_[y_c/2, width+y_c/2])
-p2 += (-1*Z0,
-        r_[length/2,-length/2],
-        width+y_c/2)
-p2 += (-1*Z0,
-        -length/2,
-        r_[width+y_c/2,y_c/2])
-p2 += (-1*Z0,
-        -length/2,
-        r_[y_c/2,-y_c/2]) # connects top loop to bottom
-p2 += (-1*Z0,
-        r_[-length/2,length/2],
-        -1*y_c/2)
-p2 += (-1*Z0,
-        length/2,
-        -1*r_[y_c/2, width+y_c/2])
-p2 += (-1*Z0,
-        r_[length/2,-length/2],
-        -1*(width+y_c/2))
-p2 += (-1*Z0,
-        -length/2,
-        r_[-1*(width+y_c/2),-y_c/2])
-p2 += (-1*Z0,
-        -length/2,
-        r_[-y_c/2,y_c/2]) # connects bottom loop to top
-p2 += (-1*Z0,
-        r_[-length/2,cable],
-        y_c/2) # output for RF connector
+p1 = path_obj_cyl(solenoid_r,
+        r_[-360:360*n_turns:1000j],
+        r_[-solenoid_l/2:solenoid_l/2:1000j])
 #}}}
-
 p1.small_pieces()
-p2.small_pieces()
-
 p1.plot()
-p2.plot()
 
 x_points = r_[0]
-y_points = r_[-length/2.:length/2.:5j]
-#z_points = r_[-1*(y_c/2.+width):(y_c/2.+width):49j]
-z_points = r_[-1*(y_c/2.+width):-1*(y_c/2.):49j]
+y_points = r_[0]
+z_points = r_[0]
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -285,7 +197,14 @@ point_grid = stack((
             (1,2,3,0)
             ).reshape((-1,3))
 
-fields = p1.calculate_biot(point_grid) + p2.calculate_biot(point_grid)
+fields = p1.calculate_biot(point_grid)# + p2.calculate_biot(point_grid)
+field_mag = sqrt((fields**2).sum(axis=-1))
+print "*** BIOT-SAVART SIMULATION ***"
+print "Magnitude of magnetic field in center:",field_mag[0],"T"
+print "*** EMPIRICAL FORMULA ***"
+print "Magnitude of magnetic field in center:",(mu_0*n_turns),"T"
+show();quit()
+
 print "***"
 print shape(fields)
 print shape(point_grid)
