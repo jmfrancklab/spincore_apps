@@ -7,6 +7,7 @@ thickness = 3.0 # hereafter t
 width = 70.0 # hereafter w
 height = 127.60 # hereafter h
 
+#{{{ all this is used just to generate a right triangular prism
 def prism_2(l,w,h):
     return polyhedron(
             points=[[0,0,0],[l,0,0],[l,w,0],[0,w,0],[0,w,h],[l,w,h]],
@@ -18,6 +19,9 @@ def prism_3(l,w,h):
             points=[[0,0,0],[0,0,l],[0,w,l],[0,w,0],[h,w,0],[h,w,l]],
             faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
             )
+#}}}
+
+
 prism_t = 12.0 # this becomes the height
 prism_w = 4.0
 prism_h = 2.32 # this becomes the thickness
@@ -120,18 +124,37 @@ all_paths = [path1,path2,path3,
 for this_path in all_paths:
     d += hole()(this_path)
 
-
-#d += up(prism_h/2.0)(
-#       right(thickness/2.0)(
-#            back(width/2.0-arm1_w-prism_w)(
-#    prism_(prism_t,prism_w,prism_h))))
-#}}}
-
-#d = (prism_2(prism_h,prism_w,prism_t))
 d += back(width/2.0-arm1_w-prism_w)(
         right(thickness/2.0)(
         down(prism_t/2.0)(
         (prism_3(prism_t,-1*prism_w,prism_h)))))
+
+# this will make a nut hole with points defined
+# in the x plane, so it is a hole in the x plan
+# whose position can be manipulated by altering
+# the x,y,z variables in extrude_along_path
+nut_radius = 3.0
+nut_thickness = 100.0
+
+points = []
+for theta in xrange(6):
+    x = nut_radius*cos(2*pi*theta/6.0)
+    y = nut_radius*sin(2*pi*theta/6.0)
+    points.append([x,y])
+nut1_width = (width+arm2_w)/2.
+nut1 = extrude_along_path(points,
+        [[-nut_thickness,-nut1_width,0],
+            [nut_thickness,-nut1_width,0]])
+nut2_width = (width+arm4_w)/2.
+nut2_height = (90.-height/2.0)+arm4_h/2.
+nut2 = extrude_along_path(points,
+        [[-nut_thickness,nut2_width,nut2_height],
+            [nut_thickness,nut2_width,nut2_height]])
+
+all_nuts = [nut1,nut2]
+for this_nut in all_nuts:
+    d += hole()(this_nut)
+
 a = scad_render(d, file_header='$fa=5;$fs=0.01;')
 with open('grad_temp.scad','w') as fp:
     fp.write(a)
