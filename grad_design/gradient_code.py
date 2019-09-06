@@ -169,6 +169,8 @@ class path_obj_cart(object):
 #}}}
 
 #{{{ defining solenoid
+# Note that for the simulation to compare well against the simple formula, we
+# need to define a very small solenoid like so
 solenoid_r = 0.1
 solenoid_l = 0.5
 n_turns = 8
