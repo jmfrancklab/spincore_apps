@@ -10,6 +10,17 @@ Z0 = 2.5e-2
 width = 1.55*Z0
 y_c = 1.19*Z0
 
+degrees_to_radians = pi/180.
+
+def cyl_to_cart(r,theta,z):
+    if isscalar(z):
+        z = z*ones_like(theta)
+    elif isscalar(theta):
+        theta = theta*ones_like(z)
+    return stack((r*cos(theta*degrees_to_radians),
+        r*sin(theta*degrees_to_radians),
+        z)).T
+
 def stack_cart(x,y,z):
     if isscalar(y):
         y = y*ones_like(z)
@@ -19,7 +30,85 @@ def stack_cart(x,y,z):
         x = x*ones_like(y)
     return stack((x,y,z)).T
 
-class path_obj(object):
+
+#{{{ class object for constructions specified in cylindrical coordinates
+class path_obj_cyl(object):
+    def __init__(self,r,tehta,z):
+        self.current_path = cyl_to_cart(r,theta,z)
+        return
+    def addpath(self,r,theta,z):
+        p = cyl_to_cart(r,theta,z)
+        self.current_path = concatenate((self.current_path,p))
+    def __add__(self,pathtuple):
+        assert len(pathtuple)==3
+        self.addpath(*pathtuple)
+        return self
+    def plot(self):
+        ax.plot(*[self.current_path[:,j] for j in xrange(3)],
+                color='k')
+        return
+    def small_pieces(self,piece_length=0.01e-3):
+        print "Printing current path..."
+        print self.current_path
+        dl = diff(self.current_path,axis=0)
+        print "Printing dl"
+        print dl
+        dl_size = sqrt((dl**2).sum(axis=1))
+        print "Printing dl_size..."
+        print dl_size
+        dl_size = r_[0,dl_size]
+        print "Printing new dl_size..."
+        print dl_size
+        progress_along_length = cumsum(dl_size)
+        print "Printing progress_along_length..."
+        print progress_along_length
+
+        print "*** *** ***"
+        print "LENGTH OF WIRE:",progress_along_length[-1]
+        print "WAS INPUT IN",len(progress_along_length),"PIECES"
+        print "BEGINNING TO INTERPOLATE..."
+        x_coords = interp1d(
+                progress_along_length,self.current_path[:,0],
+                kind='linear')
+        y_coords = interp1d(
+                progress_along_length,self.current_path[:,1],
+                kind='linear')
+        z_coords = interp1d(
+                progress_along_length,self.current_path[:,2],
+                kind='linear')
+        new_progress = r_[0:
+                progress_along_length[-1]:
+                piece_length]
+        print "DIVIDING INTO",len(new_progress),"PIECES"
+        self.current_path = stack((
+            x_coords(new_progress),
+            y_coords(new_progress),
+            z_coords(new_progress))).T
+        self.is_smooth = True
+        return self
+    def calculate_biot(self,grid,threshold=1e-3):
+        print "ENTERING CALCULATE_BIOT FUNCTION..."
+        assert hasattr(self,'is_smooth') and self.is_smooth, "you must smooth before running biot-savart"
+        dl = diff(self.current_path,axis=0)
+        centerpoint = (self.current_path[:-1,:]
+                +self.current_path[1:,:])/2
+        dl = dl[newaxis,:,:]
+        grid = grid[:,newaxis,:]
+        centerpoint = centerpoint[newaxis,:,:]
+        rprime = grid-centerpoint
+        rprime_len = sqrt((rprime**2
+            ).sum(axis=-1,keepdims=True))
+        if threshold != None:
+            rprime_len[rprime_len < threshold] = nan
+        print shape(rprime)
+        print shape(rprime_len)
+        retval = mu_0/4/pi*(cross(dl,rprime)/rprime_len**3).sum(axis=1)
+        print "EXITING CALCULATE_BIOT FUNCTION..."
+        return retval
+#}}}
+
+#{{{ class object for constructions described by Cartesian coordinates
+class path_obj_cart(object):
     def __init__(self,x,y,z):
         self.current_path = stack_cart(x,y,z)
         return
@@ -92,11 +181,12 @@ class path_obj(object):
         retval = mu_0/4/pi*(cross(dl,rprime)/rprime_len**3).sum(axis=1)
         print "EXITING CALCULATE_BIOT FUNCTION..."
         return retval
+#}}}
+
 #{{{ defining wire segments for gradient coils
 cable = -1*(length/2.+length/4.)
-p1 = path_obj(Z0, 
+p1 = path_obj_cart(Z0, 
         r_[cable,-length/2],
-
         y_c/2) # input wire for RF connector
 p1 += (Z0,
         r_[-length/2,length/2],
@@ -132,7 +222,7 @@ p1 += (Z0,
         r_[-length/2,cable],
         y_c/2) # output for RF connector
 
-p2 = path_obj(-1*Z0, 
+p2 = path_obj_cart(-1*Z0, 
         r_[cable,-length/2],
 
         y_c/2) # input wire for RF connector
@@ -170,6 +260,7 @@ p2 += (-1*Z0,
         r_[-length/2,cable],
         y_c/2) # output for RF connector
 #}}}
+
 p1.small_pieces()
 p2.small_pieces()
 
