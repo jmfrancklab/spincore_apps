@@ -182,11 +182,9 @@ p1 = path_obj_cyl(solenoid_r,
 p1.small_pieces()
 p1.plot()
 
-x_points = r_[-0.3:0.3:11j]
-y_points = r_[-0.3:0.3:11j]
-#x_points = r_[0]
-#y_points = r_[0]
-z_points = r_[0]
+x_points = r_[-0.3:0.3:5j]
+y_points = r_[-0.3:0.3:5j]
+z_points = r_[-solenoid_l:solenoid_l:5j]
 
 ones_grid = ones((len(x_points),
     len(y_points),
@@ -258,6 +256,39 @@ contourf(y_2d*ones_like(x_2d)/1e-3, # grid providing the y-axis dimensions
 xlabel(r'y axis / mm')
 ylabel(r'x axis / mm')
 colorbar()
+x_halfpoints = (point_grid_[:-1,:,:,:] + point_grid_[1:,:,:,:]) / 2.
+y_halfpoints = (point_grid_[:,:-1,:,:] + point_grid_[:,1:,:,:]) / 2.
+z_halfpoints = (point_grid_[:,:,:-1,:] + point_grid_[:,:,1:,:]) / 2.
+x_diff = x_halfpoints[:,:,:,:] - point_grid_[:-1,:,:,:]
+y_diff = y_halfpoints[:,:,:,:] - point_grid_[:,:-1,:,:]
+z_diff = z_halfpoints[:,:,:,:] - point_grid_[:,:,:-1,:]
+print shape(x_diff)
+print shape(y_diff)
+print shape(z_diff)
+dV = x_diff[0,0,0,0]*y_diff[0,0,0,1]*z_diff[0,0,0,-1]
+fields_nothresh = p1.calculate_biot(point_grid,threshold=None)
+fields_nothresh_grid = fields_nothresh.reshape(x_points.size,
+        y_points.size,z_points.size,3)
+fields_nothresh_grid *= fields_nothresh_grid
+fields_nothresh_grid *= dV*2*mu_0
+inductance = ((fields_nothresh_grid.sum(axis=-1)).sum(axis=1)).sum(axis=0)
+inductance = sqrt( inductance[0]**2 + inductance[1]**2 + inductance[2]**2 )
+print inductance
+quit()
+
+
+
+#fields_mag = sqrt((fields_nothresh_grid[:,:,:,0])**2 + (fields_nothresh_grid[:,:,:,1])**2 + (fields_nothresh_grid[:,:,:,-1])**2)
+fields_nothresh_grid[isnan(fields_nothresh_grid)] = 0
+#fields_mag[isnan(fields_mag)] = 0
+fields_mag = fields_nothresh_grid**2 * dV * 2 * mu_0
+#fields_mag *= fields_mag
+#fields_mag *= dV*2*mu_0
+inductance = ((fields_mag.sum(axis=2)).sum(axis=1)).sum(axis=0)
+inductance = sqrt((inductance[0]**2 + inductance[1]**2 + inductance[2]**2 ))
+print shape(inductance)
+print inductance
+quit()
 show();quit()
 figure(3)
 y_index = int(0.5*fields_asgrid.shape[1]+0.5)
