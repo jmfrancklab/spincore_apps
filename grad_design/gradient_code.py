@@ -182,9 +182,12 @@ p1 = path_obj_cyl(solenoid_r,
 p1.small_pieces()
 p1.plot()
 
-x_points = r_[0]
-y_points = r_[0]
+x_points = r_[-0.3:0.3:11j]
+y_points = r_[-0.3:0.3:11j]
+#x_points = r_[0]
+#y_points = r_[0]
 z_points = r_[0]
+
 ones_grid = ones((len(x_points),
     len(y_points),
     len(z_points)))
@@ -200,17 +203,13 @@ point_grid = stack((
             ).reshape((-1,3))
 
 fields = p1.calculate_biot(point_grid)# + p2.calculate_biot(point_grid)
-field_mag = sqrt((fields**2).sum(axis=-1))
-print "*** BIOT-SAVART SIMULATION ***"
-print "Magnitude of magnetic field in center:",field_mag[0],"T"
-print "*** EMPIRICAL FORMULA ***"
-print "Magnitude of magnetic field in center:",(mu_0*n_turns),"T"
-show();quit()
-
-print "***"
-print shape(fields)
-print shape(point_grid)
-print "***"
+calculate_magnitude = False
+if calculate_magnitude:
+    field_mag = sqrt((fields**2).sum(axis=-1))
+    print "*** BIOT-SAVART SIMULATION ***"
+    print "Magnitude of magnetic field in center:",field_mag[0],"T"
+    print "*** EMPIRICAL FORMULA ***"
+    print "Magnitude of magnetic field in center:",(mu_0*n_turns),"T"
 fields_asgrid = fields.reshape(x_points.size,y_points.size,z_points.size,3)
 point_grid_ = point_grid.reshape(x_points.size,y_points.size,z_points.size,3)
 #{{{ The following is for determining the partial area, as discussed in Volkmar
@@ -222,14 +221,15 @@ point_grid_ = point_grid.reshape(x_points.size,y_points.size,z_points.size,3)
 #difference between any two y points and any two z points, for example, and then
 #calculate the area from those differences, and then this area would be used for
 #the remainder of the problem (i.e., eq 13 in Volkmar et al. 2013)
-y_halfpoints = (point_grid_[:,:-1,:,:] + point_grid_[:,1:,:,:]) / 2.
-z_halfpoints = (point_grid_[:,:,:-1,:] + point_grid_[:,:,1:,:]) / 2.
-y_diff = y_halfpoints[:,:,:,:]-point_grid_[:,:-1,:,:]
-z_diff = z_halfpoints[:,:,:,:]-point_grid_[:,:,:-1,:]
-dA = y_diff[0,0,0,1]*z_diff[0,0,0,-1]
 #}}}
-self_inductance = True
+#{{{ calculating self-inductance
+self_inductance = False
 if self_inductance:
+    y_halfpoints = (point_grid_[:,:-1,:,:] + point_grid_[:,1:,:,:]) / 2.
+    z_halfpoints = (point_grid_[:,:,:-1,:] + point_grid_[:,:,1:,:]) / 2.
+    y_diff = y_halfpoints[:,:,:,:]-point_grid_[:,:-1,:,:]
+    z_diff = z_halfpoints[:,:,:,:]-point_grid_[:,:,:-1,:]
+    dA = y_diff[0,0,0,1]*z_diff[0,0,0,-1]
     fields_nothresh = p1.calculate_biot(point_grid,threshold=None)
     fields_nothresh_grid = fields_nothresh.reshape(x_points.size,
             y_points.size,z_points.size,3)
@@ -240,25 +240,25 @@ if self_inductance:
     print "*** *** ***"
     print "CALCULATED SELF INDUCTANCE AS",abs(flux),"HENRIES / AMPERE"
     print "*** *** ***"
-figure(1)
-ax.quiver(*(
-    [point_grid[:,j] for j in xrange(3)]
-    +[500*fields[:,j] for j in xrange(3)]
-    ),
-    pivot = 'middle')
+#}}}
+#figure(1)
+#ax.quiver(*(
+#    [point_grid[:,j] for j in xrange(3)]
+#    +[500*fields[:,j] for j in xrange(3)]
+#    ),
+#    pivot = 'middle')
 figure(2)
-title('Field Map, vertical cavity slice')
-y_2d = y_points[0,:,:]
-z_2d = z_points[0,:,:]
-print "Y-axis starts at",y_points[0,0,0]
-print "Z-axis starts at",z_points[0,0,0]
-contourf(y_2d*ones_like(z_2d)/1e-3, # grid providing the y-axis dimensions
-        z_2d*ones_like(y_2d)/1e-3, # grid providing the z-axis dimensions
-        fields_asgrid[0,:,:,0], # grid of the field as a function of y,z
+title('Field Map: xy plane, z component')
+y_2d = y_points[:,:,0]
+x_2d = x_points[:,:,0]
+contourf(y_2d*ones_like(x_2d)/1e-3, # grid providing the y-axis dimensions
+        x_2d*ones_like(y_2d)/1e-3, # grid providing the z-axis dimensions
+        fields_asgrid[:,:,0,2], # grid of the field as a function of y,z
         100)
-xlabel(r'x axis (in plane of and normal to $B_0$) / mm')
-ylabel(r'z axis (upward, lab frame) / mm')
+xlabel(r'y axis / mm')
+ylabel(r'x axis / mm')
 colorbar()
+show();quit()
 figure(3)
 y_index = int(0.5*fields_asgrid.shape[1]+0.5)
 plot(z_points[0,0,:]/1e-3, # grid of the z-axis dimensions
