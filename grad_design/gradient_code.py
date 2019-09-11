@@ -47,18 +47,10 @@ class path_obj_cyl(object):
                 color='k')
         return
     def small_pieces(self,piece_length=0.01e-3):
-        print shape(self.current_path)
         dl = diff(self.current_path,axis=0)
-        print "Printing dl"
-        print shape(dl)
         dl_size = sqrt((dl**2).sum(axis=1))
-        print shape(dl_size)
-        print "Printing dl_size..."
         dl_size = r_[0,dl_size]
-        print "Printing new dl_size..."
         progress_along_length = cumsum(dl_size)
-        print "Printing progress_along_length..."
-        print shape(progress_along_length)
         print "*** *** ***"
         print "LENGTH OF WIRE:",progress_along_length[-1]
         print "WAS INPUT IN",len(progress_along_length),"PIECES"
@@ -182,9 +174,10 @@ p1 = path_obj_cyl(solenoid_r,
 p1.small_pieces()
 p1.plot()
 
-x_points = r_[-0.3:0.3:5j]
-y_points = r_[-0.3:0.3:5j]
-z_points = r_[-solenoid_l:solenoid_l:5j]
+x_points = r_[-3*solenoid_r:3*solenoid_r:25j]
+y_points = r_[-3*solenoid_r:3*solenoid_r:25j]
+z_points = r_[0]
+#z_points = r_[-3*solenoid_l:3*solenoid_l:5j]
 
 ones_grid = ones((len(x_points),
     len(y_points),
@@ -239,12 +232,15 @@ if self_inductance:
     print "CALCULATED SELF INDUCTANCE AS",abs(flux),"HENRIES / AMPERE"
     print "*** *** ***"
 #}}}
+#{{{ vector plot
 #figure(1)
 #ax.quiver(*(
 #    [point_grid[:,j] for j in xrange(3)]
 #    +[500*fields[:,j] for j in xrange(3)]
 #    ),
 #    pivot = 'middle')
+#}}}
+#{{{ field map
 figure(2)
 title('Field Map: xy plane, z component')
 y_2d = y_points[:,:,0]
@@ -256,6 +252,9 @@ contourf(y_2d*ones_like(x_2d)/1e-3, # grid providing the y-axis dimensions
 xlabel(r'y axis / mm')
 ylabel(r'x axis / mm')
 colorbar()
+show();quit()
+#}}}
+#{{{ inductance calculation
 x_halfpoints = (point_grid_[:-1,:,:,:] + point_grid_[1:,:,:,:]) / 2.
 y_halfpoints = (point_grid_[:,:-1,:,:] + point_grid_[:,1:,:,:]) / 2.
 z_halfpoints = (point_grid_[:,:,:-1,:] + point_grid_[:,:,1:,:]) / 2.
@@ -273,7 +272,9 @@ fields_nothresh_grid *= fields_nothresh_grid
 fields_nothresh_grid *= dV*2*mu_0
 inductance = ((fields_nothresh_grid.sum(axis=-1)).sum(axis=1)).sum(axis=0)
 inductance = sqrt( inductance[0]**2 + inductance[1]**2 + inductance[2]**2 )
-print inductance
+inductance *= 2
+print "Inductance:",inductance,"Henries"
+#}}}
 quit()
 
 
