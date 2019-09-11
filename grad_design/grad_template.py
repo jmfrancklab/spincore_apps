@@ -4,7 +4,7 @@ from solid.utils import *
 # units of mm
 
 thickness = 3.0 # hereafter t
-width = 70.0 # hereafter w
+width = 78.0 # hereafter w
 height = 127.60 # hereafter h
 
 #{{{ all this is used just to generate a right triangular prism
@@ -50,7 +50,7 @@ arm3 = back((-width+arm3_w)/2.0)(
             up((90.-height/2.)+arm3_h/2.)(
                 cube([arm3_t,arm3_w,arm3_h], center=True))))
 
-arm4_t = 10.0
+arm4_t = 4.0
 arm4_w = 10.0
 arm4_h = 12.0
 arm4 = back((-width-arm4_w)/2.0)(
