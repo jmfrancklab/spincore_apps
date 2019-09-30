@@ -45,6 +45,8 @@ class path_obj_cyl(object):
     def plot(self):
         ax.plot(*[self.current_path[:,j] for j in xrange(3)],
                 color='k')
+        ax.set_xlabel('x axis')
+        ax.set_ylabel('y axis')
         return
     def small_pieces(self,piece_length=0.01e-3):
         dl = diff(self.current_path,axis=0)
@@ -174,8 +176,8 @@ p1 = path_obj_cyl(solenoid_r,
 p1.small_pieces()
 p1.plot()
 
-x_points = r_[-3*solenoid_r:3*solenoid_r:15j]
-y_points = r_[-3*solenoid_r:3*solenoid_r:15j]
+x_points = r_[-3*solenoid_r:3*solenoid_r:7j]
+y_points = r_[-3*solenoid_r:3*solenoid_r:7j]
 z_points = r_[0]
 #z_points = r_[-3*solenoid_l:3*solenoid_l:5j]
 
@@ -242,12 +244,12 @@ if self_inductance:
 #}}}
 #{{{ field map
 figure(2)
-title('Field Map: xy plane, z component')
+title('Field Map,xy plane\ny component; 7x7 point grid')
 y_2d = y_points[:,:,0]
 x_2d = x_points[:,:,0]
 contourf(y_2d*ones_like(x_2d)/1e-3, # grid providing the y-axis dimensions
         x_2d*ones_like(y_2d)/1e-3, # grid providing the z-axis dimensions
-        fields_asgrid[:,:,0,0])#, # grid of the field as a function of y,z
+        fields_asgrid[:,:,0,1])#, # grid of the field as a function of y,z
        # 100)
 xlabel(r'y axis / mm')
 ylabel(r'x axis / mm')
