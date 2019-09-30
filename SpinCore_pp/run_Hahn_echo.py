@@ -31,9 +31,9 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '190805'
-output_name = 'echo_3_2'
-adcOffset = 38
+date = '190926'
+output_name = 'echo_1'
+adcOffset = 46
 carrierFreq_MHz = 14.898295
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -60,6 +60,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
+pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
 acq_params = {}
@@ -163,13 +164,14 @@ while save_file:
     try:
         print "SAVING FILE..."
         data.hdf5_write(date+'_'+output_name+'.h5')
+        print "FILE SAVED!"
         print "Name of saved data",data.name()
         print "Units of saved data",data.get_units('t')
         print "Shape of saved data",ndshape(data)
         save_file = False
     except Exception as e:
         print e
-        print "FILE ALREADY EXISTS."
+        print "EXCEPTION ERROR - FILE MAY ALREADY EXIST."
         save_file = False
 if not phase_cycling:
     fl.next('raw data')
