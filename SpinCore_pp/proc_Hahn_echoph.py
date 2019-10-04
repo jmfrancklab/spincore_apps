@@ -2,8 +2,9 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('190926','echo_2'),
+        ('191004','echo_7'),
         ]:
+    title_string = 'enhanced'
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -31,13 +32,13 @@ for date,id_string in [
     fl.image(s)
     s = s['ph1',1]['ph2',0].C
     s.setaxis('t2',s.getaxis('t2'))
-    fl.next('freq-signal')
-    fl.plot(s.real)
-    fl.plot(s.imag)
-    fl.plot(abs(s),':')
+    fl.next('freq-signal '+title_string)
+    fl.plot(s.real,alpha=0.7,label='real')
+    fl.plot(s.imag,alpha=0.7,label='imag')
+    #fl.plot(abs(s),':')
     s.ift('t2')
-    fl.next('time-signal')
-    fl.plot(s.real)
-    fl.plot(s.imag)
-    fl.plot(abs(s),':')
+    fl.next('time-signal '+title_string)
+    fl.plot(s.real,alpha=0.7,label='real')
+    fl.plot(s.imag,alpha=0.7,label='imag')
+    #fl.plot(abs(s),':')
 fl.show()

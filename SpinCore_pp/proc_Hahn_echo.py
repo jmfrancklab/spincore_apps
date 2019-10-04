@@ -15,6 +15,7 @@ for date,id_string in [
                 exp_type = 'test_equip'))
     s.set_units('t','s')
     print s.get_prop('acq_params')
+    print s.get_prop('nScans')
     fl.next('raw data')
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)

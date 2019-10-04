@@ -2,21 +2,29 @@ import socket
 import time
 from pylab import *
 
-class gpib_eth (object):
-    """WARNING: I modified the names of this file and the classes to make it
-    less ambiguous -- this probably breaks a lot of stuff -- see the
-    appropriate git commit"""
+class prologix_connection (object):
+    """This controls the IP connection to the prologix -- all classes
+    that use prologix must be nested inside a prologix_connection with
+    block.
+
+    Contains both the TCP connection to the prologix device and a record
+    of which instrument we are "facing".
+    """
     def __init__(self, ip="jmfrancklab-prologix.syr.edu", port=1234):
-        # Switch for OS X
-        self.flags = {}
-        self.open()
+        self.current_address = None
+        self.opened_port = None
+        self.opened_ip = None
+        self.socket = None
+        self.open(ip,port)
+        return
     def __enter__(self):
         return self
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
         return
-    def open(self, ip="jmfrancklab-prologix.syr.edu", port=1234):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+    def open(self, ip, port):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM,
+                socket.IPPROTO_TCP)
         try:
             self.socket.connect((ip,port))
         except:
@@ -28,57 +36,95 @@ class gpib_eth (object):
         self.socket.send('++eoi 0'+"\r")
         self.socket.send("++ver\r")
         versionstring = self.socket.recv(1000)
-        self.caddr = -1
         if versionstring[0:8]=='Prologix':
             print 'connected to: ',versionstring
         else:
             print 'Error! can\'t find prologix on %s:%d'%(ip,port)
             raise
+        self.opened_port = port
+        self.opened_ip = ip
+        return self
     def close(self):
         self.socket.close()
-    def setaddr(self,addr):
-        if(self.caddr != addr):
-            self.socket.send('++addr '+str(addr)+"\r")
-            self.caddr=addr
-    def readandchop(self,addr): # unique to the ethernet one
+class gpib_eth (object):
+    """WARNING: I modified the names of this file and the classes to make it
+    less ambiguous -- this probably breaks a lot of stuff -- see the
+    appropriate git commit"""
+    def __init__(self, prologix_instance, address):
+        """Initialize a GPIB instrument
+        
+        Parameters
+        ==========
+        prologix: a prologix_connection instance
+            Both the TCP connection to the prologix_instance device and a record
+            of which instrument we are "facing".
+        address: int
+            the GPIB address
+        """
+        if prologix_instance is None or not isinstance(prologix_instance, prologix_connection):
+            raise ValueError("you must specify a prologix_instance instance")
+        # Switch for OS X
+        self.flags = {}
+        self.address = address # the GPIB address of the instrument for which I have generated this instance of gpib_eth
+        if address is None:
+            raise ValueError("you need to set the GPIB address (address=xxx)!!!!")
+        self.prologix_instance = prologix_instance
+        self.socket = self.prologix_instance.socket
+        self.setaddr()
+    def __enter__(self):
+        return self
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.close()
+        return
+    def close(self):
+        self.prologix_instance.current_address = None
+    def setaddr(self):
+        if(self.prologix_instance.current_address != self.address):
+            self.socket.send('++addr '+str(self.address)+"\r")
+            print "I am setting the GPIB address to "+str(self.address)
+            self.prologix_instance.current_address = self.address
+    def readandchop(self): # unique to the ethernet one
+        self.setaddr()
         retval = self.socket.recv(1024) # get rid of dos newline
         while (retval[-1] == '\r') or (retval[-1] == '\n'): # there should be a function for this (i.e. chop, etc)!
             retval = retval[:-1]
         return retval
-    def readline(self,addr):    
-        self.setaddr(addr)
+    def readline(self):    
+        self.setaddr()
         self.socket.send('++read 10'+"\r")
-        return self.readandchop(addr)
-    def read(self,addr):
-        self.setaddr(addr)
+        return self.readandchop()
+    def read(self):
+        self.setaddr()
         self.socket.send('++read eoi'+"\r")
-        return self.readandchop(addr)
-    def write(self,addr,gpibstr):
-        self.setaddr(addr)
-        print "about to send:",gpibstr,"to address",addr
+        return self.readandchop()
+    def write(self,gpibstr):
+        self.setaddr()
+        print "about to send:",gpibstr,"to address",self.address
         self.socket.send(gpibstr+"\r")
-    def respond(self,addr,gpibstr,printstr):
-        self.write(addr,gpibstr)
-        print printstr % self.read(addr)
+    def respond(self,gpibstr,printstr='%s'):
+        self.write(gpibstr)
+        print printstr % self.read()
+        return self.read()
         
     #{{{ Functions for Newer Tek Scope
-    def tek_query_var(self,addr,varname):
-        self.write(addr,varname+'?')
-        temp = self.read(addr)
+    def tek_query_var(self,varname):
+        self.write(varname+'?')
+        temp = self.read()
         temp = temp[len(varname)+2:-1] # remove initial space and trailing \n
         if temp[0]=='\"':
             return temp[1:-1]
         else:
             return double(temp)
-    def tek_get_curve(self,addr):
-        y_unit = self.tek_query_var(addr,'WFMP:YUN')
-        y_mult = self.tek_query_var(addr,'WFMP:YMU')
-        y_offset = self.tek_query_var(addr,'WFMP:YOF')
-        dx = self.tek_query_var(addr,'WFMP:XIN')
-        x_unit = self.tek_query_var(addr,'WFMP:XUN')
+    def tek_get_curve(self):
+        self.setaddr()
+        y_unit = self.tek_query_var('WFMP:YUN')
+        y_mult = self.tek_query_var('WFMP:YMU')
+        y_offset = self.tek_query_var('WFMP:YOF')
+        dx = self.tek_query_var('WFMP:XIN')
+        x_unit = self.tek_query_var('WFMP:XUN')
         #print y_mult,y_unit,y_offset,dx,x_unit
-        self.write(addr,'CURV?')
-        self.serial.write('++addr '+str(addr)+"\r")
+        self.write('CURV?')
+        self.setaddr()
         time.sleep(0.1)
         self.serial.write('++read eoi'+"\r")
         header_string = self.serial.read(8)
@@ -98,21 +144,21 @@ class gpib_eth (object):
     #}}}
     
     #{{{ Functions for HP 54110D Digitizing Oscilloscope
-    def hp_get_curve(self,addr):
+    def hp_get_curve(self):
         # Acquire waveform
-        self.write(addr,":acquire:type normal")
-        self.write(addr,":digitize CHANNEL2")
-        self.write(addr,":waveform:source 2")
-        self.write(addr,":waveform:format ascii")
+        self.write(":acquire:type normal")
+        self.write(":digitize CHANNEL2")
+        self.write(":waveform:source 2")
+        self.write(":waveform:format ascii")
         
-        self.write(addr,":waveform:data?");
+        self.write(":waveform:data?");
         
-        self.write(addr,"++read eoi");
+        self.write("++read eoi");
         wfrm = [int(x) for x in self.serial.readlines()]
         
         # Acquire preamble
-        self.write(addr,":waveform:preamble?")
-        self.write(addr,"++read eoi");
+        self.write(":waveform:preamble?")
+        self.write("++read eoi");
         pra = self.serial.readline().split(",")
         print 'pra=\'',pra,'\''
         try:

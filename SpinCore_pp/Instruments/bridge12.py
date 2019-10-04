@@ -8,7 +8,7 @@ from serial import Serial
 from scipy.interpolate import interp1d
 from numpy import *
 import time
-from Instruments import HP8672A
+from Instruments import HP8672A, prologix_connection
 import logging
 
 def generate_beep(f,dur):
@@ -219,43 +219,44 @@ class Bridge12 (Serial):
             if setting > 30+self.cur_pwr_int: 
                 raise RuntimeError("Once you are above 10 dBm, you must raise the power in MAX 3 dB increments.  The power is currently %g, and you tried to set it to %g -- this is not allowed!"%(self.cur_pwr_int/10.,setting/10.))
         print "Setting HP power to",(setting/10.)-35.0,"dBm, which is",setting/10.,"dBm after amplifier"
-        with HP8672A(gpibaddress=19) as h:
-            h.set_power((setting/10.)-35.0)
-        #self.write('power %d\r'%setting)
-        if setting > 0:
-            self.rxpowermv_int_singletry() # doing this just for safety interlock
-            self.cur_pwr_int = setting
-        #for j in range(10):
-        #    result = self.power_int()
-        #    if setting > 0: self.rxpowermv_int_singletry() # doing this just for safety interlock
-        #    if result == setting:
-        #        self.cur_pwr_int = result
-        #        return
-        #    time.sleep(10e-3)
-        #raise RuntimeError(("After checking status 10 times, I can't get the"
-        #    "power to change: I'm trying to set to %d/10 dBm, but the Bridge12"
-        #    "keeps replying saying that it's set to %d/10"
-        #    "dBm")%(setting,result))
-    def rxpowermv_int_singletry(self):
-        """read the integer value for the Rx power (which is 10* the value in mV).  Also has a software interlock so that if the Rx power ever exceeds self.safe_rx_level_int, then the amp shuts down."""
-        self.write('rxpowermv?\r')
-        retval = self.readline()
-        retval = retval.strip()
-        if retval == 'ERROR':
-            logging.info("Found ERROR condition on trying to read rxpowermv -- trying again")
-            j = 0
-            while j < 10:
-                time.sleep(10e-3)
-                self.write('rxpowermv?\r')
-                retval = self.readline()
-                retval = retval.strip()
-                if retval != 'ERROR':
-                    logging.info("after try %d, it responded with %s"%(j+1,retval))
-                    break
-        retval = int(retval)
-        if retval > self.safe_rx_level_int:
-            raise RuntimeError("Read an unsafe Rx level of %0.1fmV"%(retval/10.))
-        return retval
+        with prologix_connection() as p:
+            with HP8672A(prologix_instance=p, gpibaddress=19) as h:
+                h.set_power((setting/10.)-35.0)
+            #self.write('power %d\r'%setting)
+            if setting > 0:
+                self.rxpowermv_int_singletry() # doing this just for safety interlock
+                self.cur_pwr_int = setting
+            #for j in range(10):
+            #    result = self.power_int()
+            #    if setting > 0: self.rxpowermv_int_singletry() # doing this just for safety interlock
+            #    if result == setting:
+            #        self.cur_pwr_int = result
+            #        return
+            #    time.sleep(10e-3)
+            #raise RuntimeError(("After checking status 10 times, I can't get the"
+            #    "power to change: I'm trying to set to %d/10 dBm, but the Bridge12"
+            #    "keeps replying saying that it's set to %d/10"
+            #    "dBm")%(setting,result))
+    def     rxpowermv_int_singletry(self):
+            """read the integer value for the Rx power (which is 10* the value in mV).  Also has a software interlock so that if the Rx power ever exceeds self.safe_rx_level_int, then the amp shuts down."""
+            self.write('rxpowermv?\r')
+            retval = self.readline()
+            retval = retval.strip()
+            if retval == 'ERROR':
+                logging.info("Found ERROR condition on trying to read rxpowermv -- trying again")
+                j = 0
+                while j < 10:
+                    time.sleep(10e-3)
+                    self.write('rxpowermv?\r')
+                    retval = self.readline()
+                    retval = retval.strip()
+                    if retval != 'ERROR':
+                        logging.info("after try %d, it responded with %s"%(j+1,retval))
+                        break
+            retval = int(retval)
+            if retval > self.safe_rx_level_int:
+                raise RuntimeError("Read an unsafe Rx level of %0.1fmV"%(retval/10.))
+            return retval
     def rxpowermv_float(self):
         "need two consecutive responses that match"
         for j in range(3):
