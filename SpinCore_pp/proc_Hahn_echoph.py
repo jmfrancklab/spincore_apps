@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('191004','echo_7'),
+        ('191007','echo_2'),
         ]:
     title_string = 'enhanced'
     filename = date+'_'+id_string+'.h5'
