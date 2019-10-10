@@ -36,13 +36,15 @@ for date,id_string in [
     # Center the time-domain echo at t = 0
     t2_max = abs(s).argmax('t2',raw_index=True).data
     s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max)])
-    abs_val_real = False
+    abs_val_real = True
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
-        
+        print "*** *** ***"
+        print "BEGIN ABSOLUTE VALUE OF THE REAL PHASING..."
+        print "*** *** ***"
         s.ft('t2')
         before = s.C
-        fl.next('Pre-phasing: real and imag (Without Enhancement)')
+        fl.next('(Abs Val Real) Pre-phasing: real and imag (Without Enhancement)')
         fl.plot(s.real,c='black',alpha=0.8,label='real')
         fl.plot(s.imag,c='red',alpha=0.8,label='imag')
         s.ift('t2')
@@ -63,7 +65,7 @@ for date,id_string in [
         s.ft('t2')
         s *= exp(-1j*2*pi*ph1_opt*s.fromaxis('t2'))
         s /= ph0
-        fl.next('Post-phasing: real and imag (Without Enhancement)')
+        fl.next('(Abs Val Real) Post-phasing: real and imag (Without Enhancement)')
         fl.plot(s.real,c='black',alpha=0.8,label='real')
         fl.plot(s.imag,c='red',alpha=0.8,label='imag')
         fl.next('Compare before and after - real')
@@ -72,13 +74,15 @@ for date,id_string in [
         fl.next('Compare before and after - imag')
         fl.plot(before.imag,alpha=0.8,label='before',human_units=False)
         fl.plot(s.imag,alpha=0.8,label='after',human_units=False)
-        fl.show();quit()
+        print "*** *** ***"
+        print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
+        print "*** *** ***"
     #}}}
-    hermit_phasing = False
+    hermit_phasing = True
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
         print "*** *** ***"
-        print "Begin Hermitian symmetry phasing..."
+        print "BEGIN HERMITIAN SYMMETRY PHASING..."
         print "*** *** ***"
         # Get rid of negative time points, and scale first time point appropriately
         s.ift('t2')
@@ -141,6 +145,9 @@ for date,id_string in [
         fl.next('Post-phasing: real and imag (Without Enhancement)')
         fl.plot(s.real,c='black',alpha=0.8,label='real')
         fl.plot(s.imag,c='red',alpha=0.8,label='imag')
+        print "*** *** ***"
+        print "FINISHED HERMITIAN SYMMETRY PHASING"
+        print "*** *** ***"
         fl.show();quit()
     #}}}
     s.ft('t2')
