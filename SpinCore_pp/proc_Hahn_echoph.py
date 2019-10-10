@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('191007','echo_1'),
+        ('191007','echo_2'),
         ]:
     title_string = 'unenhanced'
     filename = date+'_'+id_string+'.h5'
@@ -78,7 +78,7 @@ for date,id_string in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
-    hermit_phasing = True
+    hermit_phasing = False
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
         print "*** *** ***"
@@ -150,7 +150,6 @@ for date,id_string in [
         print "*** *** ***"
         fl.show();quit()
     #}}}
-    s.ft('t2')
     fl.next('freq-signal '+title_string)
     fl.plot(s.real,alpha=0.7,label='real')
     fl.plot(s.imag,alpha=0.7,label='imag')
