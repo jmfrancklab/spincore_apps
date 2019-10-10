@@ -78,7 +78,7 @@ for date,id_string in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
-    hermit_phasing = False
+    hermit_phasing = True
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
         print "*** *** ***"
@@ -94,7 +94,7 @@ for date,id_string in [
         fl.plot(s.C.ft('t2'),human_units=False)
         s.ft('t2')
         df = diff(s.getaxis('t2')[r_[0,1]])[0]
-        max_hwidth = 10
+        max_hwidth = 6
         window_hwidth = 2
         max_shift = (max_hwidth - window_hwidth)*df
         center_index = where(abs(s.getaxis('t2'))==abs(s.getaxis('t2')).min())[0][0]
@@ -112,12 +112,10 @@ for date,id_string in [
             phshift = exp(-1j*2*pi*f_axis*(firstorder*1e-6))
             phshift *= exp(-1j*2*pi*zerorder_rad)
             temp = phshift * slice_
-            deviation = temp['t2',slice_center_index - window_hwidth:slice_center_index+window_hwidth+1].C
+            deviation = temp['t2',(slice_center_index - window_hwidth):(slice_center_index+window_hwidth+1)].C
             deviation -= deviation['t2',::-1].C.run(conj)
             return (abs(deviation.data)**2)[:].sum()
-
         iteration = 0
-
         def print_func(x,f,accepted):
             global iteration
             print(iteration,x,int(accepted))
