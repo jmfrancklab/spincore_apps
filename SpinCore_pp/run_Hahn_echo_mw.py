@@ -3,8 +3,7 @@ from numpy import *
 import os
 import sys
 import SpinCore_pp
-
-from Instruments import Bridge12
+from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 import time
 
@@ -39,7 +38,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-powers = r_[1e-3:1.6:20j]
+powers = r_[1e-3:1.0:10j]
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 def check_for_3dB_step(x):
@@ -56,10 +55,10 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '190813'
+date = '191017'
 output_name = 'echo_DNP'
-adcOffset = 38
-carrierFreq_MHz = 14.898295
+adcOffset = 44
+carrierFreq_MHz = 14.898534
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -76,10 +75,10 @@ if not phase_cycling:
 #}}}
 p90 = 3.5
 deadtime = 50.0
-repetition = 45e6
+repetition = 10e6
 
-SW_kHz = 3.0
-nPoints = 128
+SW_kHz = 24.0
+nPoints = 1024
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
@@ -194,15 +193,16 @@ with Bridge12() as b:
     dip_f = this_return[2]
     print "Frequency",dip_f
     b.set_freq(dip_f)
-    rx_array = empty_like(dB_settings)
-    tx_array = empty_like(dB_settings) #inserted tx here
+    meter_powers = zeros_like(dB_settings)
     for j,this_power in enumerate(dB_settings):
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
-        time.sleep(5)
-        rx_array[j] = b.rxpowermv_float()
-        tx_array[j] = b.txpowermv_float() #inserted tx here
+        time.sleep(15)
+        with prologix_connection() as p:
+            with gigatronics(prologix_instance=p, address=7) as g:
+                meter_powers[j] = g.read_power()
+                print "POWER READING",meter_powers[j]
         print "\n*** *** *** *** ***\n"
         print "\n*** *** ***\n"
         print "CONFIGURING TRANSMITTER..."
@@ -268,8 +268,7 @@ with Bridge12() as b:
         data.name('signal')
         DNP_data['power',j+1] = data
 DNP_data.name('signal')
-DNP_data.set_prop('rx_array',rx_array)
-DNP_data.set_prop('tx_array',tx_array) #added ", 'tx_array', tx_array" here
+DNP_data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
