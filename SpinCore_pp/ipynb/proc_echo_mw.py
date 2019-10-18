@@ -94,7 +94,12 @@ enhancement.sum('t2').real
 enhanced = enhancement.data[1:]
 #enhancement.setaxis('power',s.get_prop('meter_powers'))
 fl.next('Prelim phasing enhancement')
-fl.plot(s.get_prop('meter_powers'),enhanced,'.')
+power_axis_dBm = array(s.get_prop('meter_powers'))
+power_axis_W = zeros_like(power_axis_dBm)
+power_axis_W[:] = (1e-3*10**((power_axis_dBm[:]+10.)*1e-1))
+fl.plot(power_axis_W,enhanced,'.')
+xlabel('power meter reading (W)')
+ylabel('enhancement')
 fl.show();quit()
 
 # # Beginning Hermitian symmetry phasing procedure
