@@ -15,20 +15,16 @@ for date,id_string in [
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
-    s.set_units('t','s')
-    orig_t = s.getaxis('t')
-    acq_time_s = orig_t[nPoints]
-    t2_axis = linspace(0,acq_time_s,nPoints)
-    s.setaxis('t',None)
     s.reorder('t',first=True)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.setaxis('t2',t2_axis)
     s.reorder('t2',first=False)
-    s.ft('t2',shift=True)
     s.ft(['ph1','ph2'])
     fl.next(id_string+'raw data - chunking coh')
+    fl.image(s)
+    s.ft('t2',shift=True)
+    fl.next(id_string+'raw data - FT')
     fl.image(s)
     s = s['ph1',1]['ph2',0].C
     s.setaxis('t2',s.getaxis('t2'))
