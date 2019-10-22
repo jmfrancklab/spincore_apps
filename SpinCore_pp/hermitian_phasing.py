@@ -32,6 +32,24 @@ for date,id_string in [
     s = s['ph1',1]['ph2',0]
     fl.next(id_string+'select pathway')
     fl.show_complex(s)
+    # {{{ slice only f-domain with signal
+    s.ft('t2', shift=True)
+    fl.next('frequency domain')
+    fl.plot(abs(s), human_units=False)# no human units to make sure
+    #                                   axvline matches
+    slice_f = (-1e3,1e3)
+    axvline(x=slice_f[0],
+            color='k')
+    axvline(x=slice_f[1],
+            color='k')
+    text(slice_f[1], abs(s).data.max()*0.75,
+            ' (slice this region)',
+            ha='left')
+    s = s['t2':slice_f]
+    s.ift('t2')
+    # }}}
+    fl.next('frequency filtered')
+    fl.show_complex(s)
     max_data = abs(s.data).max()
     pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
     longest_pair = diff(pairs).argmax()
@@ -44,11 +62,14 @@ for date,id_string in [
             ' (lines delineate peak of echo)',
             ha='left')
     s.setaxis('t2',lambda x: x-peak_location.mean())
+    # at this point, I need to get an axis that's in register with 0
+    # -- this is what gives rise to "zero not in middle" below
+    # I think I already have a function to do this
     fl.next('crude centering')
     fl.show_complex(s)
     max_shift = diff(peak_location).item()/2
     # {{{ just check signs of shift
-    s.ft('t2', shift=True)
+    s.ft('t2')
     s_left = s * exp(+1j*2*pi*max_shift*s.fromaxis('t2'))
     s_right = s * exp(-1j*2*pi*max_shift*s.fromaxis('t2'))
     s.ift('t2')
@@ -66,9 +87,10 @@ for date,id_string in [
     s_shifted.ift('t2')
     s_shifted = s_shifted['t2':(-max_shift,max_shift)]
     # {{{ demand an odd number of points
+    print s_shifted.getaxis('t2')[r_[0,ndshape(s_shifted)['t2']//2,ndshape(s_shifted)['t2']//2+1,-1]]
     if ndshape(s_shifted)['t2'] % 2 == 0:
         s_shifted = s_shifted['t2',:-1]
-    assert s_shifted.getaxis('t2')[s_shifted.getaxis('t2').size//2+1] == 0, 'zero not in the middle!'
+    assert s_shifted.getaxis('t2')[s_shifted.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
     # }}}
     fl.next('first')
     fl.show_complex(s_shifted['shift',0])
