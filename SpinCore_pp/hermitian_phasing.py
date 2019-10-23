@@ -88,32 +88,32 @@ for date,id_string in [
     # }}}
     shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
     t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:100j],'R2'))
-    s.ft('t2')
-    s_shifted = s * exp(-1j*2*pi*shift_t*s.fromaxis('t2'))
-    s.ift('t2')
-    s_shifted.ift('t2')
-    s_shifted /= t2_decay
-    s_shifted = s_shifted['t2':(-max_shift,max_shift)]
+    s_foropt = s.C
+    s_foropt.ft('t2')
+    s_foropt *= exp(-1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
+    s_foropt.ift('t2')
+    s_foropt /= t2_decay
+    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
     # {{{ demand an odd number of points
-    print s_shifted.getaxis('t2')[r_[0,ndshape(s_shifted)['t2']//2,ndshape(s_shifted)['t2']//2+1,-1]]
-    if ndshape(s_shifted)['t2'] % 2 == 0:
-        s_shifted = s_shifted['t2',:-1]
-    assert s_shifted.getaxis('t2')[s_shifted.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
+    print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+    if ndshape(s_foropt)['t2'] % 2 == 0:
+        s_foropt = s_foropt['t2',:-1]
+    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
     # }}}
     # {{{ the middle point, at t=0 must be entirely real
-    ph0 = s_shifted['t2':0.0]
+    ph0 = s_foropt['t2':0.0]
     ph0 /= abs(ph0)
-    s_shifted /= ph0
-    s_shifted /= abs(s_shifted).run(max,'t2')
+    s_foropt /= ph0
+    s_foropt /= abs(s_foropt).run(max,'t2')
     # }}}
-    residual = abs(s_shifted - s_shifted['t2',::-1].runcopy(conj)).sum('t2')
+    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     fl.next('cost function')
     fl.image(residual)
     fl.plot(residual.C.argmin('shift'),'x')
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
-    #fl.plot(best_R2,best_shift,'o')
+    fl.plot(best_R2,best_shift,'o')
     # replace following with time shift function
     s.ft('t2')
     s *= exp(-1j*2*pi*best_shift*s.fromaxis('t2'))
