@@ -108,8 +108,9 @@ for date,id_string in [
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     fl.next('cost function')
+    residual.reorder('shift')
     fl.image(residual)
-    fl.plot(residual.C.argmin('shift'),'x')
+    fl.plot(residual.C.argmin('shift').name('shift'),'x')
     minpoint = residual.argmin()
     best_shift = minpoint['shift']
     best_R2 = minpoint['R2']
