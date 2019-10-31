@@ -1,7 +1,7 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
-for date,id_string in [
+for date,id_string,label_string in [
         #('191031','echo_4_2'),
         #('191031','echo_4_3'),
         #('191031','echo_4_4'),
@@ -12,15 +12,16 @@ for date,id_string in [
         #('191031','echo_4_mw_30dBm_5'),
         #('191031','echo_4_6'),
         #('191031','echo_4_mw_30dBm_6'),
-        ('191031','echo_5'),
-        ('191031','echo_5_mw_30dBm'),
-        ('191031','echo_5_mw_34dBm'),
-        ('191031','echo_5_mw_36dBm'),
-        ('191031','echo_5_mw_36dBm_2'),
-        ('191031','echo_5_3'),
-        ('191031','echo_5_4'),
+        ('191031','echo_5','no microwaves'),
+        ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
+        ('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
+        ('191031','echo_5_mw_36dBm','+36 dBm microwaves'),
+        ('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
+        ('191031','echo_5_3','no microwaves'),
+        ('191031','echo_5_4','no microwaves'),
         ]:
-    title_string = 'unenhanced'
+    #title_string = 'unenhanced'
+    title_string = ''
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -165,13 +166,13 @@ for date,id_string in [
         print "*** *** ***"
         fl.show();quit()
     #}}}
-    fl.next('freq-signal '+title_string)
-    fl.plot(s.real,alpha=0.7,label='real')
+    fl.next('Aer ODNP - freq domain '+title_string)
+    fl.plot(s.real,alpha=0.7,label='%s'%label_string)
     #fl.plot(s.imag,alpha=0.7,label='imag')
     #fl.plot(abs(s),':')
     s.ift('t2')
     fl.next('time-signal '+title_string)
-    fl.plot(s.real,alpha=0.7,label='real')
+    fl.plot(s.real,alpha=0.7,label='%s'%label_string)
     #fl.plot(s.imag,alpha=0.7,label='imag')
     #fl.plot(abs(s),':')
 fl.show()
