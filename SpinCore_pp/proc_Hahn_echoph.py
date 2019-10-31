@@ -2,7 +2,23 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string in [
-        ('191007','echo_2'),
+        #('191031','echo_4_2'),
+        #('191031','echo_4_3'),
+        #('191031','echo_4_4'),
+        #('191031','echo_4_5'),
+        #('191031','echo_4_mw_30dBm_2'),
+        #('191031','echo_4_mw_30dBm_3'),
+        #('191031','echo_4_mw_30dBm_4'),
+        #('191031','echo_4_mw_30dBm_5'),
+        #('191031','echo_4_6'),
+        #('191031','echo_4_mw_30dBm_6'),
+        ('191031','echo_5'),
+        ('191031','echo_5_mw_30dBm'),
+        ('191031','echo_5_mw_34dBm'),
+        ('191031','echo_5_mw_36dBm'),
+        ('191031','echo_5_mw_36dBm_2'),
+        ('191031','echo_5_3'),
+        ('191031','echo_5_4'),
         ]:
     title_string = 'unenhanced'
     filename = date+'_'+id_string+'.h5'
@@ -10,22 +26,27 @@ for date,id_string in [
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
-    print ndshape(s)
     nPoints = s.get_prop('acq_params')['nPoints']
     nEchoes = s.get_prop('acq_params')['nEchoes']
     nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
     SW_kHz = s.get_prop('acq_params')['SW_kHz']
     s.reorder('t',first=True)
+    t2_axis = s.getaxis('t')[0:nPoints/nPhaseSteps]
+    s.setaxis('t',None)
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.setaxis('t2',t2_axis)
     s.reorder('t2',first=False)
     s.ft(['ph1','ph2'])
-    fl.next(id_string+'raw data - chunking coh')
-    fl.image(s)
+    show_coherence = False
+    if show_coherence:
+        fl.next(id_string+'raw data - chunking coh')
+        fl.image(s)
     s.ft('t2',shift=True)
-    fl.next(id_string+'raw data - FT')
-    fl.image(s)
+    if show_coherence:
+        fl.next(id_string+'raw data - FT')
+        fl.image(s)
     s = s['ph1',1]['ph2',0].C
     s.setaxis('t2',s.getaxis('t2'))
     s.ift('t2')
@@ -74,7 +95,7 @@ for date,id_string in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
-    hermit_phasing = True
+    hermit_phasing = False
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
         print "*** *** ***"
@@ -146,11 +167,11 @@ for date,id_string in [
     #}}}
     fl.next('freq-signal '+title_string)
     fl.plot(s.real,alpha=0.7,label='real')
-    fl.plot(s.imag,alpha=0.7,label='imag')
-    fl.plot(abs(s),':')
+    #fl.plot(s.imag,alpha=0.7,label='imag')
+    #fl.plot(abs(s),':')
     s.ift('t2')
     fl.next('time-signal '+title_string)
     fl.plot(s.real,alpha=0.7,label='real')
-    fl.plot(s.imag,alpha=0.7,label='imag')
-    fl.plot(abs(s),':')
+    #fl.plot(s.imag,alpha=0.7,label='imag')
+    #fl.plot(abs(s),':')
 fl.show()
