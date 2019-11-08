@@ -38,7 +38,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-powers = r_[1e-3:1.0:10j]
+powers = r_[1e-3:4.0:10j]
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 def check_for_3dB_step(x):
@@ -55,10 +55,10 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '191017'
-output_name = 'echo_DNP'
-adcOffset = 43
-carrierFreq_MHz = 14.898580
+date = '191107'
+output_name = 'echo_DNP_3'
+adcOffset = 39
+carrierFreq_MHz = 14.898264
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -73,9 +73,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.5
+p90 = 3.3
 deadtime = 50.0
-repetition = 10e6
+repetition = 15e6
 
 SW_kHz = 24.0
 nPoints = 1024
