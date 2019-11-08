@@ -2,7 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping,nnls
 fl = figlist_var()
 rcParams['figure.figsize'] = [10,6]
-date,id_string = '191017','echo_DNP'
+date,id_string = '191107','echo_DNP_2'
 filename = date+'_'+id_string+'.h5'
 nodename = 'signal'
 s = nddata_hdf5(filename+'/'+nodename,
@@ -92,14 +92,21 @@ fl.plot(enhancement.C)
 enhancement.sum('t2').real
 #enhancement *= remember_sign
 enhanced = enhancement.data[1:]
+enhanced /= max(enhanced)
 #enhancement.setaxis('power',s.get_prop('meter_powers'))
-fl.next('Prelim phasing enhancement')
+fl.next('150uL TEMPOL enhancement curve')
 power_axis_dBm = array(s.get_prop('meter_powers'))
 power_axis_W = zeros_like(power_axis_dBm)
-power_axis_W[:] = (1e-3*10**((power_axis_dBm[:]+10.)*1e-1))
+power_axis_W[:] = (1e-2*10**((power_axis_dBm[:]+10.)*1e-1))
 fl.plot(power_axis_W,enhanced,'.')
 xlabel('power meter reading (W)')
 ylabel('enhancement')
+save_fig = False
+if save_fig:
+    savefig('191107_TEMPOL.png',
+            transparent=True,
+            bbox_inches='tight',
+            pad_inches=0)
 fl.show();quit()
 
 # # Beginning Hermitian symmetry phasing procedure
