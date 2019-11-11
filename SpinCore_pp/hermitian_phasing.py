@@ -104,7 +104,7 @@ for date,id_string in [
     ph0 = s_foropt['t2':0.0]
     ph0 /= abs(ph0)
     s_foropt /= ph0
-    s_foropt /= abs(s_foropt).run(max,'t2')
+    s_foropt /= max(abs(s_foropt.getaxis('t2')))
     # }}}
     residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     fl.next('cost function')

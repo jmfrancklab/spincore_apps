@@ -1,24 +1,14 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-fl = figlist_var()
+class flv(figlist_var):
+    def show_complex(fl,d,**kwargs):
+        fl.plot(abs(d),'k',alpha=0.75,**kwargs)
+        fl.plot(d.real,'b',alpha=0.75,**kwargs)
+        fl.plot(d.imag,'r',alpha=0.75,**kwargs)
+        return
+fl = flv()
 for date,id_string,label_string in [
-        #('191031','echo_4_2'),
-        #('191031','echo_4_3'),
-        #('191031','echo_4_4'),
-        #('191031','echo_4_5'),
-        #('191031','echo_4_mw_30dBm_2'),
-        #('191031','echo_4_mw_30dBm_3'),
-        #('191031','echo_4_mw_30dBm_4'),
-        #('191031','echo_4_mw_30dBm_5'),
-        #('191031','echo_4_6'),
-        #('191031','echo_4_mw_30dBm_6'),
-        ('191031','echo_5','no microwaves'),
-        ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
-        ('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
-        ('191031','echo_5_mw_36dBm','+36 dBm microwaves'),
-        ('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
-        ('191031','echo_5_3','no microwaves'),
-        ('191031','echo_5_4','no microwaves'),
+        ('191007','echo_2','1007_echo'),
         ]:
     #title_string = 'unenhanced'
     title_string = ''
@@ -49,18 +39,37 @@ for date,id_string,label_string in [
         fl.next(id_string+'raw data - FT')
         fl.image(s)
     s = s['ph1',1]['ph2',0].C
-    s.setaxis('t2',s.getaxis('t2'))
+    s = s['t2':(-1e3,1e3)].C
+    fl.next('f domain')
+    fl.show_complex(s)
     s.ift('t2')
     # Center the time-domain echo at t = 0
-    t2_max = abs(s).argmax('t2',raw_index=True).data
-    s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max)])
+    max_data = abs(s.data).max()
+    pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
+    longest_pair = diff(pairs).argmax()
+    peak_location = pairs[longest_pair,:]
+    s.setaxis('t2',lambda x: x-peak_location.mean())
+    s.register_axis({'t2':0})
+    s_none = s.C
+    s_sliced = s['t2':(0,None)].C
+    s_sliced['t2',0] *= 0.5
+    fl.next('Crude centering')
+    fl.show_complex(s)
+    s.ft('t2',pad=128)
+    s_none.ft('t2')
+    s_sliced.ft('t2',pad=True)
+    fl.next('Crude + cutoff')
+    fl.show_complex(s_sliced)
+    fl.next('Crude centering - ft')
+    fl.show_complex(s_none)
+    fl.next('Crude centering, pad - ft')
+    fl.show_complex(s)
     abs_val_real = True
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
         print "*** *** ***"
         print "BEGIN ABSOLUTE VALUE OF THE REAL PHASING..."
         print "*** *** ***"
-        s.ft('t2')
         before = s.C
         fl.next('(Abs Val Real) Pre-phasing: real and imag (Without Enhancement)')
         fl.plot(s.real,c='black',alpha=0.8,label='real')
@@ -96,6 +105,7 @@ for date,id_string,label_string in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
+    fl.show();quit()
     hermit_phasing = False
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
