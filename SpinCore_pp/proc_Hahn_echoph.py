@@ -1,14 +1,11 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
-class flv(figlist_var):
-    def show_complex(fl,d,**kwargs):
-        fl.plot(abs(d),'k',alpha=0.75,**kwargs)
-        fl.plot(d.real,'b',alpha=0.75,**kwargs)
-        fl.plot(d.imag,'r',alpha=0.75,**kwargs)
-        return
-fl = flv()
+fl = figlist_var()
 for date,id_string,label_string in [
-        ('191007','echo_2','1007_echo'),
+        ('191031','echo_5_4','no microwaves'),
+        ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
+        ('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
+        ('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
         ]:
     #title_string = 'unenhanced'
     title_string = ''
@@ -41,7 +38,7 @@ for date,id_string,label_string in [
     s = s['ph1',1]['ph2',0].C
     s = s['t2':(-1e3,1e3)].C
     fl.next('f domain')
-    fl.show_complex(s)
+    fl.plot(s)
     s.ift('t2')
     # Center the time-domain echo at t = 0
     max_data = abs(s.data).max()
@@ -54,17 +51,17 @@ for date,id_string,label_string in [
     s_sliced = s['t2':(0,None)].C
     s_sliced['t2',0] *= 0.5
     fl.next('Crude centering')
-    fl.show_complex(s)
-    s.ft('t2',pad=128)
+    fl.plot(s)
+    s.ft('t2',pad=True)
     s_none.ft('t2')
     s_sliced.ft('t2',pad=True)
     fl.next('Crude + cutoff')
-    fl.show_complex(s_sliced)
+    fl.plot(s_sliced)
     fl.next('Crude centering - ft')
-    fl.show_complex(s_none)
+    fl.plot(s_none)
     fl.next('Crude centering, pad - ft')
-    fl.show_complex(s)
-    abs_val_real = True
+    fl.plot(s,label=label_string)
+    abs_val_real = False
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
         print "*** *** ***"
@@ -78,7 +75,7 @@ for date,id_string,label_string in [
         temp = s.C
         temp.ft('t2')
         SW = diff(temp.getaxis('t2')[r_[0,-1]]).item()
-        thisph1 = nddata(r_[-6:6:2048j]/SW,'phi1').set_units('phi1','s')
+        thisph1 = nddata(r_[-4:4:2048j]/SW,'phi1').set_units('phi1','s')
         phase_test_r = temp * exp(-1j*2*pi*thisph1*temp.fromaxis('t2'))
         phase_test_rph0 = phase_test_r.C.sum('t2')
         phase_test_rph0 /= abs(phase_test_rph0)
@@ -105,7 +102,6 @@ for date,id_string,label_string in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
-    fl.show();quit()
     hermit_phasing = False
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
@@ -176,13 +172,11 @@ for date,id_string,label_string in [
         print "*** *** ***"
         fl.show();quit()
     #}}}
-    fl.next('Aer ODNP - freq domain '+title_string)
-    fl.plot(s.real,alpha=0.7,label='%s'%label_string)
-    #fl.plot(s.imag,alpha=0.7,label='imag')
-    #fl.plot(abs(s),':')
-    s.ift('t2')
-    fl.next('time-signal '+title_string)
-    fl.plot(s.real,alpha=0.7,label='%s'%label_string)
-    #fl.plot(s.imag,alpha=0.7,label='imag')
-    #fl.plot(abs(s),':')
+    fl.next('Aer ODNP - NMR signal'+title_string)
+    fl.plot(s,alpha=0.7,label='%s'%label_string)
+    legend()
+    savefig('aer_ODNP_191111.png',
+            transparent=True,
+            bbox_inches='tight',
+            pad_inches=0)
 fl.show()
