@@ -1,11 +1,13 @@
 from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
-for date,id_string,label_string in [
-        ('191031','echo_5_4','no microwaves'),
-        ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
-        ('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
-        ('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
+for date,id_string,label_str in [
+        ('191111','echo_4','gradient off'),
+        ('191111','echo_4_2','gradient off'),
+        ('191111','echo_4_3','gradient off'),
+        ('191111','echo_4_on','gradient on'),
+        ('191111','echo_4_on_2','gradient on'),
+        ('191111','echo_4_on_3','gradient on'),
         ]:
     #title_string = 'unenhanced'
     title_string = ''
@@ -49,11 +51,32 @@ for date,id_string,label_string in [
     s.register_axis({'t2':0})
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
-    fl.next('Crude centering')
-    fl.plot(s)
+    fl.next('Crude centering - time domain')
+    fl.plot(s,alpha=0.8,label='%s'%label_str)
+    legend()
+    savefig('191111_gradient_test_tdomain.png',
+            transparent=True,
+            bbox_inches='tight',
+            pad_inches=False)
     s.ft('t2')#,pad=True)
     fl.next('Crude centering - ft + filtering + correction')
-    fl.plot(s,label=label_string)
+    fl.plot(s,alpha=0.8,label='%s'%label_str)
+    legend()
+    savefig('191111_gradient_test_fdomain.png',
+            transparent=True,
+            bbox_inches='tight',
+            pad_inches=False)
+    max_val = argmax(s.data)
+    print max_val
+fl.show();quit()
+for date,id_string in [
+        ('191031','echo_4'),
+        ('191031','echo_4_2'),
+        ('191031','echo_4_3'),
+        ('191031','echo_4_on'),
+        ('191031','echo_4_2_on'),
+        ('191031','echo_4_3_on'),
+        ]:
     abs_val_real = False
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
