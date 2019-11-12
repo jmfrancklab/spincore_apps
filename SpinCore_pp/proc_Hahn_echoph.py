@@ -47,19 +47,12 @@ for date,id_string,label_string in [
     peak_location = pairs[longest_pair,:]
     s.setaxis('t2',lambda x: x-peak_location.mean())
     s.register_axis({'t2':0})
-    s_none = s.C
-    s_sliced = s['t2':(0,None)].C
-    s_sliced['t2',0] *= 0.5
+    s = s['t2':(0,None)]
+    s['t2',0] *= 0.5
     fl.next('Crude centering')
     fl.plot(s)
-    s.ft('t2',pad=True)
-    s_none.ft('t2')
-    s_sliced.ft('t2',pad=True)
-    fl.next('Crude + cutoff')
-    fl.plot(s_sliced)
-    fl.next('Crude centering - ft')
-    fl.plot(s_none)
-    fl.next('Crude centering, pad - ft')
+    s.ft('t2')#,pad=True)
+    fl.next('Crude centering - ft + filtering + correction')
     fl.plot(s,label=label_string)
     abs_val_real = False
     #{{{ Absolute value of the real phasing procedure 
@@ -102,7 +95,7 @@ for date,id_string,label_string in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
-    hermit_phasing = False
+    hermit_phasing = True
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
         print "*** *** ***"
@@ -172,11 +165,19 @@ for date,id_string,label_string in [
         print "*** *** ***"
         fl.show();quit()
     #}}}
-    fl.next('Aer ODNP - NMR signal'+title_string)
-    fl.plot(s,alpha=0.7,label='%s'%label_string)
-    legend()
-    savefig('aer_ODNP_191111.png',
-            transparent=True,
-            bbox_inches='tight',
-            pad_inches=0)
+    fl.next('AER ODNP - ft + filtering + correction + phasing')
+    fl.plot(s,label='%s'%label_string)
+    #{{{ for plotting
+    plot_this = True
+    if plot_this:
+        legend()
+        savefig('aer_ODNP_ft_phasing_191112.png',
+                transparent=True,
+                bbox_inches='tight',
+                pad_inches=0)
+    #}}}
+fl.show();quit()
+    #s.ift('t2')
+    #fl.next('Aer ODNP - NMR signal time'+title_string)
+    #fl.plot(s,alpha=0.7,label='%s'%label_string)
 fl.show()
