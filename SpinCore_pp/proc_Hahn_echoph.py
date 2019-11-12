@@ -101,24 +101,27 @@ for date,id_string,label_string in [
         print "*** *** ***"
         print "BEGIN HERMITIAN SYMMETRY PHASING..."
         print "*** *** ***"
-        # Get rid of negative time points, and scale first time point appropriately
-        s.ift('t2')
-        s = s['t2':(0,None)]
-        s['t2',0] *= 0.5
         fl.next('sliced')
-        fl.plot(s)
-        fl.next('Visualize sliced peak')
-        fl.plot(s.C.ft('t2'),human_units=False)
-        s.ft('t2')
+        fl.plot(s,alpha=0.5)
+        fl.plot(abs(s),alpha=0.5)
         df = diff(s.getaxis('t2')[r_[0,1]])[0]
-        max_hwidth = 6
-        window_hwidth = 2
+        max_hwidth = 1
+        window_hwidth = 10
         max_shift = (max_hwidth - window_hwidth)*df
-        center_index = where(abs(s.getaxis('t2'))==abs(s.getaxis('t2')).min())[0][0]
+        print s.getaxis('t2')
+        # the following is for a peak centered at f = 0 Hz
+        on_0 = False
+        if on_0:
+            center_index = where(abs(s.getaxis('t2'))==abs(s.getaxis('t2')).min())[0][0]
+        else:
+            center_index = argmax(s.data)
         slice_ = s['t2',int(center_index-max_hwidth) : int(center_index+max_hwidth+1)].C
-        slice_center_index = where(abs(slice_.getaxis('t2'))==abs(slice_.getaxis('t2')).min())[0][0]
+        if on_0:
+            slice_center_index = where(abs(slice_.getaxis('t2'))==abs(slice_.getaxis('t2')).min())[0][0]
+        else:
+            slice_center_index = argmax(slice_.data)
+            print slice_center_index
         fl.plot(slice_,':',human_units=False)
-        print slice_center_index
         f_axis = slice_.fromaxis('t2')
         fl.next('Pre-phasing: real and imag (Without Enhancement)')
         fl.plot(s.real,c='black',alpha=0.8,label='real')
@@ -142,7 +145,7 @@ for date,id_string,label_string in [
                 minimizer_kwargs={"method":'L-BFGS-B'},
                 callback=print_func,
                 stepsize=100.,
-                niter=500,
+                niter=100,
                 T=1000.
                 )
         zerorder_rad,firstorder = sol.x
