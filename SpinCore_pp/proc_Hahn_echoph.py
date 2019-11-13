@@ -2,10 +2,10 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191031','echo_5_4','no microwaves'),
-        ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
-        ('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
-        ('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
+        ('191113','echo_1_1','1024 pts'),
+        ('191113','echo_1_2','2048 pts'),
+        ('191113','echo_2','1024 pts, 2'),
+        ('191113','echo_2_2','2048 pts, 2'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -52,7 +52,7 @@ for date,id_string,label_str in [
     s.ft('t2')#,pad=True)
     fl.next('Crude centering - ft + filtering + correction')
     fl.plot(s,alpha=0.8,label='%s'%label_str)
-    abs_val_real = False
+    abs_val_real = True
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
         print "*** *** ***"
