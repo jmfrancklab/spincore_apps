@@ -3,7 +3,7 @@ from solid.utils import *
 
 # units of mm
 
-thickness = 2.0 # hereafter t
+thickness = 4.0 # hereafter t
 width = 78.0 # hereafter w
 height = 127.60 # hereafter h
 

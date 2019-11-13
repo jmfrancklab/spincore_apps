@@ -7,8 +7,11 @@ class flv(figlist_var):
         fl.plot(d.imag,'g',alpha=0.5,**kwargs)
         return
 fl = flv()
-for date,id_string in [
-        ('191007','echo_2'),
+for date,id_string,label_string in [
+        ('191031','echo_5_4','no microwaves'),
+        ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
+        ('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
+        ('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
         ]:
     title_string = 'unenhanced'
     filename = date+'_'+id_string+'.h5'
@@ -87,28 +90,37 @@ for date,id_string in [
     fl.plot(abs(s_right), label='max right',alpha=0.5)
     # }}}
     shift_t = nddata(r_[-1:1:1000j]*max_shift, 'shift')
-    s.ft('t2')
-    s_shifted = s * exp(-1j*2*pi*shift_t*s.fromaxis('t2'))
-    s.ift('t2')
-    s_shifted.ift('t2')
-    s_shifted = s_shifted['t2':(-max_shift,max_shift)]
+    t2_decay = exp(-s.fromaxis('t2')*nddata(r_[0:1e3:1000j],'R2'))
+    s_foropt = s.C
+    s_foropt.ft('t2')
+    s_foropt *= exp(1j*2*pi*shift_t*s_foropt.fromaxis('t2'))
+    s_foropt.ift('t2')
+    s_foropt /= t2_decay
+    s_foropt = s_foropt['t2':(-max_shift,max_shift)]
     # {{{ demand an odd number of points
-    print s_shifted.getaxis('t2')[r_[0,ndshape(s_shifted)['t2']//2,ndshape(s_shifted)['t2']//2+1,-1]]
-    if ndshape(s_shifted)['t2'] % 2 == 0:
-        s_shifted = s_shifted['t2',:-1]
-    assert s_shifted.getaxis('t2')[s_shifted.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
+    print s_foropt.getaxis('t2')[r_[0,ndshape(s_foropt)['t2']//2,ndshape(s_foropt)['t2']//2+1,-1]]
+    if ndshape(s_foropt)['t2'] % 2 == 0:
+        s_foropt = s_foropt['t2',:-1]
+    assert s_foropt.getaxis('t2')[s_foropt.getaxis('t2').size//2+1] == 0, 'zero not in the middle! -- does your original axis contain a 0?'
     # }}}
     # {{{ the middle point, at t=0 must be entirely real
-    ph0 = s_shifted['t2':0.0]
+    ph0 = s_foropt['t2':0.0]
     ph0 /= abs(ph0)
-    s_shifted /= ph0
+    s_foropt /= ph0
+    s_foropt /= max(abs(s_foropt.getaxis('t2')))
     # }}}
-    residual = abs(s_shifted - s_shifted['t2',::-1].runcopy(conj)).sum('t2')
+    residual = abs(s_foropt - s_foropt['t2',::-1].runcopy(conj)).sum('t2')
     fl.next('cost function')
-    fl.plot(residual)
-    best_shift = residual.argmin('shift').item()
+    residual.reorder('shift')
+    fl.image(residual)
+    fl.plot(residual.C.argmin('shift').name('shift'),'x')
+    minpoint = residual.argmin()
+    best_shift = minpoint['shift']
+    best_R2 = minpoint['R2']
+    fl.plot(best_R2,best_shift,'o')
+    # replace following with time shift function
     s.ft('t2')
-    s *= exp(-1j*2*pi*best_shift*s.fromaxis('t2'))
+    s *= exp(1j*2*pi*best_shift*s.fromaxis('t2'))
     s.ift('t2')
     ph0 = s['t2':0.0]
     ph0 /= abs(ph0)
@@ -118,19 +130,24 @@ for date,id_string in [
     s_sliced['t2',0] *= 0.5
     s_sliced.ft('t2')
     fl.show_complex(s_sliced)
-    # {{{ 
-    fl.next("attempt to superimpose left side to add to SNR\ndoesn't work because of T2 decay (?)\n(Illustrates limits of method)")
-    s_sliced = s['t2':(0,None)].C
-    s_leftslice = s['t2':(None,0)]['t2',::-1].run(conj)
-    s_leftslice.setaxis('t2',lambda x: -1*x)
-    print s_sliced.getaxis('t2')[r_[0,-1]]
-    print s_leftslice.getaxis('t2')[r_[0,-1]]
-    fl.show_complex(s_sliced)
-    fl.show_complex(s_leftslice)
-    #assert s_leftslice.getaxis('t2')[0] != 0, "libraries have changed and left slice includes 0"
-    #s_sliced['t2',1:ndshape(s_leftslice)['t2']+1] += s_leftslice
-    #s_sliced['t2',0:ndshape(s_leftslice)['t2']+1] *= 0.5
-    #s_sliced.ft('t2')
-    #fl.show_complex(s_sliced)
-    # }}}
+    fl.next('Compare spectra')
+    fl.plot(s_sliced.real,label='%s'%label_string)
+    checking_time_slices = False
+    if checking_time_slices:
+        # {{{ 
+        fl.next("edit superimposition to include a correction for T2 decay")
+        s_sliced = s['t2':(0,None)].C
+        s_leftslice = s['t2':(None,0)]['t2',::-1].run(conj)
+        s_leftslice.setaxis('t2',lambda x: -1*x)
+        print "check time slices"
+        print s_sliced.getaxis('t2')[r_[0,-1]]
+        print s_leftslice.getaxis('t2')[r_[0,-1]]
+        fl.show_complex(s_sliced)
+        fl.show_complex(s_leftslice)
+        #assert s_leftslice.getaxis('t2')[0] != 0, "libraries have changed and left slice includes 0"
+        #s_sliced['t2',1:ndshape(s_leftslice)['t2']+1] += s_leftslice
+        #s_sliced['t2',0:ndshape(s_leftslice)['t2']+1] *= 0.5
+        #s_sliced.ft('t2')
+        #fl.show_complex(s_sliced)
+        # }}}
 fl.show()

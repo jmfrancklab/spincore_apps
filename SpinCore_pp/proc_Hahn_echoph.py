@@ -2,14 +2,11 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191107','echo_1','d1=1s'),
-        ('191107','echo_2','d1=3s'),
-        ('191107','echo_3','d1=10s'),
-        ('191107','echo_4','d1=15s'),
-        ('191107','echo_5','d1=20s'),
-        ('191107','echo_6','d1=15s'),
+        ('191031','echo_5_4','no microwaves'),
+        ('191031','echo_5_mw_30dBm','+30 dBm microwaves'),
+        ('191031','echo_5_mw_34dBm','+34 dBm microwaves'),
+        ('191031','echo_5_mw_36dBm_2','+36 dBm microwaves'),
         ]:
-    title_string = 'unenhanced'
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -37,18 +34,30 @@ for date,id_string,label_str in [
         fl.next(id_string+'raw data - FT')
         fl.image(s)
     s = s['ph1',1]['ph2',0].C
-    s.setaxis('t2',s.getaxis('t2'))
+    s = s['t2':(-1e3,1e3)].C
+    fl.next('f domain')
+    fl.plot(s)
     s.ift('t2')
     # Center the time-domain echo at t = 0
-    t2_max = abs(s).argmax('t2',raw_index=True).data
-    s.setaxis('t2',lambda t: t - s.getaxis('t2')[int(t2_max)])
-    abs_val_real = True
+    max_data = abs(s.data).max()
+    pairs = s.contiguous(lambda x: abs(x) > max_data*0.5)
+    longest_pair = diff(pairs).argmax()
+    peak_location = pairs[longest_pair,:]
+    s.setaxis('t2',lambda x: x-peak_location.mean())
+    s.register_axis({'t2':0})
+    s = s['t2':(0,None)]
+    s['t2',0] *= 0.5
+    fl.next('Crude centering - time domain')
+    fl.plot(s,alpha=0.8,label='%s'%label_str)
+    s.ft('t2')#,pad=True)
+    fl.next('Crude centering - ft + filtering + correction')
+    fl.plot(s,alpha=0.8,label='%s'%label_str)
+    abs_val_real = False
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
         print "*** *** ***"
         print "BEGIN ABSOLUTE VALUE OF THE REAL PHASING..."
         print "*** *** ***"
-        s.ft('t2')
         before = s.C
         fl.next('(Abs Val Real) Pre-phasing: real and imag (Without Enhancement)')
         fl.plot(s.real,c='black',alpha=0.8,label='real')
@@ -57,7 +66,7 @@ for date,id_string,label_str in [
         temp = s.C
         temp.ft('t2')
         SW = diff(temp.getaxis('t2')[r_[0,-1]]).item()
-        thisph1 = nddata(r_[-6:6:2048j]/SW,'phi1').set_units('phi1','s')
+        thisph1 = nddata(r_[-4:4:2048j]/SW,'phi1').set_units('phi1','s')
         phase_test_r = temp * exp(-1j*2*pi*thisph1*temp.fromaxis('t2'))
         phase_test_rph0 = phase_test_r.C.sum('t2')
         phase_test_rph0 /= abs(phase_test_rph0)
@@ -90,24 +99,27 @@ for date,id_string,label_str in [
         print "*** *** ***"
         print "BEGIN HERMITIAN SYMMETRY PHASING..."
         print "*** *** ***"
-        # Get rid of negative time points, and scale first time point appropriately
-        s.ift('t2')
-        s = s['t2':(0,None)]
-        s['t2',0] *= 0.5
         fl.next('sliced')
-        fl.plot(s)
-        fl.next('Visualize sliced peak')
-        fl.plot(s.C.ft('t2'),human_units=False)
-        s.ft('t2')
+        fl.plot(s,alpha=0.5)
+        fl.plot(abs(s),alpha=0.5)
         df = diff(s.getaxis('t2')[r_[0,1]])[0]
-        max_hwidth = 6
-        window_hwidth = 2
+        max_hwidth = 1
+        window_hwidth = 10
         max_shift = (max_hwidth - window_hwidth)*df
-        center_index = where(abs(s.getaxis('t2'))==abs(s.getaxis('t2')).min())[0][0]
+        print s.getaxis('t2')
+        # the following is for a peak centered at f = 0 Hz
+        on_0 = False
+        if on_0:
+            center_index = where(abs(s.getaxis('t2'))==abs(s.getaxis('t2')).min())[0][0]
+        else:
+            center_index = argmax(s.data)
         slice_ = s['t2',int(center_index-max_hwidth) : int(center_index+max_hwidth+1)].C
-        slice_center_index = where(abs(slice_.getaxis('t2'))==abs(slice_.getaxis('t2')).min())[0][0]
+        if on_0:
+            slice_center_index = where(abs(slice_.getaxis('t2'))==abs(slice_.getaxis('t2')).min())[0][0]
+        else:
+            slice_center_index = argmax(slice_.data)
+            print slice_center_index
         fl.plot(slice_,':',human_units=False)
-        print slice_center_index
         f_axis = slice_.fromaxis('t2')
         fl.next('Pre-phasing: real and imag (Without Enhancement)')
         fl.plot(s.real,c='black',alpha=0.8,label='real')
@@ -131,7 +143,7 @@ for date,id_string,label_str in [
                 minimizer_kwargs={"method":'L-BFGS-B'},
                 callback=print_func,
                 stepsize=100.,
-                niter=500,
+                niter=100,
                 T=1000.
                 )
         zerorder_rad,firstorder = sol.x
@@ -154,13 +166,6 @@ for date,id_string,label_str in [
         print "*** *** ***"
         fl.show();quit()
     #}}}
-    fl.next('freq-signal '+title_string)
-    fl.plot(s.real,alpha=0.7,label=label_str+'real')
-    #fl.plot(s.imag,alpha=0.7,label='imag')
-    #fl.plot(abs(s),':')
-    s.ift('t2')
-    fl.next('time-signal '+title_string)
-    fl.plot(s.real,alpha=0.7,label=label_str+'real')
-    #fl.plot(s.imag,alpha=0.7,label='imag')
-    #fl.plot(abs(s),':')
+    fl.next('Final plots')
+    fl.plot(s,alpha=0.8,label='%s'%label_str)
 fl.show()
