@@ -2,7 +2,8 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191113','echo_3_2','1'),
+        ('191113','echo_4','8x sig avg'),
+        ('191113','echo_4_2','1x sig avg'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -20,6 +21,7 @@ for date,id_string,label_str in [
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
+    s.set_units('t2','s')
     s.reorder('t2',first=False)
     s.ft(['ph1','ph2'])
     show_coherence = False
@@ -45,11 +47,11 @@ for date,id_string,label_str in [
     s = s['t2':(0,None)]
     s['t2',0] *= 0.5
     fl.next('Crude centering - time domain')
-    fl.plot(s,alpha=0.8,label='%s'%label_str)
+    fl.plot(s,alpha=0.5,label='%s'%label_str)
     s.ft('t2')#,pad=True)
     fl.next('Crude centering - ft + filtering + correction')
-    fl.plot(s,alpha=0.8,label='%s'%label_str)
-    abs_val_real = False
+    fl.plot(s,alpha=0.5,label='%s'%label_str)
+    abs_val_real = True
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
         print "*** *** ***"
@@ -90,7 +92,7 @@ for date,id_string,label_str in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
-    hermit_phasing = True
+    hermit_phasing = False
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
         print "*** *** ***"
@@ -166,6 +168,9 @@ for date,id_string,label_str in [
         print "*** *** ***"
         fl.show();quit()
     #}}}
-    fl.next('Final plots')
-    fl.plot(s,alpha=0.8,label='%s'%label_str)
+    fl.next('Final plots - f domain')
+    fl.plot(s,alpha=0.5,label='%s'%label_str)
+    s.ift('t2')
+    fl.next('Final plots - t domain')
+    fl.plot(s,alpha=0.5,label='%s'%label_str)
 fl.show()

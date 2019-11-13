@@ -32,7 +32,7 @@ def verifyParams():
     return
 #}}}
 date = '191113'
-output_name = 'echo_3_2'
+output_name = 'echo_4_2'
 adcOffset = 30 
 carrierFreq_MHz = 14.897581
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -53,7 +53,7 @@ p90 = 3.3
 deadtime = 50.0
 repetition = 15e6
 
-SW_kHz = 12.0
+SW_kHz = 3.0
 nPoints = 2048
 
 acq_time = nPoints/SW_kHz # ms
