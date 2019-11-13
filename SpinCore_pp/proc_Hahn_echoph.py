@@ -16,20 +16,25 @@ for date,id_string,label_str in [
     s = nddata_hdf5(filename+'/'+nodename,
             directory = getDATADIR(
                 exp_type = 'test_equip'))
-    nPoints = s.get_prop('acq_params')['nPoints']
-    nEchoes = s.get_prop('acq_params')['nEchoes']
-    nPhaseSteps = s.get_prop('acq_params')['nPhaseSteps']
-    SW_kHz = s.get_prop('acq_params')['SW_kHz']
+    acq_params = s.get_prop('acq_params')
+    for j in ['nPoints', 'nEchoes', 'nPhaseSteps', 'SW_kHz']:
+        globals()[j] = acq_params[j]
     s.reorder('t',first=True)
-    t2_axis = s.getaxis('t')[0:nPoints/nPhaseSteps]
-    s.setaxis('t',None)
+    I_require_validation = False
+    if I_require_validation:
+        print ndshape(s)
+        t2_axis = s.getaxis('t')[0:nPoints/nPhaseSteps]
+        print len(t2_axis)
+        print t2_axis
     s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    if I_require_validation:
+        print ndshape(s)
+        assert all(isclose(t2_axis,s.getaxis('t2')[0:nPoints/nPhaseSteps]))
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.setaxis('t2',t2_axis)
-    s.reorder('t2',first=False)
+    # s.setaxis('t2',t2_axis) <-- in the most recent version of pyspecdata (1) this is not needed and (2) it will fail, because t2_axis here is the wrong length
     s.ft(['ph1','ph2'])
-    show_coherence = False
+    show_coherence = True
     if show_coherence:
         fl.next(id_string+'raw data - chunking coh')
         fl.image(s)
@@ -37,9 +42,9 @@ for date,id_string,label_str in [
     if show_coherence:
         fl.next(id_string+'raw data - FT')
         fl.image(s)
-    s = s['ph1',1]['ph2',0].C
-    s = s['t2':(-1e3,1e3)].C
-    fl.next('f domain')
+    s = s['ph1',1]['ph2',0]
+    s = s['t2':(-1e3,1e3)]
+    fl.next('f domain -- raw')
     fl.plot(s)
     s.ift('t2')
     # Center the time-domain echo at t = 0
