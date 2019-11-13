@@ -168,6 +168,6 @@ for date,id_string,label_str in [
         print "*** *** ***"
         fl.show();quit()
     #}}}
-    fl.next('AER ODNP')
+    fl.next('Final plots')
     fl.plot(s,alpha=0.8,label='%s'%label_str)
 fl.show()
