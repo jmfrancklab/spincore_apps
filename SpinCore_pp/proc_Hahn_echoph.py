@@ -9,8 +9,6 @@ for date,id_string,label_str in [
         ('191111','echo_4_on_2','gradient on'),
         ('191111','echo_4_on_3','gradient on'),
         ]:
-    #title_string = 'unenhanced'
-    title_string = ''
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
     s = nddata_hdf5(filename+'/'+nodename,
@@ -53,30 +51,9 @@ for date,id_string,label_str in [
     s['t2',0] *= 0.5
     fl.next('Crude centering - time domain')
     fl.plot(s,alpha=0.8,label='%s'%label_str)
-    legend()
-    savefig('191111_gradient_test_tdomain.png',
-            transparent=True,
-            bbox_inches='tight',
-            pad_inches=False)
     s.ft('t2')#,pad=True)
     fl.next('Crude centering - ft + filtering + correction')
     fl.plot(s,alpha=0.8,label='%s'%label_str)
-    legend()
-    savefig('191111_gradient_test_fdomain.png',
-            transparent=True,
-            bbox_inches='tight',
-            pad_inches=False)
-    max_val = argmax(s.data)
-    print max_val
-fl.show();quit()
-for date,id_string in [
-        ('191031','echo_4'),
-        ('191031','echo_4_2'),
-        ('191031','echo_4_3'),
-        ('191031','echo_4_on'),
-        ('191031','echo_4_2_on'),
-        ('191031','echo_4_3_on'),
-        ]:
     abs_val_real = False
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
@@ -118,7 +95,7 @@ for date,id_string in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
-    hermit_phasing = True
+    hermit_phasing = False
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
         print "*** *** ***"
@@ -191,19 +168,6 @@ for date,id_string in [
         print "*** *** ***"
         fl.show();quit()
     #}}}
-    fl.next('AER ODNP - ft + filtering + correction + phasing')
-    fl.plot(s,label='%s'%label_string)
-    #{{{ for plotting
-    plot_this = True
-    if plot_this:
-        legend()
-        savefig('aer_ODNP_ft_phasing_191112.png',
-                transparent=True,
-                bbox_inches='tight',
-                pad_inches=0)
-    #}}}
-fl.show();quit()
-    #s.ift('t2')
-    #fl.next('Aer ODNP - NMR signal time'+title_string)
-    #fl.plot(s,alpha=0.7,label='%s'%label_string)
+    fl.next('AER ODNP')
+    fl.plot(s,alpha=0.8,label='%s'%label_str)
 fl.show()
