@@ -31,13 +31,13 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '191111'
-output_name = 'echo_4_on_3'
+date = '191113'
+output_name = 'echo_3_2'
 adcOffset = 30 
-carrierFreq_MHz = 14.898634
+carrierFreq_MHz = 14.897581
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 64 
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -51,10 +51,10 @@ if not phase_cycling:
 #}}}
 p90 = 3.3
 deadtime = 50.0
-repetition = 1e6
+repetition = 15e6
 
-SW_kHz = 24.0
-nPoints = 1024
+SW_kHz = 12.0
+nPoints = 2048
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0

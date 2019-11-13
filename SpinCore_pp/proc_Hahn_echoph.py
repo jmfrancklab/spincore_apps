@@ -2,10 +2,7 @@ from pyspecdata import *
 from scipy.optimize import leastsq,minimize,basinhopping
 fl = figlist_var()
 for date,id_string,label_str in [
-        ('191113','echo_1_1','1024 pts'),
-        ('191113','echo_1_2','2048 pts'),
-        ('191113','echo_2','1024 pts, 2'),
-        ('191113','echo_2_2','2048 pts, 2'),
+        ('191113','echo_3_2','1'),
         ]:
     filename = date+'_'+id_string+'.h5'
     nodename = 'signal'
@@ -52,7 +49,7 @@ for date,id_string,label_str in [
     s.ft('t2')#,pad=True)
     fl.next('Crude centering - ft + filtering + correction')
     fl.plot(s,alpha=0.8,label='%s'%label_str)
-    abs_val_real = True
+    abs_val_real = False
     #{{{ Absolute value of the real phasing procedure 
     if abs_val_real:
         print "*** *** ***"
@@ -93,7 +90,7 @@ for date,id_string,label_str in [
         print "FINISHED ABSOLUTE VALUE OF THE REAL PHASING"
         print "*** *** ***"
     #}}}
-    hermit_phasing = False
+    hermit_phasing = True
     #{{{ Hermitian symmetry cost function phasing algorithm
     if hermit_phasing:
         print "*** *** ***"
@@ -143,7 +140,7 @@ for date,id_string,label_str in [
                 minimizer_kwargs={"method":'L-BFGS-B'},
                 callback=print_func,
                 stepsize=100.,
-                niter=100,
+                niter=10,
                 T=1000.
                 )
         zerorder_rad,firstorder = sol.x
@@ -152,10 +149,13 @@ for date,id_string,label_str in [
         phshift *= exp(-1j*2*pi*zerorder_rad)
 
         s *= phshift
+        print ndshape(s)
+        quit()
         # If phasing algorithm gives negative result, correct it here
-        max_data_index = where(abs(s.data)==abs(s.data).max())
-        if s.data[max_data_index] < 0:
-            s *= -1.0
+        #max_data_index = where(abs(s.data)==abs(s.data).max())
+        #print max_data_index
+        #if s.data[max_data_index] < 0:
+        #    s *= -1.0
         fl.next('Visualize sliced peak')
         fl.plot(s,c='black',alpha=0.8,human_units=False)
         fl.next('Post-phasing: real and imag (Without Enhancement)')
