@@ -56,7 +56,7 @@ print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3
 powers = 1e-3*10**(dB_settings/10.)
 
 date = '191118'
-output_name = 'echo_DNP_2'
+output_name = 'echo_DNP_3'
 adcOffset = 40
 carrierFreq_MHz = 14.898418
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -77,8 +77,8 @@ p90 = 3.3
 deadtime = 50.0
 repetition = 15e6
 
-SW_kHz = 3.0
-nPoints = 2048
+SW_kHz = 24.0
+nPoints = 1024
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0

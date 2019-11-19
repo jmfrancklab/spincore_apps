@@ -53,8 +53,8 @@ p90 = 3.3
 deadtime = 50.0
 repetition = 15e6
 
-SW_kHz = 3.0
-nPoints = 2048
+SW_kHz = 24.0
+nPoints = 1024
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
