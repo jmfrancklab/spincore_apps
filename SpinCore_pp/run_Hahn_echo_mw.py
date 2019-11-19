@@ -55,10 +55,10 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '191107'
-output_name = 'echo_DNP_3'
-adcOffset = 39
-carrierFreq_MHz = 14.898264
+date = '191118'
+output_name = 'echo_DNP_2'
+adcOffset = 40
+carrierFreq_MHz = 14.898418
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -77,8 +77,8 @@ p90 = 3.3
 deadtime = 50.0
 repetition = 15e6
 
-SW_kHz = 24.0
-nPoints = 1024
+SW_kHz = 3.0
+nPoints = 2048
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
