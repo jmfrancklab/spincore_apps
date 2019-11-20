@@ -32,14 +32,14 @@ def verifyParams():
     return
 #}}}
 date = '191119'
-output_name = 'echo_1'
+output_name = 'echo_2'
 adcOffset = 40 
 carrierFreq_MHz = 14.898618
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 2
+nScans = 4
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -51,7 +51,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.3
 deadtime = 50.0
-repetition = 5e6
+repetition = 15e6
 
 SW_kHz = 24.0
 nPoints = 1024
@@ -147,7 +147,7 @@ for x in xrange(nScans):
     dataPoints = float(shape(data_array)[0])
     if x == 0:
         time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=float64)
+        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:nScans])
         data.name('signal')
@@ -193,6 +193,7 @@ if not phase_cycling:
         fl.next('FT raw data')
         fl.image(data)
 if phase_cycling:
+    print ndshape(data)
     s = data.C
     s.set_units('t','s')
     orig_t = s.getaxis('t')
@@ -205,6 +206,7 @@ if phase_cycling:
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
     s.reorder('t2',first=False)
+    print ndshape(s)
     #fl.next('raw data - chunking')
     #fl.image(s)
     s.ft('t2',shift=True)
@@ -213,14 +215,14 @@ if phase_cycling:
     fl.image(s)
     s = s['ph1',1]['ph2',0].C
     s.setaxis('t2',s.getaxis('t2'))
-    for x in xrange(s.getaxis('nScans')):
+    for x in xrange(len(s.getaxis('nScans'))):
         s = s['nScans',x]
-        fl.next('freq-signal')
+        fl.next('freq-signal %d'%x)
         fl.plot(s.real)
         fl.plot(s.imag)
         fl.plot(abs(s),':')
         s.ift('t2')
-        fl.next('time-signal')
+        fl.next('time-signal %d'%x)
         fl.plot(s.real)
         fl.plot(s.imag)
         fl.plot(abs(s),':')
