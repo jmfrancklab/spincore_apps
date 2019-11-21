@@ -31,13 +31,13 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '191119'
-output_name = 'echo_2'
-adcOffset = 40 
-carrierFreq_MHz = 14.898618
+date = '191121'
+output_name = 'echo_5'
+adcOffset = 40
+carrierFreq_MHz = 14.898848
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 8
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -51,10 +51,10 @@ if not phase_cycling:
 #}}}
 p90 = 3.3
 deadtime = 50.0
-repetition = 15e6
+repetition = 5e6
 
 SW_kHz = 24.0
-nPoints = 1024
+nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
@@ -86,14 +86,14 @@ print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for x in xrange(nScans):
-    print "SCAN NO. %d"%(x+1)
+    print "*** *** *** SCAN NO. %d *** *** ***"%(x+1)
     print "\n*** *** ***\n"
     print "CONFIGURING TRANSMITTER..."
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     print "\nTRANSMITTER CONFIGURED."
     print "***"
     print "CONFIGURING RECEIVER..."
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
+    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
     acq_params['acq_time_ms'] = acq_time
     # acq_time is in msec!
     print "ACQUISITION TIME IS",acq_time,"ms"
@@ -153,7 +153,7 @@ for x in xrange(nScans):
         data.name('signal')
         data.set_prop('acq_params',acq_params)
     data['nScans',x] = data_array
-SpinCore_pp.stopBoard();
+    SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
 save_file = True
@@ -175,9 +175,11 @@ if not phase_cycling:
         print ndshape(data)
         fl.next('raw data')
         fl.plot(data)
+        fl.plot(abs(data),':',alpha=0.5)
         data.ft('t',shift=True)
         fl.next('raw data - FT')
         fl.plot(data)
+        fl.plot(abs(data),':',alpha=0.5)
     else:
         print ndshape(data)
         data.reorder('nScans',first=True)
