@@ -40,11 +40,11 @@ import SpinCore_pp
 import time
 fl = figlist_var()
 
-date = '190710'
-output_name = 'T1CPMG_3'
+date = '191121'
+output_name = 'T1CPMG_1'
 #clock_correction = 1.0829/998.253
 adcOffset = 35
-carrierFreq_MHz = 14.897206
+carrierFreq_MHz = 14.898848
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.35
