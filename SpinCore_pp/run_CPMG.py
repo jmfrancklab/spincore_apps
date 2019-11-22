@@ -40,9 +40,9 @@ import SpinCore_pp
 fl = figlist_var()
 
 date = '191122'
-output_name = 'CPMG_1_8'
+output_name = 'CPMG_5_1'
 adcOffset = 43
-carrierFreq_MHz = 14.899145
+carrierFreq_MHz = 14.898749
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.3
@@ -60,7 +60,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 4
+nScans = 1
 nEchoes = 128
 phase_cycling = True
 if phase_cycling:

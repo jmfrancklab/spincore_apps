@@ -34,7 +34,7 @@ def verifyParams():
 date = '191122'
 output_name = 'echo'
 adcOffset = 43
-carrierFreq_MHz = 14.899145
+carrierFreq_MHz = 14.898749
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
