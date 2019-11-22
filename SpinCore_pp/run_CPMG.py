@@ -39,18 +39,18 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 
-date = '191121'
-output_name = 'CPMG_1'
-adcOffset = 38
-carrierFreq_MHz = 14.898848
+date = '191122'
+output_name = 'CPMG_1_8'
+adcOffset = 43
+carrierFreq_MHz = 14.899145
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.3
 deadtime = 60.0
 repetition = 4e6
 
-SW_kHz = 15.0
-nPoints = 128
+SW_kHz = 60
+nPoints = 64
 
 deblank = 1.0
 acq_time = nPoints/SW_kHz # ms
@@ -61,7 +61,7 @@ print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
 nScans = 4
-nEchoes = 64
+nEchoes = 128
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 2
