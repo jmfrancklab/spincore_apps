@@ -36,16 +36,16 @@ in the second case.
 #}}}
 from pyspecdata import *
 from numpy import *
-import SpinCore_pp 
-
-from Instruments import Bridge12
+import os
+import sys
+import SpinCore_pp
+from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 import time
 
 fl = figlist_var()
-
 # Parameters for Bridge12
-powers = r_[1e-3:2.:20j]
+powers = r_[1e-3:4.0:10j]
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 def check_for_3dB_step(x):
@@ -62,15 +62,15 @@ dB_settings = check_for_3dB_step(dB_settings)
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '190805'
+date = '191121'
 output_name = 'CPMG_DNP_1'
-adcOffset = 36 
-carrierFreq_MHz = 14.896843
+adcOffset = 35 
+carrierFreq_MHz = 14.898410
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.37
+p90 = 3.3
 deadtime = 60.0
-repetition = 45e6
+repetition = 15e6
 
 SW_kHz = 9.0
 nPoints = 128
@@ -83,7 +83,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 4
+nScans = 1
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -193,7 +193,7 @@ DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=com
 DNP_data.setaxis('power',r_[0,powers]).set_units('W')
 DNP_data.setaxis('t',time_axis).set_units('t','s')
 DNP_data['power',0] = data
-raw_input("CONNECT AND TURN ON BRIDGE12...")
+#raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
@@ -202,15 +202,16 @@ with Bridge12() as b:
     dip_f = this_return[2]
     print "Frequency",dip_f
     b.set_freq(dip_f)
-    rx_array = empty_like(dB_settings)
-    tx_array = empty_like(dB_settings) #inserted tx here
+    meter_powers = zeros_like(dB_settings)
     for j,this_power in enumerate(dB_settings):
         print "\n*** *** *** *** ***\n"
         print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
         b.set_power(this_power)
-        time.sleep(5)
-        rx_array[j] = b.rxpowermv_float()
-        tx_array[j] = b.txpowermv_float() #inserted tx here
+        time.sleep(15)
+        with prologix_connection() as p:
+            with gigatronics(prologix_instance=p, address=7) as g:
+                meter_powers[j] = g.read_power()
+                print "POWER READING",meter_powers[j]
         print "\n*** *** *** *** ***\n"
         print "\n*** *** ***\n"
         print "CONFIGURING TRANSMITTER..."
@@ -291,8 +292,8 @@ with Bridge12() as b:
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
         DNP_data['power',j+1] = data
-DNP_data.set_prop('rx_array',rx_array)
-DNP_data.set_prop('tx_array',tx_array) #added ", 'tx_array', tx_array" here
+DNP_data.name('signal')
+DNP_data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
