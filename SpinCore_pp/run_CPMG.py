@@ -40,17 +40,17 @@ import SpinCore_pp
 fl = figlist_var()
 
 date = '191205'
-output_name = 'CPMG_TEMPOL_2_2'
-adcOffset = 39
-carrierFreq_MHz = 14.898950
+output_name = 'CPMG_TEMPOL_13_8'
+adcOffset = 37
+carrierFreq_MHz = 14.898857
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.6
+p90 = 3.53
 deadtime = 60.0
 repetition = 15e6
 
-SW_kHz = 24.0
-nPoints = 512
+SW_kHz = 9.0
+nPoints = 64
 
 deblank = 1.0
 acq_time = nPoints/SW_kHz # ms
@@ -61,7 +61,7 @@ print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
 nScans = 1
-nEchoes = 16
+nEchoes = 128
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 2

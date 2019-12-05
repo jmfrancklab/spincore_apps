@@ -33,8 +33,8 @@ def verifyParams():
 #}}}
 date = '191205'
 output_name = 'echo_TEMPOL_1'
-adcOffset = 39
-carrierFreq_MHz = 14.898892
+adcOffset = 37
+carrierFreq_MHz = 14.898623
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
