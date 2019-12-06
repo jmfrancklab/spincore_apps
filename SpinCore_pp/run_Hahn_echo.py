@@ -32,9 +32,9 @@ def verifyParams():
     return
 #}}}
 date = '191206'
-output_name = 'echo_2_1'
-adcOffset = 42
-carrierFreq_MHz = 14.898799
+output_name = 'echo_TEMPOL_1'
+adcOffset = 43
+carrierFreq_MHz = 14.898764
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 4
@@ -51,7 +51,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.53
 deadtime = 50.0
-repetition = 20e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
