@@ -40,17 +40,17 @@ import SpinCore_pp
 fl = figlist_var()
 
 date = '191206'
-output_name = 'CPMG_3'
+output_name = 'CPMG_12'
 adcOffset = 42
 carrierFreq_MHz = 14.898799
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.5
-deadtime = 60.0
+deadtime = 120.0
 repetition = 20e6
 
-SW_kHz = 9.0
-nPoints = 64
+SW_kHz = 5.0
+nPoints = 4
 
 deblank = 1.0
 acq_time = nPoints/SW_kHz # ms
@@ -60,8 +60,8 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 3
-nEchoes = 128
+nScans = 4
+nEchoes = 2048
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 2
@@ -213,34 +213,10 @@ if phase_cycling:
     s.set_units('t','s')
     orig_t = s.getaxis('t')
     acq_time_s = orig_t[nPoints]
-    t2_axis = linspace(0,acq_time_s,nPoints)
-    s.setaxis('t',None)
-    s.reorder('t',first=True)
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.setaxis('ph2',r_[0.,2.]/4)
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.setaxis('t2',t2_axis)
-    s.reorder('t2',first=False)
-    print ndshape(s)
-    #fl.next('raw data - chunking')
-    #fl.image(s)
-    s.ft('t2',shift=True)
-    s.ft(['ph1','ph2'])
-    fl.next('raw data - chunking coh')
-    fl.image(s)
-    s = s['ph1',1]['ph2',0].C
-    s.setaxis('t2',s.getaxis('t2'))
-    for x in xrange(len(s.getaxis('nScans'))):
-        s = s['nScans',x]
-        fl.next('freq-signal %d'%x)
-        fl.plot(s.real)
-        fl.plot(s.imag)
-        fl.plot(abs(s),':')
-        s.ift('t2')
-        fl.next('time-signal %d'%x)
-        fl.plot(s.real)
-        fl.plot(s.imag)
-        fl.plot(abs(s),':')
-        fl.show();quit()
-fl.show()
+    fl.next('time')
+    fl.plot(abs(s))
+    s.ft('t',shift=True)
+    fl.next('freq')
+    fl.plot(abs(s))
+fl.show();quit()
 
