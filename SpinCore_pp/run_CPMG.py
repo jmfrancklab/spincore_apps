@@ -40,7 +40,7 @@ import SpinCore_pp
 fl = figlist_var()
 
 date = '191206'
-output_name = 'CPMG_2'
+output_name = 'CPMG_3'
 adcOffset = 42
 carrierFreq_MHz = 14.898799
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -60,7 +60,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 8
+nScans = 3
 nEchoes = 128
 phase_cycling = True
 if phase_cycling:
@@ -88,107 +88,159 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-print "\n*** *** ***\n"
-print "CONFIGURING TRANSMITTER..."
-SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-print "\nTRANSMITTER CONFIGURED."
-print "***"
-print "CONFIGURING RECEIVER..."
-acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-acq_params['acq_time_ms'] = acq_time
-print "\nRECEIVER CONFIGURED."
-print "***"
-print "\nINITIALIZING PROG BOARD...\n"
-SpinCore_pp.init_ppg();
-print "\nLOADING PULSE PROG...\n"
-if phase_cycling:
-    SpinCore_pp.load([
-        ('marker','start',1),
-        ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,2]),
-            ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,1),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',pad),
-            ('marker','echo_label',(nEchoes-1)),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,1),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',pad),
-            ('jumpto','echo_label'),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-    if not phase_cycling:
+for x in xrange(nScans):
+    print "*** *** *** SCAN NO. %d *** *** ***"%(x+1)
+    print "\n*** *** ***\n"
+    print "CONFIGURING TRANSMITTER..."
+    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+    print "\nTRANSMITTER CONFIGURED."
+    print "***"
+    print "CONFIGURING RECEIVER..."
+    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    acq_params['acq_time_ms'] = acq_time
+    print "\nRECEIVER CONFIGURED."
+    print "***"
+    print "\nINITIALIZING PROG BOARD...\n"
+    SpinCore_pp.init_ppg();
+    print "\nLOADING PULSE PROG...\n"
+    if phase_cycling:
         SpinCore_pp.load([
-            ('marker','start',nScans),
+            ('marker','start',1),
             ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,0.0),
-            ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',pad),
-            ('marker','echo_label',(nEchoes-1)),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',pad),
-            ('jumpto','echo_label'),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-print "\nSTOPPING PROG BOARD...\n"
-SpinCore_pp.stop_ppg();
-print "\nRUNNING BOARD...\n"
-if phase_cycling:
-    for x in xrange(nScans):
-        print "SCAN NO. %d"%(x+1)
-        SpinCore_pp.runBoard();
-if not phase_cycling:
-    SpinCore_pp.runBoard(); 
-raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-SpinCore_pp.stopBoard();
+                ('delay_TTL',deblank),
+                ('pulse_TTL',p90,'ph1',r_[0,2]),
+                ('delay',tau),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',2.0*p90,1),
+                ('delay',deadtime),
+                ('acquire',acq_time),
+                ('delay',pad),
+                ('marker','echo_label',(nEchoes-1)),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',2.0*p90,1),
+                ('delay',deadtime),
+                ('acquire',acq_time),
+                ('delay',pad),
+                ('jumpto','echo_label'),
+                ('delay',repetition),
+                ('jumpto','start')
+                ])
+        if not phase_cycling:
+            SpinCore_pp.load([
+                ('marker','start',nScans),
+                ('phase_reset',1),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',p90,0.0),
+                ('delay',tau),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',2.0*p90,0.0),
+                ('delay',deadtime),
+                ('acquire',acq_time),
+                ('delay',pad),
+                ('marker','echo_label',(nEchoes-1)),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',2.0*p90,0.0),
+                ('delay',deadtime),
+                ('acquire',acq_time),
+                ('delay',pad),
+                ('jumpto','echo_label'),
+                ('delay',repetition),
+                ('jumpto','start')
+                ])
+    print "\nSTOPPING PROG BOARD...\n"
+    SpinCore_pp.stop_ppg();
+    print "\nRUNNING BOARD...\n"
+    SpinCore_pp.runBoard();
+    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+    raw_data.astype(float)
+    data_array = []
+    data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+    print "COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]
+    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+    dataPoints = float(shape(data_array)[0])
+    if x == 0:
+        time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=complex128)
+        data.setaxis('t',time_axis).set_units('t','s')
+        data.setaxis('nScans',r_[0:nScans])
+        data.name('signal')
+        data.set_prop('acq_params',acq_params)
+    data['nScans',x] = data_array
+    SpinCore_pp.stopBoard();
 print "EXITING..."
 print "\n*** *** ***\n"
-raw_data.astype(float)
-data = []
-data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
-dataPoints = float(shape(data)[0])
-time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-data = nddata(array(data),'t')
-data.setaxis('t',time_axis).set_units('t','s')
-data.name('signal')
 save_file = True
 while save_file:
     try:
         print "SAVING FILE..."
-        data.set_prop('acq_params',acq_params)
         data.hdf5_write(date+'_'+output_name+'.h5')
+        print "FILE SAVED!"
         print "Name of saved data",data.name()
         print "Units of saved data",data.get_units('t')
         print "Shape of saved data",ndshape(data)
         save_file = False
     except Exception as e:
         print e
-        print "FILE ALREADY EXISTS."
+        print "EXCEPTION ERROR - FILE MAY ALREADY EXIST."
         save_file = False
-fl.next('raw data')
-fl.plot(data.real,alpha=0.8)
-fl.plot(data.imag,alpha=0.8)
-fl.plot(abs(data),':',alpha=0.8)
-data.ft('t',shift=True)
-fl.next('FT raw data')
-fl.plot(data.real,alpha=0.8)
-fl.plot(data.imag,alpha=0.8)
-fl.plot(abs(data),':',alpha=0.8)
+if not phase_cycling:
+    if nScans == 1:
+        print ndshape(data)
+        fl.next('raw data')
+        fl.plot(data)
+        fl.plot(abs(data),':',alpha=0.5)
+        data.ft('t',shift=True)
+        fl.next('raw data - FT')
+        fl.plot(data)
+        fl.plot(abs(data),':',alpha=0.5)
+    else:
+        print ndshape(data)
+        data.reorder('nScans',first=True)
+        fl.next('raw data')
+        fl.image(data)
+        for x in xrange(len(data.getaxis('nScans'))):
+            fl.next('scan %d'%x)
+            fl.plot(data['nScans',x])
+        data.ft('t',shift=True)
+        for x in xrange(len(data.getaxis('nScans'))):
+            fl.next('FT scan %d'%x)
+            fl.plot(data['nScans',x])
+        fl.next('FT raw data')
+        fl.image(data)
+if phase_cycling:
+    print ndshape(data)
+    s = data.C
+    s.set_units('t','s')
+    orig_t = s.getaxis('t')
+    acq_time_s = orig_t[nPoints]
+    t2_axis = linspace(0,acq_time_s,nPoints)
+    s.setaxis('t',None)
+    s.reorder('t',first=True)
+    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    s.setaxis('ph2',r_[0.,2.]/4)
+    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    s.setaxis('t2',t2_axis)
+    s.reorder('t2',first=False)
+    print ndshape(s)
+    #fl.next('raw data - chunking')
+    #fl.image(s)
+    s.ft('t2',shift=True)
+    s.ft(['ph1','ph2'])
+    fl.next('raw data - chunking coh')
+    fl.image(s)
+    s = s['ph1',1]['ph2',0].C
+    s.setaxis('t2',s.getaxis('t2'))
+    for x in xrange(len(s.getaxis('nScans'))):
+        s = s['nScans',x]
+        fl.next('freq-signal %d'%x)
+        fl.plot(s.real)
+        fl.plot(s.imag)
+        fl.plot(abs(s),':')
+        s.ift('t2')
+        fl.next('time-signal %d'%x)
+        fl.plot(s.real)
+        fl.plot(s.imag)
+        fl.plot(abs(s),':')
+        fl.show();quit()
 fl.show()
+
