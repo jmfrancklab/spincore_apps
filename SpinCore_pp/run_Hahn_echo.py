@@ -31,15 +31,15 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '191206'
-output_name = 'echo_TEMPOL_1'
-adcOffset = 45
-carrierFreq_MHz = 14.898764
+date = '191212'
+output_name = 'echo_5'
+adcOffset = 33
+carrierFreq_MHz = 14.898871
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -49,7 +49,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.53
+p90 = 7.976
 deadtime = 50.0
 repetition = 15e6
 
@@ -174,11 +174,13 @@ if not phase_cycling:
     if nScans == 1:
         print ndshape(data)
         fl.next('raw data')
-        fl.plot(data)
+        fl.plot(data.real)
+        fl.plot(data.imag)
         fl.plot(abs(data),':',alpha=0.5)
         data.ft('t',shift=True)
         fl.next('raw data - FT')
         fl.plot(data)
+        fl.plot(data.imag)
         fl.plot(abs(data),':',alpha=0.5)
     else:
         print ndshape(data)
