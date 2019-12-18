@@ -52,6 +52,7 @@ def check_for_3dB_step(x):
         return x
 ini_len = len(dB_settings)
 dB_settings = check_for_3dB_step(dB_settings)
+dB_settings = append(dB_settings,[1.5,0.5,0.25])
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
