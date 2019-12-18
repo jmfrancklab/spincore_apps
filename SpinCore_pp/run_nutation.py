@@ -59,7 +59,7 @@ if set_field:
     API_sender(B0)
 #}}}
 date = '191212'
-output_name = 'nutation_2'
+output_name = 'nutation_3'
 adcOffset = 33
 carrierFreq_MHz = 14.898871
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -82,7 +82,7 @@ tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.0,20.0,40,endpoint=False)
+p90_range = linspace(1.0,30.0,100,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
