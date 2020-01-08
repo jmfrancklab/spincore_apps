@@ -39,31 +39,31 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 
-date = '191206'
-output_name = 'CPMG_TEMPOL_calib_3'
+date = '200107'
+output_name = 'CPMG_calib_4'
 adcOffset = 45
-carrierFreq_MHz = 14.898764
+carrierFreq_MHz = 14.898840
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 deadtime = 60.0
 repetition = 15e6
 
 SW_kHz = 9.0
-nPoints = 8
+nPoints = 128
 
 deblank = 1.0
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-nScans = 1
-nEchoes = 1024
+nScans = 4
+nEchoes = 64
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 2
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(3.2,3.5,7,endpoint=False)
+p90_range = linspace(3.0,5.0,20)#,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset

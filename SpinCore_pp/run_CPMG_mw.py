@@ -59,13 +59,14 @@ def check_for_3dB_step(x):
         return x
 ini_len = len(dB_settings)
 dB_settings = check_for_3dB_step(dB_settings)
+dB_settings = append(dB_settings,[1.5,0.5,0.25])
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '191121'
+date = '200107'
 output_name = 'CPMG_DNP_1'
-adcOffset = 35 
-carrierFreq_MHz = 14.898410
+adcOffset = 45
+carrierFreq_MHz = 14.898840
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.3
@@ -83,7 +84,7 @@ pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 print "PAD DELAY:",pad,"us"
-nScans = 1
+nScans = 4
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
