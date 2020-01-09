@@ -56,10 +56,10 @@ dB_settings = append(dB_settings,[1.5,0.5,0.25])
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '191218'
+date = '200109'
 output_name = 'echo_DNP_1'
-adcOffset = 48
-carrierFreq_MHz = 14.900336
+adcOffset = 45
+carrierFreq_MHz = 14.902313
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
