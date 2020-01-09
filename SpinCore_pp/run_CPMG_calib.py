@@ -39,10 +39,10 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 
-date = '200107'
-output_name = 'CPMG_calib_4'
-adcOffset = 45
-carrierFreq_MHz = 14.898840
+date = '200108'
+output_name = 'CPMG_calib_1'
+adcOffset = 46
+carrierFreq_MHz = 14.899173
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 deadtime = 60.0
@@ -54,6 +54,7 @@ nPoints = 128
 deblank = 1.0
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
+additional_pad = 10000.
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 nScans = 4
 nEchoes = 64
@@ -85,7 +86,7 @@ if phase_cycling:
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 for index,val in enumerate(p90_range):
     p90 = val # us
-    pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
+    pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank + additional_pad
     print "ACQUISITION TIME:",acq_time,"ms"
     print "TAU DELAY:",tau,"us"
     print "PAD DELAY:",pad,"us"
