@@ -63,22 +63,22 @@ dB_settings = append(dB_settings,[1.5,0.5,0.25])
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200107'
+date = '200109'
 output_name = 'CPMG_DNP_1'
-adcOffset = 45
-carrierFreq_MHz = 14.898840
+adcOffset = 48
+carrierFreq_MHz = 14.898970
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.3
+p90 = 3.5
 deadtime = 60.0
 repetition = 15e6
 
-SW_kHz = 9.0
+SW_kHz = 4.0
 nPoints = 128
 
 deblank = 1.0
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
+tau_adjust = 1000.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
 print "ACQUISITION TIME:",acq_time,"ms"
