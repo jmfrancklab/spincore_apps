@@ -39,14 +39,14 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 
-date = '200108'
+date = '200110'
 output_name = 'CPMG_calib_1'
-adcOffset = 48
-carrierFreq_MHz = 14.898939
+adcOffset = 46
+carrierFreq_MHz = 14.898111
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 deadtime = 60.0
-repetition = 15e6
+repetition = 10e6
 
 SW_kHz = 4.0
 nPoints = 128
@@ -63,7 +63,7 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(3.0,9.0,3)#,endpoint=False)
+p90_range = linspace(2.0,12.0,30)#,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset

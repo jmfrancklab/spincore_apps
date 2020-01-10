@@ -51,7 +51,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.3
 deadtime = 50.0
-repetition = 3e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
