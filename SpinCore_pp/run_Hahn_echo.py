@@ -32,12 +32,12 @@ def verifyParams():
     return
 #}}}
 date = '200113'
-output_name = 'echo_lg_1'
-adcOffset = 51
-carrierFreq_MHz = 14.898116
+output_name = 'echo_FS_TCM51C_3'
+adcOffset = 46
+carrierFreq_MHz = 14.897775
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 12
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -49,9 +49,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 7.6
+p90 = 3.3
 deadtime = 50.0
-repetition = 10e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
