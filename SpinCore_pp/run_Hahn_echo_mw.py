@@ -39,7 +39,7 @@ def verifyParams():
 
 # Parameters for Bridge12
 powers = r_[1e-3:4.0:10j] # Watts
-append_powers = r_[1.5,0.5,0.25] # Watts
+append_powers = r_[1.75,0.5,0.25] # Watts
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 append_dB = round_(2*log10(append_powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
@@ -61,9 +61,9 @@ print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3
 powers = 1e-3*10**(dB_settings/10.)
 
 date = '200113'
-output_name = 'echo_DNP_FS_TCM51C_2'
-adcOffset = 46
-carrierFreq_MHz = 14.897823
+output_name = 'echo_DNP_TEMPOL_1'
+adcOffset = 49
+carrierFreq_MHz = 14.898275
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1

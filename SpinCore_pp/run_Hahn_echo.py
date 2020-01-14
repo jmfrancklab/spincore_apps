@@ -32,9 +32,9 @@ def verifyParams():
     return
 #}}}
 date = '200113'
-output_name = 'echo_FS_TCM51C_3'
-adcOffset = 46
-carrierFreq_MHz = 14.897775
+output_name = 'echo_TEMPOL_1'
+adcOffset = 49
+carrierFreq_MHz = 14.898275
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
