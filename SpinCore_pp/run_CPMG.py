@@ -40,9 +40,9 @@ import SpinCore_pp
 fl = figlist_var()
 
 date = '200115'
-output_name = 'CPMG_12'
+output_name = 'CPMG_13'
 adcOffset = 44
-carrierFreq_MHz = 14.898275
+carrierFreq_MHz = 14.898132
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.4
@@ -81,6 +81,12 @@ acq_params['nEchoes'] = nEchoes
 acq_params['p90_us'] = p90
 acq_params['deadtime_us'] = deadtime
 acq_params['repetition_us'] = repetition
+acq_params['deblank_us'] = deblank
+acq_params['tau_extra_us'] = tau_extra
+acq_params['pad_start_us'] = pad_start
+acq_params['pad_end_us'] = pad_end
+acq_params['marker_us'] = marker
+acq_params['tau1_us'] = tau1
 acq_params['SW_kHz'] = SW_kHz
 acq_params['nPoints'] = nPoints
 if phase_cycling:
@@ -133,19 +139,21 @@ for x in xrange(nScans):
                 ('phase_reset',1),
                 ('delay_TTL',deblank),
                 ('pulse_TTL',p90,0.0),
-                ('delay',tau),
+                ('delay',tau1),
                 ('delay_TTL',deblank),
                 ('pulse_TTL',2.0*p90,0.0),
                 ('delay',deadtime),
+                ('delay',pad_start),
                 ('acquire',acq_time),
-                ('delay',pad),
-                ('marker','echo_label',(nEchoes-1)),
+                ('delay',pad_end),
+                ('marker','echo_label',(nEchoes-1)), # 1 us delay
                 ('delay_TTL',deblank),
                 ('pulse_TTL',2.0*p90,0.0),
                 ('delay',deadtime),
+                ('delay',pad_start),
                 ('acquire',acq_time),
-                ('delay',pad),
-                ('jumpto','echo_label'),
+                ('delay',pad_end),
+                ('jumpto','echo_label'), # 1 us delay
                 ('delay',repetition),
                 ('jumpto','start')
                 ])
