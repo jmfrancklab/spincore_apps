@@ -57,7 +57,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_extra = 75.0 # us, must be more than deadtime and more than deblank
 pad_start = tau_extra - deadtime
 pad_end = tau_extra - deblank*2 # marker + deblank
-tau1 = 2*p90*(pi-2) - (2*p90)/2. + pad_start + deadtime + 0.5*acq_time*1e3 - deblank
+tau1 = 2*p90 - (2*p90)/pi + pad_start + deadtime + 0.5*acq_time*1e3 - deblank - (2*p90)/pi
 
 print "ACQUISITION TIME:",acq_time,"ms"
 
