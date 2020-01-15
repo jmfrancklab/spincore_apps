@@ -49,6 +49,7 @@ p90 = 3.4
 deadtime = 50.0
 repetition = 15e6
 deblank = 1.0
+marker = 1.0
 
 SW_kHz = 4.0
 nPoints = 128
@@ -57,7 +58,9 @@ acq_time = nPoints/SW_kHz # ms
 tau_extra = 75.0 # us, must be more than deadtime and more than deblank
 pad_start = tau_extra - deadtime
 pad_end = tau_extra - deblank*2 # marker + deblank
-tau1 = 2*p90 - (2*p90)/pi + pad_start + deadtime + 0.5*acq_time*1e3 - deblank - (2*p90)/pi
+twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
+tau1 = twice_tau/2.0
+#tau1 = 2*p90 - (2*p90)/pi + pad_start + deadtime + 0.5*acq_time*1e3 - deblank - (2*p90)/pi
 
 print "ACQUISITION TIME:",acq_time,"ms"
 
