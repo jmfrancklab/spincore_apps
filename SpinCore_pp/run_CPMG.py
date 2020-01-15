@@ -41,27 +41,28 @@ fl = figlist_var()
 
 date = '200115'
 output_name = 'CPMG_12'
-adcOffset = 46
-carrierFreq_MHz = 14.898213
+adcOffset = 44
+carrierFreq_MHz = 14.898275
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 3.4
 deadtime = 50.0
 repetition = 15e6
+deblank = 1.0
 
 SW_kHz = 4.0
 nPoints = 128
-
-deblank = 1.0
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 7500.0 # use this to increase total echo time
-tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
+
+tau_extra = 75.0 # us, must be more than deadtime and more than deblank
+pad_start = tau_extra - deadtime
+pad_end = tau_extra - deblank*2 # marker + deblank
+tau1 = 2*p90*(pi-2) - (2*p90)/2. + pad_start + deadtime + 0.5*acq_time*1e3 - deblank
+
 print "ACQUISITION TIME:",acq_time,"ms"
-print "TAU DELAY:",tau,"us"
-print "PAD DELAY:",pad,"us"
-nScans = 4
-nEchoes = 64
+
+nScans = 1
+nEchoes = 4
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 2
@@ -79,10 +80,6 @@ acq_params['deadtime_us'] = deadtime
 acq_params['repetition_us'] = repetition
 acq_params['SW_kHz'] = SW_kHz
 acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
-acq_params['deblank_us'] = deblank
-acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
@@ -109,19 +106,21 @@ for x in xrange(nScans):
             ('phase_reset',1),
                 ('delay_TTL',deblank),
                 ('pulse_TTL',p90,'ph1',r_[0,2]),
-                ('delay',tau),
+                ('delay',tau1),
                 ('delay_TTL',deblank),
                 ('pulse_TTL',2.0*p90,1),
                 ('delay',deadtime),
+                ('delay',pad_start),
                 ('acquire',acq_time),
-                ('delay',pad),
-                ('marker','echo_label',(nEchoes-1)),
+                ('delay',pad_end),
+                ('marker','echo_label',(nEchoes-1)), # 1 us delay
                 ('delay_TTL',deblank),
                 ('pulse_TTL',2.0*p90,1),
                 ('delay',deadtime),
+                ('delay',pad_start),
                 ('acquire',acq_time),
-                ('delay',pad),
-                ('jumpto','echo_label'),
+                ('delay',pad_end),
+                ('jumpto','echo_label'), # 1 us delay
                 ('delay',repetition),
                 ('jumpto','start')
                 ])
@@ -215,8 +214,12 @@ if phase_cycling:
     acq_time_s = orig_t[nPoints]
     fl.next('time')
     fl.plot(abs(s))
+    fl.plot(s.real,alpha=0.4)
+    fl.plot(s.imag,alpha=0.4)
     s.ft('t',shift=True)
     fl.next('freq')
     fl.plot(abs(s))
+    fl.plot(s.real,alpha=0.4)
+    fl.plot(s.imag,alpha=0.4)
 fl.show();quit()
 

@@ -31,8 +31,8 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200114'
-output_name = 'echo_TEMPOL_2'
+date = '200115'
+output_name = 'echo_TEMPOL_3'
 adcOffset = 44
 carrierFreq_MHz = 14.898275
 tx_phases = r_[0.0,90.0,180.0,270.0]
