@@ -31,10 +31,10 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200115'
-output_name = 'echo_TEMPOL_4'
-adcOffset = 45
-carrierFreq_MHz = 14.898152
+date = '200116'
+output_name = 'echo_phc4'
+adcOffset = 51
+carrierFreq_MHz = 14.898652
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -49,7 +49,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.3
+p90 = 2.7
 deadtime = 100.0
 repetition = 15e6
 
@@ -109,10 +109,10 @@ for x in xrange(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph1',r_[0,2]),
             ('delay',tau),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+            ('pulse_TTL',2.0*p90,'ph2',r_[0,1,2,3]),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),
