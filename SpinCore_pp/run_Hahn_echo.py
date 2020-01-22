@@ -31,10 +31,10 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200121'
-output_name = 'echo_FS_TCM51C_3'
-adcOffset = 53
-carrierFreq_MHz = 14.902085
+date = '200122'
+output_name = 'echo_1'
+adcOffset = 47
+carrierFreq_MHz = 14.903004
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
