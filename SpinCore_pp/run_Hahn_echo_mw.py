@@ -60,10 +60,10 @@ raw_input("Look ok?")
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200113'
-output_name = 'echo_DNP_TEMPOL_1'
-adcOffset = 49
-carrierFreq_MHz = 14.898275
+date = '200121'
+output_name = 'echo_DNP_TCM51C_2'
+adcOffset = 53
+carrierFreq_MHz = 14.902085
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
