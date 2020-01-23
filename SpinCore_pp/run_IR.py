@@ -34,14 +34,14 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200121'
+date = '200122'
 #clock_correction = 4.275439/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
 #clock_correction = -0.399405/9.969
 #clock_correction = 1.0829/998.253
 clock_correction = 0
-output_name = 'IR_FS_TCM51C_4'
-adcOffset = 53
-carrierFreq_MHz = 14.902135
+output_name = 'IR_water_6'
+adcOffset = 44
+carrierFreq_MHz = 14.902358
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -49,7 +49,7 @@ nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 3.3
 deadtime = 50.0
-repetition = 15e6
+repetition = 10e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
