@@ -38,7 +38,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-powers = r_[1e-3:1.2:10j] # Watts
+powers = r_[1e-3:4.0:10j] # Watts
 append_powers = r_[0.9,0.5,0.25] # Watts
 dB_settings = round_(2*log10(powers/1e-3)*10.)/2
 append_dB = round_(2*log10(append_powers/1e-3)*10.)/2
@@ -60,10 +60,10 @@ raw_input("Look ok?")
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200122'
-output_name = 'echo_DNP_TCM51C_3'
-adcOffset = 47
-carrierFreq_MHz = 14.903004
+date = '200128'
+output_name = 'echo_DNP_TCM118C_1'
+adcOffset = 46
+carrierFreq_MHz = 14.902675
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
