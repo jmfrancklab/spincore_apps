@@ -32,14 +32,14 @@ def verifyParams():
     return
 #}}}
 date = '200129'
-output_name = 'Lg_probe_2coil_1'
-adcOffset = 55
-carrierFreq_MHz = 14.899165
+output_name = 'echo_4'
+adcOffset = 53
+carrierFreq_MHz = 14.897225
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 64
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -49,7 +49,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 8
+p90 = 3.3
 deadtime = 50.0
 repetition = 15e6
 
