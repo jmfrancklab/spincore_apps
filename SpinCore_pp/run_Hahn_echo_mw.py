@@ -10,12 +10,14 @@ import time
 fl = figlist_var()
 def gen_powerlist(max_power, steps, min_dBm_step=0.5):
     "generate a list of (roughly) evenly spaced powers up to max_power"
-
+    lin_steps = steps
     def det_allowed(lin_steps):
         powers = r_[0:max_power:1j*lin_steps][1:]
-        dB_settings = round(10*(log10(powers)+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
-        return unique(dB_settings)
-    lin_steps = steps
+        vectorize(powers)
+        rdB_settings = ones_like(powers)
+        for x in xrange(len(powers)):
+            rdB_settings[x] = round(10*(log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
+        return unique(rdB_settings)
     dB_settings = det_allowed(lin_steps)
     while len(dB_settings) < steps-1:
         lin_steps += 1
@@ -23,7 +25,7 @@ def gen_powerlist(max_power, steps, min_dBm_step=0.5):
         if lin_steps >= 200:
             raise ValueError("I think I'm in an infinite loop -- maybe you"
                     "can't request %d steps between 0 and %f W without going"
-                    "below %f a step?"%(steps,max_power,min_dBm_step)
+                    "below %f a step?")%(steps,max_power,min_dBm_step)
     return dB_settings
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -55,12 +57,15 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-powers = r_[1e-3:4.0:10j] # Watts
+#powers = r_[1e-3:4.0:10j] # Watts
 append_powers = r_[0.9,0.5,0.25] # Watts
+max_power = 1.0
+power_steps = 10
 dB_settings = gen_powerlist(max_power,power_steps)
-append_powers = [10**(dB_settings/10.-3).argmin(max_power*frac) for frac in [0.25,0.5,0.75]]
+append_powers = [10**(dB_settings/10.-3).argmin(max_power)*frac for frac in [0.25,0.5,0.75]]
 append_dB = round_(2*log10(append_powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
+print dB_settings
 ini_len = len(dB_settings)
 dB_settings = append(dB_settings,append_dB)
 print dB_settings
@@ -68,10 +73,10 @@ raw_input("Look ok?")
 print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200128'
-output_name = 'echo_DNP_TCM118C_1'
-adcOffset = 46
-carrierFreq_MHz = 14.902675
+date = '200130'
+output_name = 'echo_DNP_1'
+adcOffset = 53
+carrierFreq_MHz = 14.898672
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -209,7 +214,7 @@ with Bridge12() as b:
     meter_powers = zeros_like(dB_settings)
     for j,this_power in enumerate(dB_settings):
         print "\n*** *** *** *** ***\n"
-        print "SETTING THIS POWER",this_power,"("dB_settings[j-1],powers[j],"W)"
+        print "SETTING THIS POWER",this_power,"(",dB_settings[j-1],powers[j],"W)"
         if j>0 and this_power > last_power + 3:
             last_power += 3
             b.set_power(last_power)
