@@ -59,24 +59,22 @@ def verifyParams():
 # Parameters for Bridge12
 #powers = r_[1e-3:4.0:10j] # Watts
 append_powers = r_[0.9,0.5,0.25] # Watts
-max_power = 1.0
-power_steps = 10
+max_power = 4.0
+power_steps = 20
 dB_settings = gen_powerlist(max_power,power_steps)
-append_powers = [10**(dB_settings/10.-3).argmin(max_power)*frac for frac in [0.25,0.5,0.75]]
+#append_powers = [10**(dB_settings/10.-3).argmin(max_power)*frac for frac in [0.25,0.5,0.75]]
 append_dB = round_(2*log10(append_powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
-print dB_settings
 ini_len = len(dB_settings)
 dB_settings = append(dB_settings,append_dB)
 print dB_settings
 raw_input("Look ok?")
-print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
 powers = 1e-3*10**(dB_settings/10.)
 
 date = '200130'
-output_name = 'echo_DNP_1'
+output_name = 'echo_DNP_5'
 adcOffset = 53
-carrierFreq_MHz = 14.898672
+carrierFreq_MHz = 14.898788
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -201,7 +199,6 @@ DNP_data = ndshape([len(powers)+1,len(time_axis)],['power','t']).alloc(dtype=com
 DNP_data.setaxis('power',r_[0,powers]).set_units('W')
 DNP_data.setaxis('t',time_axis).set_units('t','s')
 DNP_data['power',0] = data
-raw_input("CONNECT AND TURN ON BRIDGE12...")
 
 with Bridge12() as b:
     b.set_wg(True)
@@ -217,13 +214,28 @@ with Bridge12() as b:
         print "SETTING THIS POWER",this_power,"(",dB_settings[j-1],powers[j],"W)"
         if j>0 and this_power > last_power + 3:
             last_power += 3
+            print "SETTING TO...",last_power
             b.set_power(last_power)
-            time.sleep(0.1)
+            time.sleep(3.0)
             while this_power > last_power+3:
                 last_power += 3
+                print "SETTING TO...",last_power
                 b.set_power(last_power)
-                time.sleep(0.1)
-        b.set_power(this_power)
+                time.sleep(3.0)
+            print "FINALLY - SETTING TO DESIRED POWER"
+            b.set_power(this_power)
+        elif j == 0:
+            threshold_power = 10
+            if this_power > threshold_power:
+                next_power = threshold_power + 3
+                while next_power < this_power:
+                    print "SETTING To...",next_power
+                    b.set_power(next_power)
+                    time.sleep(3.0)
+                    next_power += 3
+            b.set_power(this_power)
+        else:
+            b.set_power(this_power)
         time.sleep(15)
         with prologix_connection() as p:
             with gigatronics(prologix_instance=p, address=7) as g:
@@ -257,6 +269,7 @@ with Bridge12() as b:
                 ('delay',repetition),
                 ('jumpto','start')
                 ])
+            #{{{
         if not phase_cycling:
             SpinCore_pp.load([
                 ('marker','start',nScans),
@@ -272,6 +285,7 @@ with Bridge12() as b:
                 ('delay',repetition),
                 ('jumpto','start')
                 ])
+            #}}}
         print "\nSTOPPING PROG BOARD...\n"
         SpinCore_pp.stop_ppg();
         print "\nRUNNING BOARD...\n"
