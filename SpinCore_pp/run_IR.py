@@ -34,14 +34,14 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200122'
+date = '200131'
 #clock_correction = 4.275439/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
 #clock_correction = -0.399405/9.969
 #clock_correction = 1.0829/998.253
 clock_correction = 0
-output_name = 'IR_water_6'
-adcOffset = 44
-carrierFreq_MHz = 14.902358
+output_name = 'IR_pR_1_1'
+adcOffset = 45
+carrierFreq_MHz = 14.898826
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
