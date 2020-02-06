@@ -97,14 +97,16 @@ for index,val in enumerate(vd_list):
     acq_params['acq_time_ms'] = acq_time
     SpinCore_pp.init_ppg();
     if phase_cycling:
+        phase_cycles = dict(ph1 = r_[0,2],
+                ph2 = r_[0,1,2,3])
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,'ph1',r_[0,2]),
+            ('pulse_TTL',2.0*p90,'ph1',phase_cycles['ph1']),
             ('delay',vd),
             ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph2',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph2',phase_cycles['ph2']),
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,0.0),
@@ -162,6 +164,15 @@ SpinCore_pp.stopBoard();
 print "EXITING...\n"
 print "\n*** *** ***\n"
 save_file = True
+if phase_cycling:
+    phcyc_names = list(phase_cycles.keys())
+    phcyc_names.sort(reverse=True)
+    phcyc_dims = [len(phase_cycles[j]) for j in phcyc_names]
+    vd_data.chunk('t',phcyc_names+['t2'],phcyc_dims+[-1])
+    vd_data.setaxis('ph1',ph1/4.)
+    vd_data.setaxis('ph2',ph2/4.)
+else:
+    vd_data.rename('t','t2')
 while save_file:
     try:
         print "SAVING FILE..."

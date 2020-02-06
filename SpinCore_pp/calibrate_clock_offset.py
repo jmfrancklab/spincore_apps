@@ -4,6 +4,13 @@ board, specifically between the transmit clock (which gives the phase of the rf
 pulses) and the receiver clock (which mixes down the signal to give the acquired
 data).
 
+Remember that a linear time-dependent phase is a frequency -- here we have a frequency difference
+:math:`\Delta \nu` between :math:`\nu_{tx}` and :math:`\nu_{tx}` (:math:`\Delta
+\nu=\nu_{rx}-\nu_{tx}` that gives rise to a phase that looks like this:
+:math:`\exp(i 2 \pi \Delta \nu t)` -- note how this is a phase that varies linearly with :math:`t`.
+The phase reset command sets the phase of both Tx and Rx, so :math:`t` here is
+the time since the last phase reset.
+
 This program requires the spectrometer to be fully up and
 running, ready for signal acquisition (i.e., magnet on, amplifiers on).
 

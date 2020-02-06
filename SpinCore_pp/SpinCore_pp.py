@@ -127,7 +127,6 @@ ppg_element = _SpinCore_pp.ppg_element
 marker_names = {}
 from numpy import *
 def apply_cycles(ppg_in,list_of_cycles_found):
-#{{{ documentation for apply cycles
     """Recursively apply the phase cycles indicated by elements with tuple form
     ``('pulse',length,cyclename,cycle)``
     where ``cyclename`` is a string and ``cycle`` is a numpy array.
@@ -153,7 +152,6 @@ def apply_cycles(ppg_in,list_of_cycles_found):
         List of cycles found that could be used to reshape the data.
         The list is given outside in, so that it's in the right order.
     """
-#}}}
     pulse_cycles = []
     found_cycle = False
     for cycled_idx, ppg_element in enumerate(ppg_in):

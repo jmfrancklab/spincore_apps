@@ -8,9 +8,8 @@ from serial import Serial
 import time
 
 fl = figlist_var()
-def gen_powerlist(max_power, steps, min_dBm_step=0.5):
+def gen_powerlist(max_power, lin_steps, min_dBm_step=0.5):
     "generate a list of (roughly) evenly spaced powers up to max_power"
-    lin_steps = steps
     def det_allowed(lin_steps):
         powers = r_[0:max_power:1j*lin_steps][1:]
         vectorize(powers)
@@ -57,12 +56,11 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-#powers = r_[1e-3:4.0:10j] # Watts
-append_powers = r_[0.9,0.5,0.25] # Watts
 max_power = 4.0
 power_steps = 25
 dB_settings = gen_powerlist(max_power,power_steps)
-#append_powers = [10**(dB_settings/10.-3).argmin(max_power)*frac for frac in [0.25,0.5,0.75]]
+append_powers = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
+        for frac in [0.25,0.5,0.75]]
 append_dB = round_(2*log10(append_powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 ini_len = len(dB_settings)
