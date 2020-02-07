@@ -8,8 +8,9 @@ from serial import Serial
 import time
 
 fl = figlist_var()
-def gen_powerlist(max_power, lin_steps, min_dBm_step=0.5):
+def gen_powerlist(max_power, steps, min_dBm_step=0.5):
     "generate a list of (roughly) evenly spaced powers up to max_power"
+    lin_steps = steps
     def det_allowed(lin_steps):
         powers = r_[0:max_power:1j*lin_steps][1:]
         vectorize(powers)
@@ -59,8 +60,10 @@ def verifyParams():
 max_power = 4.0
 power_steps = 25
 dB_settings = gen_powerlist(max_power,power_steps)
-append_powers = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
-        for frac in [0.25,0.5,0.75]]
+#append_powers = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
+#        for frac in [0.25,0.5,0.75]]
+append_powers = r_[0.9,0.5,0.25] # Watts
+print append_powers
 append_dB = round_(2*log10(append_powers/1e-3)*10.)/2
 dB_settings = unique(dB_settings)
 ini_len = len(dB_settings)
@@ -69,10 +72,10 @@ print dB_settings
 raw_input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200131'
-output_name = 'echo_DNP_pR_1'
-adcOffset = 45
-carrierFreq_MHz = 14.898926
+date = '200206'
+output_name = 'echo_DNP_LG_2'
+adcOffset = 53
+carrierFreq_MHz = 14.836576
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -87,7 +90,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.3
+p90 = 8.0
 deadtime = 50.0
 repetition = 15e6
 
@@ -202,7 +205,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.81e9,9.84e9))
+    this_return = b.lock_on_dip(ini_range=(9.73e9,9.75e9))
     dip_f = this_return[2]
     print "Frequency",dip_f
     b.set_freq(dip_f)
