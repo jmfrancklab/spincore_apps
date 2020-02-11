@@ -31,9 +31,9 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200207'
-output_name = 'echo_3'
-adcOffset = 54
+date = '200210'
+output_name = 'echo_LG_3'
+adcOffset = 49
 carrierFreq_MHz = 14.901592
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -51,7 +51,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.3
 deadtime = 5.0
-repetition = 10e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2
