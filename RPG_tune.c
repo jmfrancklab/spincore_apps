@@ -9,6 +9,7 @@
  * TO RUN: $winpty ./a.exe
  */
 #include <stdio.h>
+#include <stdlib.h> /** for strtod **/
 #include <math.h>
 
 #include "mrispinapi.h"
@@ -36,9 +37,14 @@ DWORD error_catch(int error, int line_number)
 
 int main(int argc, char *argv[])
 {
+    double carrier_freq;
 
     // ** Configure Board ** 
     // Initialize MRI SpinAPI
+    if(argc<2){
+        printf("You need to give a carrier frequency on the command line!!!");
+        exit(1);
+    }
     ERROR_CATCH( spmri_init() );
 
     printf("SpinAPI initialized.\n");
@@ -46,7 +52,10 @@ int main(int argc, char *argv[])
     ERROR_CATCH( spmri_set_defaults() );
 
     // Carrier Frequency Registers
-    double freq[1] = {14.902344};
+    // previously hard-coded carrier 14.902344
+    carrier_freq = strtod(argv[1]);
+    printf("I'm using a carrier frequency of %0.6f", carrier_freq);
+    double freq[1] = {carrier_freq};
     ERROR_CATCH( spmri_set_frequency_registers( freq, 1 ) );
 
     // Phase Registers
