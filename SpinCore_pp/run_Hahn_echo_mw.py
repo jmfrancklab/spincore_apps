@@ -73,6 +73,9 @@ date = '200131'
 output_name = 'echo_DNP_pR_1'
 adcOffset = 45
 carrierFreq_MHz = 14.898926
+yesno = raw_input("Do you need to tune your probe?")
+if yesno.lower()[1] == 'y':
+    os.system('../tune.exe %0.6f'%carrierFreq_MHz)
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
