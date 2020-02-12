@@ -34,21 +34,18 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200206'
-#clock_correction = 4.275439/10. # clock correction in radians per second (additional phase accumulated after phase_reset)
-#clock_correction = -0.399405/9.969
-#clock_correction = 1.0829/998.253
+date = '200212'
 clock_correction = 0
 output_name = 'IR_1'
-adcOffset = 52
-carrierFreq_MHz = 14.901326
+adcOffset = 38
+carrierFreq_MHz = 14.898232
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 3.3
-deadtime = 50.0
+deadtime = 5.0
 repetition = 10e6
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -59,6 +56,8 @@ tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 phase_cycling = True
+ph1 = r_[0,2]
+ph2 = r_[0,1,2,3]
 if phase_cycling:
     nPhaseSteps = 8 
 if not phase_cycling:
@@ -84,7 +83,7 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list = r_[5e4,9e5,4e6]
+#vd_list = r_[1e1,4e4,1e6]
 #vd_list = r_[5e4,1e5,5e5,8e5,9e5,
 #        1e6,2e6,3e6,4e6,5e6,6e6,
 #        1e7]
@@ -188,13 +187,10 @@ while save_file:
         print "FILE ALREADY EXISTS."
         save_file = False
 fl.next('raw data')
-vd_data *= exp(-1j*vd_data.fromaxis('vd')*clock_correction)
-manual_taxis_zero = acq_time*1e-3/2.0 #2.29e-3
-vd_data.setaxis('t',lambda x: x-manual_taxis_zero)
 fl.image(vd_data)
 fl.next('abs raw data')
 fl.image(abs(vd_data))
-vd_data.ft('t',shift=True)
+vd_data.ft('t2',shift=True)
 fl.next('FT raw data')
 fl.image(vd_data)
 fl.next('FT abs raw data')

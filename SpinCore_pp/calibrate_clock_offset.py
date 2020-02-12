@@ -58,13 +58,11 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200210'
-#clock_correction = -10.51/6 # clock correction in radians per second
-# (additional phase accumulated after phase_reset)
+date = '200212'
 clock_correction = 0
 output_name = 'calibrate_clock_1'
-adcOffset = 49
-carrierFreq_MHz = 14.901592
+adcOffset = 38
+carrierFreq_MHz = 14.898232
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 16
@@ -83,10 +81,10 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list = [1e1,4e4,1e6]
-vd_list = r_[1e1,1.11e5,2.22e5,3.33e5,
-        4.44e5,5.55e5,6.66e5,7.77e5,8.88e5,
-        1e6]
+vd_list = r_[1e1,4e4,1e6]
+#vd_list = r_[1e1,1.11e5,2.22e5,3.33e5,
+#        4.44e5,5.55e5,6.66e5,7.77e5,8.88e5,
+#        1e6]
 #vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
 #vd_list = r_[3e1,1e2,1e3,3e3,5e3,1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,3e6,3e6,6e6]
 for scan_num in xrange(nScans):
@@ -135,7 +133,7 @@ for scan_num in xrange(nScans):
         if index == 0 and scan_num == 0:
             vd_data = ndshape([nScans,len(vd_list),len(time_axis)],['nScans','vd','t']).alloc(dtype=complex128)
             vd_data.setaxis('nScans',r_[0:nScans])
-            vd_data.setaxis('vd',vd_list).set_units('vd','s')
+            vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
             vd_data.setaxis('t',time_axis).set_units('t','s')
         vd_data['vd',index]['nScans',scan_num] = data
 SpinCore_pp.stopBoard();
