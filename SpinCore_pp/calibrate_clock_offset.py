@@ -60,17 +60,17 @@ def verifyParams():
 #}}}
 date = '200212'
 clock_correction = 0
-output_name = 'calibrate_clock_1'
-adcOffset = 38
-carrierFreq_MHz = 14.898232
+output_name = 'calibrate_clock_6'
+adcOffset = 39
+carrierFreq_MHz = 14.898692
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 16
+nScans = 8
 nEchoes = 1
 nPhaseSteps = 1 
 p90 = 3.3
 deadtime = 5.0
-repetition = 10e6
+repetition = 15e6
 deblank = 1.0
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -81,12 +81,8 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 print "ACQUISITION TIME:",acq_time,"ms"
 print "TAU DELAY:",tau,"us"
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[1e1,4e4,1e6]
-#vd_list = r_[1e1,1.11e5,2.22e5,3.33e5,
-#        4.44e5,5.55e5,6.66e5,7.77e5,8.88e5,
-#        1e6]
-#vd_list = r_[1e1,1e2,1e3,1e4,1e5,1e6,1e7]
-#vd_list = r_[3e1,1e2,1e3,3e3,5e3,1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,3e6,3e6,6e6]
+#vd_list = r_[3e1,1e2,1e3,3e3,5e3,1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,6e6]
+vd_list = r_[5e1,4e4,6e5,9e5,1e6,1.5e6,2e6,2.5e6,3e6,3.5e6,4e6,4.5e6,5e6,5.5e6,6e6]
 for scan_num in xrange(nScans):
     for index,val in enumerate(vd_list):
         vd = val

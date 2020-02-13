@@ -36,9 +36,9 @@ def verifyParams():
 #}}}
 date = '200212'
 clock_correction = 0
-output_name = 'IR_1'
-adcOffset = 38
-carrierFreq_MHz = 14.898232
+output_name = 'IR_3_36dBm'
+adcOffset = 39
+carrierFreq_MHz = 14.898727
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -83,10 +83,7 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list = r_[1e1,4e4,1e6]
-#vd_list = r_[5e4,1e5,5e5,8e5,9e5,
-#        1e6,2e6,3e6,4e6,5e6,6e6,
-#        1e7]
+vd_list = r_[5e1,3e3,4e4,6e5,1e6,1.4e6,1.6e6,2.8e6,4e6,6e6]
 for index,val in enumerate(vd_list):
     vd = val
     print "***"

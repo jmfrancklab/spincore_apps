@@ -72,10 +72,10 @@ print dB_settings
 raw_input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200210'
-output_name = 'echo_DNP_coil2'
-adcOffset = 49
-carrierFreq_MHz = 14.856850
+date = '200212'
+output_name = 'echo_DNP_1'
+adcOffset = 39
+carrierFreq_MHz = 14.898292
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -90,7 +90,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 8.5
+p90 = 3.3
 deadtime = 50.0
 repetition = 15e6
 
@@ -205,7 +205,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.73e9,9.757e9))
+    this_return = b.lock_on_dip(ini_range=(9.81e9,9.84e9))
     dip_f = this_return[2]
     print "Frequency",dip_f
     b.set_freq(dip_f)

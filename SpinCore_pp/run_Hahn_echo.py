@@ -33,8 +33,8 @@ def verifyParams():
 #}}}
 date = '200212'
 output_name = 'echo_1'
-adcOffset = 38
-carrierFreq_MHz = 14.898232
+adcOffset = 39
+carrierFreq_MHz = 14.898727
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
