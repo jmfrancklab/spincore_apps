@@ -60,15 +60,11 @@ def verifyParams():
 max_power = 4.0
 power_steps = 25
 dB_settings = gen_powerlist(max_power,power_steps)
-#append_powers = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
-#        for frac in [0.25,0.5,0.75]]
-append_powers = r_[0.9,0.5,0.25] # Watts
-print append_powers
-append_dB = round_(2*log10(append_powers/1e-3)*10.)/2
-dB_settings = unique(dB_settings)
-ini_len = len(dB_settings)
+append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
+        for frac in [0.75,0.5,0.25]]
 dB_settings = append(dB_settings,append_dB)
-print dB_settings
+print "dB_settings",dB_settings
+print "correspond to powers in Watts",10**(dB_settings/10.-3)
 raw_input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
