@@ -31,15 +31,15 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200212'
+date = '200218'
 output_name = 'echo_1'
-adcOffset = 39
+adcOffset = 42
 carrierFreq_MHz = 14.898727
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -51,7 +51,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.3
 deadtime = 5.0
-repetition = 1e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -211,8 +211,8 @@ if phase_cycling:
     s.setaxis('t2',t2_axis)
     s.reorder('t2',first=False)
     print ndshape(s)
-    #fl.next('raw data - chunking')
-    #fl.image(s)
+    fl.next('raw data - chunking')
+    fl.image(s)
     s.ft('t2',shift=True)
     s.ft(['ph1','ph2'])
     fl.next('raw data - chunking coh')
@@ -230,6 +230,6 @@ if phase_cycling:
         fl.plot(s.real)
         fl.plot(s.imag)
         fl.plot(abs(s),':')
-        fl.show();quit()
-fl.show()
+        fl.show()
+fl.show();quit()
 
