@@ -68,10 +68,10 @@ print "correspond to powers in Watts",10**(dB_settings/10.-3)
 raw_input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200212'
+date = '200218'
 output_name = 'echo_DNP_1'
-adcOffset = 39
-carrierFreq_MHz = 14.898292
+adcOffset = 42
+carrierFreq_MHz = 14.898727
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -87,7 +87,7 @@ if not phase_cycling:
 # note that acq_time is always milliseconds
 #}}}
 p90 = 3.3
-deadtime = 50.0
+deadtime = 5.0
 repetition = 15e6
 
 SW_kHz = 24.0
