@@ -31,10 +31,10 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200219'
-output_name = 'AG_probe_4'
-adcOffset = 40
-carrierFreq_MHz = 14.709928
+date = '200220'
+output_name = 'DNP_S179R1apR_1'
+adcOffset = 41
+carrierFreq_MHz = 14.904034
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -49,7 +49,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 10
+p90 = 3.3
 deadtime = 5.0
 repetition = 10e6
 

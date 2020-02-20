@@ -68,10 +68,10 @@ print "correspond to powers in Watts",10**(dB_settings/10.-3)
 raw_input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200218'
-output_name = 'echo_DNP_1'
-adcOffset = 42
-carrierFreq_MHz = 14.898727
+date = '200220'
+output_name = 'DNP_S179R1apR_1'
+adcOffset = 41
+carrierFreq_MHz = 14.904034
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -201,7 +201,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.81e9,9.84e9))
+    this_return = b.lock_on_dip(ini_range=(9.80e9,9.84e9))
     dip_f = this_return[2]
     print "Frequency",dip_f
     b.set_freq(dip_f)
