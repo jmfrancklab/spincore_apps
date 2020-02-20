@@ -31,10 +31,10 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200218'
-output_name = 'echo_1'
-adcOffset = 42
-carrierFreq_MHz = 14.898727
+date = '200219'
+output_name = 'AG_probe_4'
+adcOffset = 40
+carrierFreq_MHz = 14.709928
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -49,9 +49,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.3
+p90 = 10
 deadtime = 5.0
-repetition = 1e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -195,7 +195,7 @@ if not phase_cycling:
             fl.next('FT scan %d'%x)
             fl.plot(data['nScans',x])
         fl.next('FT raw data')
-        fl.image(data)
+        fl.image(data['t2':(-5e3,5e3)])
 if phase_cycling:
     print ndshape(data)
     s = data.C
@@ -209,6 +209,7 @@ if phase_cycling:
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
+    s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
     print ndshape(s)
     fl.next('raw data - chunking')
@@ -217,19 +218,14 @@ if phase_cycling:
     s.ft(['ph1','ph2'])
     fl.next('raw data - chunking coh')
     fl.image(s)
-    s = s['ph1',1]['ph2',0].C
     s.setaxis('t2',s.getaxis('t2'))
-    for x in xrange(len(s.getaxis('nScans'))):
-        s = s['nScans',x]
-        fl.next('freq-signal %d'%x)
+    if nScans > 1:
+        s.mean('nScans')
+        fl.next('after sig avg')
+        fl.image(s)
+        s = s['ph1',1]['ph2',0].C
+        fl.next('plot - after sig avg')
         fl.plot(s.real)
         fl.plot(s.imag)
-        fl.plot(abs(s),':')
-        s.ift('t2')
-        fl.next('time-signal %d'%x)
-        fl.plot(s.real)
-        fl.plot(s.imag)
-        fl.plot(abs(s),':')
-        fl.show()
 fl.show();quit()
 
