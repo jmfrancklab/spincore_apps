@@ -39,13 +39,13 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 
-date = '200207'
-output_name = 'CPMG_5_5'
-adcOffset = 54
-carrierFreq_MHz = 14.901592
+date = '200220'
+output_name = 'CPMG_TEMPOLgel_2p9_3'
+adcOffset = 42
+carrierFreq_MHz = 14.898534
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.3
+p90 = 2.9
 deadtime = 5.0
 repetition = 15e6
 deblank = 1.0

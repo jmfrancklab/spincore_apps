@@ -44,33 +44,74 @@ from serial import Serial
 import time
 
 fl = figlist_var()
-# Parameters for Bridge12
-powers = r_[1e-3:4.0:10j]
-dB_settings = round_(2*log10(powers/1e-3)*10.)/2
-dB_settings = unique(dB_settings)
-def check_for_3dB_step(x):
-    assert len(x.shape) == 1
-    if any(diff(x) > 3.0):
-        idx = nonzero(diff(x) > 3)[0][0]
-        x = insert(x,idx+1,r_[x[idx]:x[idx+1]:3.0][1:])
-        x = check_for_3dB_step(x)
-        return x
+def gen_powerlist(max_power, steps, min_dBm_step=0.5):
+    "generate a list of (roughly) evenly spaced powers up to max_power"
+    lin_steps = steps
+    def det_allowed(lin_steps):
+        powers = r_[0:max_power:1j*lin_steps][1:]
+        vectorize(powers)
+        rdB_settings = ones_like(powers)
+        for x in xrange(len(powers)):
+            rdB_settings[x] = round(10*(log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
+        return unique(rdB_settings)
+    dB_settings = det_allowed(lin_steps)
+    while len(dB_settings) < steps-1:
+        lin_steps += 1
+        dB_settings = det_allowed(lin_steps)
+        if lin_steps >= 200:
+            raise ValueError("I think I'm in an infinite loop -- maybe you"
+                    "can't request %d steps between 0 and %f W without going"
+                    "below %f a step?")%(steps,max_power,min_dBm_step)
+    return dB_settings
+#{{{ Verify arguments compatible with board
+def verifyParams():
+    if (nPoints > 16*1024 or nPoints < 1):
+        print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
+        print "EXITING."
+        quit()
     else:
-        return x
-ini_len = len(dB_settings)
-dB_settings = check_for_3dB_step(dB_settings)
-dB_settings = append(dB_settings,[1.5,0.5,0.25])
-print "adjusted my power list by",len(dB_settings)-len(powers),"to satisfy the 3dB step requirement and the 0.5 dB resolution"
+        print "VERIFIED NUMBER OF POINTS."
+    if (nScans < 1):
+        print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED NUMBER OF SCANS."
+    if (p90 < 0.065):
+        print "ERROR: PULSE TIME TOO SMALL."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED PULSE TIME."
+    if (tau < 0.065):
+        print "ERROR: DELAY TIME TOO SMALL."
+        print "EXITING."
+        quit()
+    else:
+        print "VERIFIED DELAY TIME."
+    return
+#}}}
+
+# Parameters for Bridge12
+max_power = 4.0
+power_steps = 25
+dB_settings = gen_powerlist(max_power,power_steps)
+append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
+        for frac in [0.75,0.5,0.25]]
+dB_settings = append(dB_settings,append_dB)
+print "dB_settings",dB_settings
+print "correspond to powers in Watts",10**(dB_settings/10.-3)
+raw_input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = '200115'
-output_name = 'CPMG_DNP_1'
-adcOffset = 45
-carrierFreq_MHz = 14.898373
+output_name = 'CPMG_DNP_TEMPOLgel_1'
+adcOffset = 42
+carrierFreq_MHz = 14.898534
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 2.7
-deadtime = 100.0
+p90 = 2.9
+deadtime = 5.0
 repetition = 15e6
 deblank = 1.0
 marker = 1.0
@@ -206,15 +247,38 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.81e9,9.83e9))
+    this_return = b.lock_on_dip(ini_range=(9.815e9,9.83e9))
     dip_f = this_return[2]
     print "Frequency",dip_f
     b.set_freq(dip_f)
     meter_powers = zeros_like(dB_settings)
     for j,this_power in enumerate(dB_settings):
         print "\n*** *** *** *** ***\n"
-        print "SETTING THIS POWER",this_power,"(",powers[j],"W)"
-        b.set_power(this_power)
+        print "SETTING THIS POWER",this_power,"(",dB_settings[j-1],powers[j],"W)"
+        if j>0 and this_power > last_power + 3:
+            last_power += 3
+            print "SETTING TO...",last_power
+            b.set_power(last_power)
+            time.sleep(3.0)
+            while this_power > last_power+3:
+                last_power += 3
+                print "SETTING TO...",last_power
+                b.set_power(last_power)
+                time.sleep(3.0)
+            print "FINALLY - SETTING TO DESIRED POWER"
+            b.set_power(this_power)
+        elif j == 0:
+            threshold_power = 10
+            if this_power > threshold_power:
+                next_power = threshold_power + 3
+                while next_power < this_power:
+                    print "SETTING To...",next_power
+                    b.set_power(next_power)
+                    time.sleep(3.0)
+                    next_power += 3
+            b.set_power(this_power)
+        else:
+            b.set_power(this_power)
         time.sleep(15)
         with prologix_connection() as p:
             with gigatronics(prologix_instance=p, address=7) as g:
@@ -304,6 +368,7 @@ with Bridge12() as b:
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
         DNP_data['power',j+1] = data
+        last_power = this_power
 DNP_data.name('signal')
 DNP_data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
