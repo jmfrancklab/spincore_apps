@@ -32,9 +32,9 @@ def verifyParams():
     return
 #}}}
 date = '200221'
-output_name = 'echo_TEMPOLgel_1_2'
-adcOffset = 41
-carrierFreq_MHz = 14.897534
+output_name = 'echo_S179R1apR_1'
+adcOffset = 40
+carrierFreq_MHz = 14.908426
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -51,7 +51,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.3
 deadtime = 5.0
-repetition = 1e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
