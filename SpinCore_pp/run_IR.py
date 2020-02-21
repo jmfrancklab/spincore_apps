@@ -34,17 +34,17 @@ def verifyParams():
         print "VERIFIED DELAY TIME."
     return
 #}}}
-date = '200218'
+date = '200221'
 clock_correction = 0
-output_name = 'IR_1_36dBm'
-adcOffset = 42
-carrierFreq_MHz = 14.898727
+output_name = 'IR_TEMPOLgel_1'
+adcOffset = 41
+carrierFreq_MHz = 14.897534
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 3.3
+p90 = 2.9
 deadtime = 5.0
 repetition = 10e6
 SW_kHz = 24.0
