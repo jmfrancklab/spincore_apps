@@ -40,30 +40,31 @@ import SpinCore_pp
 import time
 fl = figlist_var()
 
-date = '191121'
-output_name = 'T1CPMG_1'
+date = '200221'
+output_name = 'T1CPMG_TEMPOLgel_2'
 #clock_correction = 1.0829/998.253
-adcOffset = 35
-carrierFreq_MHz = 14.898848
+adcOffset = 41
+carrierFreq_MHz = 14.898684
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.35
-deadtime = 60.0
-repetition = 4e6
-
-SW_kHz = 9.0
-#SW_kHz = 15.0
-nPoints = 128
-
+p90 = 3.3
+deadtime = 5.0
+repetition = 15e6
 deblank = 1.0
+marker = 1.0
+
+SW_kHz = 4.0
+nPoints = 128
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
-tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-pad = 2.0*tau - deadtime - acq_time*1e3 - 2.0*p90 - deblank
-print "ACQUISITION TIME:",acq_time,"ms"
-print "TAU DELAY:",tau,"us"
-print "PAD DELAY:",pad,"us"
-nScans = 16
+deblank = 1.0
+
+tau_extra = 5000.0 # us, must be more than deadtime and more than deblank
+pad_start = tau_extra - deadtime
+pad_end = tau_extra - deblank*2 # marker + deblank
+twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
+tau1 = twice_tau/2.0
+
+nScans = 4
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -72,7 +73,7 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[3e1,1e2,1e3,3e3,5e3,1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,3e6,3e6,6e6]
+vd_list = r_[5e1,3e3,4e4,6e5,1e6,1.4e6,1.6e6,2.8e6,4e6,6e6]
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -83,12 +84,14 @@ acq_params['nEchoes'] = nEchoes
 acq_params['p90_us'] = p90
 acq_params['deadtime_us'] = deadtime
 acq_params['repetition_us'] = repetition
+acq_params['deblank_us'] = deblank
+acq_params['tau_extra_us'] = tau_extra
+acq_params['pad_start_us'] = pad_start
+acq_params['pad_end_us'] = pad_end
+acq_params['marker_us'] = marker
+acq_params['tau1_us'] = tau1
 acq_params['SW_kHz'] = SW_kHz
 acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
-acq_params['deblank_us'] = deblank
-acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
@@ -110,19 +113,21 @@ for index,val in enumerate(vd_list):
             ('delay',vd),
             ('delay_TTL',deblank),
             ('pulse_TTL',p90,'ph1',r_[0,2]),
-            ('delay',tau),
+            ('delay',tau1),
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,1),
             ('delay',deadtime),
+            ('delay',pad_start),
             ('acquire',acq_time),
-            ('delay',pad),
-            ('marker','echo_label',(nEchoes-1)),
+            ('delay',pad_end),
+            ('marker','echo_label',(nEchoes-1)), # 1 us delay
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,1),
             ('delay',deadtime),
+            ('delay',pad_start),
             ('acquire',acq_time),
-            ('delay',pad),
-            ('jumpto','echo_label'),
+            ('delay',pad_end),
+            ('jumpto','echo_label'), # 1 us delay
             ('delay',repetition),
             ('jumpto','start')
             ])
@@ -135,7 +140,7 @@ for index,val in enumerate(vd_list):
             ('delay',vd),
             ('delay_TTL',deblank),
             ('pulse_TTL',p90,0.0),
-            ('delay',tau),
+            ('delay',tau1),
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,0.0),
             ('delay',deadtime),
