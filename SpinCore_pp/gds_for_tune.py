@@ -30,37 +30,7 @@ fl = figlist_var()
 print "These are the instruments available:"
 SerialInstrument(None)
 print "done printing available instruments"
-
-def waiting_func():
-    for j in range(3):
-        time.sleep(3)
-        print "counter number %d"%j
-def other_func(carrier_frequency):
-    for j in range(3):
-        time.sleep(3)
-        print "second func: counter number %d"%j
-def run_tune(carrier_frequency):
-    SpinCore_pp.tune(carrier_frequency)
-
-with GDS_scope() as g:
-    g.reset()
-    g.CH1.disp=True
-    g.CH2.disp=True
-    g.write(':CHAN1:DISP ON')
-    g.write(':CHAN2:DISP ON')
-    g.write(':CHAN3:DISP OFF')
-    g.write(':CHAN4:DISP OFF')
-    g.CH1.voltscal=100E-3
-    g.CH2.voltscal=50E-3
-    g.timscal(500e-9, pos=2.325e-6)
-    g.write(':CHAN1:IMP 5.0E+1')
-    g.write(':CHAN2:IMP 5.0E+1')
-    g.write(':TRIG:SOUR CH1') 
-    g.write(':TRIG:MOD NORMAL')
-    g.write(':TRIG:HLEV 7.5E-2')
-    tune_thread = threading.Thread(target=run_tune,
-            args=(carrier_frequency,))
-    tune_thread.start()
+def grab_waveforms(g):
     # {{{ capture a "successful" waveform
     ch1 = g.waveform(ch=1)
     ch2 = g.waveform(ch=2)
@@ -76,18 +46,59 @@ with GDS_scope() as g:
     # }}}
     d = concat([ch1,ch2],'ch')
     d.reorder('ch')
+    return d
+def waiting_func():
+    for j in range(3):
+        time.sleep(3)
+        print "counter number %d"%j
+def other_func(carrier_frequency):
+    for j in range(3):
+        time.sleep(3)
+        print "second func: counter number %d"%j
+def run_tune(carrier_frequency):
+    SpinCore_pp.tune(carrier_frequency)
+
+with GDS_scope() as g:
+    tune_thread = threading.Thread(target=run_tune,
+            args=(carrier_frequency,))
+    tune_thread.start()
+    g.reset()
+    g.CH1.disp=True
+    g.CH2.disp=True
+    g.write(':CHAN1:DISP ON')
+    g.write(':CHAN2:DISP ON')
+    g.write(':CHAN3:DISP OFF')
+    g.write(':CHAN4:DISP OFF')
+    g.CH1.voltscal=100E-3
+    g.CH2.voltscal=50E-3
+    g.timscal(500e-9, pos=2.325e-6)
+    g.write(':CHAN1:IMP 5.0E+1')
+    g.write(':CHAN2:IMP 5.0E+1')
+    g.write(':TRIG:SOUR CH1') 
+    g.write(':TRIG:MOD NORMAL')
+    g.write(':TRIG:HLEV 7.5E-2')
+    tune_thread.join()
+    d = grab_waveforms(g)
     d_orig = d.C
     d.ft('t',shift=True)
     d['t':(carrier_frequency*2.3e6,None)] = 0
     d['t':(None,0)] = 0
     d *= 2
     d.ift('t')
-    reflection_slice = d['t':(3.7e-6,6.5e-6)]['ch',1]# will always be the same since the scope settings are the same
-    tune_thread.join()
+    flat_slice = d['t':(3.7e-6,6.5e-6)]# will always be the same since the scope settings are the same
 with figlist_var() as fl:
-    fl.next('original waveforms')
-    fl.plot(d, alpha=0.5)
-    fl.plot(abs(reflection_slice), alpha=0.5)
-    fl.next('FT')
-    d_orig.ft('t')
-    fl.plot(abs(d_orig))
+    #d['ch',1] *= sqrt(2) # I'm only observing 1/2 of the power of the reflection (so 1/sqrt(2) of the voltage)
+    d['ch',1] *= 2 # just empirically, I need to scale up the reflection by a factor of 2 in order to get it to be the right size
+    fl.next('waveforms')
+    fl.plot(d, alpha=0.1)
+    fl.plot(abs(d), alpha=0.5, linewidth=3)
+    fl.plot(abs(flat_slice), alpha=0.5, linewidth=3)
+flat_slice.run(abs).mean('t')
+print "reflection ratio calculated from ratio of %f to %f mV"%(abs(flat_slice['ch',1]).item()/1e-3,abs(flat_slice['ch',0]).item()/1e-3)
+ratio = (abs(flat_slice['ch',1]/flat_slice['ch',0])).item()
+tuning_dB = log10(ratio)*20
+if tuning_dB < -20:
+    print "congratulations! you have achieved a reflection ratio of %0.1f dB"%tuning_dB
+else:
+    print "Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!"%tuning_dB
+
