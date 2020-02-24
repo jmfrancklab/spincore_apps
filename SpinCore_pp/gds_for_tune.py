@@ -7,6 +7,7 @@ from scipy import signal
 import SpinCore_pp
 import sys
 import threading
+from pyspecdata import *
 
 default_field = 3504.24 # G -- give this to 2 s.f.!!
 default_effective_gamma = 0.0042490577 # MHz/G
@@ -30,6 +31,17 @@ print "These are the instruments available:"
 SerialInstrument(None)
 print "done printing available instruments"
 
+def waiting_func():
+    for j in range(3):
+        time.sleep(3)
+        print "counter number %d"%j
+def other_func(carrier_frequency):
+    for j in range(3):
+        time.sleep(3)
+        print "second func: counter number %d"%j
+def run_tune(carrier_frequency):
+    SpinCore_pp.tune(carrier_frequency)
+
 with GDS_scope() as g:
     g.reset()
     g.CH1.disp=True
@@ -46,20 +58,36 @@ with GDS_scope() as g:
     g.write(':TRIG:SOUR CH1') 
     g.write(':TRIG:MOD NORMAL')
     g.write(':TRIG:HLEV 7.5E-2')
-def waiting_func():
-    for j in range(3):
-        time.sleep(3)
-        print "counter number %d"%j
-def other_func(carrier_frequency):
-    for j in range(3):
-        time.sleep(3)
-        print "second func: counter number %d"%j
-def run_tune(carrier_frequency):
-    SpinCore_pp.tune(carrier_frequency)
-tune_thread = threading.Thread(target=run_tune,
-        args=(carrier_frequency,))
-display_waiting = threading.Thread(target=waiting_func)
-tune_thread.start()
-display_waiting.start()
-display_waiting.join()
-tune_thread.join()
+    tune_thread = threading.Thread(target=run_tune,
+            args=(carrier_frequency,))
+    tune_thread.start()
+    # {{{ capture a "successful" waveform
+    ch1 = g.waveform(ch=1)
+    ch2 = g.waveform(ch=2)
+    success = False
+    for j in range(10):
+        if ch1.data.max() < 50e-3:
+            ch1 = g.waveform(ch=1)
+            ch2 = g.waveform(ch=2)
+        else:
+            success = True
+    if not success:
+        raise ValueError("can't seem to get a waveform that's large enough!")
+    # }}}
+    d = concat([ch1,ch2],'ch')
+    d.reorder('ch')
+    d_orig = d.C
+    d.ft('t',shift=True)
+    d['t':(carrier_frequency*2.3e6,None)] = 0
+    d['t':(None,0)] = 0
+    d *= 2
+    d.ift('t')
+    reflection_slice = d['t':(3.7e-6,6.5e-6)]['ch',1]# will always be the same since the scope settings are the same
+    tune_thread.join()
+with figlist_var() as fl:
+    fl.next('original waveforms')
+    fl.plot(d, alpha=0.5)
+    fl.plot(abs(reflection_slice), alpha=0.5)
+    fl.next('FT')
+    d_orig.ft('t')
+    fl.plot(abs(d_orig))
