@@ -38,6 +38,7 @@ DWORD error_catch(int error, int line_number)
 int main(int argc, char *argv[])
 {
     double carrier_freq;
+    char *end_string;
 
     // ** Configure Board ** 
     // Initialize MRI SpinAPI
@@ -53,7 +54,7 @@ int main(int argc, char *argv[])
 
     // Carrier Frequency Registers
     // previously hard-coded carrier 14.902344
-    carrier_freq = strtod(argv[1]);
+    carrier_freq = strtod(argv[1],&end_string);
     printf("I'm using a carrier frequency of %0.6f", carrier_freq);
     double freq[1] = {carrier_freq};
     ERROR_CATCH( spmri_set_frequency_registers( freq, 1 ) );
