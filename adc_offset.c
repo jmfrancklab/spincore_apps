@@ -39,8 +39,6 @@ int main(int argc, char *argv[])
 	
 	printf("Correct ADC offset = %d\n", test_offset);
 	
-	system("pause");
-	
 	return 0;
 }
 
