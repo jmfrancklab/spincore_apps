@@ -14,19 +14,19 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         super(mywindow,self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.pushButton.clicked.connect(self.run_Hahn_echo)
-        self.ui.pushButton_2.clicked.connect(self.openPlot)
+        self.ui.pushButton.clicked.connect(self.run_adcoffset)
+        self.ui.pushButton_2.clicked.connect(self.run_Hahn_echo)
+        self.ui.pushButton_3.clicked.connect(self.takeFT)
+        self.ui.adcoffset = None
         self.ui.xaxis = None
         self.ui.yaxis = None
     def run_adcoffset(self):
         adc_val = (subprocess.check_output("../adc_offset.exe").split()[-1])
+        self.ui.adcoffset = adc_val
         self.ui.textEdit.setText(adc_val)
-        return adc_val
-    def openPlot(self):
-        x=range(0,10)
-        y=range(0,20,2)
-        self.ui.plotWidget.canvas.ax.plot(self.ui.xaxis,self.ui.yaxis)
-        self.ui.plotWidget.canvas.draw()
+    def takeFT(self):
+        self.ui.f_widget.canvas.ax.plot(self.ui.xaxis,self.ui.yaxis.real,alpha=0.4)
+        self.ui.f_widget.canvas.draw()
     #{{{
     def run_Hahn_echo(self):
         #{{{ Verify arguments compatible with board
@@ -59,7 +59,7 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         #}}}
         date = '200226'
         output_name = 'echo_1'
-        adcOffset = 45
+        adcOffset = int(self.ui.adcoffset)
         carrierFreq_MHz = 14.898564
         tx_phases = r_[0.0,90.0,180.0,270.0]
         amplitude = 1.0
@@ -197,10 +197,11 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                 print "EXCEPTION ERROR - FILE MAY ALREADY EXIST."
                 save_file = False
                 #}}}
+        self.ui.time_plot.canvas.ax.plot(data.getaxis('t'),data.data,alpha=0.4)
+        self.ui.time_plot.canvas.draw()
+        data.ft('t',shift=True)
         self.ui.xaxis = data.getaxis('t')
         self.ui.yaxis = data.data
-        #self.ui.plotWidget.canvas.ax.plot(data.getaxis('t'),data.data)
-        #self.ui.plotWidget.canvas.draw()
 
 
 app = QtWidgets.QApplication([])
