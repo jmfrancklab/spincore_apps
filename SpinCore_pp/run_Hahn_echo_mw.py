@@ -57,8 +57,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4.0
-power_steps = 15
+max_power = 10.0
+power_steps = 25
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -68,10 +68,10 @@ print "correspond to powers in Watts",10**(dB_settings/10.-3)
 raw_input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200221'
-output_name = 'DNP_S179R1apR_one'
-adcOffset = 40
-carrierFreq_MHz = 14.908426
+date = '200225'
+output_name = 'DNP_echo_2'
+adcOffset = 45
+carrierFreq_MHz = 14.898564
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -334,4 +334,3 @@ fl.next('raw data - ft')
 fl.image(DNP_data)
 fl.next('abs raw data - ft')
 fl.image(abs(DNP_data))
-fl.show()
