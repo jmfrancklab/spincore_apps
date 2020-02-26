@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(803, 566)
+        MainWindow.resize(1154, 566)
         font = QtGui.QFont()
         font.setPointSize(9)
         MainWindow.setFont(font)
@@ -53,11 +53,11 @@ class Ui_MainWindow(object):
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
         self.plotWidget = MplWidget(self.centralwidget)
-        self.plotWidget.setGeometry(QtCore.QRect(320, 140, 401, 271))
+        self.plotWidget.setGeometry(QtCore.QRect(260, 20, 731, 481))
         self.plotWidget.setObjectName("plotWidget")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 803, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1154, 21))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)

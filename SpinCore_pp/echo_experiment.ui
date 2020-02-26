@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>803</width>
+    <width>1154</width>
     <height>566</height>
    </rect>
   </property>
@@ -112,10 +112,10 @@
    <widget class="MplWidget" name="plotWidget" native="true">
     <property name="geometry">
      <rect>
-      <x>320</x>
-      <y>140</y>
-      <width>401</width>
-      <height>271</height>
+      <x>260</x>
+      <y>20</y>
+      <width>731</width>
+      <height>481</height>
      </rect>
     </property>
    </widget>
@@ -125,7 +125,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>803</width>
+     <width>1154</width>
      <height>21</height>
     </rect>
    </property>
