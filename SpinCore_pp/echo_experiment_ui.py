@@ -72,7 +72,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.label.setText(_translate("MainWindow", "ADC OFFSET"))
         self.pushButton.setText(_translate("MainWindow", "Calculate"))
-        self.pushButton_2.setText(_translate("MainWindow", "Go"))
+        self.pushButton_2.setText(_translate("MainWindow", "Plot"))
         self.label_2.setText(_translate("MainWindow", "BEGIN EXPERIMENT"))
 
 from mplwidget import MplWidget

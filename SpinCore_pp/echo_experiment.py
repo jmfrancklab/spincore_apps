@@ -15,6 +15,9 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.pushButton.clicked.connect(self.run_Hahn_echo)
+        self.ui.pushButton_2.clicked.connect(self.openPlot)
+        self.ui.xaxis = None
+        self.ui.yaxis = None
     def run_adcoffset(self):
         adc_val = (subprocess.check_output("../adc_offset.exe").split()[-1])
         self.ui.textEdit.setText(adc_val)
@@ -22,8 +25,9 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
     def openPlot(self):
         x=range(0,10)
         y=range(0,20,2)
-        self.ui.plotWidget.canvas.ax.plot(x,y)
+        self.ui.plotWidget.canvas.ax.plot(self.ui.xaxis,self.ui.yaxis)
         self.ui.plotWidget.canvas.draw()
+    #{{{
     def run_Hahn_echo(self):
         #{{{ Verify arguments compatible with board
         def verifyParams():
@@ -192,8 +196,11 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                 print e
                 print "EXCEPTION ERROR - FILE MAY ALREADY EXIST."
                 save_file = False
-        self.ui.plotWidget.canvas.ax.plot(data.getaxis('t'),data.data)
-        self.ui.plotWidget.canvas.draw()
+                #}}}
+        self.ui.xaxis = data.getaxis('t')
+        self.ui.yaxis = data.data
+        #self.ui.plotWidget.canvas.ax.plot(data.getaxis('t'),data.data)
+        #self.ui.plotWidget.canvas.draw()
 
 
 app = QtWidgets.QApplication([])
