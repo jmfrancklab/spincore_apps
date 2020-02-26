@@ -54,7 +54,7 @@ class Ui_MainWindow(object):
         self.label_2.setObjectName("label_2")
         self.plotWidget = MplWidget(self.centralwidget)
         self.plotWidget.setGeometry(QtCore.QRect(320, 140, 401, 271))
-        self.plotWidget.setObjectName("graphWidget")
+        self.plotWidget.setObjectName("plotWidget")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 803, 21))
