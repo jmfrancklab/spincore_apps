@@ -52,9 +52,9 @@ class Ui_MainWindow(object):
         font.setWeight(75)
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
-        self.graphicsView = QtWidgets.QGraphicsView(self.centralwidget)
-        self.graphicsView.setGeometry(QtCore.QRect(340, 160, 256, 192))
-        self.graphicsView.setObjectName("graphicsView")
+        self.plotWidget = MplWidget(self.centralwidget)
+        self.plotWidget.setGeometry(QtCore.QRect(320, 140, 401, 271))
+        self.plotWidget.setObjectName("graphWidget")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 803, 21))
@@ -75,3 +75,4 @@ class Ui_MainWindow(object):
         self.pushButton_2.setText(_translate("MainWindow", "Go"))
         self.label_2.setText(_translate("MainWindow", "BEGIN EXPERIMENT"))
 
+from mplwidget import MplWidget

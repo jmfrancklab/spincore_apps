@@ -109,13 +109,13 @@
      <string>BEGIN EXPERIMENT</string>
     </property>
    </widget>
-   <widget class="QGraphicsView" name="graphicsView">
+   <widget class="MplWidget" name="graphWidget" native="true">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>160</y>
-      <width>256</width>
-      <height>192</height>
+      <x>320</x>
+      <y>140</y>
+      <width>401</width>
+      <height>271</height>
      </rect>
     </property>
    </widget>
@@ -132,6 +132,14 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MplWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">mplwidget</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
