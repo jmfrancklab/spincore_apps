@@ -24,7 +24,7 @@ elif _swig_python_version_info >= (2, 6, 0):
         try:
             fp, pathname, description = imp.find_module('_SpinCore_pp', [dirname(__file__)])
         except ImportError:
-            import _SpinCore_pp
+            from . import _SpinCore_pp
             return _SpinCore_pp
         try:
             _mod = imp.load_module('_SpinCore_pp', fp, pathname, description)
@@ -35,7 +35,7 @@ elif _swig_python_version_info >= (2, 6, 0):
     _SpinCore_pp = swig_import_helper()
     del swig_import_helper
 else:
-    import _SpinCore_pp
+    from . import _SpinCore_pp
 del _swig_python_version_info
 
 try:
@@ -46,7 +46,7 @@ except NameError:
 try:
     import builtins as __builtin__
 except ImportError:
-    import __builtin__
+    import builtins
 
 def _swig_setattr_nondynamic(self, class_type, name, value, static=1):
     if (name == "thisown"):
@@ -83,14 +83,14 @@ def _swig_getattr(self, class_type, name):
 def _swig_repr(self):
     try:
         strthis = "proxy of " + self.this.__repr__()
-    except __builtin__.Exception:
+    except builtins.Exception:
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
 try:
     _object = object
     _newclass = 1
-except __builtin__.Exception:
+except builtins.Exception:
     class _object:
         pass
     _newclass = 0
@@ -162,13 +162,13 @@ def apply_cycles(ppg_in,list_of_cycles_found):
             found_cycle = True
             break
     if found_cycle:
-        print "found phase cycle named",cycle_name
+        print("found phase cycle named",cycle_name)
         all_cycles = [ppg_element[3] for ppg_element in ppg_in if (((ppg_element[0] == 'pulse' or ppg_element[0] == 'pulse_TTL') and ppg_element[2] == cycle_name) if len(ppg_element)>3 else False )]
-        maxlen = max(map(len,all_cycles))
+        maxlen = max(list(map(len,all_cycles)))
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
-        print "LIST OF CYCLES FOUND NOW"
+        print("LIST OF CYCLES FOUND NOW")
         ppg_out = []
-        for j in xrange(maxlen):
+        for j in range(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
                 if len(ppg_elem) > 3 and ppg_elem[2] == cycle_name:
                     elem_copy = list(ppg_elem)
@@ -178,12 +178,12 @@ def apply_cycles(ppg_in,list_of_cycles_found):
                 else:
                     ppg_out.append(ppg_elem)
         del ppg_in
-        print "***"
-        print "AFTER CYCLING:\n",'\n'.join(map(str,ppg_out))
+        print("***")
+        print("AFTER CYCLING:\n",'\n'.join(map(str,ppg_out)))
         return apply_cycles(ppg_out,list_of_cycles_found)
     else:
-        print "***"
-        print "FOUND NO CYCLING ELEMENTS"
+        print("***")
+        print("FOUND NO CYCLING ELEMENTS")
         return ppg_in,list_of_cycles_found
 def load(args):
     ppg_list = []
