@@ -18,9 +18,11 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.ui.pushButton_2.clicked.connect(self.run_Hahn_echo)
         self.ui.pushButton_3.clicked.connect(self.takeFT)
         self.ui.pushButton_4.clicked.connect(self.save_file)
+        self.ui.pushButton_5.clicked.connect(self.open_acqparams)
         self.ui.adcoffset = None
         self.ui.data = None
         self.ui.filename = None
+        self.ui.carrierFreq_MHz = None
     def run_adcoffset(self):
         adc_val = (subprocess.check_output("../adc_offset.exe").split()[-1])
         self.ui.adcoffset = adc_val
@@ -28,6 +30,19 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
     def takeFT(self):
         self.ui.f_widget.canvas.ax.plot(self.ui.data.getaxis('t'),self.ui.data.data.real,alpha=0.4)
         self.ui.f_widget.canvas.draw()
+    def open_acqparams(self):
+        layout = QtWidgets.QFormLayout()
+        self.btn = QtWidgets.QPushButton("Params")
+        self.btn.clicked.connect(None)
+
+        self.le = QtWidgets.QLineEdit()
+        layout.addRow(self.btn,self.le)
+        self.btn1 = QtWidgets.QPushButton("Carrier Frequency:")
+        self.btn1.clicked.connect(self.getCarrier())
+    def getCarrier(self):
+        text,ok = QtWidgets.QInputDialog.getText(self,"Input dialog","Enter desired carrier freq in MHz:")
+        if ok:
+            self.ui.carrierFreq_MHz = float(text)
     def get_filename(self):
         text,ok = QtWidgets.QInputDialog.getText(self,"Filename input dialog","Enter desired file name:")
         if ok:
