@@ -41,9 +41,14 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         except Exception as e:
             print e
             print "EXCEPTION ERROR - FILE ALREADY EXISTS."
-            error_dialog = QtWidgets.QMessageBox()
-            error_dialog.about(self,"Title","MEssage")
-            #error_dialog.showMessage("Oh no!")
+            buttonReply = QtWidgets.QMessageBox.question(self,"File Already Exists","Rename and try again?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+            if buttonReply == QtWidgets.QMessageBox.Yes:
+                print('Yes clicked')
+                self.save_file()
+            if buttonReply == QtWidgets.QMessageBox.No:
+                print('No clicked. Exiting...')
+            if buttonReply == QtWidgets.QMessageBox.Cancel:
+                print('Exiting..')
 
     def run_Hahn_echo(self):
         #{{{ Verify arguments compatible with board
