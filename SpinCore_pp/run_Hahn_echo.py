@@ -32,14 +32,16 @@ def verifyParams():
     return
 #}}}
 date = '200226'
-output_name = 'echo_1'
+output_name = 'echo_2'
 adcOffset = 45
 carrierFreq_MHz = 14.898564
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
+ph1 = r_[0,1,2,3]
+ph2 = r_[0,2]
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -105,14 +107,16 @@ for x in xrange(nScans):
     print "PROGRAMMING BOARD..."
     print "\nLOADING PULSE PROG...\n"
     if phase_cycling:
+        phase_cycles = dict(ph1 = r_[0,1,2,3],
+                ph2 = r_[0,2])
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph1',phase_cycles['ph1']),
             ('delay',tau),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+            ('pulse_TTL',2.0*p90,'ph2',phase_cycles['ph2']),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),
@@ -157,6 +161,16 @@ for x in xrange(nScans):
 print "EXITING..."
 print "\n*** *** ***\n"
 save_file = True
+if phase_cycling:
+    phcyc_names = list(phase_cycles.keys())
+    phcyc_names.sort(reverse=True)
+    phcyc_dims = [len(phase_cycles[j]) for j in phcyc_names]
+    data.chunk('t',phcyc_names+['t2'],phcyc_dims+[-1])
+    data.setaxis('nScans',r_[0:nScans])
+    data.setaxis('ph1',ph1/4.)
+    data.setaxis('ph2',ph2/4.)
+else:
+    data.rename('t','t2')
 while save_file:
     try:
         print "SAVING FILE..."
@@ -209,7 +223,6 @@ if phase_cycling:
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
-    s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
     print ndshape(s)
     fl.next('raw data - chunking')
