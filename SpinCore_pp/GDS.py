@@ -10,20 +10,20 @@ fl = figlist_var()
     
 def wait_time():
     start = time.time()
-    print "Waiting for user"
-    raw_input()
+    print("Waiting for user")
+    input()
     return time.time() - start
 
 def collect(date,id_string,captures,wait):
     cap_len = len(captures)
     datalist = []
-    print "about to load GDS"
+    print("about to load GDS")
     with GDS_scope() as g:
-        print "loaded GDS"
-        for x in xrange(1,cap_len+1):
-            print "entering capture",x
-            print "AWAITING USER"
-            raw_input()
+        print("loaded GDS")
+        for x in range(1,cap_len+1):
+            print("entering capture",x)
+            print("AWAITING USER")
+            input()
             ch1_waveform = g.waveform(ch=1)
             ch2_waveform = g.waveform(ch=2)
             data = concat([ch1_waveform,ch2_waveform],'ch').reorder('t')
@@ -36,9 +36,9 @@ def collect(date,id_string,captures,wait):
     s.labels('capture',captures)
     s.name('accumulated_'+date)
     s.hdf5_write(date+'_'+id_string+'.h5')
-    print "name of data",s.name()
-    print "units should be",s.get_units('t')
-    print "shape of data",ndshape(s)
+    print("name of data",s.name())
+    print("units should be",s.get_units('t'))
+    print("shape of data",ndshape(s))
     return
 
 date = '190220'

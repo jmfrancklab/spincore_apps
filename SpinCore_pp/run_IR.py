@@ -1,6 +1,6 @@
 from pyspecdata import *
 import os
-import SpinCore_pp
+from . import SpinCore_pp
 import socket
 import sys
 import time
@@ -9,29 +9,29 @@ fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
-        print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
-        print "EXITING."
+        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF POINTS."
+        print("VERIFIED NUMBER OF POINTS.")
     if (nScans < 1):
-        print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
-        print "EXITING."
+        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF SCANS."
+        print("VERIFIED NUMBER OF SCANS.")
     if (p90 < 0.065):
-        print "ERROR: PULSE TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: PULSE TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED PULSE TIME."
+        print("VERIFIED PULSE TIME.")
     if (tau < 0.065):
-        print "ERROR: DELAY TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: DELAY TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED DELAY TIME."
+        print("VERIFIED DELAY TIME.")
     return
 #}}}
 date = '200221'
@@ -53,8 +53,8 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-print "ACQUISITION TIME:",acq_time,"ms"
-print "TAU DELAY:",tau,"us"
+print("ACQUISITION TIME:",acq_time,"ms")
+print("TAU DELAY:",tau,"us")
 phase_cycling = True
 ph1 = r_[0,2]
 ph2 = r_[0,1,2,3]
@@ -86,9 +86,9 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 vd_list = r_[5e1,3e3,4e4,6e5,1e6,1.4e6,1.6e6,2.8e6,4e6,6e6]
 for index,val in enumerate(vd_list):
     vd = val
-    print "***"
-    print "INDEX %d - VARIABLE DELAY %f"%(index,val)
-    print "***"
+    print("***")
+    print("INDEX %d - VARIABLE DELAY %f"%(index,val))
+    print("***")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
     acq_params['acq_time_ms'] = acq_time
@@ -130,10 +130,10 @@ for index,val in enumerate(vd_list):
             ('jumpto','start')
             ])
     SpinCore_pp.stop_ppg();
-    print "\nRUNNING BOARD...\n"
+    print("\nRUNNING BOARD...\n")
     if phase_cycling:
-        for x in xrange(nScans):
-            print "SCAN NO. %d"%(x+1)
+        for x in range(nScans):
+            print("SCAN NO. %d"%(x+1))
             SpinCore_pp.runBoard();
     if not phase_cycling:
         start = time.time()
@@ -144,8 +144,8 @@ for index,val in enumerate(vd_list):
     raw_data.astype(float)
     data = []
     data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
     dataPoints = float(shape(data)[0])
     time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
     data = nddata(array(data),'t')
@@ -158,8 +158,8 @@ for index,val in enumerate(vd_list):
         vd_data.setaxis('t',time_axis).set_units('t','s')
     vd_data['vd',index] = data
 SpinCore_pp.stopBoard();
-print "EXITING...\n"
-print "\n*** *** ***\n"
+print("EXITING...\n")
+print("\n*** *** ***\n")
 save_file = True
 if phase_cycling:
     phcyc_names = list(phase_cycles.keys())
@@ -172,16 +172,16 @@ else:
     vd_data.rename('t','t2')
 while save_file:
     try:
-        print "SAVING FILE..."
+        print("SAVING FILE...")
         vd_data.name('signal')
         vd_data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",vd_data.name()
-        print "Units of saved data",vd_data.get_units('t')
-        print "Shape of saved data",ndshape(vd_data)
+        print("Name of saved data",vd_data.name())
+        print("Units of saved data",vd_data.get_units('t'))
+        print("Shape of saved data",ndshape(vd_data))
         save_file = False
     except Exception as e:
-        print e
-        print "FILE ALREADY EXISTS."
+        print(e)
+        print("FILE ALREADY EXISTS.")
         save_file = False
 fl.next('raw data')
 fl.image(vd_data)

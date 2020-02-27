@@ -36,7 +36,7 @@ in the second case.
 #}}}
 from pyspecdata import *
 from numpy import *
-import SpinCore_pp 
+from . import SpinCore_pp 
 import socket
 import sys
 import time
@@ -47,16 +47,16 @@ def API_sender(value):
     if len(sys.argv) > 1:
         IP = sys.argv[1]
     PORT = 6001
-    print "target IP:", IP
-    print "target port:", PORT
+    print("target IP:", IP)
+    print("target port:", PORT)
     MESSAGE = str(value)
-    print "SETTING FIELD TO...", MESSAGE
+    print("SETTING FIELD TO...", MESSAGE)
     sock = socket.socket(socket.AF_INET, # Internet
             socket.SOCK_STREAM) # TCP
     sock.connect((IP, PORT))
     sock.send(MESSAGE)
     sock.close()
-    print "FIELD SET TO...", MESSAGE
+    print("FIELD SET TO...", MESSAGE)
     time.sleep(3)
     return
 #}}}
@@ -85,17 +85,17 @@ nPoints = 2048
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-print "ACQUISITION TIME:",acq_time,"ms"
-print "TAU DELAY:",tau,"us"
+print("ACQUISITION TIME:",acq_time,"ms")
+print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for index,val in enumerate(field_axis):
-    print "***"
-    print "INDEX NO.",index
-    print "***"
+    print("***")
+    print("INDEX NO.",index)
+    print("***")
     API_sender(val)
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    print "ACQUISITION TIME IS",acq_time,"ms"
+    print("ACQUISITION TIME IS",acq_time,"ms")
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
@@ -127,8 +127,8 @@ for index,val in enumerate(field_axis):
             ])
     SpinCore_pp.stop_ppg();
     if phase_cycling:
-        for x in xrange(nScans):
-            print "SCAN NO. %d"%(x+1)
+        for x in range(nScans):
+            print("SCAN NO. %d"%(x+1))
             SpinCore_pp.runBoard();
     if not phase_cycling:
         SpinCore_pp.runBoard();
@@ -139,8 +139,8 @@ for index,val in enumerate(field_axis):
     # should work same as line below and be more effic
     #data = raw_data.view(complex128)
     data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
     dataPoints = float(shape(data)[0])
     time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
     data = nddata(array(data),'t')
@@ -152,21 +152,21 @@ for index,val in enumerate(field_axis):
         field_sweep.setaxis('t',time_axis).set_units('t','s')
     field_sweep['field',index] = data
 SpinCore_pp.stopBoard();
-print "EXITING..."
-print "\n*** *** ***\n"
+print("EXITING...")
+print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print "SAVING FILE..."
+        print("SAVING FILE...")
         field_sweep.name('field_sweep')
         field_sweep.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",field_sweep.name()
-        print "Units of saved data",field_sweep.get_units('t')
-        print "Shape of saved data",ndshape(field_sweep)
+        print("Name of saved data",field_sweep.name())
+        print("Units of saved data",field_sweep.get_units('t'))
+        print("Shape of saved data",ndshape(field_sweep))
         save_file = False
     except Exception as e:
-        print e
-        print "FILE ALREADY EXISTS."
+        print(e)
+        print("FILE ALREADY EXISTS.")
         save_file = False
 fl.next('raw data')
 #manual_taxis_zero = acq_time*1e-3/2.0

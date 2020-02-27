@@ -1,7 +1,7 @@
 from pyspecdata import *
 import os
 import sys
-import SpinCore_pp
+from . import SpinCore_pp
 #from . import SpinCore_pp
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
@@ -84,12 +84,12 @@ acq_params['pad_us'] = pad
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
-print("ACQUISITION TIME:",acq_time,"ms")
-print("TAU DELAY:",tau,"us")
-print("PAD DELAY:",pad,"us")
+print(("ACQUISITION TIME:",acq_time,"ms"))
+print(("TAU DELAY:",tau,"us"))
+print(("PAD DELAY:",pad,"us"))
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for x in range(nScans):
-    print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
+    print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
     print("\n*** *** ***\n")
     print("CONFIGURING TRANSMITTER...")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
@@ -99,7 +99,7 @@ for x in range(nScans):
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
     acq_params['acq_time_ms'] = acq_time
     # acq_time is in msec!
-    print("ACQUISITION TIME IS",acq_time,"ms")
+    print(("ACQUISITION TIME IS",acq_time,"ms"))
     verifyParams()
     print("\nRECEIVER CONFIGURED.")
     print("***")
@@ -147,8 +147,8 @@ for x in range(nScans):
     raw_data.astype(float)
     data_array = []
     data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
-    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
+    print(("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]))
+    print(("RAW DATA ARRAY LENGTH:",shape(raw_data)[0]))
     dataPoints = float(shape(data_array)[0])
     if x == 0:
         time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
@@ -177,9 +177,9 @@ while save_file:
         print("SAVING FILE...")
         data.hdf5_write(date+'_'+output_name+'.h5')
         print("FILE SAVED!")
-        print("Name of saved data",data.name())
-        print("Units of saved data",data.get_units('t'))
-        print("Shape of saved data",ndshape(data))
+        print(("Name of saved data",data.name()))
+        print(("Units of saved data",data.get_units('t')))
+        print(("Shape of saved data",ndshape(data)))
         save_file = False
     except Exception as e:
         print(e)
@@ -187,7 +187,7 @@ while save_file:
         save_file = False
 if not phase_cycling:
     if nScans == 1:
-        print(ndshape(data))
+        print((ndshape(data)))
         fl.next('raw data')
         fl.plot(data.real)
         fl.plot(data.imag)
@@ -198,7 +198,7 @@ if not phase_cycling:
         fl.plot(data.imag)
         fl.plot(abs(data),':',alpha=0.5)
     else:
-        print(ndshape(data))
+        print((ndshape(data)))
         data.reorder('nScans',first=True)
         fl.next('raw data')
         fl.image(data)
@@ -212,7 +212,7 @@ if not phase_cycling:
         fl.next('FT raw data')
         fl.image(data['t2':(-5e3,5e3)])
 if phase_cycling:
-    print(ndshape(data))
+    print((ndshape(data)))
     s = data.C
     s.set_units('t','s')
     orig_t = s.getaxis('t')
@@ -225,7 +225,7 @@ if phase_cycling:
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
     s.reorder('t2',first=False)
-    print(ndshape(s))
+    print((ndshape(s)))
     fl.next('raw data - chunking')
     fl.image(s)
     s.ft('t2',shift=True)

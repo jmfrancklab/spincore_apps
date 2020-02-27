@@ -2,7 +2,7 @@ from pyspecdata import *
 from numpy import *
 import os
 import sys
-import SpinCore_pp
+from . import SpinCore_pp
 from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 import time
@@ -15,7 +15,7 @@ def gen_powerlist(max_power, steps, min_dBm_step=0.5):
         powers = r_[0:max_power:1j*lin_steps][1:]
         vectorize(powers)
         rdB_settings = ones_like(powers)
-        for x in xrange(len(powers)):
+        for x in range(len(powers)):
             rdB_settings[x] = round(10*(log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
         return unique(rdB_settings)
     dB_settings = det_allowed(lin_steps)
@@ -30,29 +30,29 @@ def gen_powerlist(max_power, steps, min_dBm_step=0.5):
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
-        print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
-        print "EXITING."
+        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF POINTS."
+        print("VERIFIED NUMBER OF POINTS.")
     if (nScans < 1):
-        print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
-        print "EXITING."
+        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF SCANS."
+        print("VERIFIED NUMBER OF SCANS.")
     if (p90 < 0.065):
-        print "ERROR: PULSE TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: PULSE TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED PULSE TIME."
+        print("VERIFIED PULSE TIME.")
     if (tau < 0.065):
-        print "ERROR: DELAY TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: DELAY TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED DELAY TIME."
+        print("VERIFIED DELAY TIME.")
     return
 #}}}
 
@@ -63,9 +63,9 @@ dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
 dB_settings = append(dB_settings,append_dB)
-print "dB_settings",dB_settings
-print "correspond to powers in Watts",10**(dB_settings/10.-3)
-raw_input("Look ok?")
+print("dB_settings",dB_settings)
+print("correspond to powers in Watts",10**(dB_settings/10.-3))
+input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = '200225'
@@ -117,26 +117,26 @@ acq_params['tau_us'] = tau
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
-print "ACQUISITION TIME:",acq_time,"ms"
-print "TAU DELAY:",tau,"us"
+print("ACQUISITION TIME:",acq_time,"ms")
+print("TAU DELAY:",tau,"us")
 #print "PAD DELAY:",pad,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-print "\n*** *** ***\n"
-print "CONFIGURING TRANSMITTER..."
+print("\n*** *** ***\n")
+print("CONFIGURING TRANSMITTER...")
 SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-print "\nTRANSMITTER CONFIGURED."
-print "***"
-print "CONFIGURING RECEIVER..."
+print("\nTRANSMITTER CONFIGURED.")
+print("***")
+print("CONFIGURING RECEIVER...")
 acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
 acq_params['acq_time_ms'] = acq_time
-print "ACQUISITION TIME IS",acq_time,"ms"
+print("ACQUISITION TIME IS",acq_time,"ms")
 verifyParams()
-print "\nRECEIVER CONFIGURED."
-print "***"
-print "\nINITIALIZING PROG BOARD...\n"
+print("\nRECEIVER CONFIGURED.")
+print("***")
+print("\nINITIALIZING PROG BOARD...\n")
 SpinCore_pp.init_ppg();
-print "PROGRAMMING BOARD..."
-print "\nLOADING PULSE PROG...\n"
+print("PROGRAMMING BOARD...")
+print("\nLOADING PULSE PROG...\n")
 if phase_cycling:
     SpinCore_pp.load([
         ('marker','start',1),
@@ -167,12 +167,12 @@ if not phase_cycling:
         ('delay',repetition),
         ('jumpto','start')
         ])
-print "\nSTOPPING PROG BOARD...\n"
+print("\nSTOPPING PROG BOARD...\n")
 SpinCore_pp.stop_ppg();
-print "\nRUNNING BOARD...\n"
+print("\nRUNNING BOARD...\n")
 if phase_cycling:
-    for x in xrange(nScans):
-        print "SCAN NO. %d"%(x+1)
+    for x in range(nScans):
+        print("SCAN NO. %d"%(x+1))
         SpinCore_pp.runBoard();
 if not phase_cycling:
     SpinCore_pp.runBoard();
@@ -183,8 +183,8 @@ data = []
 # should work same as line below and be more effic
 #data = raw_data.view(complex128)
 data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
 dataPoints = float(shape(data)[0])
 time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
 data = nddata(array(data),'t')
@@ -203,30 +203,30 @@ with Bridge12() as b:
     b.set_amp(True)
     this_return = b.lock_on_dip(ini_range=(9.80e9,9.84e9))
     dip_f = this_return[2]
-    print "Frequency",dip_f
+    print("Frequency",dip_f)
     b.set_freq(dip_f)
     meter_powers = zeros_like(dB_settings)
     for j,this_power in enumerate(dB_settings):
-        print "\n*** *** *** *** ***\n"
-        print "SETTING THIS POWER",this_power,"(",dB_settings[j-1],powers[j],"W)"
+        print("\n*** *** *** *** ***\n")
+        print("SETTING THIS POWER",this_power,"(",dB_settings[j-1],powers[j],"W)")
         if j>0 and this_power > last_power + 3:
             last_power += 3
-            print "SETTING TO...",last_power
+            print("SETTING TO...",last_power)
             b.set_power(last_power)
             time.sleep(3.0)
             while this_power > last_power+3:
                 last_power += 3
-                print "SETTING TO...",last_power
+                print("SETTING TO...",last_power)
                 b.set_power(last_power)
                 time.sleep(3.0)
-            print "FINALLY - SETTING TO DESIRED POWER"
+            print("FINALLY - SETTING TO DESIRED POWER")
             b.set_power(this_power)
         elif j == 0:
             threshold_power = 10
             if this_power > threshold_power:
                 next_power = threshold_power + 3
                 while next_power < this_power:
-                    print "SETTING To...",next_power
+                    print("SETTING To...",next_power)
                     b.set_power(next_power)
                     time.sleep(3.0)
                     next_power += 3
@@ -237,20 +237,20 @@ with Bridge12() as b:
         with prologix_connection() as p:
             with gigatronics(prologix_instance=p, address=7) as g:
                 meter_powers[j] = g.read_power()
-                print "POWER READING",meter_powers[j]
-        print "\n*** *** *** *** ***\n"
-        print "\n*** *** ***\n"
-        print "CONFIGURING TRANSMITTER..."
+                print("POWER READING",meter_powers[j])
+        print("\n*** *** *** *** ***\n")
+        print("\n*** *** ***\n")
+        print("CONFIGURING TRANSMITTER...")
         SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-        print "\nTRANSMITTER CONFIGURED."
-        print "***"
-        print "CONFIGURING RECEIVER..."
+        print("\nTRANSMITTER CONFIGURED.")
+        print("***")
+        print("CONFIGURING RECEIVER...")
         acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-        print "\nRECEIVER CONFIGURED."
-        print "***"
-        print "\nINITIALIZING PROG BOARD...\n"
+        print("\nRECEIVER CONFIGURED.")
+        print("***")
+        print("\nINITIALIZING PROG BOARD...\n")
         SpinCore_pp.init_ppg();
-        print "\nLOADING PULSE PROG...\n"
+        print("\nLOADING PULSE PROG...\n")
         if phase_cycling:
             SpinCore_pp.load([
                 ('marker','start',1),
@@ -283,12 +283,12 @@ with Bridge12() as b:
                 ('jumpto','start')
                 ])
             #}}}
-        print "\nSTOPPING PROG BOARD...\n"
+        print("\nSTOPPING PROG BOARD...\n")
         SpinCore_pp.stop_ppg();
-        print "\nRUNNING BOARD...\n"
+        print("\nRUNNING BOARD...\n")
         if phase_cycling:
-            for x in xrange(nScans):
-                print "SCAN NO. %d"%(x+1)
+            for x in range(nScans):
+                print("SCAN NO. %d"%(x+1))
                 SpinCore_pp.runBoard();
         if not phase_cycling:
             SpinCore_pp.runBoard(); 
@@ -296,8 +296,8 @@ with Bridge12() as b:
         raw_data.astype(float)
         data = []
         data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-        print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-        print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+        print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+        print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
         dataPoints = float(shape(data)[0])
         time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
         data = nddata(array(data),'t')
@@ -308,22 +308,22 @@ with Bridge12() as b:
 DNP_data.name('signal')
 DNP_data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
-print "EXITING..."
-print "\n*** *** ***\n"
+print("EXITING...")
+print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print "SAVING FILE..."
+        print("SAVING FILE...")
         DNP_data.set_prop('acq_params',acq_params)
         DNP_data.name('signal')
         DNP_data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",DNP_data.name()
-        print "Units of saved data",DNP_data.get_units('t')
-        print "Shape of saved data",ndshape(DNP_data)
+        print("Name of saved data",DNP_data.name())
+        print("Units of saved data",DNP_data.get_units('t'))
+        print("Shape of saved data",ndshape(DNP_data))
         save_file = False
     except Exception as e:
-        print e
-        print "FILE ALREADY EXISTS."
+        print(e)
+        print("FILE ALREADY EXISTS.")
         save_file = False
 fl.next('raw data')
 fl.image(DNP_data)

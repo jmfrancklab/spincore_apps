@@ -36,7 +36,7 @@ in the second case.
 #}}}
 from pyspecdata import *
 from numpy import *
-import SpinCore_pp 
+from . import SpinCore_pp 
 fl = figlist_var()
 
 date = '200115'
@@ -93,15 +93,15 @@ for index,val in enumerate(p90_range):
     p90 = val # us
     twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
     tau1 = twice_tau/2.0
-    print "***"
-    print "INDEX %d - 90 TIME %f"%(index,val)
-    print "***"
-    for x in xrange(nScans):
+    print("***")
+    print("INDEX %d - 90 TIME %f"%(index,val))
+    print("***")
+    for x in range(nScans):
         SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
         acq_params['acq_time_ms'] = acq_time
         SpinCore_pp.init_ppg();
-        print "\nLOADING PULSE PROG...\n"
+        print("\nLOADING PULSE PROG...\n")
         if phase_cycling:
             SpinCore_pp.load([
                 ('marker','start',1),
@@ -156,14 +156,14 @@ for index,val in enumerate(p90_range):
         raw_data.astype(float)
         data = []
         data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-        print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-        print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+        print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+        print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
         dataPoints = float(shape(data)[0])
         if x == 0:
             if index == 0:
-                print " *** *** ***"
-                print "INITILIAZING NDDATA..."
-                print " *** *** ***"
+                print(" *** *** ***")
+                print("INITILIAZING NDDATA...")
+                print(" *** *** ***")
                 time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
                 nutation_data = ndshape([len(p90_range),len(time_axis),nScans],['p_90','t','nScans']).alloc(dtype=complex128)
                 nutation_data.setaxis('p_90',p90_range*1e-6).set_units('p_90','s')
@@ -171,22 +171,22 @@ for index,val in enumerate(p90_range):
                 nutation_data.setaxis('nScans',r_[0:nScans])
         nutation_data['p_90',index]['nScans',x] = data
     SpinCore_pp.stopBoard();
-print "EXITING..."
-print "\n*** *** ***\n"
+print("EXITING...")
+print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print "SAVING FILE..."
+        print("SAVING FILE...")
         nutation_data.set_prop('acq_params',acq_params)
         nutation_data.name('nutation')
         nutation_data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",nutation_data.name()
-        print "Units of saved data",nutation_data.get_units('t')
-        print "Shape of saved data",ndshape(nutation_data)
+        print("Name of saved data",nutation_data.name())
+        print("Units of saved data",nutation_data.get_units('t'))
+        print("Shape of saved data",ndshape(nutation_data))
         save_file = False
     except Exception as e:
-        print e
-        print "FILE ALREADY EXISTS."
+        print(e)
+        print("FILE ALREADY EXISTS.")
         save_file = False
 fl.next('raw data')
 fl.image(nutation_data)

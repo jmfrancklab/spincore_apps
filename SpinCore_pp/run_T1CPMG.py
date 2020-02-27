@@ -36,7 +36,7 @@ in the second case.
 #}}}
 from pyspecdata import *
 from numpy import *
-import SpinCore_pp 
+from . import SpinCore_pp 
 import time
 fl = figlist_var()
 
@@ -97,9 +97,9 @@ if phase_cycling:
 #}}}
 for index,val in enumerate(vd_list):
     vd = val
-    print "***"
-    print "INDEX %d - VARIABLE DELAY %f"%(index,val)
-    print "***"
+    print("***")
+    print("INDEX %d - VARIABLE DELAY %f"%(index,val))
+    print("***")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
     acq_params['acq_time_ms'] = acq_time
@@ -156,12 +156,12 @@ for index,val in enumerate(vd_list):
             ('delay',repetition),
             ('jumpto','start')
             ])
-    print "\nSTOPPING PROG BOARD...\n"
+    print("\nSTOPPING PROG BOARD...\n")
     SpinCore_pp.stop_ppg();
-    print "\nRUNNING BOARD...\n"
+    print("\nRUNNING BOARD...\n")
     if phase_cycling:
-        for x in xrange(nScans):
-            print "SCAN NO. %d"%(x+1)
+        for x in range(nScans):
+            print("SCAN NO. %d"%(x+1))
             SpinCore_pp.runBoard();
     if not phase_cycling:
         SpinCore_pp.runBoard(); 
@@ -172,8 +172,8 @@ for index,val in enumerate(vd_list):
     # should work same as line below and be more effic
     #data = raw_data.view(complex128)
     data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
     dataPoints = float(shape(data)[0])
     time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
     data = nddata(array(data),'t')
@@ -185,22 +185,22 @@ for index,val in enumerate(vd_list):
         data_2d.setaxis('t',time_axis).set_units('t','s')
     data_2d['vd',index] = data
 SpinCore_pp.stopBoard();
-print "EXITING..."
-print "\n*** *** ***\n"
+print("EXITING...")
+print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print "SAVING FILE..."
+        print("SAVING FILE...")
         data_2d.set_prop('acq_params',acq_params)
         data_2d.name('signal')
         data_2d.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",data_2d.name()
-        print "Units of saved data",data_2d.get_units('t')
-        print "Shape of saved data",ndshape(data_2d)
+        print("Name of saved data",data_2d.name())
+        print("Units of saved data",data_2d.get_units('t'))
+        print("Shape of saved data",ndshape(data_2d))
         save_file = False
     except Exception as e:
-        print e
-        print "FILE ALREADY EXISTS."
+        print(e)
+        print("FILE ALREADY EXISTS.")
         save_file = False
 fl.next('raw data')
 data_2d *= exp(-1j*data_2d.fromaxis('vd')*clock_correction)

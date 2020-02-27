@@ -102,4 +102,4 @@ class Ui_MainWindow(object):
         self.pushButton_4.setText(_translate("MainWindow", "Save"))
         self.pushButton_5.setText(_translate("MainWindow", "Acquistion Parameters"))
 
-from mplwidget import MplWidget
+from .mplwidget import MplWidget
