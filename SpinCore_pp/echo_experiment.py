@@ -17,17 +17,34 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.ui.pushButton.clicked.connect(self.run_adcoffset)
         self.ui.pushButton_2.clicked.connect(self.run_Hahn_echo)
         self.ui.pushButton_3.clicked.connect(self.takeFT)
+        self.ui.pushButton_4.clicked.connect(self.save_file)
         self.ui.adcoffset = None
-        self.ui.xaxis = None
-        self.ui.yaxis = None
+        self.ui.data = None
+        self.ui.filename = None
     def run_adcoffset(self):
         adc_val = (subprocess.check_output("../adc_offset.exe").split()[-1])
         self.ui.adcoffset = adc_val
         self.ui.textEdit.setText(adc_val)
     def takeFT(self):
-        self.ui.f_widget.canvas.ax.plot(self.ui.xaxis,self.ui.yaxis.real,alpha=0.4)
+        self.ui.f_widget.canvas.ax.plot(self.ui.data.getaxis('t'),self.ui.data.data.real,alpha=0.4)
         self.ui.f_widget.canvas.draw()
-    #{{{
+    def get_filename(self):
+        text,ok = QtWidgets.QInputDialog.getText(self,"Filename input dialog","Enter desired file name:")
+        if ok:
+            self.ui.filename = str(text)
+    def save_file(self):
+        self.get_filename()
+        try:
+            print "SAVING FILE..."
+            self.ui.data.hdf5_write(self.ui.filename+'.h5')
+            print "FILE SAVED!"
+        except Exception as e:
+            print e
+            print "EXCEPTION ERROR - FILE ALREADY EXISTS."
+            error_dialog = QtWidgets.QMessageBox()
+            error_dialog.about(self,"Title","MEssage")
+            #error_dialog.showMessage("Oh no!")
+
     def run_Hahn_echo(self):
         #{{{ Verify arguments compatible with board
         def verifyParams():
@@ -202,6 +219,7 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         data.ft('t',shift=True)
         self.ui.xaxis = data.getaxis('t')
         self.ui.yaxis = data.data
+        self.ui.data = data
 
 
 app = QtWidgets.QApplication([])
