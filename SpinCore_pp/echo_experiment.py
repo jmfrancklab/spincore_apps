@@ -1,5 +1,5 @@
 import sys
-from .echo_experiment_ui import Ui_MainWindow
+from echo_experiment_ui import Ui_MainWindow
 import subprocess
 
 from PyQt5 import QtWidgets
@@ -7,7 +7,7 @@ from PyQt5 import QtWidgets
 from pyspecdata import *
 import os
 import sys
-from . import SpinCore_pp
+import SpinCore_pp
 
 class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
     def __init__(self):

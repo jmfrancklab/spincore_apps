@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file 'echo_experiment.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -101,5 +103,4 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "EXPERIMENT"))
         self.pushButton_4.setText(_translate("MainWindow", "Save"))
         self.pushButton_5.setText(_translate("MainWindow", "Acquistion Parameters"))
-
-from .mplwidget import MplWidget
+from mplwidget import MplWidget

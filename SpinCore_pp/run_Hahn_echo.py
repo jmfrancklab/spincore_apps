@@ -1,7 +1,8 @@
 from pyspecdata import *
 import os
 import sys
-from . import SpinCore_pp
+import SpinCore_pp
+#from . import SpinCore_pp
 #from . import SpinCore_pp
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
