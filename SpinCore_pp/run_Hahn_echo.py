@@ -32,16 +32,14 @@ def verifyParams():
     return
 #}}}
 date = '200301'
-output_name = 'echo_alex_probe_cf'
+output_name = 'echo_alex_probe_cf_FULLPOWER'
 adcOffset = 44
 carrierFreq_MHz = 14.781047
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = True
-ph1 = r_[0,1,2,3]
-ph2 = r_[0,2]
+phase_cycling = False
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -107,16 +105,14 @@ for x in range(nScans):
     print("PROGRAMMING BOARD...")
     print("\nLOADING PULSE PROG...\n")
     if phase_cycling:
-        phase_cycles = dict(ph1 = r_[0,1,2,3],
-                ph2 = r_[0,2])
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',phase_cycles['ph1']),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph2',phase_cycles['ph2']),
+            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),
@@ -161,16 +157,6 @@ for x in range(nScans):
 print("EXITING...")
 print("\n*** *** ***\n")
 save_file = True
-if phase_cycling:
-    phcyc_names = list(phase_cycles.keys())
-    phcyc_names.sort(reverse=True)
-    phcyc_dims = [len(phase_cycles[j]) for j in phcyc_names]
-    data.chunk('t',phcyc_names+['t2'],phcyc_dims+[-1])
-    data.setaxis('nScans',r_[0:nScans])
-    data.setaxis('ph1',ph1/4.)
-    data.setaxis('ph2',ph2/4.)
-else:
-    data.rename('t','t2')
 while save_file:
     try:
         print("SAVING FILE...")
@@ -186,32 +172,29 @@ while save_file:
         save_file = False
 if not phase_cycling:
     if nScans == 1:
-        print((ndshape(data)))
         fl.next('raw data')
         fl.plot(data.real)
         fl.plot(data.imag)
         fl.plot(abs(data),':',alpha=0.5)
-        data.ft('t2',shift=True)
+        data.ft('t',shift=True)
         fl.next('raw data - FT')
         fl.plot(data)
         fl.plot(data.imag)
         fl.plot(abs(data),':',alpha=0.5)
     else:
-        print((ndshape(data)))
         data.reorder('nScans',first=True)
         fl.next('raw data')
         fl.image(data)
-        for x in range(len(data.getaxis('nScans'))):
+        for x in xrange(len(data.getaxis('nScans'))):
             fl.next('scan %d'%x)
             fl.plot(data['nScans',x])
         data.ft('t',shift=True)
-        for x in range(len(data.getaxis('nScans'))):
+        for x in xrange(len(data.getaxis('nScans'))):
             fl.next('FT scan %d'%x)
             fl.plot(data['nScans',x])
         fl.next('FT raw data')
         fl.image(data['t2':(-5e3,5e3)])
 if phase_cycling:
-    print((ndshape(data)))
     s = data.C
     s.set_units('t','s')
     orig_t = s.getaxis('t')
@@ -223,8 +206,8 @@ if phase_cycling:
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
+    s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
-    print((ndshape(s)))
     fl.next('raw data - chunking')
     fl.image(s)
     s.ft('t2',shift=True)

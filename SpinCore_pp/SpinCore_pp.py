@@ -24,7 +24,7 @@ elif _swig_python_version_info >= (2, 6, 0):
         try:
             fp, pathname, description = imp.find_module('_SpinCore_pp', [dirname(__file__)])
         except ImportError:
-            from . import _SpinCore_pp
+            import _SpinCore_pp
             return _SpinCore_pp
         try:
             _mod = imp.load_module('_SpinCore_pp', fp, pathname, description)
@@ -35,7 +35,7 @@ elif _swig_python_version_info >= (2, 6, 0):
     _SpinCore_pp = swig_import_helper()
     del swig_import_helper
 else:
-    from . import _SpinCore_pp
+    import _SpinCore_pp
 del _swig_python_version_info
 
 try:
@@ -46,7 +46,7 @@ except NameError:
 try:
     import builtins as __builtin__
 except ImportError:
-    import builtins
+    import __builtin__
 
 def _swig_setattr_nondynamic(self, class_type, name, value, static=1):
     if (name == "thisown"):
@@ -83,44 +83,44 @@ def _swig_getattr(self, class_type, name):
 def _swig_repr(self):
     try:
         strthis = "proxy of " + self.this.__repr__()
-    except builtins.Exception:
+    except __builtin__.Exception:
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
 try:
     _object = object
     _newclass = 1
-except builtins.Exception:
+except __builtin__.Exception:
     class _object:
         pass
     _newclass = 0
 
 
-def get_time():
+def get_time() -> "char *":
     return _SpinCore_pp.get_time()
 get_time = _SpinCore_pp.get_time
 
-def pause():
+def pause() -> "void":
     return _SpinCore_pp.pause()
 pause = _SpinCore_pp.pause
 
-def configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints):
+def configureTX(adcOffset: 'int', carrierFreq_MHz: 'double', tx_phases: 'double *', amplitude: 'double', nPoints: 'unsigned int') -> "int":
     return _SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
 configureTX = _SpinCore_pp.configureTX
 
-def configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps):
+def configureRX(SW_kHz: 'double', nPoints: 'unsigned int', nScans: 'unsigned int', nEchoes: 'unsigned int', nPhaseSteps: 'unsigned int') -> "double":
     return _SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
 configureRX = _SpinCore_pp.configureRX
 
-def init_ppg():
+def init_ppg() -> "int":
     return _SpinCore_pp.init_ppg()
 init_ppg = _SpinCore_pp.init_ppg
 
-def stop_ppg():
+def stop_ppg() -> "int":
     return _SpinCore_pp.stop_ppg()
 stop_ppg = _SpinCore_pp.stop_ppg
 
-def ppg_element(str_label, firstarg, secondarg=0):
+def ppg_element(str_label: 'char *', firstarg: 'double', secondarg: 'double'=0) -> "int":
     return _SpinCore_pp.ppg_element(str_label, firstarg, secondarg)
 ppg_element = _SpinCore_pp.ppg_element
 
@@ -162,13 +162,13 @@ def apply_cycles(ppg_in,list_of_cycles_found):
             found_cycle = True
             break
     if found_cycle:
-        print(("found phase cycle named",cycle_name))
+        print("found phase cycle named",cycle_name)
         all_cycles = [ppg_element[3] for ppg_element in ppg_in if (((ppg_element[0] == 'pulse' or ppg_element[0] == 'pulse_TTL') and ppg_element[2] == cycle_name) if len(ppg_element)>3 else False )]
-        maxlen = max(list(map(len,all_cycles)))
+        maxlen = max(map(len,all_cycles))
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
         print("LIST OF CYCLES FOUND NOW")
         ppg_out = []
-        for j in range(maxlen):
+        for j in xrange(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
                 if len(ppg_elem) > 3 and ppg_elem[2] == cycle_name:
                     elem_copy = list(ppg_elem)
@@ -179,7 +179,7 @@ def apply_cycles(ppg_in,list_of_cycles_found):
                     ppg_out.append(ppg_elem)
         del ppg_in
         print("***")
-        print(("AFTER CYCLING:\n",'\n'.join(map(str,ppg_out))))
+        print("AFTER CYCLING:\n",'\n'.join(map(str,ppg_out)))
         return apply_cycles(ppg_out,list_of_cycles_found)
     else:
         print("***")
@@ -205,19 +205,19 @@ def load(args):
         ppg_element(*a_tuple)
 
 
-def runBoard():
+def runBoard() -> "int":
     return _SpinCore_pp.runBoard()
 runBoard = _SpinCore_pp.runBoard
 
-def getData(output_array, nPoints, nEchoes, nPhaseSteps, output_name):
+def getData(output_array: 'int *', nPoints: 'unsigned int', nEchoes: 'unsigned int', nPhaseSteps: 'unsigned int', output_name: 'char *') -> "int":
     return _SpinCore_pp.getData(output_array, nPoints, nEchoes, nPhaseSteps, output_name)
 getData = _SpinCore_pp.getData
 
-def stopBoard():
+def stopBoard() -> "void":
     return _SpinCore_pp.stopBoard()
 stopBoard = _SpinCore_pp.stopBoard
 
-def tune(carrier_freq):
+def tune(carrier_freq: 'double') -> "void":
     return _SpinCore_pp.tune(carrier_freq)
 tune = _SpinCore_pp.tune
 # This file is compatible with both classic and new-style classes.
