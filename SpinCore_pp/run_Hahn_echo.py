@@ -2,8 +2,6 @@ from pyspecdata import *
 import os
 import sys
 import SpinCore_pp
-#from . import SpinCore_pp
-#from . import SpinCore_pp
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -33,15 +31,15 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-date = '200226'
-output_name = 'echo_2'
-adcOffset = 45
-carrierFreq_MHz = 14.898564
+date = '200301'
+output_name = 'echo_alex_probe_cf'
+adcOffset = 44
+carrierFreq_MHz = 14.781047
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 ph1 = r_[0,1,2,3]
 ph2 = r_[0,2]
 if phase_cycling:
@@ -53,7 +51,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.3
+p90 = 10.
 deadtime = 5.0
 repetition = 1e6
 
