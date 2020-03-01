@@ -6,42 +6,40 @@ fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
-        print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
-        print "EXITING."
+        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF POINTS."
+        print("VERIFIED NUMBER OF POINTS.")
     if (nScans < 1):
-        print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
-        print "EXITING."
+        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF SCANS."
+        print("VERIFIED NUMBER OF SCANS.")
     if (p90 < 0.065):
-        print "ERROR: PULSE TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: PULSE TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED PULSE TIME."
+        print("VERIFIED PULSE TIME.")
     if (tau < 0.065):
-        print "ERROR: DELAY TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: DELAY TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED DELAY TIME."
+        print("VERIFIED DELAY TIME.")
     return
 #}}}
-date = '200226'
-output_name = 'echo_2'
-adcOffset = 45
-carrierFreq_MHz = 14.898564
+date = '200301'
+output_name = 'echo_alex_probe_cf_FULLPOWER'
+adcOffset = 44
+carrierFreq_MHz = 14.781047
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = True
-ph1 = r_[0,1,2,3]
-ph2 = r_[0,2]
+phase_cycling = False
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
@@ -51,7 +49,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.3
+p90 = 10.
 deadtime = 5.0
 repetition = 1e6
 
@@ -83,40 +81,38 @@ acq_params['pad_us'] = pad
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
-print "ACQUISITION TIME:",acq_time,"ms"
-print "TAU DELAY:",tau,"us"
-print "PAD DELAY:",pad,"us"
+print(("ACQUISITION TIME:",acq_time,"ms"))
+print(("TAU DELAY:",tau,"us"))
+print(("PAD DELAY:",pad,"us"))
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-for x in xrange(nScans):
-    print "*** *** *** SCAN NO. %d *** *** ***"%(x+1)
-    print "\n*** *** ***\n"
-    print "CONFIGURING TRANSMITTER..."
+for x in range(nScans):
+    print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
+    print("\n*** *** ***\n")
+    print("CONFIGURING TRANSMITTER...")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    print "\nTRANSMITTER CONFIGURED."
-    print "***"
-    print "CONFIGURING RECEIVER..."
+    print("\nTRANSMITTER CONFIGURED.")
+    print("***")
+    print("CONFIGURING RECEIVER...")
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
     acq_params['acq_time_ms'] = acq_time
     # acq_time is in msec!
-    print "ACQUISITION TIME IS",acq_time,"ms"
+    print(("ACQUISITION TIME IS",acq_time,"ms"))
     verifyParams()
-    print "\nRECEIVER CONFIGURED."
-    print "***"
-    print "\nINITIALIZING PROG BOARD...\n"
+    print("\nRECEIVER CONFIGURED.")
+    print("***")
+    print("\nINITIALIZING PROG BOARD...\n")
     SpinCore_pp.init_ppg();
-    print "PROGRAMMING BOARD..."
-    print "\nLOADING PULSE PROG...\n"
+    print("PROGRAMMING BOARD...")
+    print("\nLOADING PULSE PROG...\n")
     if phase_cycling:
-        phase_cycles = dict(ph1 = r_[0,1,2,3],
-                ph2 = r_[0,2])
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',phase_cycles['ph1']),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph2',phase_cycles['ph2']),
+            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),
@@ -138,16 +134,16 @@ for x in xrange(nScans):
             ('delay',repetition),
             ('jumpto','start')
             ])
-    print "\nSTOPPING PROG BOARD...\n"
+    print("\nSTOPPING PROG BOARD...\n")
     SpinCore_pp.stop_ppg();
-    print "\nRUNNING BOARD...\n"
+    print("\nRUNNING BOARD...\n")
     SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
     data_array = []
     data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print "COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]
-    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+    print(("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]))
+    print(("RAW DATA ARRAY LENGTH:",shape(raw_data)[0]))
     dataPoints = float(shape(data_array)[0])
     if x == 0:
         time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
@@ -158,35 +154,24 @@ for x in xrange(nScans):
         data.set_prop('acq_params',acq_params)
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
-print "EXITING..."
-print "\n*** *** ***\n"
+print("EXITING...")
+print("\n*** *** ***\n")
 save_file = True
-if phase_cycling:
-    phcyc_names = list(phase_cycles.keys())
-    phcyc_names.sort(reverse=True)
-    phcyc_dims = [len(phase_cycles[j]) for j in phcyc_names]
-    data.chunk('t',phcyc_names+['t2'],phcyc_dims+[-1])
-    data.setaxis('nScans',r_[0:nScans])
-    data.setaxis('ph1',ph1/4.)
-    data.setaxis('ph2',ph2/4.)
-else:
-    data.rename('t','t2')
 while save_file:
     try:
-        print "SAVING FILE..."
+        print("SAVING FILE...")
         data.hdf5_write(date+'_'+output_name+'.h5')
-        print "FILE SAVED!"
-        print "Name of saved data",data.name()
-        print "Units of saved data",data.get_units('t')
-        print "Shape of saved data",ndshape(data)
+        print("FILE SAVED!")
+        print(("Name of saved data",data.name()))
+        print(("Units of saved data",data.get_units('t')))
+        print(("Shape of saved data",ndshape(data)))
         save_file = False
     except Exception as e:
-        print e
-        print "EXCEPTION ERROR - FILE MAY ALREADY EXIST."
+        print(e)
+        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
         save_file = False
 if not phase_cycling:
     if nScans == 1:
-        print ndshape(data)
         fl.next('raw data')
         fl.plot(data.real)
         fl.plot(data.imag)
@@ -197,7 +182,6 @@ if not phase_cycling:
         fl.plot(data.imag)
         fl.plot(abs(data),':',alpha=0.5)
     else:
-        print ndshape(data)
         data.reorder('nScans',first=True)
         fl.next('raw data')
         fl.image(data)
@@ -211,7 +195,6 @@ if not phase_cycling:
         fl.next('FT raw data')
         fl.image(data['t2':(-5e3,5e3)])
 if phase_cycling:
-    print ndshape(data)
     s = data.C
     s.set_units('t','s')
     orig_t = s.getaxis('t')
@@ -223,8 +206,8 @@ if phase_cycling:
     s.setaxis('ph2',r_[0.,2.]/4)
     s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     s.setaxis('t2',t2_axis)
+    s.setaxis('nScans',r_[0:nScans])
     s.reorder('t2',first=False)
-    print ndshape(s)
     fl.next('raw data - chunking')
     fl.image(s)
     s.ft('t2',shift=True)

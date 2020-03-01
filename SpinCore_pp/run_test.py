@@ -1,34 +1,34 @@
 from pyspecdata import *
 import os
 import sys
-import SpinCore_pp
+from . import SpinCore_pp
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
-        print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
-        print "EXITING."
+        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF POINTS."
+        print("VERIFIED NUMBER OF POINTS.")
     if (nScans < 1):
-        print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
-        print "EXITING."
+        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF SCANS."
+        print("VERIFIED NUMBER OF SCANS.")
     if (p90 < 0.065):
-        print "ERROR: PULSE TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: PULSE TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED PULSE TIME."
+        print("VERIFIED PULSE TIME.")
     if (tau < 0.065):
-        print "ERROR: DELAY TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: DELAY TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED DELAY TIME."
+        print("VERIFIED DELAY TIME.")
     return
 #}}}
 date = '190404'
@@ -76,10 +76,10 @@ if not phase_cycling:
         ])
 SpinCore_pp.stop_ppg();
 if phase_cycling:
-    for x in xrange(nScans):
-        print "SCAN NO. %d"%(x+1)
+    for x in range(nScans):
+        print("SCAN NO. %d"%(x+1))
         SpinCore_pp.runBoard();
 if not phase_cycling:
     SpinCore_pp.runBoard();
 SpinCore_pp.stopBoard();
-print "EXITING..."
+print("EXITING...")

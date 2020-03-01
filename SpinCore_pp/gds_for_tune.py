@@ -4,7 +4,7 @@ import time
 from serial.tools.list_ports import comports
 import serial
 from scipy import signal
-import SpinCore_pp
+from . import SpinCore_pp
 import sys
 import threading
 from pyspecdata import *
@@ -23,13 +23,13 @@ if field is None: field = default_field
 if effective_gamma is None: effective_gamma = default_effective_gamma
 carrier_frequency = field*effective_gamma
 
-print "Using a field of %f and an effective gamma of %g to predict a frequency of %f MHz"%(field,effective_gamma,carrier_frequency)
+print("Using a field of %f and an effective gamma of %g to predict a frequency of %f MHz"%(field,effective_gamma,carrier_frequency))
 
 fl = figlist_var()
 
-print "These are the instruments available:"
+print("These are the instruments available:")
 SerialInstrument(None)
-print "done printing available instruments"
+print("done printing available instruments")
 def grab_waveforms(g):
     # {{{ capture a "successful" waveform
     ch1 = g.waveform(ch=1)
@@ -50,11 +50,11 @@ def grab_waveforms(g):
 def waiting_func():
     for j in range(3):
         time.sleep(3)
-        print "counter number %d"%j
+        print("counter number %d"%j)
 def other_func(carrier_frequency):
     for j in range(3):
         time.sleep(3)
-        print "second func: counter number %d"%j
+        print("second func: counter number %d"%j)
 def run_tune(carrier_frequency):
     SpinCore_pp.tune(carrier_frequency)
 
@@ -94,11 +94,11 @@ with figlist_var() as fl:
     fl.plot(abs(d), alpha=0.5, linewidth=3)
     fl.plot(abs(flat_slice), alpha=0.5, linewidth=3)
 flat_slice.run(abs).mean('t')
-print "reflection ratio calculated from ratio of %f to %f mV"%(abs(flat_slice['ch',1]).item()/1e-3,abs(flat_slice['ch',0]).item()/1e-3)
+print("reflection ratio calculated from ratio of %f to %f mV"%(abs(flat_slice['ch',1]).item()/1e-3,abs(flat_slice['ch',0]).item()/1e-3))
 ratio = (abs(flat_slice['ch',1]/flat_slice['ch',0])).item()
 tuning_dB = log10(ratio)*20
 if tuning_dB < -20:
-    print "congratulations! you have achieved a reflection ratio of %0.1f dB"%tuning_dB
+    print("congratulations! you have achieved a reflection ratio of %0.1f dB"%tuning_dB)
 else:
-    print "Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!"%tuning_dB
+    print("Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!"%tuning_dB)
 

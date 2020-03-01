@@ -221,7 +221,7 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
                     ));
     }else if (strcmp(str_label,"marker")==0){
         error_status = 0;
-        printf("MARKER: label %d, %d times\n",(int) firstarg,(int) secondarg);
+        printf("MARKER: label %d, %d times\n",(int) firstarg,(double) secondarg);
         printf("READING TO MEMORY...\n");
         int label = (int) firstarg;
         unsigned int nTimes = (int) secondarg;

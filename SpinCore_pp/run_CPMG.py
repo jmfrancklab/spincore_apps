@@ -1,7 +1,7 @@
 
 from pyspecdata import *
 from numpy import *
-import SpinCore_pp 
+from . import SpinCore_pp 
 fl = figlist_var()
 
 date = '200221'
@@ -56,21 +56,21 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-for x in xrange(nScans):
-    print "*** *** *** SCAN NO. %d *** *** ***"%(x+1)
-    print "\n*** *** ***\n"
-    print "CONFIGURING TRANSMITTER..."
+for x in range(nScans):
+    print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
+    print("\n*** *** ***\n")
+    print("CONFIGURING TRANSMITTER...")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    print "\nTRANSMITTER CONFIGURED."
-    print "***"
-    print "CONFIGURING RECEIVER..."
+    print("\nTRANSMITTER CONFIGURED.")
+    print("***")
+    print("CONFIGURING RECEIVER...")
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
     acq_params['acq_time_ms'] = acq_time
-    print "\nRECEIVER CONFIGURED."
-    print "***"
-    print "\nINITIALIZING PROG BOARD...\n"
+    print("\nRECEIVER CONFIGURED.")
+    print("***")
+    print("\nINITIALIZING PROG BOARD...\n")
     SpinCore_pp.init_ppg();
-    print "\nLOADING PULSE PROG...\n"
+    print("\nLOADING PULSE PROG...\n")
     if phase_cycling:
         SpinCore_pp.load([
             ('marker','start',1),
@@ -119,16 +119,16 @@ for x in xrange(nScans):
                 ('delay',repetition),
                 ('jumpto','start')
                 ])
-    print "\nSTOPPING PROG BOARD...\n"
+    print("\nSTOPPING PROG BOARD...\n")
     SpinCore_pp.stop_ppg();
-    print "\nRUNNING BOARD...\n"
+    print("\nRUNNING BOARD...\n")
     SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
     data_array = []
     data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print "COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]
-    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+    print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
+    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
     dataPoints = float(shape(data_array)[0])
     if x == 0:
         time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
@@ -139,25 +139,25 @@ for x in xrange(nScans):
         data.set_prop('acq_params',acq_params)
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
-print "EXITING..."
-print "\n*** *** ***\n"
+print("EXITING...")
+print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print "SAVING FILE..."
+        print("SAVING FILE...")
         data.hdf5_write(date+'_'+output_name+'.h5')
-        print "FILE SAVED!"
-        print "Name of saved data",data.name()
-        print "Units of saved data",data.get_units('t')
-        print "Shape of saved data",ndshape(data)
+        print("FILE SAVED!")
+        print("Name of saved data",data.name())
+        print("Units of saved data",data.get_units('t'))
+        print("Shape of saved data",ndshape(data))
         save_file = False
     except Exception as e:
-        print e
-        print "EXCEPTION ERROR - FILE MAY ALREADY EXIST."
+        print(e)
+        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
         save_file = False
 if not phase_cycling:
     if nScans == 1:
-        print ndshape(data)
+        print(ndshape(data))
         fl.next('raw data')
         fl.plot(data)
         fl.plot(abs(data),':',alpha=0.5)
@@ -166,21 +166,21 @@ if not phase_cycling:
         fl.plot(data)
         fl.plot(abs(data),':',alpha=0.5)
     else:
-        print ndshape(data)
+        print(ndshape(data))
         data.reorder('nScans',first=True)
         fl.next('raw data')
         fl.image(data)
-        for x in xrange(len(data.getaxis('nScans'))):
+        for x in range(len(data.getaxis('nScans'))):
             fl.next('scan %d'%x)
             fl.plot(data['nScans',x])
         data.ft('t',shift=True)
-        for x in xrange(len(data.getaxis('nScans'))):
+        for x in range(len(data.getaxis('nScans'))):
             fl.next('FT scan %d'%x)
             fl.plot(data['nScans',x])
         fl.next('FT raw data')
         fl.image(data)
 if phase_cycling:
-    print ndshape(data)
+    print(ndshape(data))
     s = data.C
     s.set_units('t','s')
     orig_t = s.getaxis('t')

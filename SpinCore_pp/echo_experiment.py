@@ -18,9 +18,11 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.ui.pushButton_2.clicked.connect(self.run_Hahn_echo)
         self.ui.pushButton_3.clicked.connect(self.takeFT)
         self.ui.pushButton_4.clicked.connect(self.save_file)
+        self.ui.pushButton_5.clicked.connect(self.open_acqparams)
         self.ui.adcoffset = None
         self.ui.data = None
         self.ui.filename = None
+        self.ui.carrierFreq_MHz = None
     def run_adcoffset(self):
         adc_val = (subprocess.check_output("../adc_offset.exe").split()[-1])
         self.ui.adcoffset = adc_val
@@ -28,6 +30,19 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
     def takeFT(self):
         self.ui.f_widget.canvas.ax.plot(self.ui.data.getaxis('t'),self.ui.data.data.real,alpha=0.4)
         self.ui.f_widget.canvas.draw()
+    def open_acqparams(self):
+        layout = QtWidgets.QFormLayout()
+        self.btn = QtWidgets.QPushButton("Params")
+        self.btn.clicked.connect(None)
+
+        self.le = QtWidgets.QLineEdit()
+        layout.addRow(self.btn,self.le)
+        self.btn1 = QtWidgets.QPushButton("Carrier Frequency:")
+        self.btn1.clicked.connect(self.getCarrier())
+    def getCarrier(self):
+        text,ok = QtWidgets.QInputDialog.getText(self,"Input dialog","Enter desired carrier freq in MHz:")
+        if ok:
+            self.ui.carrierFreq_MHz = float(text)
     def get_filename(self):
         text,ok = QtWidgets.QInputDialog.getText(self,"Filename input dialog","Enter desired file name:")
         if ok:
@@ -35,12 +50,12 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
     def save_file(self):
         self.get_filename()
         try:
-            print "SAVING FILE..."
+            print("SAVING FILE...")
             self.ui.data.hdf5_write(self.ui.filename+'.h5')
-            print "FILE SAVED!"
+            print("FILE SAVED!")
         except Exception as e:
-            print e
-            print "EXCEPTION ERROR - FILE ALREADY EXISTS."
+            print(e)
+            print("EXCEPTION ERROR - FILE ALREADY EXISTS.")
             buttonReply = QtWidgets.QMessageBox.question(self,"File Already Exists","Rename and try again?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
             if buttonReply == QtWidgets.QMessageBox.Yes:
                 print('Yes clicked')
@@ -54,29 +69,29 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         #{{{ Verify arguments compatible with board
         def verifyParams():
             if (nPoints > 16*1024 or nPoints < 1):
-                print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
-                print "EXITING."
+                print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
+                print("EXITING.")
                 quit()
             else:
-                print "VERIFIED NUMBER OF POINTS."
+                print("VERIFIED NUMBER OF POINTS.")
             if (nScans < 1):
-                print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
-                print "EXITING."
+                print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
+                print("EXITING.")
                 quit()
             else:
-                print "VERIFIED NUMBER OF SCANS."
+                print("VERIFIED NUMBER OF SCANS.")
             if (p90 < 0.065):
-                print "ERROR: PULSE TIME TOO SMALL."
-                print "EXITING."
+                print("ERROR: PULSE TIME TOO SMALL.")
+                print("EXITING.")
                 quit()
             else:
-                print "VERIFIED PULSE TIME."
+                print("VERIFIED PULSE TIME.")
             if (tau < 0.065):
-                print "ERROR: DELAY TIME TOO SMALL."
-                print "EXITING."
+                print("ERROR: DELAY TIME TOO SMALL.")
+                print("EXITING.")
                 quit()
             else:
-                print "VERIFIED DELAY TIME."
+                print("VERIFIED DELAY TIME.")
             return
         #}}}
         date = '200226'
@@ -129,29 +144,29 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         if phase_cycling:
             acq_params['nPhaseSteps'] = nPhaseSteps
         #}}}
-        print "ACQUISITION TIME:",acq_time,"ms"
-        print "TAU DELAY:",tau,"us"
-        print "PAD DELAY:",pad,"us"
+        print("ACQUISITION TIME:",acq_time,"ms")
+        print("TAU DELAY:",tau,"us")
+        print("PAD DELAY:",pad,"us")
         data_length = 2*nPoints*nEchoes*nPhaseSteps
-        for x in xrange(nScans):
-            print "*** *** *** SCAN NO. %d *** *** ***"%(x+1)
-            print "\n*** *** ***\n"
-            print "CONFIGURING TRANSMITTER..."
+        for x in range(nScans):
+            print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
+            print("\n*** *** ***\n")
+            print("CONFIGURING TRANSMITTER...")
             SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-            print "\nTRANSMITTER CONFIGURED."
-            print "***"
-            print "CONFIGURING RECEIVER..."
+            print("\nTRANSMITTER CONFIGURED.")
+            print("***")
+            print("CONFIGURING RECEIVER...")
             acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
             acq_params['acq_time_ms'] = acq_time
             # acq_time is in msec!
-            print "ACQUISITION TIME IS",acq_time,"ms"
+            print("ACQUISITION TIME IS",acq_time,"ms")
             verifyParams()
-            print "\nRECEIVER CONFIGURED."
-            print "***"
-            print "\nINITIALIZING PROG BOARD...\n"
+            print("\nRECEIVER CONFIGURED.")
+            print("***")
+            print("\nINITIALIZING PROG BOARD...\n")
             SpinCore_pp.init_ppg();
-            print "PROGRAMMING BOARD..."
-            print "\nLOADING PULSE PROG...\n"
+            print("PROGRAMMING BOARD...")
+            print("\nLOADING PULSE PROG...\n")
             if phase_cycling:
                 SpinCore_pp.load([
                     ('marker','start',1),
@@ -182,16 +197,16 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                     ('delay',repetition),
                     ('jumpto','start')
                     ])
-            print "\nSTOPPING PROG BOARD...\n"
+            print("\nSTOPPING PROG BOARD...\n")
             SpinCore_pp.stop_ppg();
-            print "\nRUNNING BOARD...\n"
+            print("\nRUNNING BOARD...\n")
             SpinCore_pp.runBoard();
             raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
             raw_data.astype(float)
             data_array = []
             data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-            print "COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]
-            print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+            print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
+            print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
             dataPoints = float(shape(data_array)[0])
             if x == 0:
                 time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
@@ -202,21 +217,21 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                 data.set_prop('acq_params',acq_params)
             data['nScans',x] = data_array
             SpinCore_pp.stopBoard();
-        print "EXITING..."
-        print "\n*** *** ***\n"
+        print("EXITING...")
+        print("\n*** *** ***\n")
         save_file = True
         while save_file:
             try:
-                print "SAVING FILE..."
+                print("SAVING FILE...")
                 data.hdf5_write(date+'_'+output_name+'.h5')
-                print "FILE SAVED!"
-                print "Name of saved data",data.name()
-                print "Units of saved data",data.get_units('t')
-                print "Shape of saved data",ndshape(data)
+                print("FILE SAVED!")
+                print("Name of saved data",data.name())
+                print("Units of saved data",data.get_units('t'))
+                print("Shape of saved data",ndshape(data))
                 save_file = False
             except Exception as e:
-                print e
-                print "EXCEPTION ERROR - FILE MAY ALREADY EXIST."
+                print(e)
+                print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
                 save_file = False
                 #}}}
         self.ui.time_plot.canvas.ax.plot(data.getaxis('t'),data.data,alpha=0.4)

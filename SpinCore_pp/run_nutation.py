@@ -1,6 +1,6 @@
 from pyspecdata import *
 import os
-import SpinCore_pp
+from . import SpinCore_pp
 import socket
 import sys
 import time
@@ -8,29 +8,29 @@ fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
-        print "ERROR: MAXIMUM NUMBER OF POINTS IS 16384."
-        print "EXITING."
+        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF POINTS."
+        print("VERIFIED NUMBER OF POINTS.")
     if (nScans < 1):
-        print "ERROR: THERE MUST BE AT LEAST 1 SCAN."
-        print "EXITING."
+        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED NUMBER OF SCANS."
+        print("VERIFIED NUMBER OF SCANS.")
     if (p90 < 0.065):
-        print "ERROR: PULSE TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: PULSE TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED PULSE TIME."
+        print("VERIFIED PULSE TIME.")
     if (tau < 0.065):
-        print "ERROR: DELAY TIME TOO SMALL."
-        print "EXITING."
+        print("ERROR: DELAY TIME TOO SMALL.")
+        print("EXITING.")
         quit()
     else:
-        print "VERIFIED DELAY TIME."
+        print("VERIFIED DELAY TIME.")
     return
 #}}}
 #{{{ for setting EPR magnet
@@ -39,16 +39,16 @@ def API_sender(value):
     if len(sys.argv) > 1:
         IP = sys.argv[1]
     PORT = 6001
-    print "target IP:", IP
-    print "target port:", PORT
+    print("target IP:", IP)
+    print("target port:", PORT)
     MESSAGE = str(value)
-    print "SETTING FIELD TO...", MESSAGE
+    print("SETTING FIELD TO...", MESSAGE)
     sock = socket.socket(socket.AF_INET, # Internet
             socket.SOCK_STREAM) # TCP
     sock.connect((IP, PORT))
     sock.send(MESSAGE)
     sock.close()
-    print "FIELD SET TO...", MESSAGE
+    print("FIELD SET TO...", MESSAGE)
     time.sleep(5)
     return
 #}}}
@@ -79,8 +79,8 @@ nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-print "ACQUISITION TIME:",acq_time,"ms"
-print "TAU DELAY:",tau,"us"
+print("ACQUISITION TIME:",acq_time,"ms")
+print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 p90_range = linspace(1.0,150.0,50,endpoint=False)
 #{{{ setting acq_params dictionary
@@ -104,9 +104,9 @@ if phase_cycling:
 #}}}
 for index,val in enumerate(p90_range):
     p90 = val # us
-    print "***"
-    print "INDEX %d - 90 TIME %f"%(index,val)
-    print "***"
+    print("***")
+    print("INDEX %d - 90 TIME %f"%(index,val))
+    print("***")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
     acq_params['acq_time_ms'] = acq_time
@@ -141,8 +141,8 @@ for index,val in enumerate(p90_range):
             ])
     SpinCore_pp.stop_ppg();
     if phase_cycling:
-        for x in xrange(nScans):
-            print "SCAN NO. %d"%(x+1)
+        for x in range(nScans):
+            print("SCAN NO. %d"%(x+1))
             SpinCore_pp.runBoard();
     if not phase_cycling:
         SpinCore_pp.runBoard();
@@ -153,8 +153,8 @@ for index,val in enumerate(p90_range):
     # should work same as line below and be more effic
     #data = raw_data.view(complex128)
     data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print "COMPLEX DATA ARRAY LENGTH:",shape(data)[0]
-    print "RAW DATA ARRAY LENGTH:",shape(raw_data)[0]
+    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
     dataPoints = float(shape(data)[0])
     time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
     data = nddata(array(data),'t')
@@ -166,22 +166,22 @@ for index,val in enumerate(p90_range):
         nutation_data.setaxis('t',time_axis).set_units('t','s')
     nutation_data['p_90',index] = data
 SpinCore_pp.stopBoard();
-print "EXITING...\n"
-print "\n*** *** ***\n"
+print("EXITING...\n")
+print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print "SAVING FILE..."
+        print("SAVING FILE...")
         nutation_data.set_prop('acq_params',acq_params)
         nutation_data.name('nutation')
         nutation_data.hdf5_write(date+'_'+output_name+'.h5')
-        print "Name of saved data",nutation_data.name()
-        print "Units of saved data",nutation_data.get_units('t')
-        print "Shape of saved data",ndshape(nutation_data)
+        print("Name of saved data",nutation_data.name())
+        print("Units of saved data",nutation_data.get_units('t'))
+        print("Shape of saved data",ndshape(nutation_data))
         save_file = False
     except Exception as e:
-        print e
-        print "FILE ALREADY EXISTS."
+        print(e)
+        print("FILE ALREADY EXISTS.")
         save_file = False
 fl.next('raw data')
 fl.image(nutation_data)

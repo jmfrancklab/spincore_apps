@@ -73,11 +73,11 @@ def apply_cycles(ppg_in,list_of_cycles_found):
             found_cycle = True
             break
     if found_cycle:
-        print "found phase cycle named",cycle_name
+        print("found phase cycle named",cycle_name)
         all_cycles = [ppg_element[3] for ppg_element in ppg_in if (((ppg_element[0] == 'pulse' or ppg_element[0] == 'pulse_TTL') and ppg_element[2] == cycle_name) if len(ppg_element)>3 else False )]
         maxlen = max(map(len,all_cycles))
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
-        print "LIST OF CYCLES FOUND NOW"
+        print("LIST OF CYCLES FOUND NOW")
         ppg_out = []
         for j in xrange(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
@@ -89,12 +89,12 @@ def apply_cycles(ppg_in,list_of_cycles_found):
                 else:
                     ppg_out.append(ppg_elem)
         del ppg_in
-        print "***"
-        print "AFTER CYCLING:\n",'\n'.join(map(str,ppg_out))
+        print("***")
+        print("AFTER CYCLING:\n",'\n'.join(map(str,ppg_out)))
         return apply_cycles(ppg_out,list_of_cycles_found)
     else:
-        print "***"
-        print "FOUND NO CYCLING ELEMENTS"
+        print("***")
+        print("FOUND NO CYCLING ELEMENTS")
         return ppg_in,list_of_cycles_found
 def load(args):
     ppg_list = []
