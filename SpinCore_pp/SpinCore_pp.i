@@ -7,7 +7,7 @@ extern int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases,
 extern double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, unsigned int nEchoes, unsigned int nPhaseSteps);
 extern int init_ppg();
 extern int stop_ppg();
-extern int ppg_element(char *str_label, double firstarg, double secondarg);
+extern int ppg_element(char *str_label, double firstarg, int secondarg);
 extern char *exception_info();
 extern int runBoard();
 extern void tune(double carrier_freq);
@@ -32,7 +32,7 @@ extern int stop_ppg();
         return NULL;
     }
 }
-%varargs(double secondarg=0) ppg_element;
+%varargs(int secondarg=0) ppg_element;
 extern int ppg_element(char *str_label, double firstarg, ...);
 %pythoncode %{
 marker_names = {}

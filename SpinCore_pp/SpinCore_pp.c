@@ -119,7 +119,7 @@ char *error_message = "";
 /* JUMPTO: 'jumpto', string, no. times */
 DWORD jump_addresses[10];
 
-int ppg_element(char *str_label, double firstarg, double secondarg){ /*takes 3 vars*/
+int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars*/
     int error_status;
     if (strcmp(str_label,"pulse")==0){
         error_status = 0;
