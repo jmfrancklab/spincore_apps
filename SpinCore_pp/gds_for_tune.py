@@ -4,7 +4,7 @@ import time
 from serial.tools.list_ports import comports
 import serial
 from scipy import signal
-from . import SpinCore_pp
+import SpinCore_pp
 import sys
 import threading
 from pyspecdata import *
@@ -24,6 +24,8 @@ if effective_gamma is None: effective_gamma = default_effective_gamma
 carrier_frequency = field*effective_gamma
 
 print("Using a field of %f and an effective gamma of %g to predict a frequency of %f MHz"%(field,effective_gamma,carrier_frequency))
+print("")
+input("Please note I'm going to assume the control is hooked up to CH1 of the GDS and the reflection is hooked up to CH2 of the GDS... (press enter to continue)")
 
 fl = figlist_var()
 
