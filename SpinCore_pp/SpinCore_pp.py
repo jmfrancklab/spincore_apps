@@ -96,31 +96,31 @@ except __builtin__.Exception:
     _newclass = 0
 
 
-def get_time() -> "char *":
+def get_time():
     return _SpinCore_pp.get_time()
 get_time = _SpinCore_pp.get_time
 
-def pause() -> "void":
+def pause():
     return _SpinCore_pp.pause()
 pause = _SpinCore_pp.pause
 
-def configureTX(adcOffset: 'int', carrierFreq_MHz: 'double', tx_phases: 'double *', amplitude: 'double', nPoints: 'unsigned int') -> "int":
+def configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints):
     return _SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
 configureTX = _SpinCore_pp.configureTX
 
-def configureRX(SW_kHz: 'double', nPoints: 'unsigned int', nScans: 'unsigned int', nEchoes: 'unsigned int', nPhaseSteps: 'unsigned int') -> "double":
+def configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps):
     return _SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
 configureRX = _SpinCore_pp.configureRX
 
-def init_ppg() -> "int":
+def init_ppg():
     return _SpinCore_pp.init_ppg()
 init_ppg = _SpinCore_pp.init_ppg
 
-def stop_ppg() -> "int":
+def stop_ppg():
     return _SpinCore_pp.stop_ppg()
 stop_ppg = _SpinCore_pp.stop_ppg
 
-def ppg_element(str_label: 'char *', firstarg: 'double', secondarg: 'double'=0) -> "int":
+def ppg_element(str_label, firstarg, secondarg=0):
     return _SpinCore_pp.ppg_element(str_label, firstarg, secondarg)
 ppg_element = _SpinCore_pp.ppg_element
 
@@ -168,13 +168,13 @@ def apply_cycles(ppg_in,list_of_cycles_found):
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
         print("LIST OF CYCLES FOUND NOW")
         ppg_out = []
-        for j in xrange(maxlen):
+        for j in range(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
                 if len(ppg_elem) > 3 and ppg_elem[2] == cycle_name:
                     elem_copy = list(ppg_elem)
                     spec_len = len(elem_copy[3])
                     c_idx = j % spec_len
-                    ppg_out.append(tuple(elem_copy[:2]+[elem_copy[3][c_idx]]))
+                    ppg_out.append(tuple(elem_copy[:2]+[elem_copy[3][c_idx].item()]))
                 else:
                     ppg_out.append(ppg_elem)
         del ppg_in
@@ -205,19 +205,19 @@ def load(args):
         ppg_element(*a_tuple)
 
 
-def runBoard() -> "int":
+def runBoard():
     return _SpinCore_pp.runBoard()
 runBoard = _SpinCore_pp.runBoard
 
-def getData(output_array: 'int *', nPoints: 'unsigned int', nEchoes: 'unsigned int', nPhaseSteps: 'unsigned int', output_name: 'char *') -> "int":
+def getData(output_array, nPoints, nEchoes, nPhaseSteps, output_name):
     return _SpinCore_pp.getData(output_array, nPoints, nEchoes, nPhaseSteps, output_name)
 getData = _SpinCore_pp.getData
 
-def stopBoard() -> "void":
+def stopBoard():
     return _SpinCore_pp.stopBoard()
 stopBoard = _SpinCore_pp.stopBoard
 
-def tune(carrier_freq: 'double') -> "void":
+def tune(carrier_freq):
     return _SpinCore_pp.tune(carrier_freq)
 tune = _SpinCore_pp.tune
 # This file is compatible with both classic and new-style classes.

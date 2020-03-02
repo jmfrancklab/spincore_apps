@@ -79,13 +79,13 @@ def apply_cycles(ppg_in,list_of_cycles_found):
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
         print("LIST OF CYCLES FOUND NOW")
         ppg_out = []
-        for j in xrange(maxlen):
+        for j in range(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
                 if len(ppg_elem) > 3 and ppg_elem[2] == cycle_name:
                     elem_copy = list(ppg_elem)
                     spec_len = len(elem_copy[3])
                     c_idx = j % spec_len
-                    ppg_out.append(tuple(elem_copy[:2]+[elem_copy[3][c_idx]]))
+                    ppg_out.append(tuple(elem_copy[:2]+[elem_copy[3][c_idx].item()]))
                 else:
                     ppg_out.append(ppg_elem)
         del ppg_in
