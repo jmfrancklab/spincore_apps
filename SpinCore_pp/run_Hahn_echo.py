@@ -191,9 +191,11 @@ else:
         data.rename('t','t2')
 has_phcyc_dims = False
 for j in range(8):# up to 8 independently phase cycled pulses
-    if 'ph%d'%j in data.dimlabels:
+    phstr = 'ph%d'%j
+    if phstr in data.dimlabels:
         has_phcyc_dims = True
-        data.ft('ph%d'%j)
+        print('phcyc along',phstr)
+        data.ft(phstr)
 if has_phcyc_dims:
     fl.next('raw data - time|coh domain')
     fl.image(data)
