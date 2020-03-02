@@ -33,6 +33,14 @@ int main(int argc, char *argv[])
 {
 	double max_offset_result = get_dc_value(ADC_OFFSET_MAX);
 	double min_offset_result = get_dc_value(ADC_OFFSET_MIN);
+
+	printf("Max offset result = %g\n", max_offset_result);
+	printf("Min offset result = %g\n", min_offset_result);
+
+    if(max_offset_result==0 && min_offset_result==0){
+        printf("both max and min offset results are 0 -- try using an adc offset of 0\n");
+        return 0;
+    }
 	
 	double theoretical_adc_offset = (0 - min_offset_result) / (max_offset_result - min_offset_result) * (ADC_OFFSET_MAX - ADC_OFFSET_MIN) + ADC_OFFSET_MIN;
 	int test_offset = round( theoretical_adc_offset );
@@ -192,6 +200,7 @@ int readData(int adc_offset, double* peak)
 	
 	dc_value = 0;
 	for( i = 0 ; i < NUM_POINTS ; i++ ) {
+        printf("for adc offset %d, point %d, I get %d\n",adc_offset,i,real[i]);
 		dc_value += real[i];
 	}
 	

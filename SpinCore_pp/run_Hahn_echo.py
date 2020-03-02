@@ -33,8 +33,8 @@ def verifyParams():
 #}}}
 date = '200301'
 output_name = 'echo_alex_probe_cf_FULLPOWER'
-adcOffset = 44
-carrierFreq_MHz = 14.781047
+adcOffset = 0 
+carrierFreq_MHz = 14.902675
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
