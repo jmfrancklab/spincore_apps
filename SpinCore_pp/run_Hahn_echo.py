@@ -2,6 +2,7 @@ from pyspecdata import *
 import os
 import sys
 import SpinCore_pp
+from datetime import datetime
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -31,15 +32,15 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-date = '200301'
-output_name = 'echo_alex_probe_cf_FULLPOWER'
-adcOffset = 0 
-carrierFreq_MHz = 14.902675
+output_name = 'alex_probe_water'
+adcOffset = 41
+carrierFreq_MHz = 14.889718
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = False
+date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
