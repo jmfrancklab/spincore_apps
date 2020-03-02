@@ -40,6 +40,7 @@ amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
+coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
     nPhaseSteps = 8
@@ -125,10 +126,10 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,0.0),
+            ('pulse_TTL',p90,0),
             ('delay',tau),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
+            ('pulse_TTL',2.0*p90,0),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),
@@ -171,58 +172,47 @@ while save_file:
         print(e)
         print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
         save_file = False
-if not phase_cycling:
-    if nScans == 1:
-        fl.next('raw data')
-        fl.plot(data.real)
-        fl.plot(data.imag)
-        fl.plot(abs(data),':',alpha=0.5)
-        data.ft('t',shift=True)
-        fl.next('raw data - FT')
-        fl.plot(data)
-        fl.plot(data.imag)
-        fl.plot(abs(data),':',alpha=0.5)
-    else:
-        data.reorder('nScans',first=True)
-        fl.next('raw data')
-        fl.image(data)
-        for x in xrange(len(data.getaxis('nScans'))):
-            fl.next('scan %d'%x)
-            fl.plot(data['nScans',x])
-        data.ft('t',shift=True)
-        for x in xrange(len(data.getaxis('nScans'))):
-            fl.next('FT scan %d'%x)
-            fl.plot(data['nScans',x])
-        fl.next('FT raw data')
-        fl.image(data['t2':(-5e3,5e3)])
+
+data.set_units('t','data')
+# {{{ once files are saved correctly, the following become obsolete
 if phase_cycling:
-    s = data.C
-    s.set_units('t','s')
-    orig_t = s.getaxis('t')
-    acq_time_s = orig_t[nPoints]
-    t2_axis = linspace(0,acq_time_s,nPoints)
-    s.setaxis('t',None)
-    s.reorder('t',first=True)
-    s.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    s.setaxis('ph2',r_[0.,2.]/4)
-    s.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    s.setaxis('t2',t2_axis)
-    s.setaxis('nScans',r_[0:nScans])
-    s.reorder('t2',first=False)
-    fl.next('raw data - chunking')
-    fl.image(s)
-    s.ft('t2',shift=True)
-    s.ft(['ph1','ph2'])
-    fl.next('raw data - chunking coh')
-    fl.image(s)
-    s.setaxis('t2',s.getaxis('t2'))
-    if nScans > 1:
-        s.mean('nScans')
-        fl.next('after sig avg')
-        fl.image(s)
-        s = s['ph1',1]['ph2',0].C
-        fl.next('plot - after sig avg')
-        fl.plot(s.real)
-        fl.plot(s.imag)
+    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    data.setaxis('ph2',r_[0.,2.]/4)
+    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+if nScans > 1:
+    data.setaxis('nScans',r_[0:nScans])
+# }}}
+data.squeeze()
+if len(data.dimlabels) > 1:
+    fl.next('raw data - time|ph domain')
+    fl.image(data)
+else:
+    if 't' in data.dimlabels:
+        data.rename('t','t2')
+has_phcyc_dims = False
+for j in range(8):# up to 8 independently phase cycled pulses
+    if 'ph%d'%j in data.dimlabels:
+        has_phcyc_dims = True
+        data.ft('ph%d'%j)
+if has_phcyc_dims:
+    fl.next('raw data - time|coh domain')
+    fl.image(data)
+data.ft('t2',shift=True)
+if len(data.dimlabels) > 1:
+    fl.next('raw data - freq|coh domain')
+    fl.image(data)
+if 'ph1' in data.dimlabels:
+    for phlabel,phidx in coherence_pathway:
+        data = data[phlabel,phidx]
+data.mean_all_but('t2')
+fl.next('raw data - FT')
+fl.plot(data,alpha=0.5)
+fl.plot(data.imag, alpha=0.5)
+fl.plot(abs(data),'k',alpha=0.1, linewidth=3)
+data.ift('t2')
+fl.next('avgd. and coh. ch. selected (where relevant) data -- time domain')
+fl.plot(data,alpha=0.5)
+fl.plot(data.imag, alpha=0.5)
+fl.plot(abs(data),'k',alpha=0.2, linewidth=2)
 fl.show();quit()
 
