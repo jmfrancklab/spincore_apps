@@ -2,7 +2,7 @@ from pyspecdata import *
 from numpy import *
 import os
 import sys
-from . import SpinCore_pp
+import SpinCore_pp
 from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 import time
@@ -57,7 +57,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 10.0
+max_power = 5.0
 power_steps = 25
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
@@ -68,10 +68,10 @@ print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200225'
-output_name = 'DNP_echo_2'
-adcOffset = 45
-carrierFreq_MHz = 14.898564
+date = '200302'
+output_name = 'DNP_echo_w33_2'
+adcOffset = 41
+carrierFreq_MHz = 14.687588
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -86,7 +86,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.3
+p90 = 10.
 deadtime = 5.0
 repetition = 15e6
 
@@ -201,7 +201,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.80e9,9.84e9))
+    this_return = b.lock_on_dip(ini_range=(9.72e9,9.74e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)

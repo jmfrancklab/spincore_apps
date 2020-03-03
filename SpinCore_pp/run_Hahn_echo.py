@@ -32,12 +32,12 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-output_name = 'alex_probe_water'
+output_name = 'alex_probe_w33_noMW_2'
 adcOffset = 41
-carrierFreq_MHz = 14.889718
+carrierFreq_MHz = 14.687588
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -53,7 +53,7 @@ if not phase_cycling:
 #}}}
 p90 = 10.
 deadtime = 5.0
-repetition = 1e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -183,6 +183,7 @@ if nScans > 1:
     data.setaxis('nScans',r_[0:nScans])
 # }}}
 data.squeeze()
+data.reorder('t2',first=False)
 if len(data.dimlabels) > 1:
     fl.next('raw data - time|ph domain')
     fl.image(data)
