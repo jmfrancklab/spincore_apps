@@ -1,6 +1,6 @@
 from pyspecdata import *
 import os
-from . import SpinCore_pp
+import SpinCore_pp
 import socket
 import sys
 import time
@@ -58,10 +58,10 @@ if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
 #}}}
-date = '200219'
-output_name = 'nutation_alex_probe'
-adcOffset = 39
-carrierFreq_MHz = 14.899173
+date = '200303'
+output_name = 'nutation_2'
+adcOffset = 42
+carrierFreq_MHz = 14.917034
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -72,8 +72,8 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-deadtime = 50.0
-repetition = 3e6
+deadtime = 5.0
+repetition = 5e6
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
@@ -82,7 +82,7 @@ tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.0,150.0,50,endpoint=False)
+p90_range = linspace(1.0,20.0,20,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset

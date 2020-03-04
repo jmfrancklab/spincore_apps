@@ -1,6 +1,6 @@
 from pyspecdata import *
 import os
-from . import SpinCore_pp
+import SpinCore_pp
 import socket
 import sys
 import time
@@ -34,17 +34,17 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-date = '200221'
+date = '200303'
 clock_correction = 0
-output_name = 'IR_TEMPOLgel_2_24dm'
-adcOffset = 41
-carrierFreq_MHz = 14.898684
+output_name = 'IR_AER_6'
+adcOffset = 42
+carrierFreq_MHz = 14.917034
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 3.3
+p90 = 3.8
 deadtime = 5.0
 repetition = 10e6
 SW_kHz = 24.0
@@ -83,7 +83,8 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,3e3,4e4,6e5,1e6,1.4e6,1.6e6,2.8e6,4e6,6e6]
+vd_list = r_[5e1,5e2,3e3,4e4,7e4,9e4,9.5e4,1e5,1.5e5,2e5,4e5,6e5,1e6,1.5e6,2e6]
+#vd_list = r_[5e1,3e3,7e5,1.4e6]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
@@ -106,7 +107,7 @@ for index,val in enumerate(vd_list):
             ('pulse_TTL',p90,'ph2',phase_cycles['ph2']),
             ('delay',tau),
             ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,0.0),
+            ('pulse_TTL',2.0*p90,0),
             ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),

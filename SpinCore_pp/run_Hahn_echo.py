@@ -32,12 +32,12 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-output_name = 'alex_probe_w33_noMW_2'
-adcOffset = 41
-carrierFreq_MHz = 14.687588
+output_name = 'echo_1'
+adcOffset = 42
+carrierFreq_MHz = 14.917034
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -51,9 +51,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 10.
+p90 = 3.8
 deadtime = 5.0
-repetition = 15e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -175,6 +175,33 @@ while save_file:
 
 data.set_units('t','data')
 # {{{ once files are saved correctly, the following become obsolete
+print(ndshape(data))
+if not phase_cycling:
+    fl.next('raw data')
+    fl.plot(data)
+    data.ft('t',shift=True)
+    fl.next('ft')
+    fl.plot(data.real)
+    fl.plot(data.imag)
+if phase_cycling:
+    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    data.setaxis('ph2',r_[0.,2.]/4)
+    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    if nScans > 1:
+        data.setaxis('nScans',r_[0:nScans])
+    fl.next('image')
+    fl.image(data)
+    data.ft('t2',shift=True)
+    fl.next('image - ft')
+    fl.image(data)
+    fl.next('image - ft, coherence')
+    data.ft(['ph1','ph2'])
+    fl.image(data)
+    fl.next('data plot')
+    fl.plot(data['ph1',1]['ph2',0])
+    fl.plot(data.imag['ph1',1]['ph2',0])
+fl.show();quit()
+
 if phase_cycling:
     data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     data.setaxis('ph2',r_[0.,2.]/4)
