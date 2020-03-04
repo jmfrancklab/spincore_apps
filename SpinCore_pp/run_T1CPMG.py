@@ -36,20 +36,20 @@ in the second case.
 #}}}
 from pyspecdata import *
 from numpy import *
-from . import SpinCore_pp 
+import SpinCore_pp 
 import time
 fl = figlist_var()
 
-date = '200221'
-output_name = 'T1CPMG_TEMPOLgel_2'
+date = '200303'
+output_name = 'T1CPMG_AER'
 #clock_correction = 1.0829/998.253
-adcOffset = 41
-carrierFreq_MHz = 14.898684
+adcOffset = 42
+carrierFreq_MHz = 14.917034
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.3
+p90 = 3.8
 deadtime = 5.0
-repetition = 15e6
+repetition = 6e6
 deblank = 1.0
 marker = 1.0
 
@@ -58,13 +58,13 @@ nPoints = 128
 acq_time = nPoints/SW_kHz # ms
 deblank = 1.0
 
-tau_extra = 5000.0 # us, must be more than deadtime and more than deblank
+tau_extra = 1500.0 # us, must be more than deadtime and more than deblank
 pad_start = tau_extra - deadtime
 pad_end = tau_extra - deblank*2 # marker + deblank
 twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
 tau1 = twice_tau/2.0
 
-nScans = 4
+nScans = 16
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -73,7 +73,7 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,3e3,4e4,6e5,1e6,1.4e6,1.6e6,2.8e6,4e6,6e6]
+vd_list = r_[5e1,5e2,3e3,4e4,7e4,9e4,9.5e4,1e5,1.5e5,2e5,4e5,6e5,1e6,1.5e6,2e6]
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -109,7 +109,7 @@ for index,val in enumerate(vd_list):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
+            ('pulse_TTL',2.0*p90,0),
             ('delay',vd),
             ('delay_TTL',deblank),
             ('pulse_TTL',p90,'ph1',r_[0,2]),
