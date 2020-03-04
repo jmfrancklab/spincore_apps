@@ -32,12 +32,12 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-output_name = 'echo_1'
+output_name = 'echo_AER_5'
 adcOffset = 42
 carrierFreq_MHz = 14.917034
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 16
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -53,7 +53,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 5.0
-repetition = 1e6
+repetition = 6e6
 
 SW_kHz = 24
 nPoints = 1024*2
