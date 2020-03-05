@@ -4,15 +4,15 @@ from numpy import *
 import SpinCore_pp 
 fl = figlist_var()
 
-date = '200304'
-output_name = 'CPMG_3p6_2'
-adcOffset = 40
-carrierFreq_MHz = 14.898555
+date = '200305'
+output_name = 'CPMG_3p7_3'
+adcOffset = 43
+carrierFreq_MHz = 14.898396
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.6
+p90 = 3.7
 deadtime = 5.0
-repetition = 10e6
+repetition = 8e6
 deblank = 1.0
 marker = 1.0
 
@@ -26,7 +26,7 @@ pad_end = tau_extra - deblank*2 # marker + deblank
 twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
 tau1 = twice_tau/2.0
 
-nScans = 16
+nScans = 4
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
