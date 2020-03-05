@@ -38,7 +38,7 @@ from pyspecdata import *
 from numpy import *
 import os
 import sys
-from . import SpinCore_pp
+import SpinCore_pp
 from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 import time
@@ -93,24 +93,25 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4.0
-power_steps = 25
+max_power = 1.2
+power_steps = 5
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
-        for frac in [0.75,0.5,0.25]]
+        #for frac in [0.75,0.5,0.25]]
+        for frac in [0.25]]
 dB_settings = append(dB_settings,append_dB)
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200115'
-output_name = 'CPMG_DNP_TEMPOLgel_1'
-adcOffset = 42
-carrierFreq_MHz = 14.898534
+date = '200304'
+output_name = 'CPMG_DNP_TEMPOL_1'
+adcOffset = 40
+carrierFreq_MHz = 14.898555
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 2.9
+p90 = 3.6
 deadtime = 5.0
 repetition = 15e6
 deblank = 1.0
@@ -126,7 +127,7 @@ pad_end = tau_extra - deblank*2 # marker + deblank
 twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
 tau1 = twice_tau/2.0
 
-nScans = 4
+nScans = 16
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:

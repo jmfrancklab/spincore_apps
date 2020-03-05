@@ -32,12 +32,12 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-output_name = 'lg_probe_w33_on_8scans'
-adcOffset = 41
-carrierFreq_MHz = 14.685211
+output_name = 'echo_1'
+adcOffset = 40
+carrierFreq_MHz = 14.898555
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 8
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -51,9 +51,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 10
+p90 = 3.8
 deadtime = 5.0
-repetition = 15e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2

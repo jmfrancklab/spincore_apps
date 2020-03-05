@@ -58,10 +58,10 @@ if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
 #}}}
-date = '200303'
-output_name = 'nutation_2'
-adcOffset = 42
-carrierFreq_MHz = 14.917034
+date = '200304'
+output_name = 'nutation_1'
+adcOffset = 40
+carrierFreq_MHz = 14.898555
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -73,7 +73,7 @@ if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 5.0
-repetition = 5e6
+repetition = 8e6
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
