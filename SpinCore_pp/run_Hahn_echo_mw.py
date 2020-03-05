@@ -58,7 +58,7 @@ def verifyParams():
 
 # Parameters for Bridge12
 max_power = 5.0
-power_steps = 25
+power_steps = 5
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -68,13 +68,13 @@ print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200302'
-output_name = 'DNP_echo_w33_2'
+date = '200304'
+output_name = 'DNP_echo_w33_1'
 adcOffset = 41
-carrierFreq_MHz = 14.687588
+carrierFreq_MHz = 14.685211
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 8
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
