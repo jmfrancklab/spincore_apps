@@ -57,8 +57,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 5.0
-power_steps = 5
+max_power = 4.0
+power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -68,13 +68,13 @@ print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200304'
-output_name = 'DNP_echo_w33_1'
-adcOffset = 41
-carrierFreq_MHz = 14.685211
+date = '200305'
+output_name = 'DNP_15NS175R1a_pR_DHPC_1'
+adcOffset = 38
+carrierFreq_MHz = 14.902675
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 8
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -86,7 +86,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 10.
+p90 = 3.8
 deadtime = 5.0
 repetition = 15e6
 
@@ -201,7 +201,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.72e9,9.74e9))
+    this_return = b.lock_on_dip(ini_range=(9.80e9,9.84e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)

@@ -32,14 +32,14 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-output_name = 'echo_1'
-adcOffset = 40
-carrierFreq_MHz = 14.898555
+output_name = '200205_15NS175R1a_pR_DHPC_echo_1'
+adcOffset = 38
+carrierFreq_MHz = 14.902675
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = True
+phase_cycling = False
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
@@ -53,7 +53,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 5.0
-repetition = 1e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
