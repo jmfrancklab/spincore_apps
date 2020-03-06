@@ -26,9 +26,9 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
     def run_adcoffset(self):
         adc_val = (subprocess.check_output("../adc_offset.exe").split()[-1])
         self.ui.adcoffset = adc_val
-        self.ui.textEdit.setText(adc_val)
+        self.ui.textEdit.setText(adc_val.decode('utf-8'))
     def takeFT(self):
-        self.ui.f_widget.canvas.ax.plot(self.ui.data.getaxis('t'),self.ui.data.data.real,alpha=0.4)
+        self.ui.f_widget.canvas.ax.plot(self.ui.data.getaxis('t'),self.ui.data.data.real)
         self.ui.f_widget.canvas.draw()
     def open_acqparams(self):
         layout = QtWidgets.QFormLayout()
@@ -100,7 +100,7 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         carrierFreq_MHz = 14.898564
         tx_phases = r_[0.0,90.0,180.0,270.0]
         amplitude = 1.0
-        nScans = 1
+        nScans = 128
         nEchoes = 1
         phase_cycling = False
         if phase_cycling:
@@ -112,7 +112,7 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         # as this is generally what the SpinCore takes
         # note that acq_time is always milliseconds
         #}}}
-        p90 = 3.3
+        p90 = 3.8
         deadtime = 5.0
         repetition = 1e6
 
@@ -187,10 +187,10 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                     ('marker','start',1),
                     ('phase_reset',1),
                     ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,0.0),
+                    ('pulse_TTL',p90,0),
                     ('delay',tau),
                     ('delay_TTL',deblank),
-                    ('pulse_TTL',2.0*p90,0.0),
+                    ('pulse_TTL',2.0*p90,0),
                     ('delay',deadtime),
                     ('acquire',acq_time),
                     #('delay',pad),
@@ -217,6 +217,7 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                 data.set_prop('acq_params',acq_params)
             data['nScans',x] = data_array
             SpinCore_pp.stopBoard();
+        data.mean('nScans')
         print("EXITING...")
         print("\n*** *** ***\n")
         save_file = True
@@ -234,7 +235,7 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                 print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
                 save_file = False
                 #}}}
-        self.ui.time_plot.canvas.ax.plot(data.getaxis('t'),data.data,alpha=0.4)
+        self.ui.time_plot.canvas.ax.plot(data.getaxis('t'),data.data)
         self.ui.time_plot.canvas.draw()
         data.ft('t',shift=True)
         self.ui.xaxis = data.getaxis('t')
