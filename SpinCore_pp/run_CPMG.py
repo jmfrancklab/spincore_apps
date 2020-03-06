@@ -26,7 +26,7 @@ pad_end = tau_extra - deblank*2 # marker + deblank
 twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
 tau1 = twice_tau/2.0
 
-nScans = 4
+nScans = 16
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:

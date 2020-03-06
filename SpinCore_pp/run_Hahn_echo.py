@@ -34,7 +34,7 @@ def verifyParams():
 #}}}
 output_name = 'echo_1'
 adcOffset = 43
-carrierFreq_MHz = 14.898396
+carrierFreq_MHz = 14.898478
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
