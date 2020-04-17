@@ -4,4 +4,6 @@ This package contains a very convenient extension that wraps the SpinCore API fo
 
 The documentation is not extensive, and unrelated files freely available from SpinCore are currently included, but feel free to contact us jmfranck [at] syr.edu
 
+This code was primarily developed by A Beaton in the Franck lab at Syracuse University.
+
 A manuscript describing implementation of this library in the context of Overhauser DNP is forthcoming.
