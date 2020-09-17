@@ -70,7 +70,7 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_capillary_probe_DNP'
+output_name = 'TEMPOL_capillary_probe_DNP_2'
 adcOffset = 36
 carrierFreq_MHz = 14.895786
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -89,7 +89,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 5.0
-repetition = 15e6
+repetition = 25e6
 
 SW_kHz = 24.0
 nPoints = 1024*2

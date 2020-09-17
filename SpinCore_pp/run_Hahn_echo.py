@@ -33,7 +33,7 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_capillary_probe_3'
+output_name = 'TEMPOL_capillary_probe_4'
 adcOffset = 36
 carrierFreq_MHz = 14.895786
 tx_phases = r_[0.0,90.0,180.0,270.0]
