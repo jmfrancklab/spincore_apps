@@ -4,6 +4,7 @@ import SpinCore_pp
 import socket
 import sys
 import time
+from datetime import datetime
 init_logging(level='debug')
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
@@ -34,11 +35,11 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-date = '200303'
+date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'IR_AER_6'
-adcOffset = 42
-carrierFreq_MHz = 14.917034
+output_name = 'IR_TEMPOL_capillary_probe_0_2'
+adcOffset = 31
+carrierFreq_MHz = 14.896209
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -46,7 +47,7 @@ nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 3.8
 deadtime = 5.0
-repetition = 10e6
+repetition = 15e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -83,7 +84,7 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5e2,3e3,4e4,7e4,9e4,9.5e4,1e5,1.5e5,2e5,4e5,6e5,1e6,1.5e6,2e6]
+vd_list = r_[5e1,5e2,3e3,4e4,7e4,9e4,9.5e4,1e5,1.5e5,2e5,4e5,6e5,1e6,1.5e6,2e6,5e6,10e6]
 #vd_list = r_[5e1,3e3,7e5,1.4e6]
 for index,val in enumerate(vd_list):
     vd = val
