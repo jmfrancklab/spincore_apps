@@ -24,7 +24,7 @@ during which long delays occur within the pulse sequence itself, that this phase
 #}}}
 from pyspecdata import *
 import os
-from . import SpinCore_pp
+import SpinCore_pp
 import socket
 import sys
 import time
@@ -58,17 +58,17 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-date = '200212'
+date = '200917'
 clock_correction = 0
-output_name = 'calibrate_clock_6'
-adcOffset = 39
-carrierFreq_MHz = 14.898692
+output_name = 'calibrate_clock_1'
+adcOffset = 36
+carrierFreq_MHz = 14.895786
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 8
+nScans = 16
 nEchoes = 1
 nPhaseSteps = 1 
-p90 = 3.3
+p90 = 3.8
 deadtime = 5.0
 repetition = 15e6
 deblank = 1.0
@@ -82,7 +82,7 @@ print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 #vd_list = r_[3e1,1e2,1e3,3e3,5e3,1e4,3e4,6e4,1e5,3e5,3.5e5,4e5,4.5e5,5e5,5.5e5,6e5,6.5e5,7e5,1e6,6e6]
-vd_list = r_[5e1,4e4,6e5,9e5,1e6,1.5e6,2e6,2.5e6,3e6,3.5e6,4e6,4.5e6,5e6,5.5e6,6e6]
+vd_list = r_[5e1,4e4,6e5,9e5,1e6,1.5e6,2e6,2.5e6,3e6,3.5e6,4e6,4.5e6,5e6,5.5e6,6e6,10e6]
 for scan_num in range(nScans):
     for index,val in enumerate(vd_list):
         vd = val
@@ -97,10 +97,10 @@ for scan_num in range(nScans):
             ('phase_reset',1),
             ('delay',vd),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,0.0),
+            ('pulse_TTL',p90,0),
             ('delay',tau),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
+            ('pulse_TTL',2.0*p90,0),
             ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
