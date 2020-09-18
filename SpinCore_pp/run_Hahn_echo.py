@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_capillary_probe_3_MW'
+output_name = 'TEMPOL_capillary_probe_4'
 adcOffset = 31
-carrierFreq_MHz = 14.896209
+carrierFreq_MHz = 14.896132
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
