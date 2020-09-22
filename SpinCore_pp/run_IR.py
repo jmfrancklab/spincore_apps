@@ -84,8 +84,8 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5e2,3e3,4e4,7e4,9e4,9.5e4,1e5,1.5e5,2e5,4e5,6e5,1e6,1.5e6,2e6,5e6,10e6]
-#vd_list = r_[5e1,3e3,7e5,1.4e6]
+vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
+        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
