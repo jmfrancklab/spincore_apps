@@ -37,9 +37,9 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'IR_TEMPOL_capillary_probe_0_2'
-adcOffset = 31
-carrierFreq_MHz = 14.896209
+output_name = 'IR_TEMPOL_capillary_probe_36dBm'
+adcOffset = 32
+carrierFreq_MHz = 14.896722
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
