@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_3496p6_28dBm'
+output_name = 'TEMPOL_3533p0_0_again'
 adcOffset = 41
-carrierFreq_MHz = 14.855362
+carrierFreq_MHz = 15.009910
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
