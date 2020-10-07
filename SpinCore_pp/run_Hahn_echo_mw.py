@@ -70,9 +70,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_capillary_probe_DNP_1'
-adcOffset = 31
-carrierFreq_MHz = 14.896948
+output_name = 'w8_2RM1AT_large_probe_DNP_1'
+adcOffset = 40
+carrierFreq_MHz = 14.717376
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -87,7 +87,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
+p90 = 7.
 deadtime = 5.0
 repetition = 15e6
 
@@ -202,7 +202,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.815e9,9.835e9))
+    this_return = b.lock_on_dip(ini_range=(9.65e9,9.68e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)

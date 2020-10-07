@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_3542p0_0'
-adcOffset = 37
-carrierFreq_MHz = 15.048413
+output_name = 'w8_2RM1AT__Large_probe_1'
+adcOffset = 40
+carrierFreq_MHz = 14.717376
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -52,7 +52,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
+p90 = 7.
 deadtime = 5.0
 repetition = 15e6
 
