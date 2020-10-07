@@ -60,9 +60,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_capillary_probe_nutation_1'
-adcOffset = 36
-carrierFreq_MHz = 14.895686
+output_name = 'coilE_nutation_201006'
+adcOffset = 45
+carrierFreq_MHz = 14.897806
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
