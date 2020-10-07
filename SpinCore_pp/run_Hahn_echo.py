@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'w8_2RM1AT__Large_probe_1'
+output_name = 'w8_2RM1AT__Large_probe_2'
 adcOffset = 40
-carrierFreq_MHz = 14.717376
+carrierFreq_MHz = 14.717476
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -54,7 +54,7 @@ if not phase_cycling:
 #}}}
 p90 = 7.
 deadtime = 5.0
-repetition = 15e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2
