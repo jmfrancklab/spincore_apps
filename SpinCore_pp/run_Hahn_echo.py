@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'w8_2RM1AT__Large_probe_2'
-adcOffset = 40
-carrierFreq_MHz = 14.717476
+output_name = 'w8_2RM1AT_large_probe_201013_1'
+adcOffset = 41
+carrierFreq_MHz = 14.736732
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1

@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4.00 
-power_steps = 25
+max_power = 10.00 
+power_steps = 10
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,9 +70,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'w8_2RM1AT_large_probe_DNP_1'
-adcOffset = 40
-carrierFreq_MHz = 14.717376
+output_name = 'w8_2RM1AT_large_probe_DNP_201013'
+adcOffset = 41
+carrierFreq_MHz = 14.734166
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -202,7 +202,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.65e9,9.68e9))
+    this_return = b.lock_on_dip(ini_range=(9.66e9,9.69e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)

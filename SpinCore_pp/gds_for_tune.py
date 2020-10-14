@@ -9,7 +9,7 @@ import sys
 import threading
 from pyspecdata import *
 
-default_field = 3464.0 #3506.4 # G -- give this to 2 s.f.!!
+default_field = 3468.4 #3506.4 # G -- give this to 2 s.f.!!
 default_effective_gamma = 0.0042490577 # MHz/G
 field = None
 effective_gamma = None
