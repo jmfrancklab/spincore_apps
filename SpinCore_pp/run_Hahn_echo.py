@@ -35,12 +35,12 @@ def verifyParams():
 
 output_name = 'w8_2RM1AT_large_probe_3'
 adcOffset = 41
-carrierFreq_MHz = 14.736707
+carrierFreq_MHz = 14.736662
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = True
+phase_cycling = False
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:

@@ -37,9 +37,9 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'IR_w8_2RM1AT_large_probe_1'
+output_name = 'IR_w8_2RM1AT_large_probe_2'
 adcOffset = 41
-carrierFreq_MHz = 14.736707
+carrierFreq_MHz = 14.736662
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -84,8 +84,7 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
-        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
+vd_list = linspace(5e1,10e6,64)
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
