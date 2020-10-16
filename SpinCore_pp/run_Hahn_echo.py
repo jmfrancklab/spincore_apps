@@ -33,7 +33,7 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'w8_2RM1AT_cap_probe_9_38dBm'
+output_name = 'w8_2RM1AT_cap_probe_10'
 adcOffset = 40
 carrierFreq_MHz = 14.827272
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -54,7 +54,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 5.0
-repetition = 1.3e6
+repetition = 0.5e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -191,6 +191,7 @@ if phase_cycling:
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
     fl.next('image')
+    data.mean('nScans')
     fl.image(data)
     data.ft('t2',shift=True)
     fl.next('image - ft')
