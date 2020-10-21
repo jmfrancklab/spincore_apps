@@ -1,8 +1,8 @@
 from Instruments import *
 from pyspecdata import *
 import time
-from serial.tools.list_ports import comports
-import serial
+#from serial.tools.list_ports import comports
+#import serial
 from scipy import signal
 import SpinCore_pp
 import sys
