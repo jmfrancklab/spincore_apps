@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'w8_2RM1AT_cap_probe_10'
+output_name = 'CTAB_RM_50uM_TEMPOL_cap_probe_38dBm'
 adcOffset = 40
-carrierFreq_MHz = 14.827272
+carrierFreq_MHz = 14.827140
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 200
@@ -53,14 +53,14 @@ if not phase_cycling:
 # note that acq_time is always milliseconds
 #}}}
 p90 = 3.8
-deadtime = 5.0
-repetition = 0.5e6
+deadtime = 10.0
+repetition = 2e6
 
 SW_kHz = 24
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
+tau_adjust = 500.0
 deblank = 1.0
 tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
 pad = 0
