@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'CTAB_RM_50uM_TEMPOL_cap_probe_4'
-adcOffset = 39
-carrierFreq_MHz = 14.827340
+output_name = 'CTAB_RM_500uM_TEMPOL_cap_probe_6'
+adcOffset = 38
+carrierFreq_MHz = 14.825840
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 200
@@ -54,7 +54,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 10.0
-repetition = 1.3e6
+repetition = 2e6
 
 SW_kHz = 24
 nPoints = 1024*2
