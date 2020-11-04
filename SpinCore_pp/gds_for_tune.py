@@ -9,7 +9,7 @@ import sys
 import threading
 from pyspecdata import *
 
-default_field = 3489.8 #3506.4 # G -- give this to 2 s.f.!!
+default_field = 3489.2 #3506.4 # G -- give this to 2 s.f.!!
 default_effective_gamma = 0.0042490577 # MHz/G
 field = None
 effective_gamma = None
@@ -113,7 +113,7 @@ flat_slice.run(abs).mean('t')
 print("reflection ratio calculated from ratio of %f to %f mV"%(abs(flat_slice['ch',1]).item()/1e-3,abs(flat_slice['ch',0]).item()/1e-3))
 ratio = (abs(flat_slice['ch',1]/flat_slice['ch',0])).item()
 tuning_dB = log10(ratio)*20
-if tuning_dB < -20:
+if tuning_dB < -25:
     print("congratulations! you have achieved a reflection ratio of %0.1f dB"%tuning_dB)
 else:
     print("Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!"%tuning_dB)
