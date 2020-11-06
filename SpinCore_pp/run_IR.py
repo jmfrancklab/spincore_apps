@@ -37,15 +37,15 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'IR_w8_2RM1AT_large_probe_2'
-adcOffset = 41
-carrierFreq_MHz = 14.736662
+output_name = 'IR_TEMPOL_B12_resonator_2_30dBm'
+adcOffset = 38
+carrierFreq_MHz = 14.492158
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 7.0
+p90 = 2.2
 deadtime = 5.0
 repetition = 15e6
 SW_kHz = 24.0
@@ -84,7 +84,8 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = linspace(5e1,10e6,64)
+vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
+        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")

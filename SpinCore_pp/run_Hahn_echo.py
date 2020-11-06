@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_B12_resonator_5'
+output_name = 'TEMPOL_B12_resonator_9_1'
 adcOffset = 38
-carrierFreq_MHz = 14.896746
+carrierFreq_MHz = 14.492158
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -54,7 +54,7 @@ if not phase_cycling:
 #}}}
 p90 = 2.2
 deadtime = 10.0
-repetition = 10e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2

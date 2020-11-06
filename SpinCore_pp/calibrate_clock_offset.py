@@ -61,16 +61,16 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'calibrate_clock_3'
-adcOffset = 41
-carrierFreq_MHz = 14.736732
+output_name = 'calibrate_clock_1'
+adcOffset = 38
+carrierFreq_MHz = 14.492158
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 16
 nEchoes = 1
 nPhaseSteps = 1 
-p90 = 7.
-deadtime = 5.0
+p90 = 2.2
+deadtime = 10.0
 repetition = 8e6
 deblank = 1.0
 SW_kHz = 24.0

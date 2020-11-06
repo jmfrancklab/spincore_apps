@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 5.00 
-power_steps = 7
+max_power = 1.26
+power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,12 +70,12 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'w8_2RM1AT_cap_probe_DNP_1'
-adcOffset = 40
-carrierFreq_MHz = 14.827272
+output_name = 'TEMPOL_B12_resonator_DNP_1'
+adcOffset = 38
+carrierFreq_MHz = 14.492158
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 200
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -87,9 +87,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
-deadtime = 5.0
-repetition = 1.3e6
+p90 = 2.2
+deadtime = 10.0
+repetition = 15e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -202,7 +202,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.81e9,9.84e9))
+    this_return = b.lock_on_dip(ini_range=(9.550e9,9.56e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
