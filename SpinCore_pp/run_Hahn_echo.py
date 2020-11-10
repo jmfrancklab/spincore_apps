@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_B12_resonator_9_1'
-adcOffset = 38
-carrierFreq_MHz = 14.492158
+output_name = 'TEMPOL_capillary_probe_3'
+adcOffset = 41
+carrierFreq_MHz = 14.896031
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -52,9 +52,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 2.2
+p90 = 3.8
 deadtime = 10.0
-repetition = 15e6
+repetition = 11e6
 
 SW_kHz = 24
 nPoints = 1024*2
