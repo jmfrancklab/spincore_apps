@@ -33,7 +33,7 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_capillary_probe_3'
+output_name = 'TEMPOL_capillary_probe_4'
 adcOffset = 41
 carrierFreq_MHz = 14.896031
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -54,7 +54,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 10.0
-repetition = 1e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
