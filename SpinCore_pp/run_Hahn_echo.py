@@ -54,13 +54,13 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 10.0
-repetition = 11e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 500.0
+tau_adjust = 0.0
 deblank = 1.0
 tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
 pad = 0
