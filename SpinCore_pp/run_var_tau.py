@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_capillary_probe_var_tau_35dBm'
-adcOffset = 41
-carrierFreq_MHz = 14.896031
+output_name = 'TEMPOL_capillary_probe_var_tau_'
+adcOffset = 39
+carrierFreq_MHz = 14.896038
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -60,7 +60,7 @@ SW_kHz = 24
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
-tau_adjust_range = r_[0:1e4:500]
+tau_adjust_range = r_[0:1e5:5000]
 deblank = 1.0
 tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust_range
 tau_axis = tau
