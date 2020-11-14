@@ -33,12 +33,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_capillary_probe_2'
+output_name = 'TEMPOL_capillary_probe_16Scans_ModCoil'
 adcOffset = 39
 carrierFreq_MHz = 14.896038
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 16
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
