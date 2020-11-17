@@ -33,12 +33,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_capillary_probe_16Scans_ModCoil'
-adcOffset = 39
-carrierFreq_MHz = 14.896038
+output_name = 'TEMPOL_B12_resonator_2'
+adcOffset = 33
+carrierFreq_MHz = 14.492111
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 16
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -52,7 +52,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
+p90 = 2.2
 deadtime = 10.0
 repetition = 10e6
 
