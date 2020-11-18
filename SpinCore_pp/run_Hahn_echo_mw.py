@@ -70,9 +70,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_B12_resonator_DNP_3'
+output_name = 'TEMPOL_B12_resonator_DNP_5'
 adcOffset = 33
-carrierFreq_MHz = 14.492111
+carrierFreq_MHz = 14.492194
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
