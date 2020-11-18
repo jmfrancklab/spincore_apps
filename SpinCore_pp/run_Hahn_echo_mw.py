@@ -58,7 +58,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 1.26
+max_power = 0.8
 power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
@@ -70,7 +70,7 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_B12_resonator_DNP_1'
+output_name = 'TEMPOL_B12_resonator_DNP_3'
 adcOffset = 33
 carrierFreq_MHz = 14.492111
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -89,7 +89,7 @@ if not phase_cycling:
 #}}}
 p90 = 2.2
 deadtime = 10.0
-repetition = 15e6
+repetition = 30e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
