@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4.0
-power_steps = 15
+max_power = 2.0
+power_steps = 25
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -71,8 +71,8 @@ powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
 output_name = '4AT100uM_DNP_cap_probe_1'
-adcOffset = 46
-carrierFreq_MHz = 14.895661
+adcOffset = 42
+carrierFreq_MHz = 14.895690
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -89,7 +89,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 10.0
-repetition = 20e6
+repetition = 15e6
 
 SW_kHz = 24.0
 nPoints = 1024*2

@@ -37,9 +37,9 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'TEMPOL_capillary_probe_IR_36dBm'
-adcOffset = 39
-carrierFreq_MHz = 14.896091
+output_name = '4AT100uM_cap_probe_IR_33dBm'
+adcOffset = 42
+carrierFreq_MHz = 14.895690
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -47,7 +47,7 @@ nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 3.8
 deadtime = 10.0
-repetition = 15e6
+repetition = 20e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms

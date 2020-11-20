@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4AT100uM_cap_probe_3'
-adcOffset = 46
-carrierFreq_MHz = 14.895661
+output_name = '4AT100uM_cap_probe_2'
+adcOffset = 42
+carrierFreq_MHz = 14.895690
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -54,7 +54,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 10.0
-repetition = 20e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2
