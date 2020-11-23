@@ -9,7 +9,7 @@ import sys
 import threading
 from pyspecdata import *
 
-default_field = 3504.24 # G -- give this to 2 s.f.!!
+default_field = 3505.69 #3506.4 # G -- give this to 2 s.f.!!
 default_effective_gamma = 0.0042490577 # MHz/G
 field = None
 effective_gamma = None
@@ -91,6 +91,20 @@ with GDS_scope() as g:
 with figlist_var() as fl:
     #d['ch',1] *= sqrt(2) # I'm only observing 1/2 of the power of the reflection (so 1/sqrt(2) of the voltage)
     d['ch',1] *= 2 # just empirically, I need to scale up the reflection by a factor of 2 in order to get it to be the right size
+    try_again = False
+    while try_again:
+        data_name = 'capture1'
+        d.name(data_name)
+        try:
+            d.hdf5_write('201020_sol_probe_1.h5')
+            try_again = False
+        except Exception as e:
+            print(e)
+            print("name taken, trying again...")
+            try_again = True
+    print(("name of data",d.name()))
+    print(("units should be",d.get_units('t')))
+    print(("shape of data",ndshape(d)))
     fl.next('waveforms')
     fl.plot(d, alpha=0.1)
     fl.plot(abs(d), alpha=0.5, linewidth=3)
@@ -99,7 +113,7 @@ flat_slice.run(abs).mean('t')
 print("reflection ratio calculated from ratio of %f to %f mV"%(abs(flat_slice['ch',1]).item()/1e-3,abs(flat_slice['ch',0]).item()/1e-3))
 ratio = (abs(flat_slice['ch',1]/flat_slice['ch',0])).item()
 tuning_dB = log10(ratio)*20
-if tuning_dB < -20:
+if tuning_dB < -25:
     print("congratulations! you have achieved a reflection ratio of %0.1f dB"%tuning_dB)
 else:
     print("Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!"%tuning_dB)

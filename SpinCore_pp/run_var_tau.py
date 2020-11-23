@@ -1,11 +1,8 @@
 from pyspecdata import *
 import os
-import SpinCore_pp
-import socket
 import sys
-import time
+import SpinCore_pp
 from datetime import datetime
-init_logging(level='debug')
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -35,34 +32,40 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-date = datetime.now().strftime('%y%m%d')
-clock_correction = 0
-output_name = '4AT100uM_cap_probe_IR_33dBm'
-adcOffset = 42
-carrierFreq_MHz = 14.895690
+
+output_name = 'TEMPOL_capillary_probe_var_tau_'
+adcOffset = 39
+carrierFreq_MHz = 14.896038
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-# NOTE: Number of segments is nEchoes * nPhaseSteps
+phase_cycling = True
+coherence_pathway = [('ph1',1),('ph2',-2)]
+date = datetime.now().strftime('%y%m%d')
+if phase_cycling:
+    nPhaseSteps = 8
+if not phase_cycling:
+    nPhaseSteps = 1
+#{{{ note on timing
+# putting all times in microseconds
+# as this is generally what the SpinCore takes
+# note that acq_time is always milliseconds
+#}}}
 p90 = 3.8
 deadtime = 10.0
-repetition = 20e6
-SW_kHz = 24.0
+repetition = 15e6
+
+SW_kHz = 24
 nPoints = 1024*2
+
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
+tau_adjust_range = r_[0:1e5:5000]
 deblank = 1.0
-tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-print("ACQUISITION TIME:",acq_time,"ms")
-print("TAU DELAY:",tau,"us")
-phase_cycling = True
-ph1 = r_[0,2]
-ph2 = r_[0,1,2,3]
-if phase_cycling:
-    nPhaseSteps = 8 
-if not phase_cycling:
-    nPhaseSteps = 1 
+tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust_range
+tau_axis = tau
+pad = 0
+#pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -75,56 +78,48 @@ acq_params['deadtime_us'] = deadtime
 acq_params['repetition_us'] = repetition
 acq_params['SW_kHz'] = SW_kHz
 acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
+acq_params['tau_adjust_us'] = tau_adjust_range
 acq_params['deblank_us'] = deblank
 acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
+#acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
+print(("ACQUISITION TIME:",acq_time,"ms"))
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-# NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
-        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
-for index,val in enumerate(vd_list):
-    vd = val
+for index,val in enumerate(tau_adjust_range):
+    tau_adjust = val # us
+    # calculate tau each time through
+    tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
     print("***")
-    print("INDEX %d - VARIABLE DELAY %f"%(index,val))
+    print("INDEX %d - TAU %f"%(index,tau))
     print("***")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
     acq_params['acq_time_ms'] = acq_time
     SpinCore_pp.init_ppg();
     if phase_cycling:
-        phase_cycles = dict(ph1 = r_[0,2],
-                ph2 = r_[0,1,2,3])
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,'ph1',phase_cycles['ph1']),
-            ('delay',vd),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph2',phase_cycles['ph2']),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,0),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
             ('jumpto','start')
             ])
-    if not phase_cycling:
+    if not phase_cycling: 
         SpinCore_pp.load([
             ('marker','start',nScans),
             ('phase_reset',1),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,0.0),
-            ('delay',vd),
-            ('delay_TTL',1.0),
+            ('delay_TTL',deblank),
             ('pulse_TTL',p90,0.0),
             ('delay',tau),
-            ('delay_TTL',1.0),
+            ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,0.0),
             ('delay',deadtime),
             ('acquire',acq_time),
@@ -132,19 +127,18 @@ for index,val in enumerate(vd_list):
             ('jumpto','start')
             ])
     SpinCore_pp.stop_ppg();
-    print("\nRUNNING BOARD...\n")
     if phase_cycling:
         for x in range(nScans):
             print("SCAN NO. %d"%(x+1))
             SpinCore_pp.runBoard();
     if not phase_cycling:
-        start = time.time()
-        SpinCore_pp.runBoard(); 
-        runtime = time.time()-start
-        logger.debug(strm("for vd",vd/1e6," s run time is",runtime))
+        SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
     data = []
+    # according to JF, this commented out line
+    # should work same as line below and be more effic
+    #data = raw_data.view(complex128)
     data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
     print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
     print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
@@ -153,46 +147,33 @@ for index,val in enumerate(vd_list):
     data = nddata(array(data),'t')
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
-    data.set_prop('acq_params',acq_params)
     if index == 0:
-        vd_data = ndshape([len(vd_list),len(time_axis)],['vd','t']).alloc(dtype=complex128)
-        vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
-        vd_data.setaxis('t',time_axis).set_units('t','s')
-    vd_data['vd',index] = data
+        var_tau_data = ndshape([len(tau_adjust_range),len(time_axis)],['tau','t']).alloc(dtype=complex128)
+        var_tau_data.setaxis('tau',tau_axis*1e-6).set_units('tau','s')
+        var_tau_data.setaxis('t',time_axis).set_units('t','s')
+    var_tau_data['tau',index] = data
 SpinCore_pp.stopBoard();
 print("EXITING...\n")
 print("\n*** *** ***\n")
 save_file = True
-if phase_cycling:
-    phcyc_names = list(phase_cycles.keys())
-    phcyc_names.sort(reverse=True)
-    phcyc_dims = [len(phase_cycles[j]) for j in phcyc_names]
-    vd_data.chunk('t',phcyc_names+['t2'],phcyc_dims+[-1])
-    vd_data.setaxis('ph1',ph1/4.)
-    vd_data.setaxis('ph2',ph2/4.)
-else:
-    vd_data.rename('t','t2')
 while save_file:
     try:
         print("SAVING FILE...")
-        vd_data.name('signal')
-        vd_data.hdf5_write(date+'_'+output_name+'.h5')
-        print("Name of saved data",vd_data.name())
-        print("Units of saved data",vd_data.get_units('t'))
-        print("Shape of saved data",ndshape(vd_data))
+        var_tau_data.set_prop('acq_params',acq_params)
+        var_tau_data.name('var_tau')
+        var_tau_data.hdf5_write(date+'_'+output_name+'.h5')
+        print("Name of saved data",var_tau_data.name())
+        print("Units of saved data",var_tau_data.get_units('t'))
+        print("Shape of saved data",ndshape(var_tau_data))
         save_file = False
     except Exception as e:
         print(e)
         print("FILE ALREADY EXISTS.")
         save_file = False
 fl.next('raw data')
-fl.image(vd_data)
-fl.next('abs raw data')
-fl.image(abs(vd_data))
-vd_data.ft('t2',shift=True)
+fl.image(var_tau_data)
+var_tau_data.ft('t',shift=True)
 fl.next('FT raw data')
-fl.image(vd_data)
-fl.next('FT abs raw data')
-fl.image(abs(vd_data))
+fl.image(var_tau_data)
 fl.show()
 

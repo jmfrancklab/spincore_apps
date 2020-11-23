@@ -32,9 +32,10 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-output_name = 'echo_1'
+
+output_name = '3496p2_pon'
 adcOffset = 43
-carrierFreq_MHz = 14.898478
+carrierFreq_MHz = 14.855290
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -52,8 +53,8 @@ if not phase_cycling:
 # note that acq_time is always milliseconds
 #}}}
 p90 = 3.8
-deadtime = 5.0
-repetition = 8e6
+deadtime = 10.0
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -190,6 +191,7 @@ if phase_cycling:
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
     fl.next('image')
+    data.mean('nScans')
     fl.image(data)
     data.ft('t2',shift=True)
     fl.next('image - ft')

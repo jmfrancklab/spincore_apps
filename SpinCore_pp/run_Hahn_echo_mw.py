@@ -6,6 +6,7 @@ import SpinCore_pp
 from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 import time
+from datetime import datetime
 
 fl = figlist_var()
 def gen_powerlist(max_power, steps, min_dBm_step=0.5):
@@ -57,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4.0
-power_steps = 15
+max_power = 2.0
+power_steps = 25
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -68,10 +69,10 @@ print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = '200305'
-output_name = 'DNP_15NS175R1a_pR_DHPC_1'
-adcOffset = 38
-carrierFreq_MHz = 14.902675
+date = datetime.now().strftime('%y%m%d')
+output_name = '4AT100uM_DNP_cap_probe_1'
+adcOffset = 42
+carrierFreq_MHz = 14.895690
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -87,7 +88,7 @@ if not phase_cycling:
 # note that acq_time is always milliseconds
 #}}}
 p90 = 3.8
-deadtime = 5.0
+deadtime = 10.0
 repetition = 15e6
 
 SW_kHz = 24.0
@@ -201,7 +202,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.80e9,9.84e9))
+    this_return = b.lock_on_dip(ini_range=(9.8175e9,9.825e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
