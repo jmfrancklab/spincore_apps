@@ -37,9 +37,9 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '4AT100uM_cap_probe_IR_32dBm'
-adcOffset = 43
-carrierFreq_MHz = 14.894477
+output_name = '4AT10mM_cap_probe_IR_22dBm'
+adcOffset = 35
+carrierFreq_MHz = 14.896501
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -85,8 +85,8 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
-        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
+vd_list = r_[5e1,3.3e5,6.5e5,9.8e5,1.3e6,
+        1.6e6,2e6,2.3e6,2.6e6,2.9e6,3.3e6,3.6e6]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")

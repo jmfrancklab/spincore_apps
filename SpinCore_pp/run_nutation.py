@@ -60,9 +60,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_capillary_probe_nutation_1'
-adcOffset = 39
-carrierFreq_MHz = 14.896010
+output_name = 'Ni_sol_probe_nutation_1'
+adcOffset = 36
+carrierFreq_MHz = 14.819707
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -74,8 +74,8 @@ if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 10e6
-SW_kHz = 24.0
+repetition = 3e6
+SW_kHz = 50.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
@@ -83,7 +83,7 @@ tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(0.5,15.,100,endpoint=False)
+p90_range = linspace(0.5,80.,100,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset

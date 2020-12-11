@@ -33,14 +33,14 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'output_4uV'
-adcOffset = 36
-carrierFreq_MHz = 14.819707
+output_name = 'w8_cap_probe_2'
+adcOffset = 46
+carrierFreq_MHz = 14.827002
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 200
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
@@ -52,19 +52,17 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 10.5
-deadtime = 10.0
+p90 = 3.8
+deadtime = 5.0
 repetition = 3e6
 
-SW_kHz = 100
+SW_kHz = 24
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-# Fixed tau for comparison
-#tau = 100
 pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
@@ -113,11 +111,11 @@ for x in range(nScans):
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            #('delay_TTL',deblank),
-            #('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
-            #('delay_TTL',deblank),
-            #('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),
@@ -128,11 +126,11 @@ for x in range(nScans):
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            #('delay_TTL',deblank),
-            #('pulse_TTL',p90,0),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',p90,0),
             ('delay',tau),
-            #('delay_TTL',deblank),
-            #('pulse_TTL',2.0*p90,0),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',2.0*p90,0),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),

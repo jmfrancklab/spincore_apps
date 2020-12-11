@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     ERROR_CATCH( spmri_set_defaults() );
 
     // Carrier Frequency Registers
-    double freq[1] = {14.92};
+    double freq[1] = {14.82};
     ERROR_CATCH( spmri_set_frequency_registers( freq, 1 ) );
 
     // Phase Registers
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     ERROR_CATCH( spmri_set_phase_registers( phase, 1 ) );
 
     // Amplitude Registers
-    double amp[1] = {1.0};
+    double amp[1] = {0.05};
     ERROR_CATCH( spmri_set_amplitude_registers( amp, 1 ) );
     
     // ** Program Board **
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         0x01, // flags
         0, // data
         CONTINUE, // opcode
-        2.0 * us // pulse time
+        10.0 * us // pulse time
         ));
     // Apply TX output, along with TTL
     ERROR_CATCH(spmri_mri_inst(
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
         0x01, // flags
         0, // data
         CONTINUE, // opcode
-        4.0 * us // pulse time
+        100.0 * us // pulse time
         ));
 
     // This instruct disables the analog output and resets phase
