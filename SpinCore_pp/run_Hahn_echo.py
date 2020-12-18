@@ -33,12 +33,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'w8_cap_probe_2'
-adcOffset = 46
-carrierFreq_MHz = 14.827002
+output_name = 'Ni_cap_probe_2'
+adcOffset = 43
+carrierFreq_MHz = 14.893722
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 200
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -54,7 +54,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 5.0
-repetition = 3e6
+repetition = 5e6
 
 SW_kHz = 24
 nPoints = 1024*2
