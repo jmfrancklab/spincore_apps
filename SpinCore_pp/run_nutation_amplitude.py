@@ -60,8 +60,8 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_cap_probe_nutation_amp_4'
-adcOffset = 44
+output_name = 'Ni_sol_probe_nutation_amp_2'
+adcOffset = 46
 carrierFreq_MHz = 14.893722
 tx_phases = r_[0.0,90.0,180.0,270.0]
 nScans = 1
@@ -73,14 +73,14 @@ if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 3e6
-SW_kHz = 24.0
+repetition = 5e6
+SW_kHz = 50.0
 aq = 24564
 nPoints = 2048#int(aq/SW_kHz+0.5)#1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 tau = 5e3#deadtime + acq_time*1e3*(1./8.) + tau_adjust
-p90 = 105#us (14x expected 90 time)
+p90 = 250#us (28x expected 90 time)
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps

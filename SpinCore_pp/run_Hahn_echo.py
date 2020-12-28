@@ -33,8 +33,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'Ni_cap_probe_2'
-adcOffset = 43
+output_name = 'Ni_sol_probe_1'
+adcOffset = 46
 carrierFreq_MHz = 14.893722
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -52,11 +52,11 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
+p90 = 10.5
 deadtime = 5.0
 repetition = 5e6
 
-SW_kHz = 24
+SW_kHz = 100
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
