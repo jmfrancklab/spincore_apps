@@ -33,12 +33,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'Ni_sol_probe_1'
-adcOffset = 46
-carrierFreq_MHz = 14.893722
+output_name = 'RM_capillary_probe_8'
+adcOffset = 45
+carrierFreq_MHz = 14.828469
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 512
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -52,17 +52,18 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 10.5
-deadtime = 5.0
-repetition = 5e6
+p90 = 3.8
+deadtime = 10.0
+repetition = 1.3e6
 
-SW_kHz = 100
+SW_kHz = 16
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
+tau_adjust = 0
 deblank = 1.0
-tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
+#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
+tau = 40000.
 pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
