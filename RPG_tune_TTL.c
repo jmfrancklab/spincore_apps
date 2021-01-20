@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     ERROR_CATCH( spmri_set_defaults() );
 
     // Carrier Frequency Registers
-    double freq[1] = {14.82};
+    double freq[1] = {14.89};
     ERROR_CATCH( spmri_set_frequency_registers( freq, 1 ) );
 
     // Phase Registers
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     ERROR_CATCH( spmri_set_phase_registers( phase, 1 ) );
 
     // Amplitude Registers
-    double amp[1] = {0.05};
+    double amp[1] = {0.5};
     ERROR_CATCH( spmri_set_amplitude_registers( amp, 1 ) );
     
     // ** Program Board **

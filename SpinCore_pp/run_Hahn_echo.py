@@ -3,6 +3,7 @@ import os
 import sys
 import SpinCore_pp
 from datetime import datetime
+import numpy as np
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -33,12 +34,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'RM_capillary_probe_8'
-adcOffset = 45
-carrierFreq_MHz = 14.828469
+output_name = 'solenoid_probe_1'
+adcOffset = 43
+carrierFreq_MHz = 14.891248
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 512
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -52,18 +53,18 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
+p90 = 9.5
 deadtime = 10.0
 repetition = 1.3e6
 
-SW_kHz = 16
+SW_kHz = 100
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 40000.
+tau = 3500.
 pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
@@ -145,13 +146,13 @@ for x in range(nScans):
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
     data_array = []
-    data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print(("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]))
-    print(("RAW DATA ARRAY LENGTH:",shape(raw_data)[0]))
-    dataPoints = float(shape(data_array)[0])
+    data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
+    print(("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0]))
+    print(("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0]))
+    dataPoints = float(np.shape(data_array)[0])
     if x == 0:
-        time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=complex128)
+        time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=np.complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:nScans])
         data.name('signal')
