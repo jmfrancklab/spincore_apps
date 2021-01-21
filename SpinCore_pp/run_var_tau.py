@@ -33,9 +33,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'Ni_sol_probe_var_tau_'
-adcOffset = 36
-carrierFreq_MHz = 14.819707
+output_name = 'Ni_cap_probe_var_tau_4'
+adcOffset = 44
+carrierFreq_MHz = 14.893722
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -47,22 +47,22 @@ if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1
-#{{{ note on timing
+#{{{ note on timinzag
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 10.5
+p90 = 3.8
 deadtime = 10.0
 repetition = 3e6
 
-SW_kHz = 100
+SW_kHz = 24
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
-tau_adjust_range = r_[1e3:10e3:1000]
+tau_adjust_range = r_[1e3:30e3:1000]
 deblank = 1.0
-tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust_range
+tau = 5e3#deadtime + acq_time*1e3*(1./8.) + tau_adjust_range
 tau_axis = tau
 pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
