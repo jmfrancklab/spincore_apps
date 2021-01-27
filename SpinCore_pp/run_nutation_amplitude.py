@@ -61,8 +61,8 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_sol_probe_nutation_amp_2'
-adcOffset = 40
+output_name = 'Ni_sol_probe_nutation_amp_3'
+adcOffset = 41
 carrierFreq_MHz = 14.891248
 tx_phases = r_[0.0,90.0,180.0,270.0]
 nScans = 1
@@ -85,7 +85,7 @@ p90 = 250#us (28x expected 90 time)
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-amp_range = np.linspace(0.05,0.5,200,endpoint=False)
+amp_range = np.linspace(0,0.5,200)[1:]#,endpoint=False)
 #{{{ setting acq_params dictizaonary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset

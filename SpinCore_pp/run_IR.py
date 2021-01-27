@@ -37,16 +37,16 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'OHTEMPO10mM_sol_probe_IR'
-adcOffset = 43
+output_name = 'OHTEMPO10mM_cap_probe_IR_2'
+adcOffset = 42
 carrierFreq_MHz = 14.891248
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 2
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 9.5
+p90 = 3.8
 deadtime = 10.0
 repetition = 1.3e6
 SW_kHz = 50.0
@@ -86,8 +86,10 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
-        3.6e6, 4.5e6, 5.4e6, 6.4e6, 7.2e6,10e6]
+vd_list = r_[5e3,8.62e4,1.72e5, 2.59e5,3.45e5,4.31e5,5.17e5,
+        6.03e5,6.90e5,7.76e5,8.62e5,9.48e5,1.03e6,1.12e6,1.21e6,1.29e6,
+        1.38e6,1.47e6,1.55e6,1.64e6,1.72e6,1.81e6,1.90e6,1.98e6,2.07e6,
+        2.16e6,2.24e6,2.33e6,2.41e6,2.5e6]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
