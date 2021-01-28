@@ -205,7 +205,8 @@ while save_file:
         print("SAVING FILE...")
         nutation_data.set_prop('acq_params',acq_params)
         nutation_data.name('nutation')
-        nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+        nutation_data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/nutation'))
         print("Name of saved data",nutation_data.name())
         print("Units of saved data",nutation_data.get_units('t'))
         print("Shape of saved data",ndshape(nutation_data))

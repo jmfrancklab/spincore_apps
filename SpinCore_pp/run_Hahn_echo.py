@@ -34,9 +34,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'Ni_cap_probe_2'
-adcOffset = 42
-carrierFreq_MHz = 14.899087
+output_name = 'Ni_cap_probe_1'
+adcOffset = 40
+carrierFreq_MHz = 14.899253
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -165,7 +165,8 @@ save_file = True
 while save_file:
     try:
         print("SAVING FILE...")
-        data.hdf5_write(date+'_'+output_name+'.h5')
+        data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
         print("FILE SAVED!")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
