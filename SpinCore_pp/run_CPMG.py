@@ -1,18 +1,19 @@
-
+from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
+from datetime import datetime
 fl = figlist_var()
 
-date = '200305'
-output_name = 'CPMG_3p7_3'
-adcOffset = 43
-carrierFreq_MHz = 14.898396
+date = datetime.now().strftime('%y%m%d')
+output_name = 'CPMG_2'
+adcOffset = 40
+carrierFreq_MHz = 14.899253
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.7
-deadtime = 5.0
-repetition = 8e6
+p90 = 4.6435
+deadtime = 10.0
+repetition = 3e6
 deblank = 1.0
 marker = 1.0
 
@@ -145,7 +146,8 @@ save_file = True
 while save_file:
     try:
         print("SAVING FILE...")
-        data.hdf5_write(date+'_'+output_name+'.h5')
+        data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/CPMG'))
         print("FILE SAVED!")
         print("Name of saved data",data.name())
         print("Units of saved data",data.get_units('t'))
