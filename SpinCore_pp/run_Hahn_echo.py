@@ -34,9 +34,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'cap_probe_1'
+output_name = 'Ni_cap_probe_2'
 adcOffset = 42
-carrierFreq_MHz = 14.891248
+carrierFreq_MHz = 14.899087
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -55,7 +55,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 10.0
-repetition = 1.3e6
+repetition = 3e6
 
 SW_kHz = 24
 nPoints = 1024*2
