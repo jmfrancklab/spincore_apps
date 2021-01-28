@@ -1,3 +1,4 @@
+from pylab import *
 from pyspecdata import *
 import os
 import sys
@@ -34,9 +35,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'Ni_cap_probe_1'
-adcOffset = 40
-carrierFreq_MHz = 14.899253
+output_name = 'TEMPOL_cap_probe_99'
+adcOffset = 37
+carrierFreq_MHz = 14.896045
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -55,7 +56,7 @@ if not phase_cycling:
 #}}}
 p90 = 3.8
 deadtime = 10.0
-repetition = 3e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -164,18 +165,29 @@ print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print("SAVING FILE...")
+        print("SAVING FILE IN TARGET DIRECTORY...")
         data.hdf5_write(date+'_'+output_name+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
-        print("FILE SAVED!")
+        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
         print(("Shape of saved data",ndshape(data)))
         save_file = False
     except Exception as e:
         print(e)
-        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
-        save_file = False
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
 
 data.set_units('t','data')
 # {{{ once files are saved correctly, the following become obsolete

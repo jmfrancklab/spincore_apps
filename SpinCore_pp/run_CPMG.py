@@ -6,14 +6,14 @@ from datetime import datetime
 fl = figlist_var()
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'CPMG_2'
+output_name = 'TEMPOL_CPMG_5_34dBm'
 adcOffset = 40
-carrierFreq_MHz = 14.899253
+carrierFreq_MHz = 14.896197
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.6435
+p90 = 4.901875
 deadtime = 10.0
-repetition = 3e6
+repetition = 10e6
 deblank = 1.0
 marker = 1.0
 
@@ -145,17 +145,21 @@ print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print("SAVING FILE...")
+        print("SAVING FILE IN TARGET DIRECTORY...")
         data.hdf5_write(date+'_'+output_name+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/CPMG'))
-        print("FILE SAVED!")
+        print("*** FILE SAVED IN TARGET DIRECTORY ***")
         print("Name of saved data",data.name())
         print("Units of saved data",data.get_units('t'))
         print("Shape of saved data",ndshape(data))
         save_file = False
     except Exception as e:
         print(e)
-        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
+        print("EXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION")
+        data.hdf5_write(date+'_'+output_name+'.h5')
+        print("*** FILE SAVED IN CURRENT DIRECTORY ***")
         save_file = False
 if not phase_cycling:
     if nScans == 1:

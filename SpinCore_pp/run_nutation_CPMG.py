@@ -63,14 +63,14 @@ if set_field:
 #}}}
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_cap_probe_CPMG_nutation_1'
-adcOffset = 40
-carrierFreq_MHz = 14.899253
+output_name = 'TEMPOL_cap_probe_CPMG_nutation_1'
+adcOffset = 37
+carrierFreq_MHz = 14.896045
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 3e6
+repetition = 10e6
 deblank = 1.0
 marker = 1.0
 
@@ -82,7 +82,7 @@ tau_extra = 5000.0 # us, must be more than deadtime and more than deblank
 pad_start = tau_extra - deadtime
 pad_end = tau_extra - deblank*2 # marker + deblank
 
-nScans = 2
+nScans = 1
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -213,7 +213,8 @@ while save_file:
         save_file = False
     except Exception as e:
         print(e)
-        print("FILE ALREADY EXISTS.")
+        print("FILE ALREADY EXISTS IN THAT DIRECTORY LOCATION... WILL TRY CURRENT DIRECTORY LOCATION")
+        nutation_data.hdf5_write(date+'_'+output_name+'.h5')
         save_file = False
 fl.next('raw data')
 fl.image(nutation_data)
