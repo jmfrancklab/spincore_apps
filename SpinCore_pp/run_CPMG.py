@@ -154,13 +154,21 @@ while save_file:
         print("Shape of saved data",ndshape(data))
         save_file = False
     except Exception as e:
-        print(e)
-        print("EXCEPTION ERROR.")
+        print("\nEXCEPTION ERROR.")
         print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION")
-        data.hdf5_write(date+'_'+output_name+'.h5')
-        print("*** FILE SAVED IN CURRENT DIRECTORY ***")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
+    else:
 if not phase_cycling:
     if nScans == 1:
         print(ndshape(data))
