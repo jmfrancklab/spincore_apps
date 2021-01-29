@@ -1,3 +1,4 @@
+from pylab import *
 from pyspecdata import *
 import os
 import SpinCore_pp
@@ -60,9 +61,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_sol_probe_nutation_1'
-adcOffset = 47
-carrierFreq_MHz = 14.896771
+output_name = 'TEMPOL_cap_probe_nutation_1'
+adcOffset = 37
+carrierFreq_MHz = 14.896045
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -74,7 +75,7 @@ if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 1e6
+repetition = 10e6
 SW_kHz = 50.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
@@ -83,7 +84,7 @@ tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(0.5,80.,100,endpoint=False)
+p90_range = linspace(0.1,12.,30,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -182,8 +183,19 @@ while save_file:
         print("Shape of saved data",ndshape(nutation_data))
         save_file = False
     except Exception as e:
-        print(e)
-        print("FILE ALREADY EXISTS.")
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
 fl.next('raw data')
 fl.image(nutation_data)
