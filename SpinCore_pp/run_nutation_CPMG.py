@@ -63,9 +63,9 @@ if set_field:
 #}}}
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_cap_probe_CPMG_nutation_1'
-adcOffset = 37
-carrierFreq_MHz = 14.896045
+output_name = 'TEMPOL_cap_probe_CPMG_nutation_2'
+adcOffset = 42
+carrierFreq_MHz = 14.896597
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 # NOTE: Number of segments is nEchoes * nPhaseSteps
@@ -91,7 +91,7 @@ if not phase_cycling:
     nPhaseSteps = 1 
 print("ACQUISITION TIME:",acq_time,"ms")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(0.1,20.,80,endpoint=False)
+p90_range = linspace(3.,15.,25,endpoint=False)
 # these are unique to the nutation aspect of it
 twice_tau_range = deblank + 2*p90_range + deadtime + pad_start + acq_time*1e3 + pad_end + marker
 tau1_range = twice_tau_range/2.0

@@ -6,14 +6,14 @@ from datetime import datetime
 fl = figlist_var()
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_CPMG_5_34dBm'
-adcOffset = 40
-carrierFreq_MHz = 14.896197
+output_name = 'TEMPOL_cap_probe_CPMG_3'
+adcOffset = 42
+carrierFreq_MHz = 14.896597
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.901875
+p90 = 4.625765
 deadtime = 10.0
-repetition = 10e6
+repetition = 15e6
 deblank = 1.0
 marker = 1.0
 
@@ -168,7 +168,6 @@ while save_file:
             print("*** *** ***\n")
             break
         save_file = False
-    else:
 if not phase_cycling:
     if nScans == 1:
         print(ndshape(data))

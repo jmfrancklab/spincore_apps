@@ -96,7 +96,7 @@ def verifyParams():
 
 # Parameters for Bridge12
 max_power = 2.0
-power_steps = 20
+power_steps = 10
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -108,11 +108,11 @@ powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
 output_name = 'TEMPOL_CPMG_DNP_1'
-adcOffset = 40
-carrierFreq_MHz = 14.896197
+adcOffset = 42
+carrierFreq_MHz = 14.896597
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.901875
+p90 = 4.625765
 deadtime = 10.0
 repetition = 15e6
 deblank = 1.0
