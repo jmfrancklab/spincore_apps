@@ -6,9 +6,9 @@ from datetime import datetime
 fl = figlist_var()
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_cap_probe_CPMG_3'
+output_name = 'TEMPOL_cap_probe_CPMG_5'
 adcOffset = 42
-carrierFreq_MHz = 14.896597
+carrierFreq_MHz = 14.896514
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 4.625765

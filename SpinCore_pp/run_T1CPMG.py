@@ -43,15 +43,15 @@ from datetime import datetime
 fl = figlist_var()
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_capillary_probe_T1CPMG'
+output_name = 'TEMPOL_cap_probe_T1CPMG_32dBm'
 #clock_correction = 1.0829/998.253
-adcOffset = 39
-carrierFreq_MHz = 14.896091
+adcOffset = 42
+carrierFreq_MHz = 14.896494
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.901875
+p90 = 4.625765
 deadtime = 10.0
-repetition = 10e6
+repetition = 15e6
 deblank = 1.0
 marker = 1.0
 
@@ -66,7 +66,7 @@ pad_end = tau_extra - deblank*2 # marker + deblank
 twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
 tau1 = twice_tau/2.0
 
-nScans = 4
+nScans = 12
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
