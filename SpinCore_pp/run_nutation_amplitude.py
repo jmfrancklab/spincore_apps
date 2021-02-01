@@ -5,6 +5,7 @@ import socket
 import sys
 import time
 from datetime import datetime
+import numpy as np
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -60,9 +61,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_sol_probe_nutation_amp_2'
-adcOffset = 46
-carrierFreq_MHz = 14.893722
+output_name = 'Ni_sol_probe_nutation_amp_3'
+adcOffset = 41
+carrierFreq_MHz = 14.891248
 tx_phases = r_[0.0,90.0,180.0,270.0]
 nScans = 1
 nEchoes = 1
@@ -73,7 +74,7 @@ if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 5e6
+repetition = 1.3e6
 SW_kHz = 50.0
 aq = 24564
 nPoints = 2048#int(aq/SW_kHz+0.5)#1024*2
@@ -84,7 +85,7 @@ p90 = 250#us (28x expected 90 time)
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-amp_range = linspace(0.05,0.5,200,endpoint=False)
+amp_range = np.linspace(0,0.5,200)[1:]#,endpoint=False)
 #{{{ setting acq_params dictizaonary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -155,16 +156,16 @@ for index,val in enumerate(amp_range):
     # according to JF, this commented out line
     # should work same as line below and be more effic
     #data = raw_data.view(complex128)
-    data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-    dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-    data = nddata(array(data),'t')
+    data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
+    print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
+    print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
+    dataPoints = float(np.shape(data)[0])
+    time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+    data = nddata(np.array(data),'t')
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
     if index == 0:
-        nutation_data = ndshape([len(amp_range),len(time_axis)],['amp','t']).alloc(dtype=complex128)
+        nutation_data = ndshape([len(amp_range),len(time_axis)],['amp','t']).alloc(dtype=np.complex128)
         nutation_data.setaxis('amp',amp_range).set_units('amp','arb_units')
         nutation_data.setaxis('t',time_axis).set_units('t','s')
     nutation_data['amp',index] = data
@@ -188,8 +189,19 @@ while save_file:
         print("Shape of saved data",ndshape(nutation_data))
         save_file = False
     except Exception as e:
-        print(e)
-        print("FILE ALREADY EXISTS.")
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
 fl.next('raw data')
 fl.image(nutation_data)

@@ -37,18 +37,17 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '4AT10mM_sol_probe_IR'
-adcOffset = 46
-carrierFreq_MHz = 14.896771
-
+output_name = 'TEMPOL_capillary_probe_IR_36dBm'
+adcOffset = 39
+carrierFreq_MHz = 14.896091
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 10.5
+p90 = 3.8
 deadtime = 10.0
-repetition = 1e6
+repetition = 15e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -85,9 +84,8 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,3.3e5,4.1e5,5.1e5,6.5e5,9.8e5,1.0e6,1.3e6,
-        1.6e6,2e6,2.3e6,2.6e6,2.9e6,3.0e6,3.1e6,3.2e6,
-        3.3e6,3.4e6,3.5e6,3.6e6]
+vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
+        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")

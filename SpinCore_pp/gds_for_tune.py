@@ -8,8 +8,9 @@ import SpinCore_pp
 import sys
 import threading
 from pyspecdata import *
+import numpy as np
 
-default_field = 3489.7 #3506.4 # G -- give this to 2 s.f.!!
+default_field = 3505.7 #3506.4 # G -- give this to 2 s.f.!!
 default_effective_gamma = 0.0042490577 # MHz/G
 field = None
 effective_gamma = None
@@ -112,7 +113,7 @@ with figlist_var() as fl:
 flat_slice.run(abs).mean('t')
 print("reflection ratio calculated from ratio of %f to %f mV"%(abs(flat_slice['ch',1]).item()/1e-3,abs(flat_slice['ch',0]).item()/1e-3))
 ratio = (abs(flat_slice['ch',1]/flat_slice['ch',0])).item()
-tuning_dB = log10(ratio)*20
+tuning_dB = np.log10(ratio)*20
 if tuning_dB < -25:
     print("congratulations! you have achieved a reflection ratio of %0.1f dB"%tuning_dB)
 else:

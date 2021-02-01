@@ -318,13 +318,25 @@ while save_file:
         DNP_data.set_prop('acq_params',acq_params)
         DNP_data.name('signal')
         DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print("Name of saved data",DNP_data.name())
         print("Units of saved data",DNP_data.get_units('t'))
         print("Shape of saved data",ndshape(DNP_data))
         save_file = False
     except Exception as e:
-        print(e)
-        print("FILE ALREADY EXISTS.")
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
 fl.next('raw data')
 fl.image(DNP_data)

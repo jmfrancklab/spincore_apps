@@ -34,6 +34,7 @@ SpinCore will trigger 4 times in the first case and 8 times
 in the second case.
 '''
 #}}}
+from pylab import *
 from pyspecdata import *
 from numpy import *
 import os
@@ -41,6 +42,7 @@ import sys
 import SpinCore_pp
 from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
+from datetime import datetime
 import time
 
 fl = figlist_var()
@@ -93,28 +95,25 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-#max_power = 0.5
-#power_steps = 15
-#dB_settings = gen_powerlist(max_power,power_steps)
-#append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
-##        #for frac in [0.75,0.5,0.25]]
-#        for frac in [0.25]]
-#dB_settings = append(dB_settings,append_dB)
-dB_settings = r_[0.5,1.,2.,3.,5.,7.,9.,11.,13.,15.,18.,21.,23.,25.,26.,27.]
+max_power = 2.0
+power_steps = 10
+dB_settings = gen_powerlist(max_power,power_steps)
+append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
+        for frac in [0.75,0.5,0.25]]
+dB_settings = append(dB_settings,append_dB)
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-
-date = '200305'
-output_name = 'CPMG_DNP_TEMPOL_4'
-adcOffset = 43
-carrierFreq_MHz = 14.898478
+date = datetime.now().strftime('%y%m%d')
+output_name = 'TEMPOL_CPMG_DNP_1'
+adcOffset = 42
+carrierFreq_MHz = 14.896597
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.7
-deadtime = 5.0
+p90 = 4.625765
+deadtime = 10.0
 repetition = 15e6
 deblank = 1.0
 marker = 1.0
@@ -350,6 +349,7 @@ with Bridge12() as b:
                         ('jumpto','start')
                         ])
             print("\nSTOPPING PROG BOARD...\n")
+
             SpinCore_pp.stop_ppg();
             print("\nRUNNING BOARD...\n")
             SpinCore_pp.runBoard();
@@ -377,14 +377,27 @@ while save_file:
         print("SAVING FILE...")
         DNP_data.set_prop('acq_params',acq_params)
         DNP_data.name('signal')
-        DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+        DNP_data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/DNP'))
+        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print("Name of saved data",DNP_data.name())
         print("Units of saved data",DNP_data.get_units('t'))
         print("Shape of saved data",ndshape(DNP_data))
         save_file = False
     except Exception as e:
-        print(e)
-        print("FILE ALREADY EXISTS.")
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
 fl.next('raw data')
 fl.image(DNP_data)
