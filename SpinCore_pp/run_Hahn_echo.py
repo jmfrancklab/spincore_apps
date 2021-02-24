@@ -35,9 +35,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_cap_probe_2'
-adcOffset = 42
-carrierFreq_MHz = 14.896514
+output_name = '4AT_cap_probe_echo_2'
+adcOffset = 37
+carrierFreq_MHz = 14.893494
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -54,9 +54,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
+p90 = 4.69
 deadtime = 10.0
-repetition = 10e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2

@@ -31,9 +31,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_cap_probe_2'
-adcOffset = 42
-carrierFreq_MHz = 14.896514
+output_name = '4AT_cap_probe_FID_r1_1'
+adcOffset = 37
+carrierFreq_MHz = 14.893494
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -50,11 +50,11 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
+p90 = 4.69
 deadtime = 10.0
-repetition = 10e6
+repetition = 5e6
 
-SW_kHz = 24
+SW_kHz = 48
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
@@ -145,7 +145,7 @@ while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
         data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/FID'))
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
@@ -192,8 +192,8 @@ if phase_cycling:
     data.ft(['ph1'])
     fl.image(data)
     fl.next('data plot')
-    fl.plot(data['ph1',1])
-    fl.plot(data.imag['ph1',1])
+    fl.plot(data['ph1',-1])
+    fl.plot(data.imag['ph1',-1])
 fl.show();quit()
 
 if phase_cycling:

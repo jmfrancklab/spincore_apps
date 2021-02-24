@@ -37,17 +37,17 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'TEMPOL_capillary_probe_IR_36dBm'
-adcOffset = 39
-carrierFreq_MHz = 14.896091
+output_name = '4AT_cap_probe_IR_2'
+adcOffset = 37
+carrierFreq_MHz = 14.893494
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 3.8
+p90 = 4.69
 deadtime = 10.0
-repetition = 15e6
+repetition = 5e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -78,14 +78,14 @@ acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = deblank
 acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
-        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
+#vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
+#        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
+vd_list = r_[5e1, 5e2, 5e3, 5e4, 2.5e5, 5e5, 7.5e5, 1e6] 
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
@@ -145,17 +145,17 @@ for index,val in enumerate(vd_list):
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
     data = []
-    data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-    dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-    data = nddata(array(data),'t')
+    data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
+    print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
+    print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
+    dataPoints = float(np.shape(data)[0])
+    time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+    data = nddata(np.array(data),'t')
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
     data.set_prop('acq_params',acq_params)
     if index == 0:
-        vd_data = ndshape([len(vd_list),len(time_axis)],['vd','t']).alloc(dtype=complex128)
+        vd_data = ndshape([len(vd_list),len(time_axis)],['vd','t']).alloc(dtype=np.complex128)
         vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
         vd_data.setaxis('t',time_axis).set_units('t','s')
     vd_data['vd',index] = data
@@ -174,25 +174,38 @@ else:
     vd_data.rename('t','t2')
 while save_file:
     try:
-        print("SAVING FILE...")
+        print("SAVING FILE IN TARGET DIRECTORY...")
         vd_data.name('signal')
-        vd_data.hdf5_write(date+'_'+output_name+'.h5')
-        print("Name of saved data",vd_data.name())
-        print("Units of saved data",vd_data.get_units('t'))
-        print("Shape of saved data",ndshape(vd_data))
+        vd_data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/inv_rec'))
+        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+        print(("Name of saved data",vd_data.name()))
+        print(("Units of saved data",vd_data.get_units('t')))
+        print(("Shape of saved data",ndshape(vd_data)))
         save_file = False
     except Exception as e:
         print(e)
-        print("FILE ALREADY EXISTS.")
-        save_file = False
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            vd_data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
 fl.next('raw data')
-fl.image(vd_data)
+fl.image(vd_data.setaxis('vd','#'))
 fl.next('abs raw data')
-fl.image(abs(vd_data))
+fl.image(abs(vd_data).setaxis('vd','#'))
 vd_data.ft('t2',shift=True)
 fl.next('FT raw data')
-fl.image(vd_data)
+fl.image(vd_data.setaxis('vd','#'))
 fl.next('FT abs raw data')
-fl.image(abs(vd_data))
+fl.image(abs(vd_data).setaxis('vd','#'))
 fl.show()
 
