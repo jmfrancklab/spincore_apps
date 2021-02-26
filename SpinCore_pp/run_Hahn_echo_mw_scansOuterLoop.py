@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4.0
-power_steps = 25
+max_power = 1.0
+power_steps = 4
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,12 +70,12 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '4AT10mM_DNP_cap_probe_1'
-adcOffset = 35
-carrierFreq_MHz = 14.896501
+output_name = '4AT_DNP_scansOuter_cap_probe_1'
+adcOffset = 45
+carrierFreq_MHz = 14.8944046
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -87,9 +87,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.8
+p90 = 4.69
 deadtime = 10.0
-repetition = 20e6
+repetition = 1e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -293,6 +293,11 @@ for x in range(nScans):
             data.name('signal')
             DNP_data['power',j+1]['nScans',x] = data
             last_power = this_power
+            print("*** *** ***\n*** *** ***\n *** *** ***")
+            print("Scan %d completed"%(x+1))
+            print("waiting 5 seconds for sample to cool down before next round of scans...")
+            print("*** *** ***\n*** *** ***\n *** *** ***")
+            time.sleep(5)
     DNP_data.name('signal')
     DNP_data.set_prop('meter_powers',meter_powers)
     SpinCore_pp.stopBoard();
@@ -327,11 +332,12 @@ while save_file:
             break
         save_file = False
 fl.next('raw data')
-fl.image(DNP_data)
+fl.image(DNP_data.setaxis('power','#'))
 fl.next('abs raw data')
-fl.image(abs(DNP_data))
+fl.image(abs(DNP_data).setaxis('power','#'))
 data.ft('t',shift=True)
 fl.next('raw data - ft')
-fl.image(DNP_data)
+fl.image(DNP_data.setaxis('power','#'))
 fl.next('abs raw data - ft')
-fl.image(abs(DNP_data))
+fl.image(abs(DNP_data).setaxis('power','#'))
+fl.show();quit()
