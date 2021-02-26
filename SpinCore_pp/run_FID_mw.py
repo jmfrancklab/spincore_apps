@@ -52,8 +52,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4.0
-power_steps = 15
+max_power = 1.0
+power_steps = 4
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -64,12 +64,12 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '4AT_cap_probe_FID_DNP_r3_1'
-adcOffset = 37
-carrierFreq_MHz = 14.893494
+output_name = '4AT_cap_probe_FID_DNP_1'
+adcOffset = 45
+carrierFreq_MHz = 14.8944046
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 80
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -83,7 +83,7 @@ if not phase_cycling:
 #}}}
 p90 = 2.345
 deadtime = 10.0
-repetition = 1.21732e6
+repetition = 0.9e6
 
 SW_kHz = 48
 nPoints = 1024*2
@@ -300,12 +300,12 @@ while save_file:
             break
         save_file = False
 fl.next('raw data')
-fl.image(DNP_data)
+fl.image(DNP_data.setaxis('power','#'))
 fl.next('abs raw data')
-fl.image(abs(DNP_data))
+fl.image(abs(DNP_data).setaxis('power','#'))
 data.ft('t',shift=True)
 fl.next('raw data - ft')
-fl.image(DNP_data)
+fl.image(DNP_data.setaxis('power','#'))
 fl.next('abs raw data - ft')
-fl.image(abs(DNP_data))
+fl.image(abs(DNP_data).setaxis('power','#'))
 fl.show();quit()

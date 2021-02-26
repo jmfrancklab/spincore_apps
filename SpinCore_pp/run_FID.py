@@ -31,12 +31,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4AT_cap_probe_FID_r3_1'
-adcOffset = 37
-carrierFreq_MHz = 14.893494
+output_name = '4AT_cap_probe_FID_1'
+adcOffset = 45
+carrierFreq_MHz = 14.8944046
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 80
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 #coherence_pathway = [('ph1',1),('ph2',-2)]

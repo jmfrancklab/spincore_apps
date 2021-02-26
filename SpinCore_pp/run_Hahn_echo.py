@@ -35,9 +35,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4AT_cap_probe_echo_2'
-adcOffset = 37
-carrierFreq_MHz = 14.893494
+output_name = '4AT_cap_probe_echo_1'
+adcOffset = 45
+carrierFreq_MHz = 14.8944046
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
