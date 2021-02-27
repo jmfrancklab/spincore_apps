@@ -35,12 +35,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4AT_cap_probe_echo_1'
-adcOffset = 45
-carrierFreq_MHz = 14.8944046
+output_name = 'AOT_RM_4AT_cap_probe_echo_endOfDay_2'
+adcOffset = 46
+carrierFreq_MHz = 14.826142
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 16
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -56,7 +56,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 1e6
+repetition = 1.3e6
 
 SW_kHz = 24
 nPoints = 1024*2
