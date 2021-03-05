@@ -59,7 +59,7 @@ def verifyParams():
 
 # Parameters for Bridge12
 max_power = 6.31
-power_steps = 7
+power_steps = 10
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -71,11 +71,11 @@ powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
 output_name = 'AOT_RM_4AT_cap_probe_DNP_scansOuter_1'
-adcOffset = 46
-carrierFreq_MHz = 14.826142
+adcOffset = 38
+carrierFreq_MHz = 14.826694
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 50
+nScans = 16
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
