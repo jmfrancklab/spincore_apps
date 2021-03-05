@@ -35,12 +35,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4AT_AOT_RM_cap_probe_echo_5'
+output_name = '4AT_AOT_RM_cap_probe_echo_60scans_38dBm'
 adcOffset = 38
 carrierFreq_MHz = 14.826694
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 16
+nScans = 60
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -57,6 +57,7 @@ if not phase_cycling:
 p90 = 4.69
 deadtime = 10.0
 repetition = 1.3e6
+#repetition = .7e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -167,7 +168,7 @@ while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
         data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
