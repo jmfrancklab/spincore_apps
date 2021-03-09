@@ -70,9 +70,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '4AT10mM_DNP_cap_probe_1'
+output_name = 'TEMPOL150uM_DNP_cap_probe_1'
 adcOffset = 45
-carrierFreq_MHz = 14.899580
+carrierFreq_MHz = 14.896493
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -202,7 +202,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.8175e9,9.825e9))
+    this_return = b.lock_on_dip(ini_range=(9.819e9,9.825e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
@@ -339,7 +339,8 @@ while save_file:
             break
         save_file = False
 fl.next('raw data')
-fl.image(DNP_data)
+fl.image(DNP_data.C.setaxis('power',
+'#').set_units('power','scan #'))
 fl.next('abs raw data')
 fl.image(abs(DNP_data))
 data.ft('t',shift=True)

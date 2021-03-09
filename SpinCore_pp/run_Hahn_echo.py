@@ -35,12 +35,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4AT_AOT_RM_cap_probe_echo_60scans_38dBm'
-adcOffset = 38
-carrierFreq_MHz = 14.826694
+output_name = '150uM_TEMPOL_cap_probe_8'
+adcOffset = 45
+carrierFreq_MHz = 14.896493
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 60
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
