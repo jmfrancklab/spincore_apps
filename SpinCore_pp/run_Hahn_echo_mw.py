@@ -71,8 +71,8 @@ powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
 output_name = 'TEMPOL150uM_DNP_cap_probe_1'
-adcOffset = 45
-carrierFreq_MHz = 14.896493
+adcOffset = 43
+carrierFreq_MHz = 14.896399
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -89,7 +89,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 1.3e6
+repetition = 9.5e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -340,9 +340,10 @@ while save_file:
         save_file = False
 fl.next('raw data')
 fl.image(DNP_data.C.setaxis('power',
-'#').set_units('power','scan #'))
+    '#').set_units('power','scan #'))
 fl.next('abs raw data')
-fl.image(abs(DNP_data))
+fl.image(abs(DNP_data).C.setaxis('power',
+    '#').set_units('power','scan #'))
 data.ft('t',shift=True)
 fl.next('raw data - ft')
 fl.image(DNP_data)
