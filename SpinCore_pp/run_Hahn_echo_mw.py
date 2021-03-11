@@ -70,9 +70,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL150uM_DNP_cap_probe_1'
+output_name = 'TEMPOL500uM_DNP_cap_probe_1'
 adcOffset = 43
-carrierFreq_MHz = 14.896399
+carrierFreq_MHz = 14.895497
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
