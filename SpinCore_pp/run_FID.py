@@ -31,12 +31,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4AT_cap_probe_FID_1'
+output_name = 'Ni_cap_probe_FID_3'
 adcOffset = 45
-carrierFreq_MHz = 14.8944046
+carrierFreq_MHz = 14.898836
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 64
 nEchoes = 1
 phase_cycling = True
 #coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -50,9 +50,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 2.345
+p90 = 4.69
 deadtime = 10.0
-repetition = 1.21732e6
+repetition = 2e6
 
 SW_kHz = 48
 nPoints = 1024*2

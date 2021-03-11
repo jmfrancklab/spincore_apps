@@ -35,12 +35,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = '500uM_TEMPOL_cap_probe_4'
-adcOffset = 44
-carrierFreq_MHz = 14.896304
+output_name = 'Ni_cap_probe_echo_2'
+adcOffset = 45
+carrierFreq_MHz = 14.898836
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 32
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -56,7 +56,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 6e6
+repetition = 2e6
 #repetition = .7e6
 
 SW_kHz = 24
