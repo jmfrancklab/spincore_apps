@@ -35,12 +35,12 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL500uM_cap_probe_echo_2'
-adcOffset = 46
-carrierFreq_MHz = 14.895497
+output_name = '4AT_AOT_RM_50mM_cap_probe_echo_3487p9_38dBm_repeat2'
+adcOffset = 45
+carrierFreq_MHz = 14.820879
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 62
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -56,7 +56,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 15e6
+repetition = 1e6
 #repetition = .7e6
 
 SW_kHz = 24
@@ -168,7 +168,7 @@ while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
         data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
