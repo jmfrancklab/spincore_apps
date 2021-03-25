@@ -5,6 +5,7 @@ import sys
 import SpinCore_pp
 from datetime import datetime
 import numpy as np
+from Instruments.XEPR_eth import xepr
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -35,9 +36,18 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'water_control_FIR_d1'
-adcOffset = 42
-carrierFreq_MHz = 14.820788
+desired_B0 = 3489.0
+
+with xepr() as x:
+    true_B0 = x.set_field(desired_B0)
+    print("My field in G is %f"%true_B0)
+
+output_name = 'Ni_cap_probe_1'
+adcOffset = 45
+
+gamma_eff = 0.004249215249
+carrierFreq_MHz = gamma_eff*true_B0
+print("My frequency in MHz is",carrierFreq_MHz)
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -56,7 +66,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 5e6
+repetition = 1e6
 #repetition = .7e6
 
 SW_kHz = 24
@@ -73,6 +83,7 @@ pad = 0
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
 acq_params['carrierFreq_MHz'] = carrierFreq_MHz
+acq_params['field_G'] = true_B0
 acq_params['amplitude'] = amplitude
 acq_params['nScans'] = nScans
 acq_params['nEchoes'] = nEchoes
