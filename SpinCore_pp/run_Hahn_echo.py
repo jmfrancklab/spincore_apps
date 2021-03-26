@@ -1,3 +1,15 @@
+# To run this experiment, please open Xepr on the EPR computer, connect to
+# spectrometer, load the experiemnt 'set_field' and enable XEPR API. Then, in a
+# separate terminal, run the program XEPR_API_server.py, and wait for it to
+# tell you 'I am listening' - then, you should be able to run this program from
+# the NMR computer to set the field etc. 
+
+# Note the booleans user_sets_Freq and
+# user_sets_Field allow you to run experiments as previously run in this lab.
+# If both values are set to True, this is the way we used to run them. If both
+# values are set to False, you specify what field you want, and the computer
+# will do the rest.
+
 from pylab import *
 from pyspecdata import *
 import os
@@ -36,21 +48,33 @@ def verifyParams():
     return
 #}}}
 
-desired_B0 = 3489.0
+output_name = '50mM_4AT_RM_AOT_cap_probe_echo_4_new90time'
+adcOffset = 41
 
-with xepr() as x:
-    true_B0 = x.set_field(desired_B0)
-    print("My field in G is %f"%true_B0)
+user_sets_Freq = False
+user_sets_Field = False
 
-output_name = 'Ni_cap_probe_1'
-adcOffset = 45
+if user_sets_Field:
+    # You must enter field set on XEPR here
+    #true_B0 =  3489.0
+    #print("My field in G should be %f"%true_B0)
+if not user_sets_Field:
+    desired_B0 = 3486.5
+    with xepr() as x:
+        true_B0 = x.set_field(desired_B0)
+        print("My field in G is %f"%true_B0)
 
-gamma_eff = 0.004249215249
-carrierFreq_MHz = gamma_eff*true_B0
-print("My frequency in MHz is",carrierFreq_MHz)
+if user_sets_freq:
+    carrierFreq_MHz = 14.896474
+    print("My frequency in MHz is",carrierFreq_MHz)
+if not user_sets_freq:
+    gamma_eff = 0.00424914361
+    carrierFreq_MHz = gamma_eff*true_B0
+    print("My frequency in MHz is",carrierFreq_MHz)
+
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 8
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -64,7 +88,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.69
+p90 = 4.215
 deadtime = 10.0
 repetition = 1e6
 #repetition = .7e6
@@ -204,6 +228,10 @@ while save_file:
 data.set_units('t','data')
 # {{{ once files are saved correctly, the following become obsolete
 print(ndshape(data))
+print(" *** *** *** ")
+print("My field in G is %f"%true_B0)
+print("My frequency in MHz is",carrierFreq_MHz)
+print(" *** *** *** ")
 if not phase_cycling:
     fl.next('raw data')
     fl.plot(data)
@@ -230,48 +258,3 @@ if phase_cycling:
     fl.plot(data['ph1',1]['ph2',0])
     fl.plot(data.imag['ph1',1]['ph2',0])
 fl.show();quit()
-
-if phase_cycling:
-    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    data.setaxis('ph2',r_[0.,2.]/4)
-    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-if nScans > 1:
-    data.setaxis('nScans',r_[0:nScans])
-# }}}
-data.squeeze()
-data.reorder('t2',first=False)
-if len(data.dimlabels) > 1:
-    fl.next('raw data - time|ph domain')
-    fl.image(data)
-else:
-    if 't' in data.dimlabels:
-        data.rename('t','t2')
-has_phcyc_dims = False
-for j in range(8):# up to 8 independently phase cycled pulses
-    phstr = 'ph%d'%j
-    if phstr in data.dimlabels:
-        has_phcyc_dims = True
-        print('phcyc along',phstr)
-        data.ft(phstr)
-if has_phcyc_dims:
-    fl.next('raw data - time|coh domain')
-    fl.image(data)
-data.ft('t2',shift=True)
-if len(data.dimlabels) > 1:
-    fl.next('raw data - freq|coh domain')
-    fl.image(data)
-if 'ph1' in data.dimlabels:
-    for phlabel,phidx in coherence_pathway:
-        data = data[phlabel,phidx]
-data.mean_all_but('t2')
-fl.next('raw data - FT')
-fl.plot(data,alpha=0.5)
-fl.plot(data.imag, alpha=0.5)
-fl.plot(abs(data),'k',alpha=0.1, linewidth=3)
-data.ift('t2')
-fl.next('avgd. and coh. ch. selected (where relevant) data -- time domain')
-fl.plot(data,alpha=0.5)
-fl.plot(data.imag, alpha=0.5)
-fl.plot(abs(data),'k',alpha=0.2, linewidth=2)
-fl.show();quit()
-
