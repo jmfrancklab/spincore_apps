@@ -63,7 +63,7 @@ if set_field:
 date = datetime.now().strftime('%y%m%d')
 output_name = 'Ni_cap_probe_nutation_2'
 adcOffset = 45
-carrierFreq_MHz = 14.899465
+carrierFreq_MHz = 14.820863
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -84,7 +84,7 @@ tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(2.,12.,100,endpoint=False)
+p90_range = linspace(2.,24.,150,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
