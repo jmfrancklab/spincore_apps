@@ -1,3 +1,4 @@
+#{{{ Notes for use
 # To run this experiment, please open Xepr on the EPR computer, connect to
 # spectrometer, load the experiemnt 'set_field' and enable XEPR API. Then, in a
 # separate terminal, run the program XEPR_API_server.py, and wait for it to
@@ -9,6 +10,7 @@
 # If both values are set to True, this is the way we used to run them. If both
 # values are set to False, you specify what field you want, and the computer
 # will do the rest.
+#}}}
 
 from pylab import *
 from pyspecdata import *
@@ -48,33 +50,36 @@ def verifyParams():
     return
 #}}}
 
-output_name = '50mM_4AT_RM_AOT_cap_probe_echo_4_new90time'
+output_name = '50mM_4AT_RM_AOT_cap_probe_echo_7'
 adcOffset = 41
 
-user_sets_Freq = False
-user_sets_Field = False
+user_sets_Freq = True
+user_sets_Field = True
 
+#{{{
 if user_sets_Field:
     # You must enter field set on XEPR here
-    #true_B0 =  3489.0
-    #print("My field in G should be %f"%true_B0)
+    true_B0 =  3488.17
+    print("My field in G should be %f"%true_B0)
+#}}}
 if not user_sets_Field:
-    desired_B0 = 3486.5
+    desired_B0 = 3488.17
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
-
-if user_sets_freq:
-    carrierFreq_MHz = 14.896474
+#{{{
+if user_sets_Freq:
+    carrierFreq_MHz = 14.821759
     print("My frequency in MHz is",carrierFreq_MHz)
-if not user_sets_freq:
+#}}}
+if not user_sets_Freq:
     gamma_eff = 0.00424914361
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 8
+nScans = 32
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -90,8 +95,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.215
 deadtime = 10.0
-repetition = 1e6
-#repetition = .7e6
+repetition = 0.5e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -107,7 +111,7 @@ pad = 0
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
 acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['field_G'] = true_B0
+acq_params['Ffield_G'] = true_B0
 acq_params['amplitude'] = amplitude
 acq_params['nScans'] = nScans
 acq_params['nEchoes'] = nEchoes

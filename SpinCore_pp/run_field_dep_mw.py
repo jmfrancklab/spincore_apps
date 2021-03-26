@@ -39,7 +39,7 @@ def verifyParams():
 #}}}
 
 mw_freqs = []
-field_axis = linspace(3485.0,3495.0,3)
+field_axis = linspace(3486.5,3489.5,10)
 print("Here is my field axis:",field_axis)
 
 #{{{ for setting microwave power
@@ -64,7 +64,7 @@ def gen_powerlist(max_power, steps, min_dBm_step=0.5):
     return dB_settings
 
 # Parameters for Bridge12
-max_power = 4.0
+max_power = 6.31
 power_steps = 2
 dB_settings = gen_powerlist(max_power,power_steps)
 #append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
@@ -76,13 +76,13 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
-output_name = 'Ni_cap_probe_field_dep_mw_1'
-adcOffset = 45
-gamma_eff = 0.004249215249
+output_name = '50mM_4AT_RM_AOT_cap_probe_field_dep_mw_1'
+adcOffset = 41
+gamma_eff = 0.00424914361
 #{{{ acq params
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 2
+nScans = 16
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -96,7 +96,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.69
+p90 = 4.215
 deadtime = 10.0
 repetition = 1e6
 #repetition = .7e6
