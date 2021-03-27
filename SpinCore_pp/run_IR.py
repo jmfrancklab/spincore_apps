@@ -154,12 +154,12 @@ for index,val in enumerate(vd_list):
     data = nddata(np.array(data),'t')
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
-    data.set_prop('acq_params',acq_params)
     if index == 0:
         vd_data = ndshape([len(vd_list),len(time_axis)],['vd','t']).alloc(dtype=np.complex128)
         vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
         vd_data.setaxis('t',time_axis).set_units('t','s')
     vd_data['vd',index] = data
+    vd_data.set_prop('acq_params',acq_params)
 SpinCore_pp.stopBoard();
 print("EXITING...\n")
 print("\n*** *** ***\n")
