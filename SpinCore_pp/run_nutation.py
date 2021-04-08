@@ -99,6 +99,8 @@ acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = 1.0
 acq_params['tau_us'] = tau
+ph1_cyc = r_[0,2]
+ph2_cyc = r_[0,2]
 #acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
@@ -117,10 +119,10 @@ for index,val in enumerate(p90_range):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph1',ph1_cyc),
             ('delay',tau),
             ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+            ('pulse_TTL',2.0*p90,'ph2',ph2_cyc),
             ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
@@ -170,6 +172,12 @@ SpinCore_pp.stopBoard();
 print("EXITING...\n")
 print("\n*** *** ***\n")
 save_file = True
+nutation_data.chunk('t',
+        ['ph2','ph1','t2'],[len(ph1_cyc),len(ph2_cyc),-1]).setaxis(
+                'ph2',ph2_cyc/4).setaxis('ph1',ph1_cyc/4)
+
+nutation_data.reorder('t2',first=False)
+acq_params['pulprog'] = 'spincore_nutation_v3'
 while save_file:
     try:
         print("SAVING FILE...")
