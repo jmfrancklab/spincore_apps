@@ -61,6 +61,9 @@ if set_field:
 #}}}
 date = datetime.now().strftime('%y%m%d')
 output_name = 'TEMPOL_capillary_probe_nutation_1'
+ph1_cyc = r_[0,2]
+ph2_cyc = r_[0,2]
+nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
 adcOffset = 39
 carrierFreq_MHz = 14.896010
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -68,10 +71,6 @@ amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
-if phase_cycling:
-    nPhaseSteps = 8
-if not phase_cycling:
-    nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
 repetition = 10e6
@@ -99,8 +98,6 @@ acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = 1.0
 acq_params['tau_us'] = tau
-ph1_cyc = r_[0,2]
-ph2_cyc = r_[0,2]
 #acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
