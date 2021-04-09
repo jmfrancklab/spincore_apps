@@ -26,7 +26,7 @@ def verifyParams():
         quit()
     else:
         print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
+    if (tau_us < 0.065):
         print("ERROR: DELAY TIME TOO SMALL.")
         print("EXITING.")
         quit()
@@ -72,71 +72,53 @@ nScans = 1
 nEchoes = 1
 phase_cycling = True
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-deadtime = 10.0
-repetition = 10e6
+deadtime_us = 10.0
+repetition_us = 10e6
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
-tau = deadtime + acq_time*1e3*0.5 + tau_adjust
+tau_adjust_us = 0.0
+tau_us = deadtime_us + acq_time*1e3*0.5 + tau_adjust_us
 print("ACQUISITION TIME:",acq_time,"ms")
-print("TAU DELAY:",tau,"us")
+print("TAU DELAY:",tau_us,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(0.5,15.,100,endpoint=False)
-#{{{ setting acq_params dictionary
-acq_params = {}
-acq_params['adcOffset'] = adcOffset
-acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['amplitude'] = amplitude
-acq_params['nScans'] = nScans
-acq_params['nEchoes'] = nEchoes
-acq_params['p90_us'] = p90_range
-acq_params['deadtime_us'] = deadtime
-acq_params['repetition_us'] = repetition
-acq_params['SW_kHz'] = SW_kHz
-acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
-acq_params['deblank_us'] = 1.0
-acq_params['tau_us'] = tau
-#acq_params['pad_us'] = pad 
-if phase_cycling:
-    acq_params['nPhaseSteps'] = nPhaseSteps
+p90_us = linspace(0.5,15.,100,endpoint=False)
+deblank_us = 1.0
 #}}}
-for index,val in enumerate(p90_range):
+for index,val in enumerate(p90_us):
     p90 = val # us
     print("***")
     print("INDEX %d - 90 TIME %f"%(index,val))
     print("***")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    acq_params['acq_time_ms'] = acq_time
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            ('delay_TTL',1.0),
+            ('delay_TTL',deblank_us),
             ('pulse_TTL',p90,'ph1',ph1_cyc),
-            ('delay',tau),
-            ('delay_TTL',1.0),
+            ('delay',tau_us),
+            ('delay_TTL',deblank_us),
             ('pulse_TTL',2.0*p90,'ph2',ph2_cyc),
-            ('delay',deadtime),
+            ('delay',deadtime_us),
             ('acquire',acq_time),
-            ('delay',repetition),
+            ('delay',repetition_us),
             ('jumpto','start')
             ])
     if not phase_cycling: 
         SpinCore_pp.load([
             ('marker','start',nScans),
             ('phase_reset',1),
-            ('delay_TTL',1.0),
+            ('delay_TTL',deblank_us),
             ('pulse_TTL',p90,0.0),
-            ('delay',tau),
-            ('delay_TTL',1.0),
+            ('delay',tau_us),
+            ('delay_TTL',deblank_us),
             ('pulse_TTL',2.0*p90,0.0),
-            ('delay',deadtime),
+            ('delay',deadtime_us),
             ('acquire',acq_time),
-            ('delay',repetition),
+            ('delay',repetition_us),
             ('jumpto','start')
             ])
     SpinCore_pp.stop_ppg();
@@ -161,8 +143,8 @@ for index,val in enumerate(p90_range):
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
     if index == 0:
-        nutation_data = ndshape([len(p90_range),len(time_axis)],['p_90','t']).alloc(dtype=complex128)
-        nutation_data.setaxis('p_90',p90_range*1e-6).set_units('p_90','s')
+        nutation_data = ndshape([len(p90_us),len(time_axis)],['p_90','t']).alloc(dtype=complex128)
+        nutation_data.setaxis('p_90',p90_us*1e-6).set_units('p_90','s')
         nutation_data.setaxis('t',time_axis).set_units('t','s')
     nutation_data['p_90',index] = data
 SpinCore_pp.stopBoard();
@@ -174,6 +156,10 @@ nutation_data.chunk('t',
                 'ph2',ph2_cyc/4).setaxis('ph1',ph1_cyc/4)
 
 nutation_data.reorder('t2',first=False)
+
+acq_params = {j:eval(j) in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
+    'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps']}
 acq_params['pulprog'] = 'spincore_nutation_v3'
 while save_file:
     try:
