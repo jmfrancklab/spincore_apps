@@ -76,10 +76,10 @@ deadtime_us = 10.0
 repetition_us = 10e6
 SW_kHz = 24.0
 nPoints = 1024
-acq_time = nPoints/SW_kHz # ms
+acq_time_ms = nPoints/SW_kHz # ms
 tau_adjust_us = 0.0
-tau_us = deadtime_us + acq_time*1e3*0.5 + tau_adjust_us
-print("ACQUISITION TIME:",acq_time,"ms")
+tau_us = deadtime_us + acq_time_ms*1e3*0.5 + tau_adjust_us
+print("ACQUISITION TIME:",acq_time_ms,"ms")
 print("TAU DELAY:",tau_us,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 p90_us = linspace(0.5,15.,100,endpoint=False)
@@ -91,7 +91,7 @@ for index,val in enumerate(p90_us):
     print("INDEX %d - 90 TIME %f"%(index,val))
     print("***")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    acq_time_ms = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
     SpinCore_pp.init_ppg();
     if phase_cycling:
         SpinCore_pp.load([
@@ -103,7 +103,7 @@ for index,val in enumerate(p90_us):
             ('delay_TTL',deblank_us),
             ('pulse_TTL',2.0*p90,'ph2',ph2_cyc),
             ('delay',deadtime_us),
-            ('acquire',acq_time),
+            ('acquire',acq_time_ms),
             ('delay',repetition_us),
             ('jumpto','start')
             ])
@@ -117,7 +117,7 @@ for index,val in enumerate(p90_us):
             ('delay_TTL',deblank_us),
             ('pulse_TTL',2.0*p90,0.0),
             ('delay',deadtime_us),
-            ('acquire',acq_time),
+            ('acquire',acq_time_ms),
             ('delay',repetition_us),
             ('jumpto','start')
             ])
@@ -138,7 +138,7 @@ for index,val in enumerate(p90_us):
     print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
     print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
     dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time_ms*1e-3,dataPoints)
     data = nddata(array(data),'t')
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
