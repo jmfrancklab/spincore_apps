@@ -61,7 +61,7 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_sol_probe_nutation_3'
+output_name = 'Ni_sol_probe_nutation_1'
 adcOffset = 45
 carrierFreq_MHz = 14.891248
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -70,7 +70,7 @@ nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
@@ -80,7 +80,7 @@ SW_kHz = 50.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
-tau = 3500#deadtime + acq_time*1e3*0.5 + tau_adjust
+tau = 1000#deadtime + acq_time*1e3*0.5 + tau_adjust
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
@@ -100,7 +100,9 @@ acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = 1.0
 acq_params['tau_us'] = tau
-#acq_params['pad_us'] = pad 
+ph1_cyc = r_[0,2]
+ph2_cyc = r_[0,2]
+acq_params['pad_us'] = pad 
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
@@ -118,10 +120,10 @@ for index,val in enumerate(p90_range):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph1',ph1_cyc),
             ('delay',tau),
             ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+            ('pulse_TTL',2.0*p90,'ph2',ph2_cyc),
             ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
@@ -171,6 +173,12 @@ SpinCore_pp.stopBoard();
 print("EXITING...\n")
 print("\n*** *** ***\n")
 save_file = True
+nutation_data.chunk('t',
+        ['ph2','ph1','t2'],[len(ph1_cyc),len(ph2_cyc),-1]).setaxis(
+                'ph2',ph2_cyc/4).setaxis('ph1',ph1_cyc/4)
+nutation_data.reorder('t2',first=False)
+acq_params['pulprog'] = 'spincore_nutation_v3'
+
 while save_file:
     try:
         print("SAVING FILE...")
