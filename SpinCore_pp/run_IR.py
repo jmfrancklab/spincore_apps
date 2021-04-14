@@ -37,17 +37,17 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '50mM_4AT_RM_AOT_cap_probe_IR_36dBm'
-adcOffset = 41
-carrierFreq_MHz = 14.821759
+output_name = '6mM_TEMPOL_cap_probe_IR_34dBm_1'
+adcOffset = 46
+carrierFreq_MHz = 14.896389
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 32
+nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.215
+p90 = 4.69
 deadtime = 10.0
-repetition = 0.5e6
+repetition = 1e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -87,8 +87,8 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 #vd_list = r_[5e1,2e5,4e5,6e5,8e5,
 #        1e6,1.2e6,1.4e6,1.6e6,1.8e6,2e6]
-vd_list = r_[5e1,9.1e4,1.8e5,2.7e5,3.6e5,
-        4.5e5,5.5e5,6.4e5,7.3e5,8.2e5,9.1e5,1e6]
+vd_list = r_[5.4e4,1.1e5,1.6e5,2.2e5,2.7e5,
+        3.3e5,3.8e5,4.4e5,4.9e5,5.5e5,6e5,7e5]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")

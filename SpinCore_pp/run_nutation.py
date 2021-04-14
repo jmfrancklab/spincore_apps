@@ -61,9 +61,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_sol_probe_nutation_1'
-adcOffset = 45
-carrierFreq_MHz = 14.891248
+output_name = 'Ni_sol_probe_nutation_2'
+adcOffset = 44
+carrierFreq_MHz = 14.898896
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -75,8 +75,8 @@ if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 3e6
-SW_kHz = 50.0
+repetition = 1.3e6
+SW_kHz = 800.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
