@@ -61,9 +61,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_sol_probe_nutation_2'
-adcOffset = 44
-carrierFreq_MHz = 14.898896
+output_name = 'Ni_cap_probe_nutation_1'
+adcOffset = 45
+carrierFreq_MHz = 14.821108
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
