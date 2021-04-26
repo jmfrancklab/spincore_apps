@@ -37,9 +37,9 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '50mM_4AT_AOT_w11_cap_probe_IR_37dBm_1'
-adcOffset = 45
-carrierFreq_MHz = 14.818505
+output_name = '50mM_4AT_AOT_w8_cap_probe_IR_36dBm_1'
+adcOffset = 44
+carrierFreq_MHz = 14.818680
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 32

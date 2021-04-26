@@ -50,8 +50,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = '50mM_4AT_AOT_w11_cap_probe_echo_38dBm'
-adcOffset = 45
+output_name = '50mM_4AT_AOT_w8_cap_probe_echo_38dBm_2'
+adcOffset = 44
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -71,7 +71,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.818505
+    carrierFreq_MHz = 14.818680
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -83,7 +83,7 @@ if not user_sets_Freq:
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 32
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
