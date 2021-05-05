@@ -50,7 +50,7 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'pure_water_cap_probe_echo_7'
+output_name = 'Ni_water_TempControl_probe_10'
 adcOffset = 43
 
 user_sets_Freq = True
@@ -71,7 +71,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.816056
+    carrierFreq_MHz = 14.799005
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -83,7 +83,7 @@ if not user_sets_Freq:
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 32
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -97,9 +97,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.317
+p90 = 20
 deadtime = 10.0
-repetition = 1e6
+repetition = 0.9e6
 
 SW_kHz = 24
 nPoints = 1024*2
