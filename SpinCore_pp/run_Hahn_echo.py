@@ -50,8 +50,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'sol_probe_echo_1'
-adcOffset = 41
+output_name = 'Ni_water_TempControl_probe_10'
+adcOffset = 43
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -59,7 +59,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 =  3488.17
+    true_B0 =  3504.35
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{ let computer set field
@@ -71,12 +71,12 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.821759
+    carrierFreq_MHz = 14.799005
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
 if not user_sets_Freq:
-    gamma_eff = 0.00424914361
+    gamma_eff = 0.0042490125
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
@@ -97,9 +97,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.215
+p90 = 20
 deadtime = 10.0
-repetition = 0.5e6
+repetition = 0.9e6
 
 SW_kHz = 24
 nPoints = 1024*2

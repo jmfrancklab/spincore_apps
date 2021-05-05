@@ -70,9 +70,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '50mM_4AT_AOT_RM_cap_probe_DNP_1'
-adcOffset = 41
-carrierFreq_MHz = 14.821759
+output_name = '50mM_4AT_AOT_w8_cap_probe_DNP_1'
+adcOffset = 44
+carrierFreq_MHz = 14.818680
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 32
@@ -87,9 +87,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.215
+p90 = 4.317 
 deadtime = 10.0
-repetition = 1e6
+repetition = 0.9e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
