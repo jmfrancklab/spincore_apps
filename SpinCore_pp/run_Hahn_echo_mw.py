@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 6.0
-power_steps = 15
+max_power = 4.0
+power_steps = 20
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,12 +70,12 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '50mM_4AT_AOT_w8_cap_probe_DNP_1'
-adcOffset = 44
-carrierFreq_MHz = 14.818680
+output_name = 'TEMPOL_150uM__cap_probe_DNP_1'
+adcOffset = 47
+carrierFreq_MHz = 14.896944
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 32
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -87,9 +87,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.317 
+p90 = 4.37 
 deadtime = 10.0
-repetition = 0.9e6
+repetition = 19e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -98,7 +98,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 3500.
+tau = 1000.
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset

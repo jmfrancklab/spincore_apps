@@ -37,24 +37,24 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'pure_water_cap_probe_FIR_32dBm'
-adcOffset = 43
-carrierFreq_MHz = 14.816056
+output_name = 'TEMPOL_150uM_cap_probe_FIR_30dBm_1'
+adcOffset = 47
+carrierFreq_MHz = 14.896944
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.317 
+p90 = 4.37 
 deadtime = 10.0
-repetition = 9e6
+repetition = 8e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-tau = 3500.
+tau = 1000.
 pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
@@ -91,7 +91,7 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
         #4.5e5,5.5e5,6.4e5,7.3e5,8.2e5,9.1e5,1e6]
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-vd_list = np.linspace(5e1,7e6,11)
+vd_list = np.linspace(5e1,10e6,12)
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
