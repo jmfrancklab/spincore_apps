@@ -61,9 +61,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_water_cap_probe_nutation_1'
-adcOffset = 47
-carrierFreq_MHz = 14.897182
+output_name = 'Ni_water_TempControl_probe_nutation_2'
+adcOffset = 44
+carrierFreq_MHz = 14.896096
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -84,7 +84,7 @@ tau = 1000
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.,24.,150,endpoint=False)
+p90_range = linspace(1.,24.,120,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset

@@ -50,8 +50,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_150uM_cap_probe_echo_4'
-adcOffset = 47
+output_name = 'water_cap_probe_3'
+adcOffset = 30
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -71,7 +71,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.896944
+    carrierFreq_MHz = 14.897021
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -99,7 +99,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.37
 deadtime = 10.0
-repetition = 15e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2

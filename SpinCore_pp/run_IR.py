@@ -37,9 +37,9 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'TEMPOL_150uM_cap_probe_FIR_30dBm_1'
-adcOffset = 47
-carrierFreq_MHz = 14.896944
+output_name = 'water_cap_probe_IR_34dBm'
+adcOffset = 31
+carrierFreq_MHz = 14.897021
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -47,7 +47,7 @@ nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 4.37 
 deadtime = 10.0
-repetition = 8e6
+repetition = 10e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
