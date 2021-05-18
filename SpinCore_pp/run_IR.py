@@ -5,7 +5,7 @@ import socket
 import sys
 import time
 from datetime import datetime
-init_logging(level='debug')
+#init_logging(level='debug')
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -37,23 +37,22 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'water_cap_probe_IR_34dBm'
-adcOffset = 31
-carrierFreq_MHz = 14.897021
+output_name = '4OHTempo_test2'
+adcOffset = 33
+carrierFreq_MHz = 14.713995
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.37 
+p90 = 3.24 
 deadtime = 10.0
-repetition = 10e6
+repetition = 7e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-#tau = deadtime + acq_time*1e3*0.5 + tau_adjust
 tau = 1000.
 pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
@@ -185,9 +184,11 @@ while save_file:
         vd_data.name('signal')
         vd_data.hdf5_write(date+'_'+output_name+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/inv_rec'))
+        print("*** *** *** *** *** *** *** *** *** *** ***")
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+        print("*** *** *** *** *** *** *** *** *** *** ***")
         print(("Name of saved data",vd_data.name()))
-        print(("Units of saved data",vd_data.get_units('t')))
+        print(("Units of saved data",vd_data.get_units('t2')))
         print(("Shape of saved data",ndshape(vd_data)))
         save_file = False
     except Exception as e:
