@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 3.98 #W
-power_steps = 17
+max_power = 1. #W
+power_steps = 2
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,16 +70,16 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'S175R1a_pR_DHPC_ODNP'
-adcOffset = 32 
-carrierFreq_MHz = 14.89445
+output_name = '150uM_TEMPOL_TempControl_probe_DNP_1'
+adcOffset = 31
+carrierFreq_MHz = 14.713355
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -87,9 +87,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.69 
+p90 = 3.24
 deadtime = 10.0
-repetition = 9e6
+repetition = 5e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -146,7 +146,7 @@ if phase_cycling:
         ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
         ('delay',tau),
         ('delay_TTL',deblank),
-        ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+        ('pulse_TTL',2.0*p90,0),
         ('delay',deadtime),
         ('acquire',acq_time),
         #('delay',pad),
@@ -202,7 +202,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.816e9,9.826e9))
+    this_return = b.lock_on_dip(ini_range=(9.7e9,9.708e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
@@ -260,7 +260,7 @@ with Bridge12() as b:
                 ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
                 ('delay',tau),
                 ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+                ('pulse_TTL',2.0*p90,0),
                 ('delay',deadtime),
                 ('acquire',acq_time),
                 #('delay',pad),

@@ -37,17 +37,17 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'S175R1a_pR_DHPC_FIR_30dBm'
-adcOffset = 32
-carrierFreq_MHz = 14.89445
+output_name = '150uM_TEMPOL_TempControl_probe_IR_3'
+adcOffset = 31
+carrierFreq_MHz = 14.713355
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.69 
+p90 = 3.24
 deadtime = 10.0
-repetition = 3.5e6
+repetition = 6e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -58,10 +58,9 @@ pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True
-ph1 = r_[0,2]
-ph2 = r_[0,1,2,3]
+ph1 = r_[0,1,2,3]
 if phase_cycling:
-    nPhaseSteps = 8 
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1 
 #{{{ setting acq_params dictionary
@@ -101,16 +100,15 @@ for index,val in enumerate(vd_list):
     acq_params['acq_time_ms'] = acq_time
     SpinCore_pp.init_ppg();
     if phase_cycling:
-        phase_cycles = dict(ph1 = r_[0,2],
-                ph2 = r_[0,1,2,3])
+        phase_cycles = dict(ph1 = r_[0,1,2,3])
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,'ph1',phase_cycles['ph1']),
+            ('pulse_TTL',2.0*p90,0),
             ('delay',vd),
             ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph2',phase_cycles['ph2']),
+            ('pulse_TTL',p90,'ph1',phase_cycles['ph1']),
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,0),
@@ -175,7 +173,6 @@ if phase_cycling:
     phcyc_dims = [len(phase_cycles[j]) for j in phcyc_names]
     vd_data.chunk('t',phcyc_names+['t2'],phcyc_dims+[-1])
     vd_data.setaxis('ph1',ph1/4.)
-    vd_data.setaxis('ph2',ph2/4.)
 else:
     vd_data.rename('t','t2')
 while save_file:
