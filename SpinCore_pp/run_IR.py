@@ -37,17 +37,17 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '4OHTempo_test2'
-adcOffset = 33
-carrierFreq_MHz = 14.713995
+output_name = 'S175R1a_pR_DHPC_FIR_30dBm'
+adcOffset = 32
+carrierFreq_MHz = 14.89445
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 3.24 
+p90 = 4.69 
 deadtime = 10.0
-repetition = 7e6
+repetition = 3.5e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
