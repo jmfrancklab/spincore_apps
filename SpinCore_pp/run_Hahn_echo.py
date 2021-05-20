@@ -89,7 +89,7 @@ phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -159,7 +159,7 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph1',r_[0,2]),
             ('delay',tau),
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -234,7 +234,6 @@ while save_file:
             break
 
 data.set_units('t','data')
-# {{{ once files are saved correctly, the following become obsolete
 print(ndshape(data))
 print(" *** *** *** ")
 print("My field in G is %f"%true_B0)
@@ -248,9 +247,9 @@ if not phase_cycling:
     fl.plot(data.real)
     fl.plot(data.imag)
 if phase_cycling:
-    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
     data.setaxis('ph2',r_[0.,2.]/4)
-    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    data.setaxis('ph1',r_[0.,2.]/4)
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
     fl.next('image')

@@ -58,7 +58,8 @@ pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True
-ph1 = r_[0,1,2,3]
+ph1 = r_[0,2]
+ph2 = r_[0,2]
 if phase_cycling:
     nPhaseSteps = 4
 if not phase_cycling:
@@ -100,15 +101,16 @@ for index,val in enumerate(vd_list):
     acq_params['acq_time_ms'] = acq_time
     SpinCore_pp.init_ppg();
     if phase_cycling:
-        phase_cycles = dict(ph1 = r_[0,1,2,3])
+        phase_cycles = dict(ph1 = r_[0,2],
+                ph2 = r_[0,2])
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,0),
+            ('pulse_TTL',2.0*p90,'ph1',phase_cycles['ph1']),
             ('delay',vd),
             ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph1',phase_cycles['ph1']),
+            ('pulse_TTL',p90,'ph2',phase_cycles['ph2']),
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,0),
@@ -173,6 +175,7 @@ if phase_cycling:
     phcyc_dims = [len(phase_cycles[j]) for j in phcyc_names]
     vd_data.chunk('t',phcyc_names+['t2'],phcyc_dims+[-1])
     vd_data.setaxis('ph1',ph1/4.)
+    vd_data.setaxis('ph2',ph2/4.)
 else:
     vd_data.rename('t','t2')
 while save_file:
@@ -212,5 +215,4 @@ fl.next('FT raw data')
 fl.image(vd_data.setaxis('vd','#'))
 fl.next('FT abs raw data')
 fl.image(abs(vd_data).setaxis('vd','#'))
-fl.show()
-
+fl.show();quit()
