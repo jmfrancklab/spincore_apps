@@ -37,15 +37,15 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '150uM_TEMPOL_TempControl_probe_IR_3'
-adcOffset = 31
-carrierFreq_MHz = 14.713355
+output_name = 'TEMPOL7uM_cap_probe_DNP'
+adcOffset = 30
+carrierFreq_MHz = 14.895497
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 3.24
+p90 = 4.69
 deadtime = 10.0
 repetition = 6e6
 SW_kHz = 24.0
@@ -181,9 +181,9 @@ else:
 while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
-        vd_data.name('signal')
+        vd_data.name('2p5_Watts')
         vd_data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/inv_rec'))
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
         print("*** *** *** *** *** *** *** *** *** *** ***")
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print("*** *** *** *** *** *** *** *** *** *** ***")

@@ -50,16 +50,16 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4OHTempo_TempControl_probe_1'
+output_name = 'TEMPOL7uM_cap_probe_1'
 adcOffset = 31
 
 user_sets_Freq = True
 user_sets_Field = True
 
-#{{{ set fieldza here
+#{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3463.2 
+    true_B0 = 3505.75 
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -69,9 +69,9 @@ if not user_sets_Field:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
 #}}}
-#{{{ set frequency here
+#{{{ set frequency hzaere
 if user_sets_Freq:
-    carrierFreq_MHz = 14.713355
+    carrierFreq_MHz = 14.895497
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}za
 #{{{ let computer set frequency
@@ -97,9 +97,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.24 
+p90 = 4.69 
 deadtime = 10
-repetition = 7e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
