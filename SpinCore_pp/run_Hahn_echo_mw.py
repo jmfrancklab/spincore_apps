@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 6.0
-power_steps = 15
+max_power = 1. #W
+power_steps = 2
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,16 +70,16 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '50mM_4AT_AOT_w8_cap_probe_DNP_1'
-adcOffset = 44
-carrierFreq_MHz = 14.818680
+output_name = '150uM_TEMPOL_TempControl_probe_DNP_1'
+adcOffset = 31
+carrierFreq_MHz = 14.713355
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 32
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -87,9 +87,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.317 
+p90 = 3.24
 deadtime = 10.0
-repetition = 0.9e6
+repetition = 5e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -98,7 +98,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 3500.
+tau = 1000.
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -143,7 +143,7 @@ if phase_cycling:
         ('marker','start',1),
         ('phase_reset',1),
         ('delay_TTL',deblank),
-        ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+        ('pulse_TTL',p90,'ph1',r_[0,2]),
         ('delay',tau),
         ('delay_TTL',deblank),
         ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -202,7 +202,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.819e9,9.825e9))
+    this_return = b.lock_on_dip(ini_range=(9.7e9,9.708e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
@@ -257,7 +257,7 @@ with Bridge12() as b:
                 ('marker','start',1),
                 ('phase_reset',1),
                 ('delay_TTL',deblank),
-                ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+                ('pulse_TTL',p90,'ph1',r_[0,2]),
                 ('delay',tau),
                 ('delay_TTL',deblank),
                 ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -317,8 +317,11 @@ while save_file:
         print("SAVING FILE...")
         DNP_data.set_prop('acq_params',acq_params)
         DNP_data.name('signal')
-        DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+        DNP_data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
+        print("*** *** *** *** *** *** *** *** *** *** ***")
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+        print("*** *** *** *** *** *** *** *** *** *** ***")
         print("Name of saved data",DNP_data.name())
         print("Units of saved data",DNP_data.get_units('t'))
         print("Shape of saved data",ndshape(DNP_data))
@@ -346,6 +349,7 @@ fl.image(abs(DNP_data).C.setaxis('power',
     '#').set_units('power','scan #'))
 data.ft('t',shift=True)
 fl.next('raw data - ft')
-fl.image(DNP_data)
+fl.image(DNP_data.C.setaxis('power','#'))
 fl.next('abs raw data - ft')
-fl.image(abs(DNP_data))
+fl.image(abs(DNP_data.C.setaxis('power','#')))
+fl.show();quit()

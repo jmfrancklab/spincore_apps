@@ -5,7 +5,7 @@ import socket
 import sys
 import time
 from datetime import datetime
-init_logging(level='debug')
+#init_logging(level='debug')
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -37,32 +37,31 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'pure_water_cap_probe_FIR_32dBm'
-adcOffset = 43
-carrierFreq_MHz = 14.816056
+output_name = '150uM_TEMPOL_TempControl_probe_IR_3'
+adcOffset = 31
+carrierFreq_MHz = 14.713355
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.317 
+p90 = 3.24
 deadtime = 10.0
-repetition = 9e6
+repetition = 6e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-#tau = deadtime + acq_time*1e3*0.5 + tau_adjust
-tau = 3500.
+tau = 1000.
 pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True
 ph1 = r_[0,2]
-ph2 = r_[0,1,2,3]
+ph2 = r_[0,2]
 if phase_cycling:
-    nPhaseSteps = 8 
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1 
 #{{{ setting acq_params dictionary
@@ -91,7 +90,7 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
         #4.5e5,5.5e5,6.4e5,7.3e5,8.2e5,9.1e5,1e6]
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-vd_list = np.linspace(5e1,7e6,11)
+vd_list = np.linspace(5e1,10e6,12)
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
@@ -103,7 +102,7 @@ for index,val in enumerate(vd_list):
     SpinCore_pp.init_ppg();
     if phase_cycling:
         phase_cycles = dict(ph1 = r_[0,2],
-                ph2 = r_[0,1,2,3])
+                ph2 = r_[0,2])
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
@@ -185,9 +184,11 @@ while save_file:
         vd_data.name('signal')
         vd_data.hdf5_write(date+'_'+output_name+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/inv_rec'))
+        print("*** *** *** *** *** *** *** *** *** *** ***")
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+        print("*** *** *** *** *** *** *** *** *** *** ***")
         print(("Name of saved data",vd_data.name()))
-        print(("Units of saved data",vd_data.get_units('t')))
+        print(("Units of saved data",vd_data.get_units('t2')))
         print(("Shape of saved data",ndshape(vd_data)))
         save_file = False
     except Exception as e:
@@ -214,5 +215,4 @@ fl.next('FT raw data')
 fl.image(vd_data.setaxis('vd','#'))
 fl.next('FT abs raw data')
 fl.image(abs(vd_data).setaxis('vd','#'))
-fl.show()
-
+fl.show();quit()
