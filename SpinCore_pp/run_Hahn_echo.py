@@ -50,8 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL7uM_cap_probe_1'
-adcOffset = 31
+output_name = '50mM_4AT_AOT_w11_cap_probe_echo_38dBm_1'
+node_name = 'signal'
+adcOffset = 32
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -69,9 +70,9 @@ if not user_sets_Field:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
 #}}}
-#{{{ set frequency hzaere
+#{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.895497
+    carrierFreq_MHz = 14.818090
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}za
 #{{{ let computer set frequency
@@ -83,7 +84,7 @@ if not user_sets_Freq:
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -99,7 +100,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69 
 deadtime = 10
-repetition = 10e6
+repetition = 0.9e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -200,7 +201,7 @@ for x in range(nScans):
         data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=np.complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:nScans])
-        data.name('signal')
+        data.name(node_name)
         data.set_prop('acq_params',acq_params)
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();

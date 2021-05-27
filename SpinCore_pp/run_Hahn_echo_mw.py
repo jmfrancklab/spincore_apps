@@ -58,7 +58,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 2.5 #W
+max_power = 4 #W
 power_steps = 25
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
@@ -70,12 +70,13 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL7uM_cap_probe_DNP'
-adcOffset = 30
-carrierFreq_MHz = 14.895497
+output_name = '50mM_4AT_AOT_w11_cap_probe_DNP'
+node_name = 'enhancement'
+adcOffset = 32
+carrierFreq_MHz = 14.818090
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -89,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 12e6
+repetition = 2.5e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -306,7 +307,7 @@ with Bridge12() as b:
         data.name('signal')
         DNP_data['power',j+1] = data
         last_power = this_power
-DNP_data.name('signal')
+DNP_data.name(node_name)
 DNP_data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
 print("EXITING...")
@@ -316,7 +317,7 @@ while save_file:
     try:
         print("SAVING FILE...")
         DNP_data.set_prop('acq_params',acq_params)
-        DNP_data.name('enhancement')
+        DNP_data.name(node_name)
         DNP_data.hdf5_write(date+'_'+output_name+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
         print("*** *** *** *** *** *** *** *** *** *** ***")
