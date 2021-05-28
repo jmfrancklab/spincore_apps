@@ -97,75 +97,69 @@ for index,val in enumerate(vd_list):
     print("***")
     print("INDEX %d - VARIABLE DELAY %f"%(index,val))
     print("***")
-    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    acq_params['acq_time_ms'] = acq_time
-    SpinCore_pp.init_ppg();
-    if phase_cycling:
-        phase_cycles = dict(ph1 = r_[0,2],
-                ph2 = r_[0,2])
-        SpinCore_pp.load([
-            ('marker','start',1),
-            ('phase_reset',1),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,'ph1',phase_cycles['ph1']),
-            ('delay',vd),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph2',phase_cycles['ph2']),
-            ('delay',tau),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-    if not phase_cycling:
-        SpinCore_pp.load([
-            ('marker','start',nScans),
-            ('phase_reset',1),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,0.0),
-            ('delay',vd),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',p90,0.0),
-            ('delay',tau),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,0.0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-    SpinCore_pp.stop_ppg();
-    print("\nRUNNING BOARD...\n")
-    if phase_cycling:
-        for x in range(nScans):
-            print("SCAN NO. %d"%(x+1))
-            SpinCore_pp.runBoard();
-    if not phase_cycling:
-        start = time.time()
-        SpinCore_pp.runBoard(); 
-        runtime = time.time()-start
-        logger.debug(strm("for vd",vd/1e6," s run time is",runtime))
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-    raw_data.astype(float)
-    data = []
-    data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
-    dataPoints = float(np.shape(data)[0])
-    time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-    data = nddata(np.array(data),'t')
-    data.setaxis('t',time_axis).set_units('t','s')
-    data.name('signal')
-    data.set_prop('acq_params',acq_params)
-    if index == 0:
-        vd_data = ndshape([len(vd_list),len(time_axis)],['vd','t']).alloc(dtype=np.complex128)
-        vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
-        vd_data.setaxis('t',time_axis).set_units('t','s')
-    vd_data['vd',index] = data
-    vd_data.set_prop('acq_params',acq_params)
+    for x in range(nScans): 
+        SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+        acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+        acq_params['acq_time_ms'] = acq_time
+        SpinCore_pp.init_ppg();
+        if phase_cycling:
+            phase_cycles = dict(ph1 = r_[0,2],
+                    ph2 = r_[0,2])
+            SpinCore_pp.load([
+                ('marker','start',1),
+                ('phase_reset',1),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',2.0*p90,'ph1',phase_cycles['ph1']),
+                ('delay',vd),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',p90,'ph2',phase_cycles['ph2']),
+                ('delay',tau),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',2.0*p90,0),
+                ('delay',deadtime),
+                ('acquire',acq_time),
+                ('delay',repetition),
+                ('jumpto','start')
+                ])
+        if not phase_cycling:
+            SpinCore_pp.load([
+                ('marker','start',nScans),
+                ('phase_reset',1),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',2.0*p90,0.0),
+                ('delay',vd),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',p90,0.0),
+                ('delay',tau),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',2.0*p90,0.0),
+                ('delay',deadtime),
+                ('acquire',acq_time),
+                ('delay',repetition),
+                ('jumpto','start')
+                ])
+        SpinCore_pp.stop_ppg();
+        print("\nRUNNING BOARD...\n")
+        SpinCore_pp.runBoard();
+        raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+        raw_data.astype(float)
+        data = []
+        data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
+        print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
+        print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
+        dataPoints = float(np.shape(data)[0])
+        time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+        data = nddata(np.array(data),'t')
+        data.setaxis('t',time_axis).set_units('t','s')
+        data.name('signal')
+        data.set_prop('acq_params',acq_params)
+        if index == 0 and x == 0:
+            vd_data = ndshape([len(vd_list),nScans,len(time_axis)],['vd','nScans','t']).alloc(dtype=np.complex128)
+            vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
+            vd_data.setaxis('nScans',r_[0:nScans])
+            vd_data.setaxis('t',time_axis).set_units('t','s')
+        vd_data['vd',index]['nScans',x] = data
+        vd_data.set_prop('acq_params',acq_params)
 SpinCore_pp.stopBoard();
 print("EXITING...\n")
 print("\n*** *** ***\n")
