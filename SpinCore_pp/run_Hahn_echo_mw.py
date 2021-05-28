@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4 #W
-power_steps = 25
+max_power = 4 # W
+power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,17 +70,17 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_3uM_cap_probe_DNP'
-node_name = 'enhancement'
+output_name = '50mM_4AT_AOT_w11_cap_probe_DNP'
+node_name = 'enhancement_full'
 adcOffset = 32
-carrierFreq_MHz = 14.895497
+carrierFreq_MHz = 14.817621
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
+nScans = 32
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -90,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 12e6
+repetition = 0.9e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -146,7 +146,7 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -184,16 +184,17 @@ for x in range(nScans):
     dataPoints = float(shape(data)[0])
     if x == 0:
         time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-        data = ndshape([len(data),nScans],['t','nScans']).alloc(dtype=np.complex128)
-        data.setaxis('t',time_axis).set_units('t','s')
-        data.setaxis('nScans',r_[0:nScans])
-        data.name('signal')
-        data.set_prop('acq_params',acq_params)
+        #data = ndshape([len(data)],['t']).alloc(dtype=np.complex128)
+        #data.setaxis('t',time_axis).set_units('t','s')
+        #data.name('signal')
+        #data.set_prop('acq_params',acq_params)
+        DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['power','nScans','t']).alloc(dtype=complex128)
+        DNP_data.setaxis('power',r_[0,powers]).set_units('W')
+        DNP_data.setaxis('t',time_axis).set_units('t','s')
+        DNP_data.setaxis('nScans',r_[0:nScans])
+    data = nddata(array(data),'t')
+    data.setaxis('t',time_axis)
     # Define nddata to store along the new power dimension
-    DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['power','nScans','t']).alloc(dtype=complex128)
-    DNP_data.setaxis('power',r_[0,powers]).set_units('W')
-    DNP_data.setaxis('t',time_axis).set_units('t','s')
-    DNP_data.setaxis('nScans',r_[0:nScans])
     DNP_data['power',0]['nScans',x] = data
 
 with Bridge12() as b:
@@ -258,7 +259,7 @@ with Bridge12() as b:
                     ('marker','start',1),
                     ('phase_reset',1),
                     ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,'ph1',r_[0,2]),
+                    ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
                     ('delay',tau),
                     ('delay_TTL',deblank),
                     ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
