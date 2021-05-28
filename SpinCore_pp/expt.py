@@ -1,8 +1,8 @@
 from pyspecdata import *
 import numpy as np
 
-rd = 10e6*1e-6
-nScans = 1
+rd = 12e6*1e-6
+nScans = 4
 nPhaseSteps = 2*2
 
 FIR = False

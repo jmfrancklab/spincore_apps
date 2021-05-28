@@ -50,7 +50,7 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL150uM_cap_probe_echo_1'
+output_name = 'TEMPOL3uM_cap_probe_echo_1'
 node_name = 'signal'
 adcOffset = 31
 
@@ -60,7 +60,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3505.85 
+    true_B0 = 3505.8 
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -100,7 +100,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69 
 deadtime = 10
-repetition = 10e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
