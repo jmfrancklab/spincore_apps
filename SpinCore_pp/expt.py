@@ -1,16 +1,16 @@
 from pyspecdata import *
 import numpy as np
 
-rd = 0.9e6*1e-6
-nScans = 32
-nPhaseSteps = 4*2
+rd = 4e6*1e-6
+nScans = 1
+nPhaseSteps = 4
 
-FIR = False
+FIR = True
 #{{{
 if FIR:
-    #vd_list = (np.linspace(5e1,10e6,12))*1e-6
+    vd_list = (np.linspace(5e1,10e6,12))*1e-6
     #r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]*1e-6
-    vd_list = r_[5e1,2e5,4e5,6e5,8e5]*1e-6
+    #vd_list = r_[5e1,2e5,4e5,6e5,8e5]*1e-6
     expt = rd*nScans*nPhaseSteps*len(vd_list)+sum(vd_list*nPhaseSteps*nScans)
 #}}}
 ODNP = True

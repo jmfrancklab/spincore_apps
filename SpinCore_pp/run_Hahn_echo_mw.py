@@ -80,7 +80,7 @@ nScans = 32
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -146,7 +146,7 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph1',r_[0,2]),
             ('delay',tau),
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -259,7 +259,7 @@ with Bridge12() as b:
                     ('marker','start',1),
                     ('phase_reset',1),
                     ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+                    ('pulse_TTL',p90,'ph1',r_[0,2]),
                     ('delay',tau),
                     ('delay_TTL',deblank),
                     ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),

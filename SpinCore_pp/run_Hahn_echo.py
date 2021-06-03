@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = '50mM_4AT_AOT_w11_cap_probe_echo'
-node_name = 'test_3'
-adcOffset = 32
+output_name = 'EtOH_cap_probe_echo'
+node_name = 'test_3_SW6'
+adcOffset = 31
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -73,7 +73,7 @@ repetition = 15e6
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.817621
+    carrierFreq_MHz = 14.818173
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}za
 #{{{ let computer set frequency
@@ -85,7 +85,7 @@ if not user_sets_Freq:
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 6
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -101,9 +101,9 @@ if not phase_cycling:
 #}}}
 p90 = 4.69 
 deadtime = 10
-repetition = 0.9e6
+repetition = 8.3e6
 
-SW_kHz = 24
+SW_kHz = 6.206
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
