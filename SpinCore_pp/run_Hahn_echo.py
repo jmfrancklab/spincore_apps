@@ -51,8 +51,8 @@ def verifyParams():
 #}}}
 
 output_name = 'EtOH_cap_probe_echo'
-node_name = 'test_3_SW6'
-adcOffset = 31
+node_name = 'test_3'
+adcOffset = 37
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -73,7 +73,7 @@ repetition = 15e6
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.818173
+    carrierFreq_MHz = 14.817993
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}za
 #{{{ let computer set frequency

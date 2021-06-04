@@ -38,7 +38,7 @@ def verifyParams():
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
 output_name = 'EtOH_cap_probe_COSY'
-node_name = 'COSY_1'
+node_name = 'COSY_4'
 adcOffset = 31
 carrierFreq_MHz = 14.817993
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -85,10 +85,11 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#t1_list = r_[0:330:10]*1e3 # us
-t1_list = r_[0:330:3j]*1e3 # us
 # cannot have a delay of 0, so set to minimum SpinCore can take
-t1_list[0] = 0.065
+min_t1 = 0.065 # us (lower limit of SpinCore)
+max_t1 = 200*1e3
+t1_step = 1.25*1e3
+t1_list = r_[min_t1:max_t1:t1_step]
 acq_params['t1_list'] = t1_list
 for index,val in enumerate(t1_list):
     t1 = val
