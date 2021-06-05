@@ -58,7 +58,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 4 # W
+max_power = 3.16 # W
 power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
@@ -70,17 +70,17 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '50mM_4AT_AOT_w11_cap_probe_DNP'
+output_name = '50mM_4AT_AOT_w11_cap_probe_echo'
 node_name = 'enhancement_full'
-adcOffset = 32
-carrierFreq_MHz = 14.817621
+adcOffset = 33
+carrierFreq_MHz = 14.817993
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 32
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -90,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 0.9e6
+repetition = 0.8e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -146,7 +146,7 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -259,7 +259,7 @@ with Bridge12() as b:
                     ('marker','start',1),
                     ('phase_reset',1),
                     ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,'ph1',r_[0,2]),
+                    ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
                     ('delay',tau),
                     ('delay_TTL',deblank),
                     ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),

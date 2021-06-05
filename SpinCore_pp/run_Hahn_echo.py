@@ -51,7 +51,7 @@ def verifyParams():
 #}}}
 
 output_name = '50mM_4AT_AOT_w11_cap_probe_echo'
-node_name = 'echo_noPower_2'
+node_name = 'tau_11135'
 adcOffset = 33
 
 user_sets_Freq = True
@@ -85,13 +85,13 @@ if not user_sets_Freq:
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 64
+nScans = 200
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -110,7 +110,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 1000.
+tau = 11135
 pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
@@ -161,7 +161,7 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -249,9 +249,9 @@ if not phase_cycling:
     fl.plot(data.real)
     fl.plot(data.imag)
 if phase_cycling:
-    data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     data.setaxis('ph2',r_[0.,2.]/4)
-    data.setaxis('ph1',r_[0.,2.]/4)
+    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
     fl.next('image')
