@@ -50,8 +50,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = '50mM_4AT_AOT_w11_cap_probe_echo'
-node_name = 'tau_11135'
+output_name = '100mM_TEMPOL_cap_probe_echo'
+node_name = 'echo1'
 adcOffset = 33
 
 user_sets_Freq = True
@@ -60,7 +60,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3505.8 
+    true_B0 = 3505.85 
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -73,7 +73,7 @@ repetition = 15e6
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.817993
+    carrierFreq_MHz = 14.895497
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}za
 #{{{ let computer set frequency
@@ -85,7 +85,7 @@ if not user_sets_Freq:
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 200
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -101,7 +101,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69 
 deadtime = 10
-repetition = 0.8e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -110,7 +110,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 11135
+tau = 1000
 pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
