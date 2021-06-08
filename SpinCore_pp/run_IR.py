@@ -37,18 +37,18 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'TEMPOL_3uM_cap_probe_DNP'
-node_name = 'FIR_34dBm'
-adcOffset = 34
-carrierFreq_MHz = 14.895497
+output_name = 'TEMPOL_150uM_TempCont_probe_DNP'
+node_name = 'FIR_35dBm'
+adcOffset = 32
+carrierFreq_MHz = 14.715945
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.69
+p90 =  1.68
 deadtime = 10.0
-repetition = 10e6
+repetition = 6e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -59,7 +59,7 @@ pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True
-ph1 = r_[0,4]
+ph1 = r_[0,2]
 ph2 = r_[0,2]
 if phase_cycling:
     nPhaseSteps = 4

@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_3uM_cap_probe_1'
-node_name = 'echo1'
-adcOffset = 34
+output_name = 'TEMPOL_150uM_TempCont_probe_1'
+node_name = 'echo_35dBm'
+adcOffset = 32
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -60,22 +60,21 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3505.9 
+    true_B0 = 3463.6 
     print("My field in G should be %f"%true_B0)
-#}}}
+#}}}za
 #{{{let computer set field
 if not user_sets_Field:
     desired_B0 = 3488.17
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
-repetition = 15e6
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.895497
+    carrierFreq_MHz = 14.715945
     print("My frequency in MHz is",carrierFreq_MHz)
-#}}}za
+#}}}zaza
 #{{{ let computer set frequency
 if not user_sets_Freq:
     gamma_eff = 0.0042490125
@@ -85,7 +84,7 @@ if not user_sets_Freq:
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 4 
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -99,9 +98,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 =  4.69
+p90 =  1.68
 deadtime = 10
-repetition = 10e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
