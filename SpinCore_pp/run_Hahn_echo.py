@@ -50,18 +50,19 @@ def verifyParams():
     return
 #}}}
 
-output_name = '4OHTempo_TempControl_probe_1'
-adcOffset = 31
+output_name = 'TEMPOL_150uM_TempCont_probe_1'
+node_name = 'echo_35dBm'
+adcOffset = 32
 
 user_sets_Freq = True
 user_sets_Field = True
 
-#{{{ set fieldza here
+#{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3463.2 
+    true_B0 = 3463.6 
     print("My field in G should be %f"%true_B0)
-#}}}
+#}}}za
 #{{{let computer set field
 if not user_sets_Field:
     desired_B0 = 3488.17
@@ -71,9 +72,9 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.713355
+    carrierFreq_MHz = 14.715945
     print("My frequency in MHz is",carrierFreq_MHz)
-#}}}za
+#}}}zaza
 #{{{ let computer set frequency
 if not user_sets_Freq:
     gamma_eff = 0.0042490125
@@ -83,13 +84,13 @@ if not user_sets_Freq:
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 4 
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -97,9 +98,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.24 
+p90 =  1.68
 deadtime = 10
-repetition = 7e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -108,7 +109,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 1000.
+tau = 1000
 pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
@@ -159,7 +160,7 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
             ('delay_TTL',deblank),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -200,7 +201,7 @@ for x in range(nScans):
         data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=np.complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:nScans])
-        data.name('signal')
+        data.name(node_name)
         data.set_prop('acq_params',acq_params)
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
@@ -247,9 +248,9 @@ if not phase_cycling:
     fl.plot(data.real)
     fl.plot(data.imag)
 if phase_cycling:
-    data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     data.setaxis('ph2',r_[0.,2.]/4)
-    data.setaxis('ph1',r_[0.,2.]/4)
+    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
     fl.next('image')
