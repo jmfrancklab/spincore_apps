@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_100mM_cap_probe_1'
+output_name = '3uM_TEMPOL_cap_probe_1'
 node_name = 'echo_1'
-adcOffset = 32
+adcOffset = 31
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -60,7 +60,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3505.95 
+    true_B0 = 3505.85 
     print("My field in G should be %f"%true_B0)
 #}}}za
 #{{{let computer set field
@@ -74,7 +74,7 @@ if not user_sets_Field:
 if user_sets_Freq:
     carrierFreq_MHz = 14.895497
     print("My frequency in MHz is",carrierFreq_MHz)
-#}}}zaza
+#}}}zaa
 #{{{ let computer set frequency
 if not user_sets_Freq:
     gamma_eff = 0.0042490125
@@ -100,7 +100,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10
-repetition = 5e6
+repetition = 10e6
 
 SW_kHz = 24
 nPoints = 1024*2
