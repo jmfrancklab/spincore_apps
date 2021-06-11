@@ -36,24 +36,24 @@ def verifyParams():
     return
 #}}}
 
-desired_B0 = 3487.9
 
-field_axis = linspace(3485.0,3495.0,3)
-print(field_axis)
+field_axis = r_[3463.0:3464.5:.1]
+print("Here is my field axis:",field_axis)
 
-output_name = 'Ni_cap_probe_field_dep_1'
-adcOffset = 45
-gamma_eff = 0.004249215249
+output_name = '150uM_TEMPOL_TempControl_probe_field_dep'
+node_name = 'noPower'
+adcOffset = 31
+gamma_eff = (14.713355/3463.2)
 #{{{ acq params
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 2
+nScans = 1
 nEchoes = 1
 phase_cycling = True
-coherence_pathway = [('ph1',1),('ph2',-2)]
+coherence_pathway = [('ph1',1)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -63,7 +63,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 1e6
+repetition = 10e6
 #repetition = .7e6
 
 SW_kHz = 24
@@ -72,7 +72,7 @@ nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
-tau = 3500.
+tau = 1000.
 pad = 0
 #{{{ setting acq_params dictionary
 acq_params = {}
@@ -135,7 +135,7 @@ with xepr() as x_server:
                     ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
                     ('delay',tau),
                     ('delay_TTL',deblank),
-                    ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+                    ('pulse_TTL',2.0*p90,0.0),
                     ('delay',deadtime),
                     ('acquire',acq_time),
                     #('delay',pad),
@@ -174,7 +174,7 @@ with xepr() as x_server:
                 data.setaxis('t',time_axis).set_units('t','s')
                 data.setaxis('nScans',r_[0:nScans])
                 data.setaxis('Field',field_axis)
-                data.name('signal')
+                data.name(node_name)
                 data.set_prop('acq_params',acq_params)
         data['nScans',x]['Field',B0_index] = data_array
     SpinCore_pp.stopBoard();
@@ -187,7 +187,7 @@ while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
         data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
@@ -220,8 +220,7 @@ if not phase_cycling:
     fl.plot(data.real)
     fl.plot(data.imag)
 if phase_cycling:
-    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    data.setaxis('ph2',r_[0.,2.]/4)
+    data.chunk('t',['ph1','t2'],[4,-1])
     data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
@@ -232,9 +231,9 @@ if phase_cycling:
     fl.next('image - ft')
     fl.image(data)
     fl.next('image - ft, coherence')
-    data.ft(['ph1','ph2'])
+    data.ft(['ph1'])
     fl.image(data)
     fl.next('data plot')
-    fl.plot(data['ph1',1]['ph2',0])
-    fl.plot(data.imag['ph1',1]['ph2',0])
+    fl.plot(data['ph1',1])
+    fl.plot(data.imag['ph1',1])
 fl.show();quit()
