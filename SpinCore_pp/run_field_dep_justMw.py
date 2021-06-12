@@ -40,11 +40,11 @@ def verifyParams():
 
 mw_freqs = []
 #field_axis = r_[3475:3530:0.3]
-field_axis = r_[3463.0:3464.5:.1]
+field_axis = r_[3490:3520:0.5]
 print("Here is my field axis:",field_axis)
 
 # Parameters for Bridge12
-powers = r_[1.0]
+powers = r_[1.58]
 min_dBm_step = 0.5
 for x in range(len(powers)):
     print(powers)
@@ -55,10 +55,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
-output_name = '150uM_TEMPOL_TempControl_probe_field_dep'
-node_name = '35dBm'
+output_name = 'S175R1a_pR_DDM_field_dep'
+node_name = '32dBm_finer'
 adcOffset = 31
-gamma_eff = (14.713355/3463.2)
+gamma_eff = (14.893851/3505.6)
 #{{{ acq params
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -78,7 +78,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 10e6
+repetition = 8e6
 #repetition = .7e6
 
 SW_kHz = 24
