@@ -50,8 +50,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'EtOH_cap_probe_echo'
-node_name = 'echo_2'
+output_name = '50mM_4AT_AOT_w11_cap_probe_echo'
+node_name = 'test_2'
 adcOffset = 31
 
 user_sets_Freq = True
@@ -65,26 +65,26 @@ if user_sets_Field:
 #}}}
 #{{{let computer set field
 if not user_sets_Field:
-    desired_B0 = 3505.6
+    desired_B0 = 3487.6
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.817640
+    carrierFreq_MHz = 14.817166
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}zaa
 #{{{ let computer set frequency
 if not user_sets_Freq:
-    gamma_eff = (14.893851/3505.6)
+    gamma_eff = (14.817166/3487.6)
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 64
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -100,7 +100,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10
-repetition = 8e6
+repetition = 0.7e6
 
 SW_kHz = 24
 nPoints = 1024*2
