@@ -58,7 +58,7 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 2.51 # W
+max_power = 4 # W
 power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
@@ -70,13 +70,13 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '50mM_4AT_AOT_w11_cap_probe_ODNP'
+output_name = 'TEMPOL_500uM_cap_probe_DNP'
 node_name = 'enhancement'
-adcOffset = 31
-carrierFreq_MHz = 14.817166
+adcOffset = 30
+carrierFreq_MHz = 14.895497
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 64
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -90,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 =  4.69
 deadtime = 10.0
-repetition = 0.6e6
+repetition = 8e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
