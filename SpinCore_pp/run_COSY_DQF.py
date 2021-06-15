@@ -40,10 +40,10 @@ clock_correction = 0
 output_name = 'EtOH_cap_probe_COSY_DQF'
 node_name = 'COSY_2'
 adcOffset = 31
-carrierFreq_MHz = 14.817640
+carrierFreq_MHz = 14.817140
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 3
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 4.69
@@ -60,9 +60,10 @@ pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True
+ph1 = r_[0,2]
 ph3 = r_[0,1,2,3]
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1 
 #{{{ setting acq_params dictionary
@@ -108,7 +109,7 @@ for index,val in enumerate(t1_list):
                 ('marker','start',1),
                 ('phase_reset',1),
                 ('delay_TTL',deblank),
-                ('pulse_TTL',p90,0),
+                ('pulse_TTL',p90,'ph1',r_[0,2]),
                 ('delay',t1),
                 ('delay_TTL',deblank),
                 ('pulse_TTL',p90,0),
@@ -161,7 +162,8 @@ print("EXITING...\n")
 print("\n*** *** ***\n")
 save_file = True
 if phase_cycling:
-    COSY_data.chunk('t',['ph3','t2'],[4,-1])
+    COSY_data.chunk('t',['ph3','ph1','t2'],[4,2,-1])
+    COSY_data.setaxis('ph1',r_[0,2]/4.)
     COSY_data.setaxis('ph3',r_[0,1,2,3]/4.)
 else:
     COSY_data.rename('t','t2')
@@ -193,13 +195,15 @@ while save_file:
             print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
             print("*** *** ***\n")
             break
-fl.next('raw data')
-fl.image(COSY_data.setaxis('t1','#'))
-fl.next('abs raw data')
-fl.image(abs(COSY_data).setaxis('t1','#'))
-COSY_data.ft('t2',shift=True)
-fl.next('FT raw data')
-fl.image(COSY_data.setaxis('t1','#'))
-fl.next('FT abs raw data')
-fl.image(abs(COSY_data).setaxis('t1','#'))
-fl.show();quit()
+#fl.next('raw data')
+#fl.image(COSY_data.setaxis('t1','#'))
+#fl.next('abs raw data')
+#fl.image(abs(COSY_data).setaxis('t1','#'))
+#COSY_data.ft('t2',shift=True)
+#fl.next('FT raw data')
+#fl.image(COSY_data.setaxis('t1','#'))
+#fl.next('FT abs raw data')
+#fl.image(abs(COSY_data).setaxis('t1','#'))
+#fl.show();quit()
+print("EXPERIMENT COMPLETE.")
+quit()
