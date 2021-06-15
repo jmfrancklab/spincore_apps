@@ -40,11 +40,11 @@ def verifyParams():
 
 mw_freqs = []
 #field_axis = r_[3475:3530:0.3]
-field_axis = r_[3463.0:3464.5:.1]
+field_axis = r_[3482:3493:1]
 print("Here is my field axis:",field_axis)
 
 # Parameters for Bridge12
-powers = r_[1.0]
+powers = r_[3.16]
 min_dBm_step = 0.5
 for x in range(len(powers)):
     print(powers)
@@ -55,13 +55,14 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
-output_name = '150uM_TEMPOL_TempControl_probe_field_dep_2'
+output_name = '50mM_4AT_AOT_w11_cap_probe_field_dep'
+node_name = '35dBm'
 adcOffset = 31
-gamma_eff = (14.713355/3463.2)
+gamma_eff = (14.817166/3487.6)
 #{{{ acq params
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans =1 
+nScans = 32
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1)]
@@ -75,10 +76,10 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 3.24 
+p90 = 4.69
 deadtime = 10.0
-repetition = 10e6
-#repetition = .7e6
+#repetition = 8e6
+repetition = .9e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -86,7 +87,7 @@ nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
-tau = 1100.
+tau = 1000.
 pad = 0
 #{{{ setting acq_params dictionary
 acq_params = {}
@@ -113,7 +114,7 @@ with xepr() as x_server:
     for B0_index,desired_B0 in enumerate(field_axis):
         true_B0 = x_server.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
-        time.sleep(10.0)
+        time.sleep(3.0)
         carrierFreq_MHz = gamma_eff*true_B0
         print("My frequency in MHz is",carrierFreq_MHz)
         acq_params['carrierFreq_MHz'] = carrierFreq_MHz
@@ -122,7 +123,7 @@ with xepr() as x_server:
             b.set_wg(True)
             b.set_rf(True)
             b.set_amp(True)
-            this_return = b.lock_on_dip(ini_range=(9.7e9,9.708e9))
+            this_return = b.lock_on_dip(ini_range=(9.819e9,9.825e9))
             dip_f = this_return[2]
             print("Frequency",dip_f)
             mw_freqs.append(dip_f)
@@ -222,7 +223,7 @@ with xepr() as x_server:
                         data.setaxis('nScans',r_[0:nScans])
                         data.setaxis('Field',field_axis)
                         data.setaxis('power',r_[powers])
-                        data.name('signal')
+                        data.name(node_name)
                         data.set_prop('acq_params',acq_params)
                     data['nScans',x]['Field',B0_index]['power',0] = data_array
                 last_power = this_power
