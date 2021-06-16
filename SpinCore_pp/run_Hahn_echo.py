@@ -51,33 +51,33 @@ def verifyParams():
 #}}}
 
 output_name = 'S175R1a_pR_DDM_echo'
-node_name = '32dBm'
+node_name = 'post_check5'
 adcOffset = 28
 
 user_sets_Freq = True
-user_sets_Field = True
+user_sets_Field = False
 
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3512.1
+    true_B0 = 3503.12
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
 if not user_sets_Field:
-    desired_B0 = 3512.1
+    desired_B0 = 3503.12
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.921343
+    carrierFreq_MHz = 14.883327
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}zaa
 #{{{ let computer set frequency
 if not user_sets_Freq:
-    gamma_eff = (14.921343/3512.1)
+    gamma_eff = (14.883327/3503.21)
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
