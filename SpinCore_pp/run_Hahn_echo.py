@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = '50mM_4AT_D2O_AOT_w11_cap_probe_echo'
-node_name = 'echo_after36dBm'
-adcOffset = 27
+output_name = 'EtOH_cap_probe_echo'
+node_name = 'echo_2'
+adcOffset = 29
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -60,7 +60,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3503.12
+    true_B0 = 3503.12 
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.817416
+    carrierFreq_MHz = 14.817303
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}zaa
 #{{{ let computer set frequency
@@ -100,7 +100,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10
-repetition = 15e6
+repetition = 8.3e6
 
 SW_kHz = 24
 nPoints = 1024*2
