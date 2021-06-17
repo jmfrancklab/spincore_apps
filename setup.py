@@ -4,7 +4,7 @@ from numpy.distutils.core import Extension,setup
 from distutils.spawn import find_executable
 
 ext_modules = []
-ext_modules.append(Extension(name='_SpinCore_pp',
+ext_modules.append(Extension(name='SpinCore_pp/_SpinCore_pp',
         sources = ["SpinCore_pp/SpinCore_pp.i"],
         define_macros = [('ADD_UNDERSCORE',None)],
         # flags from compile_SpinCore_pp.sh
