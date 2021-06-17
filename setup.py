@@ -4,6 +4,15 @@ from numpy.distutils.core import Extension,setup
 from distutils.spawn import find_executable
 
 ext_modules = []
+
+# {{{ compile_SpinCore_pp implies that these are set in bashrc -- I don't know
+#     how they get set in the first place
+arg_list = []
+for j in ["conda_headers","spincore","numpy"]:
+    arg_list.append('-I'+j)
+for j in ["conda_libs","spincore"]:
+    arg_list.append('-L'+j)
+# }}}
 ext_modules.append(Extension(name='SpinCore_pp/_SpinCore_pp',
         sources = ["SpinCore_pp/SpinCore_pp.i"],
         define_macros = [('ADD_UNDERSCORE',None)],
@@ -12,7 +21,7 @@ ext_modules.append(Extension(name='SpinCore_pp/_SpinCore_pp',
             "-shared",
             "-DMS_WIN64",
             "-lmrispinapi64",
-            ],# debug flags
+            ] + arg_list,# debug flags
         ))
 execfile('SpinCore_pp/version.py')
 
