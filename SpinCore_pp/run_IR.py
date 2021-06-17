@@ -37,10 +37,10 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'S175R1a_pR_DDM_ODNP'
-node_name = 'FIR_33dBm'
-adcOffset = 28
-carrierFreq_MHz = 14.883235
+output_name = '100mM_TEMPO_cap_probe'
+node_name = 'FIR_nopower'
+adcOffset = 32
+carrierFreq_MHz = 14.889463
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -48,7 +48,7 @@ nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 4.69
 deadtime = 10.0
-repetition = 5e6
+repetition = 1e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -91,7 +91,7 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
         #4.5e5,5.5e5,6.4e5,7.3e5,8.2e5,9.1e5,1e6]
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-vd_list = np.linspace(5e1,10e6,12)
+vd_list = np.linspace(5e1,1e6,12)
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6,
 #        1.818e6, 2.727e6, 3.636e6, 4.545e6, 5.454e6,
