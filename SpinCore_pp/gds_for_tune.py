@@ -10,19 +10,16 @@ import threading
 from pyspecdata import *
 import numpy as np
 
-default_field = 3487.6 #3506.40 # G -- give this to 2 s.f.!!
-default_effective_gamma = 0.0042490577 # MHz/G
-field = None
-effective_gamma = None
-if len(sys.argv) > 1:
-    field = float(sys.argv[1])
-    assert field > 2500 and field < 4000, "first argument should be a field value!!!"
-if len(sys.argv) > 2:
-    effective_gamma = float(sys.argv[2])/1e4
-    assert effective_gamma > 41 and effective_gamma < 43, "second argument should be effective gamma in MHz/T"
-if field is None: field = default_field
-if effective_gamma is None: effective_gamma = default_effective_gamma
-carrier_frequency = field*effective_gamma
+if len(sys.argv) == 1:
+    default_field = 3487.6 #3506.40 # G -- give this to 2 s.f.!!
+    print("Assuming a default field value of %f!! Probably not very wise!!"%default_field)
+    process_args(default_field)
+elif len(sys.argv) == 2:
+    carrier_frequency = process_args(sys.argv[1])
+elif len(sys.argv) == 3:
+    carrier_frequency = process_args(sys.argv[1], secondarg=sys.argv[2])
+else:
+    raise ValueError("I don't know what you're doing with that many arguments!!!")
 
 print("Using a field of %f and an effective gamma of %g to predict a frequency of %f MHz"%(field,effective_gamma,carrier_frequency))
 print("")
