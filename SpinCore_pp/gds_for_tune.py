@@ -5,6 +5,7 @@ from serial.tools.list_ports import comports
 import serial
 from scipy import signal
 import SpinCore_pp
+from process_first_arg import process_args
 import sys
 import threading
 from pyspecdata import *
@@ -21,7 +22,6 @@ elif len(sys.argv) == 3:
 else:
     raise ValueError("I don't know what you're doing with that many arguments!!!")
 
-print("Using a field of %f and an effective gamma of %g to predict a frequency of %f MHz"%(field,effective_gamma,carrier_frequency))
 print("")
 input("Please note I'm going to assume the control is hooked up to CH1 of the GDS and the reflection is hooked up to CH2 of the GDS... (press enter to continue)")
 

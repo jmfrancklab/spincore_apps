@@ -24,10 +24,12 @@ def process_args(firstarg,
             effective_gamma = effective_gamma/1e4
         field = firstarg
         assert field > 2500 and field < 4000, "first argument should be a field (G) or a frequency (MHz) value!!!"
-        print("Using a field of %f and an effective gamma of %g to predict a frequency of %f MHz"%(field,effective_gamma,carrier_frequency))
         carrier_frequency = field*effective_gamma
+        print("Using a field of %f and an effective gamma of %g to predict a frequency of %f MHz"%(field,effective_gamma,carrier_frequency))
     elif firstarg > 12 and firstarg < 20:
         carrier_frequency = firstarg
-        print("You manually specified a frequency of %f MHz the first time you run NMR, you can set your field to %f G"%(carrier_frequency,carrier_frequency/effective_gamma))
+        print("You manually specified a frequency of %f MHz.  The first time you run NMR, you can set your field to %f G"%(carrier_frequency,carrier_frequency/effective_gamma))
+    else:
+        raise ValueError("not sure what to make of the first argument "+str(firstarg))
     return carrier_frequency
 
