@@ -60,10 +60,10 @@ pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True
-ph1 = r_[0,2]
+ph1 = r_[0,1,2,3]
 ph3 = r_[0,1,2,3]
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 16
 if not phase_cycling:
     nPhaseSteps = 1 
 #{{{ setting acq_params dictionary
@@ -109,7 +109,7 @@ for index,val in enumerate(t1_list):
                 ('marker','start',1),
                 ('phase_reset',1),
                 ('delay_TTL',deblank),
-                ('pulse_TTL',p90,'ph1',r_[0,2]),
+                ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
                 ('delay',t1),
                 ('delay_TTL',deblank),
                 ('pulse_TTL',p90,0),
@@ -162,8 +162,8 @@ print("EXITING...\n")
 print("\n*** *** ***\n")
 save_file = True
 if phase_cycling:
-    COSY_data.chunk('t',['ph3','ph1','t2'],[4,2,-1])
-    COSY_data.setaxis('ph1',r_[0,2]/4.)
+    COSY_data.chunk('t',['ph3','ph1','t2'],[4,4,-1])
+    COSY_data.setaxis('ph1',r_[0,1,2,3]/4.)
     COSY_data.setaxis('ph3',r_[0,1,2,3]/4.)
 else:
     COSY_data.rename('t','t2')
