@@ -91,7 +91,7 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
         #4.5e5,5.5e5,6.4e5,7.3e5,8.2e5,9.1e5,1e6]
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-vd_list = np.linspace(5e1,10e6,12)
+vd_list = np.linspace(5e1,1e6,12)
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6,
 #        1.818e6, 2.727e6, 3.636e6, 4.545e6, 5.454e6,
