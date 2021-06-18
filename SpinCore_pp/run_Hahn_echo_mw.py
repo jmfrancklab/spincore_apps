@@ -70,10 +70,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'S175R1a_pR_DDM_ODNP'
+output_name = 'Y191R1a_pR_DDM_ODNP'
 node_name = 'enhancement'
 adcOffset = 28
-carrierFreq_MHz = 14.883235
+carrierFreq_MHz = 14.882590
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -90,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 =  4.69
 deadtime = 10.0
-repetition = 12e6
+repetition = 10.6e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
