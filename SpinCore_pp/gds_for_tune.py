@@ -1,3 +1,18 @@
+"""
+GDS for tune
+============
+
+A command line utility for tuning using the SpinCore as a pulse generator and
+the GDS scope to observe the reflection.
+(GDS scope must be hooked up to an appropriate splitter configuration).
+
+Takes one or two command line arguments:
+
+1.      *Either* a field in G or a frequency in *MHz* --> note that these will
+        be very different types of numbers (thousands vs. tens respectively),
+        so the program can use that to determine. 
+2.      If supplied, this overrides the default effective γ value.
+"""
 from Instruments import *
 from pyspecdata import *
 import time
