@@ -2,6 +2,7 @@
 import setuptools # I think this is needed for the following
 from numpy.distutils.core import Extension,setup
 from distutils.spawn import find_executable
+import os
 
 ext_modules = []
 
@@ -9,21 +10,22 @@ ext_modules = []
 #     how they get set in the first place
 arg_list = []
 for j in ["conda_headers","spincore","numpy"]:
-    arg_list.append('-I'+j)
+    arg_list.append('-I'+os.environ[j])
 for j in ["conda_libs","spincore"]:
-    arg_list.append('-L'+j)
+    arg_list.append('-L'+os.environ[j])
 # }}}
-ext_modules.append(Extension(name='SpinCore_pp/_SpinCore_pp',
-        sources = ["SpinCore_pp/SpinCore_pp.i"],
-        define_macros = [('ADD_UNDERSCORE',None)],
-        # flags from compile_SpinCore_pp.sh
-        extra_compile_args = [
-            "-shared",
-            "-DMS_WIN64",
-            "-lmrispinapi64",
-            ] + arg_list,# debug flags
-        ))
-execfile('SpinCore_pp/version.py')
+ext_modules.append(Extension(name='SpinCore_pp._SpinCore_pp',
+    sources = ["SpinCore_pp/SpinCore_pp.i", "SpinCore_pp/SpinCore_pp.c"],
+    define_macros = [('ADD_UNDERSCORE',None)],
+    # flags from compile_SpinCore_pp.sh
+    extra_compile_args = [
+        "-shared",
+        "-DMS_WIN64",
+        ] + arg_list,# debug flags
+    library_dirs = ['.'],
+    libraries = ['mrispinapi64'],
+    ))
+exec(compile(open('SpinCore_pp/version.py', "rb").read(), 'SpinCore_pp/version.py', 'exec'))
 
 setup(
     name='SpinCore_pp',
@@ -41,5 +43,4 @@ setup(
         "pyserial>=3.0",
         ],
     ext_modules = ext_modules,
-    entry_points={gds_for_tune=SpinCore_pp.gds_for_tune:__main__},
 )
