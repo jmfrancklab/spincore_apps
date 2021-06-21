@@ -58,8 +58,8 @@ def verifyParams():
 #}}}
 
 # Parameters for Bridge12
-max_power = 3.98 #W
-power_steps = 20 
+max_power = 2.51 #W
+power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,13 +70,13 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Y191R1a_pR_DDM_ODNP'
+output_name = '50mM_4AT_AOT_w3_cap_probe'
 node_name = 'enhancement'
-adcOffset = 28
-carrierFreq_MHz = 14.882590
+adcOffset = 31
+carrierFreq_MHz = 14.822838
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 64
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -90,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 =  4.69
 deadtime = 10.0
-repetition = 10.6e6
+repetition = 0.6e6
 
 SW_kHz = 24.0
 nPoints = 1024*2

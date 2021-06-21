@@ -266,5 +266,5 @@ if phase_cycling:
     data_slice = data['ph1',1]['ph2',0]
     fl.plot(data_slice, alpha=0.5)
     fl.plot(data_slice.imag, alpha=0.5)
-    fl.plot(abs(data_slice), color='k')
+    fl.plot(abs(data_slice), color='k', alpha=0.5)
 fl.show();quit()
