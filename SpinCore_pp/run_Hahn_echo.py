@@ -50,11 +50,11 @@ def verifyParams():
     return
 #}}}
 
-output_name = '100mM_TEMPO_cap_probe_echo'
-node_name = 'echo_1'
-adcOffset = 32
+output_name = 'Y191R1a_pR_DDM__echo'
+node_name = 'center_resonance_3'
+adcOffset = 28
 
-user_sets_Freq = False
+user_sets_Freq = True
 user_sets_Field = False
 
 #{{{ set field here
@@ -65,16 +65,16 @@ if user_sets_Field:
 #}}}
 #{{{let computer set field
 if not user_sets_Field:
-    desired_B0 = 3529.55
+    desired_B0 = 3502.98
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.889463
+    carrierFreq_MHz = 14.882590
     print("My frequency in MHz is",carrierFreq_MHz)
-#}}}zaa
+#}}}
 #{{{ let computer set frequency
 if not user_sets_Freq:
     gamma_eff = (14.889463/3504.55)
@@ -100,7 +100,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10
-repetition = 3e6
+repetition = 2.5e6
 
 SW_kHz = 24
 nPoints = 1024*2
