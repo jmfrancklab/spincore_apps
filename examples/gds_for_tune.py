@@ -20,7 +20,7 @@ from serial.tools.list_ports import comports
 import serial
 from scipy import signal
 import SpinCore_pp
-from process_first_arg import process_args
+from SpinCore_pp import process_args
 import sys
 import threading
 from pyspecdata import *
