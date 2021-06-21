@@ -1,18 +1,19 @@
-
+from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
+from datetime import datetime
 fl = figlist_var()
 
-date = '200305'
-output_name = 'CPMG_3p7_3'
-adcOffset = 43
-carrierFreq_MHz = 14.898396
+date = datetime.now().strftime('%y%m%d')
+output_name = 'TEMPOL_cap_probe_CPMG_5'
+adcOffset = 42
+carrierFreq_MHz = 14.896514
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.7
-deadtime = 5.0
-repetition = 8e6
+p90 = 4.625765
+deadtime = 10.0
+repetition = 15e6
 deblank = 1.0
 marker = 1.0
 
@@ -144,16 +145,28 @@ print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print("SAVING FILE...")
-        data.hdf5_write(date+'_'+output_name+'.h5')
-        print("FILE SAVED!")
+        print("SAVING FILE IN TARGET DIRECTORY...")
+        data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/CPMG'))
+        print("*** FILE SAVED IN TARGET DIRECTORY ***")
         print("Name of saved data",data.name())
         print("Units of saved data",data.get_units('t'))
         print("Shape of saved data",ndshape(data))
         save_file = False
     except Exception as e:
-        print(e)
-        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
 if not phase_cycling:
     if nScans == 1:

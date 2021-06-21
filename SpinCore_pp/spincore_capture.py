@@ -1,25 +1,8 @@
-#{{{ Notes for use
-# To run this experiment, please open Xepr on the EPR computer, connect to
-# spectrometer, load the experiemnt 'set_field' and enable XEPR API. Then, in a
-# separate terminal, run the program XEPR_API_server.py, and wait for it to
-# tell you 'I am listening' - then, you should be able to run this program from
-# the NMR computer to set the field etc. 
-
-# Note the booleans user_sets_Freq and
-# user_sets_Field allow you to run experiments as previously run in this lab.
-# If both values are set to True, this is the way we used to run them. If both
-# values are set to False, you specify what field you want, and the computer
-# will do the rest.
-#}}}
-
-from pylab import *
 from pyspecdata import *
 import os
 import sys
 import SpinCore_pp
 from datetime import datetime
-import numpy as np
-from Instruments.XEPR_eth import xepr
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -50,43 +33,14 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'Y191R1a_pR_DDM__echo'
-node_name = 'center_resonance_3'
-adcOffset = 28
-
-user_sets_Freq = True
-user_sets_Field = False
-
-#{{{ set field here
-if user_sets_Field:
-    # You must enter field set on XEPR here
-    true_B0 = 3504.55 
-    print("My field in G should be %f"%true_B0)
-#}}}
-#{{{let computer set field
-if not user_sets_Field:
-    desired_B0 = 3502.98
-    with xepr() as x:
-        true_B0 = x.set_field(desired_B0)
-        print("My field in G is %f"%true_B0)
-#}}}
-#{{{ set frequency here
-if user_sets_Freq:
-    carrierFreq_MHz = 14.882590
-    print("My frequency in MHz is",carrierFreq_MHz)
-#}}}
-#{{{ let computer set frequency
-if not user_sets_Freq:
-    gamma_eff = (14.889463/3504.55)
-    carrierFreq_MHz = gamma_eff*true_B0
-    print("My frequency in MHz is",carrierFreq_MHz)
-#}}}
-
+output_name = 'output_4uV'
+adcOffset = 36
+carrierFreq_MHz = 14.819707
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 20
 nEchoes = 1
-phase_cycling = True
+phase_cycling = False
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
@@ -98,25 +52,25 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.69
-deadtime = 10
-repetition = 2.5e6
+p90 = 10.5
+deadtime = 10.0
+repetition = 3e6
 
-SW_kHz = 24
+SW_kHz = 100
 nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0
+tau_adjust = 0.0
 deblank = 1.0
-#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 1000
+tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
+# Fixed tau for comparison
+#tau = 100
 pad = 0
 #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
 acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['Ffield_G'] = true_B0
 acq_params['amplitude'] = amplitude
 acq_params['nScans'] = nScans
 acq_params['nEchoes'] = nEchoes
@@ -159,11 +113,11 @@ for x in range(nScans):
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            #('delay_TTL',deblank),
+            #('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
+            #('delay_TTL',deblank),
+            #('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),
@@ -174,11 +128,11 @@ for x in range(nScans):
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,0),
+            #('delay_TTL',deblank),
+            #('pulse_TTL',p90,0),
             ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0),
+            #('delay_TTL',deblank),
+            #('pulse_TTL',2.0*p90,0),
             ('delay',deadtime),
             ('acquire',acq_time),
             #('delay',pad),
@@ -192,16 +146,16 @@ for x in range(nScans):
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
     data_array = []
-    data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print(("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0]))
-    print(("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0]))
-    dataPoints = float(np.shape(data_array)[0])
+    data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+    print(("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]))
+    print(("RAW DATA ARRAY LENGTH:",shape(raw_data)[0]))
+    dataPoints = float(shape(data_array)[0])
     if x == 0:
-        time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=np.complex128)
+        time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:nScans])
-        data.name(node_name)
+        data.name('signal')
         data.set_prop('acq_params',acq_params)
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
@@ -210,36 +164,21 @@ print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print("SAVING FILE IN TARGET DIRECTORY...")
-        data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
-        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+        print("SAVING FILE...")
+        data.hdf5_write(date+'_'+output_name+'.h5')
+        print("FILE SAVED!")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
         print(("Shape of saved data",ndshape(data)))
         save_file = False
     except Exception as e:
         print(e)
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(output_name) is not 0:
-            data.hdf5_write(date+'_'+output_name+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
-        else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
+        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
+        save_file = False
 
 data.set_units('t','data')
+# {{{ once files are saved correctly, the following become obsolete
 print(ndshape(data))
-print(" *** *** *** ")
-print("My field in G is %f"%true_B0)
-print("My frequency in MHz is",carrierFreq_MHz)
-print(" *** *** *** ")
 if not phase_cycling:
     fl.next('raw data')
     fl.plot(data)
@@ -263,8 +202,51 @@ if phase_cycling:
     data.ft(['ph1','ph2'])
     fl.image(data)
     fl.next('data plot')
-    data_slice = data['ph1',1]['ph2',0]
-    fl.plot(data_slice, alpha=0.5)
-    fl.plot(data_slice.imag, alpha=0.5)
-    fl.plot(abs(data_slice), color='k', alpha=0.5)
+    fl.plot(data['ph1',1]['ph2',0])
+    fl.plot(data.imag['ph1',1]['ph2',0])
 fl.show();quit()
+
+if phase_cycling:
+    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    data.setaxis('ph2',r_[0.,2.]/4)
+    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+if nScans > 1:
+    data.setaxis('nScans',r_[0:nScans])
+# }}}
+data.squeeze()
+data.reorder('t2',first=False)
+if len(data.dimlabels) > 1:
+    fl.next('raw data - time|ph domain')
+    fl.image(data)
+else:
+    if 't' in data.dimlabels:
+        data.rename('t','t2')
+has_phcyc_dims = False
+for j in range(8):# up to 8 independently phase cycled pulses
+    phstr = 'ph%d'%j
+    if phstr in data.dimlabels:
+        has_phcyc_dims = True
+        print('phcyc along',phstr)
+        data.ft(phstr)
+if has_phcyc_dims:
+    fl.next('raw data - time|coh domain')
+    fl.image(data)
+data.ft('t2',shift=True)
+if len(data.dimlabels) > 1:
+    fl.next('raw data - freq|coh domain')
+    fl.image(data)
+if 'ph1' in data.dimlabels:
+    for phlabel,phidx in coherence_pathway:
+        data = data[phlabel,phidx]
+data.mean_all_but('t2')
+fl.next('raw data - FT')
+fl.plot(data,alpha=0.5)
+fl.plot(data.imag, alpha=0.5)
+fl.plot(abs(data),'k',alpha=0.1, linewidth=3)
+data.ift('t2')
+fl.next('avgd. and coh. ch. selected (where relevant) data -- time domain')
+fl.plot(data,alpha=0.5)
+fl.plot(data.imag, alpha=0.5)
+fl.plot(abs(data),'k',alpha=0.2, linewidth=2)
+fl.show();quit()
+

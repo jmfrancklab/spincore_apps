@@ -1,3 +1,4 @@
+from pylab import *
 from pyspecdata import *
 import os
 import SpinCore_pp
@@ -60,30 +61,30 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_capillary_probe_nutation_1'
-adcOffset = 39
-carrierFreq_MHz = 14.896010
+output_name = 'Ni_water_TempControl_probe_nutation_1'
+adcOffset = 31
+carrierFreq_MHz = 14.715760
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 10e6
+repetition = 1e6
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
-tau = deadtime + acq_time*1e3*0.5 + tau_adjust
+tau = 1000
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(0.5,15.,100,endpoint=False)
+p90_range = linspace(1.,24.,120,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -117,7 +118,7 @@ for index,val in enumerate(p90_range):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph1',r_[0,2]),
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
@@ -175,14 +176,26 @@ while save_file:
         print("SAVING FILE...")
         nutation_data.set_prop('acq_params',acq_params)
         nutation_data.name('nutation')
-        nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+        nutation_data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/nutation'))
         print("Name of saved data",nutation_data.name())
         print("Units of saved data",nutation_data.get_units('t'))
         print("Shape of saved data",ndshape(nutation_data))
         save_file = False
     except Exception as e:
-        print(e)
-        print("FILE ALREADY EXISTS.")
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
 fl.next('raw data')
 fl.image(nutation_data)

@@ -34,22 +34,24 @@ SpinCore will trigger 4 times in the first case and 8 times
 in the second case.
 '''
 #}}}
+from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
 import time
+from datetime import datetime
 fl = figlist_var()
 
-date = '200303'
-output_name = 'T1CPMG_AER'
+date = datetime.now().strftime('%y%m%d')
+output_name = 'TEMPOL_cap_probe_T1CPMG_32dBm'
 #clock_correction = 1.0829/998.253
 adcOffset = 42
-carrierFreq_MHz = 14.917034
+carrierFreq_MHz = 14.896494
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 3.8
-deadtime = 5.0
-repetition = 6e6
+p90 = 4.625765
+deadtime = 10.0
+repetition = 15e6
 deblank = 1.0
 marker = 1.0
 
@@ -64,7 +66,7 @@ pad_end = tau_extra - deblank*2 # marker + deblank
 twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
 tau1 = twice_tau/2.0
 
-nScans = 16
+nScans = 12
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
@@ -73,7 +75,8 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5e2,3e3,4e4,7e4,9e4,9.5e4,1e5,1.5e5,2e5,4e5,6e5,1e6,1.5e6,2e6]
+vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
+        3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -199,8 +202,19 @@ while save_file:
         print("Shape of saved data",ndshape(data_2d))
         save_file = False
     except Exception as e:
-        print(e)
-        print("FILE ALREADY EXISTS.")
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            data_2d.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
 fl.next('raw data')
 data_2d *= exp(-1j*data_2d.fromaxis('vd')*clock_correction)

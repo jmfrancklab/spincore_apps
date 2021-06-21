@@ -37,10 +37,10 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'Y191R1a_pR_DDM_ODNP'
-node_name = 'FIR_33dBm'
-adcOffset = 28
-carrierFreq_MHz = 14.882590
+output_name = 'EtOH_cap_probe_COSY_DQF'
+node_name = 'COSY_1'
+adcOffset = 29
+carrierFreq_MHz = 14.817303
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -48,21 +48,22 @@ nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 p90 = 4.69
 deadtime = 10.0
-repetition = 6e6
-SW_kHz = 24.0
-nPoints = 1024*2
+repetition = 8.3e6
+SW_kHz = 6.206
+nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 tau = 1000.
+delta = 2.
 pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True
-ph1 = r_[0,2]
-ph2 = r_[0,2]
+ph1 = r_[0,1,2,3]
+ph3 = r_[0,1,2,3]
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 16
 if not phase_cycling:
     nPhaseSteps = 1 
 #{{{ setting acq_params dictionary
@@ -80,26 +81,23 @@ acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = deblank
 acq_params['tau_us'] = tau
+acq_params['delta_us'] = delta
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list = r_[5e1,2e5,4e5,6e5,8e5]
-#        1e6,1.2e6,1.4e6,1.6e6,1.8e6,2e6]
-#vd_list = r_[5e1,9.1e4,1.8e5,2.7e5,3.6e5,
-        #4.5e5,5.5e5,6.4e5,7.3e5,8.2e5,9.1e5,1e6]
-#vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
-#        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-vd_list = np.linspace(5e1,1e6,12)
-#vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
-#        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6,
-#        1.818e6, 2.727e6, 3.636e6, 4.545e6, 5.454e6,
-#        6.363e6, 7.272e6, 8.181e6, 9.090e6, 10e6]
-for index,val in enumerate(vd_list):
-    vd = val
+# cannot have a delay of 0, so set to minimum SpinCore can take
+min_t1 = 0.065 # us (lower limit of SpinCore)
+max_t1 = 200*1e3
+t1_step = 1.25*1e3
+#t1_step = 50*1e3
+t1_list = r_[min_t1:max_t1:t1_step]
+acq_params['t1_list'] = t1_list
+for index,val in enumerate(t1_list):
+    t1 = val
     print("***")
-    print("INDEX %d - VARIABLE DELAY %f"%(index,val))
+    print("INDEX %d - t1 %f"%(index,val))
     print("***")
     for x in range(nScans): 
         SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
@@ -107,19 +105,17 @@ for index,val in enumerate(vd_list):
         acq_params['acq_time_ms'] = acq_time
         SpinCore_pp.init_ppg();
         if phase_cycling:
-            phase_cycles = dict(ph1 = r_[0,2],
-                    ph2 = r_[0,2])
             SpinCore_pp.load([
                 ('marker','start',1),
                 ('phase_reset',1),
-                ('delay_TTL',1.0),
-                ('pulse_TTL',2.0*p90,'ph1',phase_cycles['ph1']),
-                ('delay',vd),
-                ('delay_TTL',1.0),
-                ('pulse_TTL',p90,'ph2',phase_cycles['ph2']),
-                ('delay',tau),
-                ('delay_TTL',1.0),
-                ('pulse_TTL',2.0*p90,0),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+                ('delay',t1),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',p90,0),
+                ('delay',delta),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',p90,'ph3',r_[0,1,2,3]),
                 ('delay',deadtime),
                 ('acquire',acq_time),
                 ('delay',repetition),
@@ -129,14 +125,11 @@ for index,val in enumerate(vd_list):
             SpinCore_pp.load([
                 ('marker','start',nScans),
                 ('phase_reset',1),
-                ('delay_TTL',1.0),
-                ('pulse_TTL',2.0*p90,0.0),
-                ('delay',vd),
-                ('delay_TTL',1.0),
-                ('pulse_TTL',p90,0.0),
-                ('delay',tau),
-                ('delay_TTL',1.0),
-                ('pulse_TTL',2.0*p90,0.0),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',p90,0),
+                ('delay',t1),
+                ('delay_TTL',deblank),
+                ('pulse_TTL',p90,0),
                 ('delay',deadtime),
                 ('acquire',acq_time),
                 ('delay',repetition),
@@ -158,37 +151,34 @@ for index,val in enumerate(vd_list):
         data.name('signal')
         data.set_prop('acq_params',acq_params)
         if index == 0 and x == 0:
-            vd_data = ndshape([len(vd_list),nScans,len(time_axis)],['vd','nScans','t']).alloc(dtype=np.complex128)
-            vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
-            vd_data.setaxis('nScans',r_[0:nScans])
-            vd_data.setaxis('t',time_axis).set_units('t','s')
-        vd_data['vd',index]['nScans',x] = data
-        vd_data.set_prop('acq_params',acq_params)
+            COSY_data = ndshape([len(t1_list),nScans,len(time_axis)],['t1','nScans','t']).alloc(dtype=np.complex128)
+            COSY_data.setaxis('t1',t1_list*1e-6).set_units('t1','s')
+            COSY_data.setaxis('nScans',r_[0:nScans])
+            COSY_data.setaxis('t',time_axis).set_units('t','s')
+        COSY_data['t1',index]['nScans',x] = data
+        COSY_data.set_prop('acq_params',acq_params)
 SpinCore_pp.stopBoard();
 print("EXITING...\n")
 print("\n*** *** ***\n")
 save_file = True
 if phase_cycling:
-    phcyc_names = list(phase_cycles.keys())
-    phcyc_names.sort(reverse=True)
-    phcyc_dims = [len(phase_cycles[j]) for j in phcyc_names]
-    vd_data.chunk('t',phcyc_names+['t2'],phcyc_dims+[-1])
-    vd_data.setaxis('ph1',ph1/4.)
-    vd_data.setaxis('ph2',ph2/4.)
+    COSY_data.chunk('t',['ph3','ph1','t2'],[4,4,-1])
+    COSY_data.setaxis('ph1',r_[0,1,2,3]/4.)
+    COSY_data.setaxis('ph3',r_[0,1,2,3]/4.)
 else:
-    vd_data.rename('t','t2')
+    COSY_data.rename('t','t2')
 while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
-        vd_data.name(node_name)
-        vd_data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
+        COSY_data.name(node_name)
+        COSY_data.hdf5_write(date+'_'+output_name+'.h5',
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/COSY'))
         print("*** *** *** *** *** *** *** *** *** *** ***")
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print("*** *** *** *** *** *** *** *** *** *** ***")
-        print(("Name of saved data",vd_data.name()))
-        print(("Units of saved data",vd_data.get_units('t2')))
-        print(("Shape of saved data",ndshape(vd_data)))
+        print(("Name of saved data",COSY_data.name()))
+        print(("Units of saved data",COSY_data.get_units('t2')))
+        print(("Shape of saved data",ndshape(COSY_data)))
         save_file = False
     except Exception as e:
         print(e)
@@ -197,7 +187,7 @@ while save_file:
         print("WILL TRY CURRENT DIRECTORY LOCATION...")
         output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
         if len(output_name) is not 0:
-            vd_data.hdf5_write(date+'_'+output_name+'.h5')
+            COSY_data.hdf5_write(date+'_'+output_name+'.h5')
             print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
             break
         else:
@@ -205,14 +195,15 @@ while save_file:
             print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
             print("*** *** ***\n")
             break
-vd_data.reorder(['ph1','ph2','vd','t2'])
-fl.next('raw data')
-fl.image(vd_data.setaxis('vd','#'))
-fl.next('abs raw data')
-fl.image(abs(vd_data).setaxis('vd','#'))
-vd_data.ft('t2',shift=True)
-fl.next('FT raw data')
-fl.image(vd_data.setaxis('vd','#'))
-fl.next('FT abs raw data')
-fl.image(abs(vd_data).setaxis('vd','#'))
-fl.show();quit()
+#fl.next('raw data')
+#fl.image(COSY_data.setaxis('t1','#'))
+#fl.next('abs raw data')
+#fl.image(abs(COSY_data).setaxis('t1','#'))
+#COSY_data.ft('t2',shift=True)
+#fl.next('FT raw data')
+#fl.image(COSY_data.setaxis('t1','#'))
+#fl.next('FT abs raw data')
+#fl.image(abs(COSY_data).setaxis('t1','#'))
+#fl.show();quit()
+print("EXPERIMENT COMPLETE.")
+quit()
