@@ -24,6 +24,7 @@ ext_modules.append(Extension(name='SpinCore_pp._SpinCore_pp',
         ] + arg_list,# debug flags
     library_dirs = ['.'],
     libraries = ['mrispinapi64'],
+    swig_opts=['-threads'],
     ))
 exec(compile(open('SpinCore_pp/version.py', "rb").read(), 'SpinCore_pp/version.py', 'exec'))
 
