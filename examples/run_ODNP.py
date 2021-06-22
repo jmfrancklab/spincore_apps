@@ -8,6 +8,7 @@ from Instruments import power_control
 from datetime import datetime
 from SpinCore_pp.verifyParams import verifyParams
 from SpinCore_pp.power_helper import gen_powerlist
+import h5py
 # {{{ from run_Hahn_echo_mw.py
 fl = figlist_var()
 # {{{ experimental parameters
@@ -152,15 +153,24 @@ def run_scans(nScans, power_idx, DNP_data=None):
 time_list.append(time.time())
 DNP_data = run_scans(nScans,0)
 time_list.append(time.time())
-for j,thispower in enumerate(powers):
-    run_scans(nScans,j+1,DNP_data)
+with power_control() as p:
+    for j,this_dB in enumerate(dB_settings):
+        if j == 0:
+            MWfreq = p.dip_lock(9.81,9.83)
+            print(MWfreq)
+            p.start_log()
+        p.set_power(this_dB)
+        time.sleep(5)
+        run_scans(nScans,j+1,DNP_data)
+    p.set_power(0)
+log_array, log_dict = p.stop_log()
 time_list.append(time.time())
 print("EXITING...")
 print("\n*** *** ***\n")
 save_file = True
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps']}
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq']}
 acq_params['pulprog'] = 'spincore_power_step_test_v1'
 DNP_data.set_prop('acq_params',acq_params)
 # {{{ manipulate the data as needed
@@ -173,10 +183,11 @@ if nScans > 1:
 # }}}
 time_list.append(time.time())
 # {{{ save the file
+myfilename = date+'_'+output_name+'.h5'
 while save_file:
     try:
         print("SAVING FILE...")
-        DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+        DNP_data.hdf5_write(myfilename)
         print("FILE SAVED!")
         print("Name of saved DNP_data",DNP_data.name())
         print("Units of saved DNP_data",DNP_data.get_units('t'))
@@ -191,3 +202,10 @@ time_list.append(time.time())
 time_array = array(time_list)
 print("checkpoints:",time_array-time_array[0])
 print("time for each chunk",['%0.1f'%j for j in diff(time_array)])
+with h5py.File(myfilename, 'a') as f:
+    log_grp = f.create_group('log') # normally, I would actually put this under the node with the data
+    dset = log_grp.create_dataset("log",data=log_array)
+    dset.attrs['dict_len'] = len(log_dict)
+    for j,(k,v) in enumerate(log_dict.items()):
+       dset.attrs['key%d'%j] = k 
+       dset.attrs['val%d'%j] = v 
