@@ -1,5 +1,32 @@
+from numpy import empty
+import pylab as plt
+import h5py, time
 from pyspecdata import *
-data = nddata_hdf5("210621_TEMPOL_capillary_probe_1kHz.h5/enhancement_curve")
+from matplotlib.ticker import FuncFormatter
+import matplotlib.transforms as transforms
+from dateutil import parser
+from datetime import timedelta
+time_origin = parser.parse('0:00')
+@FuncFormatter
+def thetime(x, position):
+    return (time_origin+timedelta(seconds=x)).strftime('%H:%M:%S')
+
+myfile = "210621_TEMPOL_capillary_probe_1kHz.h5"
+data = nddata_hdf5(myfile+"/enhancement_curve")
+with h5py.File(myfile, 'r') as f:
+    log_grp = f['log']
+    dset = log_grp['log']
+    print("length of dset",dset.shape)
+    # {{{ convert to a proper structured array
+    read_array = empty(len(dset), dtype=dset.dtype)
+    read_array[:] = dset
+    # }}}
+    read_dict = {}
+    for j in range(dset.attrs['dict_len']):
+        val = dset.attrs['val%d'%j]
+        if isinstance(val, bytes):
+            val = val.decode('ASCII')
+        read_dict[dset.attrs['key%d'%j]] = val
 with figlist_var() as fl:
     data.reorder(['power','t2'],first=False)
     fl.next('raw data')
@@ -12,6 +39,8 @@ with figlist_var() as fl:
     # {{{ show the log
     fig, (ax_Rx,ax_power) = plt.subplots(2,1, figsize=(10,8))
     fl.next("log", fig=fig)
+    print("the log starts at",time.strftime('%m/%d/%y %I:%M %p',time.localtime(read_array['time'][0])))
+    read_array['time'] -= read_array['time'][0] # for the purposes of this log, start at zero
     ax_Rx.xaxis.set_major_formatter(thetime)
     ax_power.xaxis.set_major_formatter(thetime)
     ax_Rx.set_ylabel('Rx / mV')

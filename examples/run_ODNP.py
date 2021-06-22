@@ -48,7 +48,7 @@ nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
 #}}}
 p90_us = 3.8
 deadtime_us = 10.0
-repetition_us = 0.5e6
+repetition_us = 0.1e6
 
 SW_kHz = 1 
 aq = 0.25
@@ -79,6 +79,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
     (note that powers and other parameters are defined globally w/in the
     script, as this function is not designed to be moved outside the module
     """
+    print("about to run run_scans for",power_idx)
     for x in range(nScans):
         run_scans_time_list = [time.time()]
         run_scans_names = ['configure']
@@ -136,7 +137,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
         print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
         print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
         dataPoints = int(shape(data_array)[0])
-        if x == 0 and power_idx == 0:
+        if DNP_data is None:
             time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time_ms*1e-3,dataPoints)
             DNP_data = ndshape([len(powers)+1,nScans,dataPoints],['power','nScans','t']).alloc(dtype=complex128)
             DNP_data.setaxis('power',r_[0,powers]).set_units('W')
@@ -149,6 +150,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
         this_array = array(run_scans_time_list)
         print("checkpoints:",this_array-this_array[0])
         print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
+        print("stored scan",x,"for power_idx",power_idx)
         return DNP_data
 time_list.append(time.time())
 DNP_data = run_scans(nScans,0)
@@ -160,10 +162,13 @@ with power_control() as p:
             print(MWfreq)
             p.start_log()
         p.set_power(this_dB)
+        for k in range(10):
+            time.sleep(0.5)
+            if p.get_power_setting() >= this_dB: break
+        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         run_scans(nScans,j+1,DNP_data)
-    p.set_power(0)
-log_array, log_dict = p.stop_log()
+    log_array, log_dict = p.stop_log()
 time_list.append(time.time())
 print("EXITING...")
 print("\n*** *** ***\n")
