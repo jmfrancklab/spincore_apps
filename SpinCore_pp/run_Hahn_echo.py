@@ -50,17 +50,17 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'Y191R1a_pR_DDM__echo'
-node_name = 'center_resonance_3'
-adcOffset = 28
+output_name = '100mM_TEMPO_hexane_echo'
+node_name = 'echo1'
+adcOffset = 31
 
 user_sets_Freq = True
-user_sets_Field = False
+user_sets_Field = True
 
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3504.55 
+    true_B0 = 3489.95 
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.882590
+    carrierFreq_MHz = 14.827512
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -100,7 +100,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10
-repetition = 2.5e6
+repetition = 5e6
 
 SW_kHz = 24
 nPoints = 1024*2
