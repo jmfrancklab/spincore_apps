@@ -11,7 +11,7 @@ time_origin = parser.parse('0:00')
 def thetime(x, position):
     return (time_origin+timedelta(seconds=x)).strftime('%H:%M:%S')
 
-myfile = "210621_TEMPOL_capillary_probe_1kHz.h5"
+myfile = "210622_100mM_TEMPO_hexane_capillary_probe.h5"
 data = nddata_hdf5(myfile+"/enhancement_curve")
 with h5py.File(myfile, 'r') as f:
     log_grp = f['log']
@@ -30,7 +30,7 @@ with h5py.File(myfile, 'r') as f:
 with figlist_var() as fl:
     data.reorder(['power','t2'],first=False)
     fl.next('raw data')
-    data.ft(['ph1','ph2'])
+    data.ft(['ph1'])
     fl.image(data.C.setaxis('power','#'))
     fl.next('FT and slice')
     data.ft('t2', shift=True)
@@ -57,8 +57,8 @@ with figlist_var() as fl:
         ax_Rx.axvline(x=thisevent['time'])
         ax_power.axvline(x=thisevent['time'])
         y_pos = j/n_events
-        ax_Rx.text(thisevent['time'], y_pos, read_dict[thisevent['cmd']], transform=trans_Rx)
-        ax_power.text(thisevent['time'], y_pos, read_dict[thisevent['cmd']], transform=trans_power)
+        #ax_Rx.text(thisevent['time'], y_pos, read_dict[thisevent['cmd']], transform=trans_Rx)
+        #ax_power.text(thisevent['time'], y_pos, read_dict[thisevent['cmd']], transform=trans_power)
     #ax.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
     plt.tight_layout()
     # }}}
