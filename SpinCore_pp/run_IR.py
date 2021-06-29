@@ -37,18 +37,18 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '4OH_TEMPOL_150uM_TempCont_probe_DNP'
-node_name = 'FIR_34dBm'
+output_name = '50mM_4AT_AOT_w11_cap_probe_echo'
+node_name = 'FIR_32dBm'
 adcOffset = 28
-carrierFreq_MHz = 14.715280
+carrierFreq_MHz = 14.822908
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 64
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 =  1.68
+p90 = 4.69
 deadtime = 10.0
-repetition = 10e6
+repetition = 0.4e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -89,9 +89,13 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 #        1e6,1.2e6,1.4e6,1.6e6,1.8e6,2e6]
 #vd_list = r_[5e1,9.1e4,1.8e5,2.7e5,3.6e5,
         #4.5e5,5.5e5,6.4e5,7.3e5,8.2e5,9.1e5,1e6]
+vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
+        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
+#vd_list = np.linspace(5e1,7e6,12)
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
-#        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-vd_list = np.linspace(5e1,10e6,12)
+#        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6,
+#        1.818e6, 2.727e6, 3.636e6, 4.545e6, 5.454e6,
+#        6.363e6, 7.272e6, 8.181e6, 9.090e6, 10e6]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
