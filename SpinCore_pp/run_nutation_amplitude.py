@@ -87,6 +87,7 @@ print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 amp_range = np.linspace(0,0.5,200)[1:]#,endpoint=False)
+datalist = []
 #{{{ setting acq_params dictizaonary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -156,10 +157,9 @@ for index,val in enumerate(amp_range):
     if GDS:
         datalist=[]
         with GDS_scope() as g:
-            g.acquire_mode('average',32)
+            g.acquire_mode('HIR')
             for j in range(amp_range):
                 datalist.append(g.waveform(ch=1))
-        nutation_data = concat(datalist,'repeats').reorder('t')
     else:
         data = []
     # according to JF, this commented out line
@@ -179,6 +179,14 @@ for index,val in enumerate(amp_range):
             nutation_data.setaxis('t',time_axis).set_units('t','s')
         nutation_data['amp',index] = data
     SpinCore_pp.stopBoard();
+nutation_data = concat(datalist,'repeats').reorder('t')
+
+
+
+
+
+
+
 print("EXITING...\n")
 print("\n*** *** ***\n")
 nutation_data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
@@ -186,21 +194,7 @@ nutation_data.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
 nutation_data.set_units('t2','s')
 nutation_data.set_prop('postproc_type','spincore_nutation_v2')
 
-if GDS:
-    try_again = True
-    while try_again:
-        data_name = 'capture%d'%j
-        data.name(data_name)
-        try:
-            nutation_data.set_prop('acq_params',acq_params)
-            data.hdf5_write(date+'_'+output_name+'.h5')
-            try_again = False
-        except Exception as e:
-            print(e)
-            print("name taken, trying again...")
-            j += 1
-            try_again = True
-save_file = False
+save_file = True
 while save_file:
     try:
         print("SAVING FILE...")

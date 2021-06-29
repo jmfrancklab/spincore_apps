@@ -6,20 +6,20 @@ FIR = True
 ODNP = True 
 nT1 = 5
 nScans_FIR = 1 # this should generally *not* be the same as the next parameter!
-nScans_ODNP = 8
+nScans_ODNP = 1
 nPhaseSteps = 4
 vd_len = 12
-power_len = 18
+power_len = 15
 # }}}
 # {{{ relaxation parameters that can change from sample to sample
-C_SL = 3.5e-6
+C_SL = 50e-6
 krho = 353. # this number for small SL -- check against PNMRS
 kHH = 0 # e.g. if we have a protein and we have relaxation due to the protein
 C_HH = 0 # concentration of the previous thing -- for a protein, this is the
 #          same as C_SL, for a lipid it would be different, for an RM I would
 #          just leave this alone and override R1water and R1water_hot
 R1water = 1./2.2 
-R1water_hot = 1./3.8 # check this number with AB
+R1water_hot = 1./2.2 # check this number with AB
 # }}}
 # {{{ not to be adjusted -- here we're calculating the relaxation times based
 # on the previous, which is what you should always be doing
@@ -47,6 +47,7 @@ if FIR:
 if ODNP:
     print('-'*10+'ODNP'+'-'*10)
     delay_times = 21.
+    power_len += 3 # for the 3 steps down in power
     powers = power_len*delay_times # time to switch powers
     expt = ODNP_rd*nScans_ODNP*nPhaseSteps*power_len+powers
     print("use this rd: ",ODNP_rd)
