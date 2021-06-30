@@ -70,13 +70,13 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '50mM_4AT_AOT_w11_cap_probe_echo'
-node_name = 'enhancement_2'
-adcOffset = 28
-carrierFreq_MHz = 14.822908
+output_name = '50uM_TEMPO_hexane_cap_probe_DNP'
+node_name = 'enhancement'
+adcOffset = 30
+carrierFreq_MHz = 14.892038
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 64
+nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -88,9 +88,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 =  4.69
+p90 = 4.69
 deadtime = 10.0
-repetition = 0.9e6
+repetition = 15e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -201,7 +201,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.816e9,9.826e9))
+    this_return = b.lock_on_dip(ini_range=(9.8195e9,9.823e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
