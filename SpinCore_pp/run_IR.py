@@ -37,32 +37,32 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '50uM_TEMPO_hexane_cap_probe_DNP'
-node_name = 'FIR_33dBm'
-adcOffset = 30
-carrierFreq_MHz = 14.892038
+output_name = '150uM_TEMPOL_TempProbe_oilFlow_probe'
+node_name = 'FIR_36dBm'
+adcOffset = 28
+carrierFreq_MHz = 14.686239
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.69
+p90 = 1.781
 deadtime = 10.0
-repetition = 15e6
+repetition = 8e6
 SW_kHz = 24.0
-nPoints = 1024*2
+nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-tau = 1000.
+tau = 8000.
 pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True
-ph1 = r_[0,2]
-ph2 = r_[0,2]
+ph1 = r_[0,1,2,3]
+ph2 = r_[0,1,2,3]
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 16
 if not phase_cycling:
     nPhaseSteps = 1 
 #{{{ setting acq_params dictionary
@@ -92,10 +92,6 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
 vd_list = np.linspace(5e1,12e6,12)
-#vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
-#        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6,
-#        1.818e6, 2.727e6, 3.636e6, 4.545e6, 5.454e6,
- #       6.363e6, 7.272e6, 8.181e6, 9.090e6, 10e6]
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
@@ -107,8 +103,8 @@ for index,val in enumerate(vd_list):
         acq_params['acq_time_ms'] = acq_time
         SpinCore_pp.init_ppg();
         if phase_cycling:
-            phase_cycles = dict(ph1 = r_[0,2],
-                    ph2 = r_[0,2])
+            phase_cycles = dict(ph1 = r_[0,1,2,3],
+                    ph2 = r_[0,1,2,3])
             SpinCore_pp.load([
                 ('marker','start',1),
                 ('phase_reset',1),

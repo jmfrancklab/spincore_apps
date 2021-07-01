@@ -41,17 +41,11 @@ def verifyParams():
         quit()
     else:
         print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
     return
 #}}}
 
-output_name = '150uM_TEMPOL_TempProbe_oilFlow_probe_16step'
-node_name = 'echo_36dBm'
+output_name = '150uM_TEMPOL_TempProbe_oilFlow_STE'
+node_name = 'tau_50m_36dBm'
 
 adcOffset = 28
 
@@ -90,7 +84,7 @@ phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
-    nPhaseSteps = 16
+    nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -103,15 +97,13 @@ deadtime = 10
 repetition = 15e6
 
 SW_kHz = 24
-nPoints = 1024
+nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
-#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 8000
-pad = 0
-#pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
+tau1 = 2
+tau2 = 50000
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -127,20 +119,19 @@ acq_params['SW_kHz'] = SW_kHz
 acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = deblank
-acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
+acq_params['tau1_us'] = tau1
+acq_params['tau2_us'] = tau2
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
 print(("ACQUISITION TIME:",acq_time,"ms"))
-print(("TAU DELAY:",tau,"us"))
-print(("PAD DELAY:",pad,"us"))
+print(("TAU 1 DELAY:",tau1,"us"))
+print(("TAU 2 DELAY:",tau2,"us"))
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for x in range(nScans):
     print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
     print("\n*** *** ***\n")
     print("CONFIGURING TRANSMITTER...")
-
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
     print("\nTRANSMITTER CONFIGURED.")
     print("***")
@@ -161,13 +152,15 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-            ('delay',tau),
+            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('delay',tau1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,1,2,3]),
+            ('pulse_TTL',p90,'ph2',r_[0,2]),
+            ('delay',tau2),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',p90,'ph3',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_time),
-            #('delay',pad),
             ('delay',repetition),
             ('jumpto','start')
             ])
@@ -182,7 +175,6 @@ for x in range(nScans):
             ('pulse_TTL',2.0*p90,0),
             ('delay',deadtime),
             ('acquire',acq_time),
-            #('delay',pad),
             ('delay',repetition),
             ('jumpto','start')
             ])
@@ -213,7 +205,7 @@ while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
         data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/STE'))
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
@@ -241,17 +233,11 @@ print(" *** *** *** ")
 print("My field in G is %f"%true_B0)
 print("My frequency in MHz is",carrierFreq_MHz)
 print(" *** *** *** ")
-if not phase_cycling:
-    fl.next('raw data')
-    fl.plot(data)
-    data.ft('t',shift=True)
-    fl.next('ft')
-    fl.plot(data.real)
-    fl.plot(data.imag)
 if phase_cycling:
-    data.chunk('t',['ph2','ph1','t2'],[4,4,-1])
-    data.setaxis('ph2',r_[0.,1.,2.,3.]/4)
-    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    data.chunk('t',['ph3','ph2','ph1','t2'],[2,2,2,-1])
+    data.setaxis('ph2',r_[0.,2.]/4)
+    data.setaxis('ph2',r_[0.,2.]/4)
+    data.setaxis('ph1',r_[0.,2.]/4)
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
     fl.next('image')
@@ -261,11 +247,8 @@ if phase_cycling:
     fl.next('image - ft')
     fl.image(data)
     fl.next('image - ft, coherence')
-    data.ft(['ph1','ph2'])
+    data.ft(['ph1','ph2','ph3'])
     fl.image(data)
-    fl.next('data plot')
-    data_slice = data['ph1',1]['ph2',-2]
-    fl.plot(data_slice, alpha=0.5)
-    fl.plot(data_slice.imag, alpha=0.5)
-    fl.plot(abs(data_slice), color='k', alpha=0.5)
+    fl.next('image - ft, coherence, exclude FID')
+    fl.image(data['ph1',1]['ph3',-1])
 fl.show();quit()

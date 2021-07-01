@@ -43,15 +43,15 @@ mw_freqs = []
 uneven = 1.0*r_[3,2,1,1,2,3]
 uneven /= sum(uneven)
 uneven = cumsum(uneven)
-start_field = 3502
-stop_field = 3508
+start_field = 3486
+stop_field = 3491
 field_axis = start_field + (stop_field-start_field)*uneven
 
 #field_axis = r_[3504:3506:.1]
 print("Here is my field axis:",field_axis)
 
 # Parameters for Bridge12
-powers = r_[3.16]
+powers = r_[3.98]
 min_dBm_step = 0.5
 for x in range(len(powers)):
     print(powers)
@@ -62,14 +62,14 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
-output_name = '500uM_TEMPO_hexane_field_dep_uneven'
-node_name = 'field_sweep'
-adcOffset = 26 
-gamma_eff = (14.890865/3504.85)
+output_name = '50mM_4AT_AOT_w11_cap_probe_field_dep'
+node_name = 'field_sweep_adj'
+adcOffset = 33
+gamma_eff = (14.824903/3489.4)
 #{{{ acq params
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 16
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1)]
@@ -85,7 +85,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 10e6
+repetition = 0.7e6
 
 SW_kHz = 24
 nPoints = 1024*2

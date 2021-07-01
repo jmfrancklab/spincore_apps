@@ -2,8 +2,8 @@ from pyspecdata import *
 import numpy as np
 
 rd = 15e6*1e-6
-nScans = 2
-nPhaseSteps = 4
+nScans = 1
+nPhaseSteps = 8
 
 FIR = False
 #{{{
@@ -16,7 +16,7 @@ if FIR:
 ODNP = True
 #{{{
 if ODNP:
-    power_len = 15
+    power_len = 7
     power_len += 3
     delay_times = 21.
     powers = power_len*delay_times
