@@ -16,7 +16,7 @@ if FIR:
 ODNP = True
 #{{{
 if ODNP:
-    power_len = 7
+    power_len = 15
     power_len += 3
     delay_times = 21.
     powers = power_len*delay_times
