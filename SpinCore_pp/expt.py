@@ -42,22 +42,4 @@ if FIR:
     expt = FIR_rd*nScans_FIR*nPhaseSteps*len(vd_list)+sum(vd_list*nPhaseSteps*nScans_FIR)
     print("Estimated experiment time for 1 FIR:",expt/60.,"min.")
     FIR_expt = expt
-#}}}
-#{{{ calculate timing for ODNP
-if ODNP:
-    print('-'*10+'ODNP'+'-'*10)
-    delay_times = 21.
-    power_len += 3 # for the 3 steps down in power
-    powers = power_len*delay_times # time to switch powers
-    expt = ODNP_rd*nScans_ODNP*nPhaseSteps*power_len+powers
-    print("use this rd: ",ODNP_rd)
-    print("Estimated experiment time for enhancement curve: %d:%02.0f"%(
-        np.floor(expt/3600),
-        (expt/60)-60*np.floor(expt/3600)))
-    total_time = expt+nT1*FIR_expt
-    print(expt,"vs",total_time)
-    if FIR:
-        print("Estimated experiment time for entire ODNP experiment: %d:%02.0f"%(
-            np.floor(total_time/3600),
-            (total_time/60)-60*np.floor(total_time/3600)))
-#}}}
+

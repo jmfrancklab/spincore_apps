@@ -48,18 +48,12 @@ def verifyParams():
         quit()
     else:
         print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
     return
 #}}}
 
 # Parameters for Bridge12
-max_power = 6.31 #W
-power_steps = 15
+max_power = 4 #W
+power_steps = 7
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,17 +64,17 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '500uM_TEMPO_hexane_cap_probe_DNP'
-node_name = 'enhancement_2'
-adcOffset = 29
-carrierFreq_MHz = 14.89360
+output_name = '150uM_TEMPOL_TempProbe_oilFlow_STE'
+node_name = 'enhancement'
+adcOffset = 28
+carrierFreq_MHz = 14.686239
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ note on timing
@@ -88,7 +82,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.69
+p90 = 1.781
 deadtime = 10.0
 repetition = 15e6
 
@@ -98,8 +92,8 @@ nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 1000.
+tau1 = 2
+tau2 = 50000
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -114,14 +108,12 @@ acq_params['SW_kHz'] = SW_kHz
 acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = deblank
-acq_params['tau_us'] = tau
-#acq_params['pad_us'] = pad 
+acq_params['tau1_us'] = tau1
+acq_params['tau2_us'] = tau2
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
 print("ACQUISITION TIME:",acq_time,"ms")
-print("TAU DELAY:",tau,"us")
-#print "PAD DELAY:",pad,"us"
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for x in range(nScans):
     print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
@@ -146,13 +138,15 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-            ('delay',tau),
+            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('delay',tau1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0),
+            ('pulse_TTL',p90,'ph2',r_[0,2]),
+            ('delay',tau2),
+            ('delay_TTL',deblank),
+            ('pulse_TTL',p90,'ph3',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_time),
-            #('delay',pad),
             ('delay',repetition),
             ('jumpto','start')
             ])
@@ -201,7 +195,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.815e9,9.83e9))
+    this_return = b.lock_on_dip(ini_range=(9.68e9,9.6875e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
@@ -259,13 +253,15 @@ with Bridge12() as b:
                     ('marker','start',1),
                     ('phase_reset',1),
                     ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-                    ('delay',tau),
+                    ('pulse_TTL',p90,'ph1',r_[0,2]),
+                    ('delay',tau1),
                     ('delay_TTL',deblank),
-                    ('pulse_TTL',2.0*p90,0),
+                    ('pulse_TTL',p90,'ph2',r_[0,2]),
+                    ('delay',tau2),
+                    ('delay_TTL',deblank),
+                    ('pulse_TTL',p90,'ph3',r_[0,2]),
                     ('delay',deadtime),
                     ('acquire',acq_time),
-                    #('delay',pad),
                     ('delay',repetition),
                     ('jumpto','start')
                     ])
@@ -315,7 +311,7 @@ while save_file:
         DNP_data.set_prop('acq_params',acq_params)
         DNP_data.name(node_name)
         DNP_data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
+                directory=getDATADIR(exp_type='ODNP_NMR_comp/STE'))
         print("*** *** *** *** *** *** *** *** *** *** ***")
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print("*** *** *** *** *** *** *** *** *** *** ***")
@@ -341,12 +337,9 @@ while save_file:
 fl.next('raw data')
 fl.image(DNP_data.C.setaxis('power',
     '#').set_units('power','scan #'))
-fl.next('abs raw data')
+data.ft('t',shift=True)
+DNP_data.ft(['ph1','ph2','ph3'])
+fl.next('abs coherence domain - ft')
 fl.image(abs(DNP_data).C.setaxis('power',
     '#').set_units('power','scan #'))
-data.ft('t',shift=True)
-fl.next('raw data - ft')
-fl.image(DNP_data.C.setaxis('power','#'))
-fl.next('abs raw data - ft')
-fl.image(abs(DNP_data.C.setaxis('power','#')))
 fl.show();quit()
