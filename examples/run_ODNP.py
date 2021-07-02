@@ -13,13 +13,13 @@ import h5py
 fl = figlist_var()
 # {{{ experimental parameters
 # {{{ these need to change every time
-adcOffset = 31
-carrierFreq_MHz = 14.827512
+adcOffset = 29
+carrierFreq_MHz = 14.896360
 # }}}
-max_power = 2.51 #W
-power_steps = 3
+max_power = 2 #W
+power_steps = 10
 dB_settings = gen_powerlist(max_power,power_steps)
-threedown = False
+threedown = True
 if threedown:
     append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
             for frac in [0.75,0.5,0.25]]
@@ -31,7 +31,7 @@ time_list = [time.time()]
 if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 powers = 1e-3*10**(dB_settings/10.)
-output_name = '100mM_TEMPO_hexane_capillary_probe_2'
+output_name = '100mM_TEMPO_hexane_test_2'
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -44,24 +44,16 @@ date = datetime.now().strftime('%y%m%d')
 #}}}
 p90_us = 4.69
 deadtime_us = 10.0
-repetition_us = 0.7e6
+repetition_us = 1e6
 
 SW_kHz = 24
-#aq = 0.83
-#nPoints = int(2**ceil(log2(aq*(SW_kHz*1e3))))
-#print("you set an aq of",aq,"and a SW of",SW_kHz,"so, I'm going to use",nPoints,"for an actual aq of",nPoints/(SW_kHz*1e3))
-#assert nPoints * len(ph2_cyc) * len(ph1_cyc) <= 2**14, "too many points!"
 nPoints = 1024*2
 
 acq_time_ms = nPoints/SW_kHz # ms
 tau_adjust_us = 0.0
 deblank_us = 1.0
-#tau_us = deadtime_us + acq_time_ms*1e3*(1./8.) + tau_adjust_us
-# Fixed tau_us for comparison
 tau_us = 1000
 pad_us = 0
-#pad_us = 2.0*tau_us - deadtime_us - acq_time_ms*1e3 - deblank_us
-# }}}
 print("ACQUISITION TIME:",acq_time_ms,"ms")
 print("TAU DELAY:",tau_us,"us")
 print("PAD DELAY:",pad_us,"us")
@@ -87,8 +79,6 @@ def run_scans_IR(vd_list, node_name, nScans = 1, rd = 1e6, power_on = False):
             acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
             verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90_us, tau_us=tau_us)
             SpinCore_pp.init_ppg();
-            ph1_cyc = r_[0,2]
-            ph2_cyc = r_[0,2]
             nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
             SpinCore_pp.load([
                 ('marker','start',1),
@@ -125,46 +115,11 @@ def run_scans_IR(vd_list, node_name, nScans = 1, rd = 1e6, power_on = False):
                 vd_data.setaxis('t',time_axis).set_units('t','s')
             vd_data['vd',index]['nScans',x] = data
             nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
-            power_on = False
-            if not power_on:
-                acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
-                    'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-                    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'acq_time_ms']}
-            if power_on:
-                acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
-                    'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-                    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms']}
-        vd_data.set_prop('acq_params',acq_params)
-    SpinCore_pp.stopBoard();
-    print("EXITING...\n")
-    print("\n*** *** ***\n")
-    save_file = True
-    vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
-    vd_data.setaxis('ph1',ph1_cyc/4.)
-    vd_data.setaxis('ph2',ph2_cyc/4.)
-    if nScans > 1:
-        vd_data.setaxis('nScans',r_[0:nScans])
-    myfilename = date+'_'+output_name+'.h5'
-    while save_file:
-        try:
-            print("SAVING FILE IN TARGET DIRECTORY...")
             vd_data.name(node_name)
-            vd_data.hdf5_write(myfilename)
-            #vd_data.hdf5_write(date+'_'+output_name+'.h5',
-            #        directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
-            print("*** *** *** *** *** *** *** *** *** *** ***")
-            print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-            print("*** *** *** *** *** *** *** *** *** *** ***")
-            print(("Name of saved data",vd_data.name()))
-            print(("Units of saved data",vd_data.get_units('t2')))
-            print(("Shape of saved data",ndshape(vd_data)))
-            save_file = False
-        except Exception as e:
-            print(e)
-            print("\nEXCEPTION ERROR.")
-            print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-            save_file = False
-    return
+            SpinCore_pp.stopBoard();
+            if nScans > 1:
+                vd_data.setaxis('nScans',r_[0:nScans])
+    return vd_data
 #}}}
 #{{{ enhancement curve pulse prog
 def run_scans(nScans, power_idx, DNP_data=None):
@@ -217,7 +172,6 @@ def run_scans(nScans, power_idx, DNP_data=None):
             ('pulse_TTL',2.0*p90_us,'ph2',ph2_cyc),
             ('delay',deadtime_us),
             ('acquire',acq_time_ms),
-            #('delay',pad_us),
             ('delay',repetition_us),
             ('jumpto','start')
             ])
@@ -257,10 +211,28 @@ def run_scans(nScans, power_idx, DNP_data=None):
         return DNP_data
 #}}}
 time_list.append(time.time())
-vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
-        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-
-run_scans_IR( vd_list, 'FIR_noPower', nScans, 0.7e6,)
+vd_list = r_[5e1,7.3e4,1e6]
+vd_data = run_scans_IR( vd_list, 'FIR_noPower', nScans, 0.7e6)
+meter_power = 0
+save_file = True
+acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
+    'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+vd_data.set_prop('acq_params',acq_params)
+myfilename = date+'_'+output_name+'.h5'
+ph1ir_cyc = r_[0,2]
+ph2ir_cyc = r_[0,2]
+vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+vd_data.setaxis('ph1',ph1ir_cyc/4)
+vd_data.setaxis('ph2',ph2ir_cyc/4)
+# Need error handling (JF has posted something on this..)
+print("SAVING FILE...")
+vd_data.hdf5_write(myfilename)
+print("\n*** FILE SAVED ***\n")
+print(("Name of saved data",vd_data.name()))
+print(("Units of saved data",vd_data.get_units('t2')))
+print(("Shape of saved data",ndshape(vd_data)))
+save_file = False
 T1_powers_dB = r_[30,32]
 T1_node_names = ['FIR_30dBm','FIR_32dBm']
 with power_control() as p:
@@ -275,16 +247,43 @@ with power_control() as p:
             if p.get_power_setting() >= this_dB: break
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
-        run_scans_IR(vd_list, T1_node_names[j], nScans, 0.7e6, power_on = True)
-    log_array_IR, log_dict_IR = p.stop_log()
+        meter_power = p.get_power_setting()
+        vd_data = run_scans_IR(vd_list, T1_node_names[j], nScans, 0.7e6, power_on = True)
+        log_array_IR, log_dict_IR = p.stop_log()
+        save_file = True
+        acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
+            'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
+            'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+        vd_data.set_prop('acq_params',acq_params)
+        vd_data.name(T1_node_names[j])
+        myfilename = date+'_'+output_name+'.h5'
+        ph1ir_cyc = r_[0,2]
+        ph2ir_cyc = r_[0,2]
+        vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+        vd_data.setaxis('ph1',ph1ir_cyc/4)
+        vd_data.setaxis('ph2',ph2ir_cyc/4)
+        print("SAVING FILE...")
+        vd_data.hdf5_write(myfilename)
+        print("\n*** FILE SAVED ***\n")
+        print(("Name of saved data",vd_data.name()))
+        print(("Units of saved data",vd_data.get_units('t2')))
+        print(("Shape of saved data",ndshape(vd_data)))
+        save_file = False
+        with h5py.File(myfilename, 'a') as f:
+            log_grp = f.create_group('log_'+str(T1_node_names[j])) # normally, I would actually put this under the node with the data
+            dset = log_grp.create_dataset("log_IR",data=log_array_IR)
+            dset.attrs['dict_len'] = len(log_dict_IR)
+            for j,(k,v) in enumerate(log_dict_IR.items()):
+               dset.attrs['key%d'%j] = k 
+               dset.attrs['val%d'%j] = v 
 
 DNP_data = run_scans(nScans,0)
 time_list.append(time.time())
+meter_powers = zeros_like(dB_settings)
 with power_control() as p:
     for j,this_dB in enumerate(dB_settings):
         if j == 0:
             MWfreq = p.dip_lock(9.81,9.83)
-            print(MWfreq)
             p.start_log()
         p.set_power(this_dB)
         for k in range(10):
@@ -292,6 +291,7 @@ with power_control() as p:
             if p.get_power_setting() >= this_dB: break
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
+        meter_powers[j] = p.get_power_setting()
         run_scans(nScans,j+1,DNP_data)
     log_array, log_dict = p.stop_log()
 time_list.append(time.time())
@@ -300,7 +300,7 @@ print("\n*** *** ***\n")
 save_file = True
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq']}
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'meter_powers']}
 acq_params['pulprog'] = 'spincore_power_step_test_v1'
 DNP_data.set_prop('acq_params',acq_params)
 # {{{ manipulate the data as needed
@@ -309,6 +309,8 @@ time_list.append(time.time())
 # {{{ save the file
 myfilename = date+'_'+output_name+'.h5'
 ph1_cyc = r_[0,1,2,3]
+ph1ir_cyc = r_[0,2]
+ph2ir_cyc = r_[0,2]
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
 DNP_data.setaxis('ph1',ph1_cyc/4)
 while save_file:
@@ -329,13 +331,6 @@ time_list.append(time.time())
 time_array = array(time_list)
 print("checkpoints:",time_array-time_array[0])
 print("time for each chunk",['%0.1f'%j for j in diff(time_array)])
-with h5py.File(myfilename+'IR', 'a') as f:
-    log_grp = f.create_group('log') # normally, I would actually put this under the node with the data
-    dset = log_grp.create_dataset("log",data=log_array_IR)
-    dset.attrs['dict_len'] = len(log_dict_IR)
-    for j,(k,v) in enumerate(log_dict_IR.items()):
-       dset.attrs['key%d'%j] = k 
-       dset.attrs['val%d'%j] = v 
 with h5py.File(myfilename, 'a') as f:
     log_grp = f.create_group('log') # normally, I would actually put this under the node with the data
     dset = log_grp.create_dataset("log",data=log_array)
