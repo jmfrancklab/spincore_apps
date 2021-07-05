@@ -12,12 +12,30 @@ import h5py
 # {{{ from run_Hahn_echo_mw.py
 fl = figlist_var()
 # {{{ experimental parameters
-# {{{ these need to change every time
+# {{{ these need to change for each sample
+output_name = '100mM_TEMPO_hexane_test_1'
 adcOffset = 29
-carrierFreq_MHz = 14.896360
+carrierFreq_MHz = 14.896314
+tx_phases = r_[0.0,90.0,180.0,270.0]
+amplitude = 1.0
+nScans = 1
+nEchoes = 1
+date = datetime.now().strftime('%y%m%d')
+# all times in microseconds
+# note that acq_time_ms is always milliseconds
+p90_us = 4.69
+deadtime_us = 10.0
+repetition_us = 1e6
+SW_kHz = 24
+nPoints = 1024*2
+acq_time_ms = nPoints/SW_kHz # ms
+tau_adjust_us = 0.0
+deblank_us = 1.0
+tau_us = 1000
+pad_us = 0
 # }}}
 max_power = 2 #W
-power_steps = 10
+power_steps = 3
 dB_settings = gen_powerlist(max_power,power_steps)
 threedown = True
 if threedown:
@@ -31,32 +49,6 @@ time_list = [time.time()]
 if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 powers = 1e-3*10**(dB_settings/10.)
-output_name = '100mM_TEMPO_hexane_test_2'
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-nScans = 1
-nEchoes = 1
-date = datetime.now().strftime('%y%m%d')
-#{{{ note on timing
-# putting all times in microseconds
-# as this is generally what the SpinCore takes
-# note that acq_time_ms is always milliseconds
-#}}}
-p90_us = 4.69
-deadtime_us = 10.0
-repetition_us = 1e6
-
-SW_kHz = 24
-nPoints = 1024*2
-
-acq_time_ms = nPoints/SW_kHz # ms
-tau_adjust_us = 0.0
-deblank_us = 1.0
-tau_us = 1000
-pad_us = 0
-print("ACQUISITION TIME:",acq_time_ms,"ms")
-print("TAU DELAY:",tau_us,"us")
-print("PAD DELAY:",pad_us,"us")
 time_list.append(time.time())
 #{{{ inversion recovery pulse prog
 def run_scans_IR(vd_list, node_name, nScans = 1, rd = 1e6, power_on = False):
@@ -210,7 +202,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
             DNP_data.setaxis('nScans',r_[0:nScans])
         return DNP_data
 #}}}
-time_list.append(time.time())
+
 vd_list = r_[5e1,7.3e4,1e6]
 vd_data = run_scans_IR( vd_list, 'FIR_noPower', nScans, 0.7e6)
 meter_power = 0
@@ -235,12 +227,13 @@ print(("Shape of saved data",ndshape(vd_data)))
 save_file = False
 T1_powers_dB = r_[30,32]
 T1_node_names = ['FIR_30dBm','FIR_32dBm']
+time_list.append(time.time())
 with power_control() as p:
     for j,this_dB in enumerate(T1_powers_dB):
         if j == 0:
             MWfreq = p.dip_lock(9.81,9.83)
             print(MWfreq)
-            p.start_log()
+        p.start_log()
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
@@ -271,7 +264,7 @@ with power_control() as p:
         save_file = False
         with h5py.File(myfilename, 'a') as f:
             log_grp = f.create_group('log_'+str(T1_node_names[j])) # normally, I would actually put this under the node with the data
-            dset = log_grp.create_dataset("log_IR",data=log_array_IR)
+            dset = log_grp.create_dataset("log",data=log_array_IR)
             dset.attrs['dict_len'] = len(log_dict_IR)
             for j,(k,v) in enumerate(log_dict_IR.items()):
                dset.attrs['key%d'%j] = k 
@@ -303,8 +296,6 @@ acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 
     'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'meter_powers']}
 acq_params['pulprog'] = 'spincore_power_step_test_v1'
 DNP_data.set_prop('acq_params',acq_params)
-# {{{ manipulate the data as needed
-# }}}
 time_list.append(time.time())
 # {{{ save the file
 myfilename = date+'_'+output_name+'.h5'
@@ -329,8 +320,6 @@ while save_file:
 # }}}
 time_list.append(time.time())
 time_array = array(time_list)
-print("checkpoints:",time_array-time_array[0])
-print("time for each chunk",['%0.1f'%j for j in diff(time_array)])
 with h5py.File(myfilename, 'a') as f:
     log_grp = f.create_group('log') # normally, I would actually put this under the node with the data
     dset = log_grp.create_dataset("log",data=log_array)
