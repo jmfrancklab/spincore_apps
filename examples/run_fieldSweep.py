@@ -15,7 +15,7 @@ fl = figlist_var()
 # just mw will only run at one power
 just_MW = True
 # {{{ params to change for each sample
-output_name = '100mM_TEMPO_hexane_sweep_1'
+output_name = '100mM_TEMPO_hexane_sweep_3'
 adcOffset = 29
 gamma_eff = (14.889463/3504.55)
 carrierFreq_MHz = 14.896314
@@ -142,7 +142,7 @@ def run_scans(nScans, power_idx, field_idx, DNP_data=None):
             DNP_data.setaxis('field',field_axis).set_units('G')
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
-            DNP_data.name('field_sweep')
+            DNP_data.name(node_name)
         DNP_data['power',power_idx]['field',field_idx]['nScans',x] = data_array
         SpinCore_pp.stopBoard()
         run_scans_time_list.append(time.time())
@@ -155,9 +155,10 @@ def run_scans(nScans, power_idx, field_idx, DNP_data=None):
         return DNP_data
 #}}}
 
+node_name = 'field_sweep'
 meter_powers = zeros_like(dB_settings)
-carrierFreqs_MHz = zeros_like(field_axis)
-fields_Set = zeros_like(field_axis)
+carrierFreqs_MHz = zeros_like(field_axis, dtype=float)
+fields_Set = zeros_like(field_axis,dtype=float)
 with power_control() as p:
     for j,this_dB in enumerate(dB_settings):
         if j == 0:
@@ -215,8 +216,8 @@ while save_file:
 time_list.append(time.time())
 time_array = array(time_list)
 with h5py.File(myfilename, 'a') as f:
-    log_grp = f.create_group('log') # normally, I would actually put this under the node with the data
-    dset = log_grp.create_dataset("log",data=log_array)
+    #log_grp = f.group(node_name) # normally, I would actually put this under the node with the data
+    dset = f[node_name].create_dataset("log",data=log_array)
     dset.attrs['dict_len'] = len(log_dict)
     for j,(k,v) in enumerate(log_dict.items()):
        dset.attrs['key%d'%j] = k 

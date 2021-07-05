@@ -11,14 +11,15 @@ time_origin = parser.parse('0:00')
 def thetime(x, position):
     return (time_origin+timedelta(seconds=x)).strftime('%H:%M:%S')
 
-myfile = "210705_100mM_TEMPO_hexane_sweep_1.h5"
-#data = nddata_hdf5(myfile+"/enhancement_curve")
+myfile = "210705_100mM_TEMPO_hexane_sweep_3.h5"
+data = nddata_hdf5(myfile+"/field_sweep")
 #data = nddata_hdf5(myfile+"/FIR_noPower")
 #data = nddata_hdf5(myfile+"/FIR_32dBm")
-#print(data.get_prop('acq_params'))
+print(data.get_prop('acq_params'))
 with h5py.File(myfile, 'r') as f:
-    log_grp = f['log']
-    dset = log_grp['log']
+    #log_grp = f['field_sweep/log']
+    #dset = log_grp['log']
+    dset = f['field_sweep/log']
     print("length of dset",dset.shape)
     # {{{ convert to a proper structured array
     read_array = empty(len(dset), dtype=dset.dtype)
@@ -31,10 +32,19 @@ with h5py.File(myfile, 'r') as f:
             val = val.decode('ASCII')
         read_dict[dset.attrs['key%d'%j]] = val
 with figlist_var() as fl:
+    data.reorder(['power','t2'],first=False)
+    fl.next('raw data')
+    data.ft(['ph1'])
+    fl.image(data.C.setaxis('power','#'))
+    fl.next('FT and slice')
+    data.ft('t2', shift=True)
+    data = data['t2':(-2e3,2e3)]
+    fl.image(data.C.setaxis('power','#'))
+    # {{{ show the log
     fig, (ax_Rx,ax_power) = plt.subplots(2,1, figsize=(10,8))
     fl.next("log", fig=fig)
-    #print("the log starts at",time.strftime('%m/%d/%y %I:%M %p',time.localtime(read_array['time'][0])))
-    #read_array['time'] -= read_array['time'][0] # for the purposes of this log, start at zero
+    print("the log starts at",time.strftime('%m/%d/%y %I:%M %p',time.localtime(read_array['time'][0])))
+    read_array['time'] -= read_array['time'][0] # for the purposes of this log, start at zero
     ax_Rx.xaxis.set_major_formatter(thetime)
     ax_power.xaxis.set_major_formatter(thetime)
     ax_Rx.set_ylabel('Rx / mV')
