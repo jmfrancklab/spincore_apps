@@ -11,15 +11,15 @@ time_origin = parser.parse('0:00')
 def thetime(x, position):
     return (time_origin+timedelta(seconds=x)).strftime('%H:%M:%S')
 
-myfile = "210702_100mM_TEMPO_hexane_test_2.h5"
-data = nddata_hdf5(myfile+"/enhancement_curve")
+myfile = "210705_100mM_TEMPO_hexane_sweep_3.h5"
+data = nddata_hdf5(myfile+"/field_sweep")
 #data = nddata_hdf5(myfile+"/FIR_noPower")
 #data = nddata_hdf5(myfile+"/FIR_32dBm")
 print(data.get_prop('acq_params'))
-quit()
 with h5py.File(myfile, 'r') as f:
-    log_grp = f['log']
-    dset = log_grp['log']
+    #log_grp = f['field_sweep/log']
+    #dset = log_grp['log']
+    dset = f['field_sweep/log']
     print("length of dset",dset.shape)
     # {{{ convert to a proper structured array
     read_array = empty(len(dset), dtype=dset.dtype)
@@ -34,6 +34,8 @@ with h5py.File(myfile, 'r') as f:
 with figlist_var() as fl:
     data.reorder(['power','t2'],first=False)
     fl.next('raw data')
+    fl.image(data)
+    fl.show();quit()
     data.ft(['ph1'])
     fl.image(data.C.setaxis('power','#'))
     fl.next('FT and slice')

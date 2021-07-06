@@ -15,7 +15,7 @@ fl = figlist_var()
 # just mw will only run at one power
 just_MW = True
 # {{{ params to change for each sample
-output_name = '100mM_TEMPO_hexane_sweep_3'
+output_name = '100mM_TEMPO_hexane_sweep_6'
 adcOffset = 29
 gamma_eff = (14.889463/3504.55)
 carrierFreq_MHz = 14.896314
@@ -28,7 +28,7 @@ date = datetime.now().strftime('%y%m%d')
 # note that acq_time_ms is always milliseconds
 p90_us = 4.69
 deadtime_us = 10.0
-repetition_us = 1e6
+repetition_us = 3e6
 SW_kHz = 24
 nPoints = 1024*2
 acq_time_ms = nPoints/SW_kHz # ms
@@ -39,11 +39,11 @@ pad_us = 0
 # }}}
 #{{{ axis for field sweep
 mw_freqs = []
-field_axis = r_[3504:3508:1]
+field_axis = r_[3490:3515:3]
 print("Here is my field axis:",field_axis)
 #}}}
 #{{{ params for Bridge 12/power
-max_power = 2 #W
+max_power = 3.5 #W
 power_steps = 2
 dB_settings = gen_powerlist(max_power,power_steps)
 threedown = False
@@ -60,6 +60,7 @@ if myinput.lower().startswith('n'):
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 time_list.append(time.time())
+DNP_data = None
 #{{{ pulse prog
 def run_scans(nScans, power_idx, field_idx, DNP_data=None):
     """run nScans and slot them into he power_idx index of DNP_data -- assume
@@ -132,7 +133,7 @@ def run_scans(nScans, power_idx, field_idx, DNP_data=None):
         print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
         print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
         dataPoints = int(shape(data_array)[0])
-        if DNP_data is None:
+        if DNP_data is None and power_idx ==0 and field_idx == 0:
             time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time_ms*1e-3,dataPoints)
             DNP_data = ndshape([len(powers),len(field_axis),nScans,dataPoints],['power','field','nScans','t']).alloc(dtype=complex128)
             if not just_MW:
@@ -183,7 +184,10 @@ with power_control() as p:
                 if not just_MW:
                     run_scans(nScans, j+1, B0_index, DNP_data)
                 if just_MW:
-                    DNP_data = run_scans(nScans, j, B0_index)
+                    if DNP_data is None:
+                        DNP_data = run_scans(nScans, j, B0_index, DNP_data = None)
+                    else:
+                        DNP_data = run_scans(nScans, j, B0_index, DNP_data)
     log_array, log_dict = p.stop_log()
 time_list.append(time.time())
 print("EXITING...")
@@ -211,12 +215,12 @@ while save_file:
     except Exception as e:
         print(e)
         print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
+
         save_file = False
 # }}}
 time_list.append(time.time())
 time_array = array(time_list)
 with h5py.File(myfilename, 'a') as f:
-    #log_grp = f.group(node_name) # normally, I would actually put this under the node with the data
     dset = f[node_name].create_dataset("log",data=log_array)
     dset.attrs['dict_len'] = len(log_dict)
     for j,(k,v) in enumerate(log_dict.items()):
