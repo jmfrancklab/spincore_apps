@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = '100mM_TEMPOL_cap_probe'
+output_name = '150uM_TEMPO_hexane_cap_probe'
 node_name = 'echo'
-adcOffset = 28
+adcOffset = 29
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -60,7 +60,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3506.2
+    true_B0 = 3505.17
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.896360
+    carrierFreq_MHz = 14.892052
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -85,7 +85,7 @@ tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-phase_cycling = True
+phase_cycling = False
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
@@ -99,7 +99,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10
-repetition = 3e6
+repetition = 12e6
 
 SW_kHz = 24
 nPoints = 1024*2
