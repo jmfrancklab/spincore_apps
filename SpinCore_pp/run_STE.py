@@ -45,9 +45,9 @@ def verifyParams():
 #}}}
 
 output_name = '150uM_TEMPOL_TempProbe_oilFlow_STE'
-node_name = 'tau_50m_36dBm'
+node_name = 'tau_50m_noPower_tau1_12'
 
-adcOffset = 28
+adcOffset = 29
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -55,7 +55,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3456.83
+    true_B0 = 3456.8
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -67,7 +67,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.686239
+    carrierFreq_MHz = 14.686622
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -102,7 +102,7 @@ nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
-tau1 = 2
+tau1 = 12
 tau2 = 50000
 #{{{ setting acq_params dictionary
 acq_params = {}
