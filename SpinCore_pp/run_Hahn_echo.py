@@ -50,8 +50,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = '150uM_TEMPO_hexane_cap_probe'
-node_name = 'echo'
+output_name = '50mM_4AT_AOT_w3_cap'
+node_name = 'echo2_37dBm'
 adcOffset = 29
 
 user_sets_Freq = True
@@ -60,19 +60,19 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3505.17
+    true_B0 = 3456.76
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
 if not user_sets_Field:
-    desired_B0 = 3488.9
+    desired_B0 = 3502.95 
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.892052
+    carrierFreq_MHz = 14.826648
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -83,9 +83,9 @@ if not user_sets_Freq:
 #}}}
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 1
+nScans = 12
 nEchoes = 1
-phase_cycling = False
+phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
@@ -99,7 +99,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10
-repetition = 12e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -247,6 +247,7 @@ if not phase_cycling:
     fl.next('ft')
     fl.plot(data.real)
     fl.plot(data.imag)
+    fl.plot(abs(data),color='k',alpha=0.5)
 if phase_cycling:
     data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
     data.setaxis('ph2',r_[0.,2.]/4)

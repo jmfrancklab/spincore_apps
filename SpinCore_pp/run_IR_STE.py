@@ -45,7 +45,7 @@ def verifyParams():
 #}}}
 
 output_name = '150uM_TEMPOL_TempProbe_oilFlow_STE'
-node_name = 'FIR_80m_noPower_coarse'
+node_name = 'FIR_80m_noPower'
 
 adcOffset = 29
 
@@ -55,7 +55,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3456.8
+    true_B0 = 3456.73
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -65,9 +65,9 @@ if not user_sets_Field:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
 #}}}
-#{{{ set frequency here
+#z{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.686622
+    carrierFreq_MHz = 14.686293
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -80,9 +80,8 @@ tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
-coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
-nPhaseSteps = 32
+nPhaseSteps = 8
 #{{{ note on timing
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
@@ -90,18 +89,18 @@ nPhaseSteps = 32
 #}}}
 p90 = 1.781
 deadtime = 10
-repetition = 15e6
+repetition = 8e6
 
 SW_kHz = 24
-nPoints = 512
+nPoints = 1024*2
 
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
 tau1 = 2
 tau2 = 80000
-#vd_list = np.linspace(5e1,12e6,12)
-vd_list = np.linspace(5e1,12e6,6)
+vd_list = np.linspace(5e1,12e6,12)
+#vd_list = np.linspace(5e1,12e6,6)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -151,7 +150,7 @@ for vd_index,vd_val in enumerate(vd_list):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph4',r_[0,1,2,3]),
+            ('pulse_TTL',2.0*p90,0),
             ('delay',vd),
             ('delay_TTL',deblank),
             ('pulse_TTL',p90,'ph1',r_[0,2]),
@@ -222,8 +221,7 @@ print(" *** *** *** ")
 print("My field in G is %f"%true_B0)
 print("My frequency in MHz is",carrierFreq_MHz)
 print(" *** *** *** ")
-data.chunk('t',['ph4','ph3','ph2','ph1','t2'],[4,2,2,2,-1])
-data.setaxis('ph4',r_[0.,1.,2.,3.]/4)
+data.chunk('t',['ph3','ph2','ph1','t2'],[2,2,2,-1])
 data.setaxis('ph3',r_[0.,2.]/4)
 data.setaxis('ph2',r_[0.,2.]/4)
 data.setaxis('ph1',r_[0.,2.]/4)
@@ -236,7 +234,7 @@ data.ft('t2',shift=True)
 fl.next('image - ft')
 fl.image(data)
 fl.next('image - ft, coherence')
-data.ft(['ph1','ph2','ph3','ph4'])
+data.ft(['ph1','ph2','ph3'])
 fl.image(data)
 fl.next('image - ft, coherence, exclude FID')
 fl.image(data['ph1',1]['ph3',-1])

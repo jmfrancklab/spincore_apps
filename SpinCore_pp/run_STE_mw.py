@@ -53,7 +53,7 @@ def verifyParams():
 
 # Parameters for Bridge12
 max_power = 4 #W
-power_steps = 7
+power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -65,9 +65,9 @@ powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
 output_name = '150uM_TEMPOL_TempProbe_oilFlow_STE'
-node_name = 'enhancement'
-adcOffset = 28
-carrierFreq_MHz = 14.686239
+node_name = 'enhancement_1'
+adcOffset = 29
+carrierFreq_MHz = 14.686293
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -84,7 +84,7 @@ if not phase_cycling:
 #}}}
 p90 = 1.781
 deadtime = 10.0
-repetition = 15e6
+repetition = 21e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -93,7 +93,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 tau1 = 2
-tau2 = 50000
+tau2 = 80000
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
