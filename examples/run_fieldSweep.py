@@ -15,10 +15,10 @@ fl = figlist_var()
 # just mw will only run at one power
 just_MW = True
 # {{{ params to change for each sample
-output_name = '100mM_TEMPO_hexane_sweep_6'
-adcOffset = 29
-gamma_eff = (14.889463/3504.55)
-carrierFreq_MHz = 14.896314
+output_name = '150uM_TEMPO_toluene_cap_probe'
+adcOffset = 26
+gamma_eff = (14.894179/3505.69)
+carrierFreq_MHz = 14.894179
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -28,18 +28,18 @@ date = datetime.now().strftime('%y%m%d')
 # note that acq_time_ms is always milliseconds
 p90_us = 4.69
 deadtime_us = 10.0
-repetition_us = 3e6
+repetition_us = 15e6
 SW_kHz = 24
 nPoints = 1024*2
 acq_time_ms = nPoints/SW_kHz # ms
 tau_adjust_us = 0.0
 deblank_us = 1.0
-tau_us = 1000
+tau_us = 3500
 pad_us = 0
 # }}}
 #{{{ axis for field sweep
 mw_freqs = []
-field_axis = r_[3490:3515:3]
+field_axis = r_[3503:3508:0.1]
 print("Here is my field axis:",field_axis)
 #}}}
 #{{{ params for Bridge 12/power
