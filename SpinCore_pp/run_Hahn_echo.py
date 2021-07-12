@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = '150uM_TEMPO_toluene_cap_probe'
-node_name = 'echo'
-adcOffset = 26
+output_name = 'Ni_water_cap_probe'
+node_name = 'echo_1'
+adcOffset = 25
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.894179
+    carrierFreq_MHz = 14.895866
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -99,7 +99,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10
-repetition = 15e6
+repetition = 1e6
 
 SW_kHz = 24
 nPoints = 1024*2

@@ -61,9 +61,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_10mM_TempCont_oilflow_probe_nutation_noPower'
-adcOffset = 31
-carrierFreq_MHz = 14.685467
+output_name = 'Ni_water_cap_probe_2'
+adcOffset = 25
+carrierFreq_MHz = 14.895866
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -72,19 +72,19 @@ phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
 if not phase_cycling:
-    nPhaseSteps = 16
+    nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 3e6
+repetition = 1.2e6
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
-tau = 1000
+tau = 3500
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.,12.,64,endpoint=False)
+p90_range = linspace(1.,24.,150,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
