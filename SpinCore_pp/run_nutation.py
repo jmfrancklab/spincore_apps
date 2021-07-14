@@ -121,7 +121,7 @@ for index,val in enumerate(p90_range):
             ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
             ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,1,2,3]),
+            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_time),
             ('delay',repetition),
