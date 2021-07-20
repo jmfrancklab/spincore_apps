@@ -73,7 +73,7 @@ date = datetime.now().strftime('%y%m%d')
 output_name = '50mM_4AT_AOT_w3_cap'
 node_name = 'enhancement'
 adcOffset = 26
-carrierFreq_MHz = 14.826123
+carrierFreq_MHz = 14.827058
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 64
@@ -90,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 1.5e6
+repetition = 0.4e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -201,7 +201,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.815e9,9.83e9))
+    this_return = b.lock_on_dip(ini_range=(9.819e9,9.824e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)

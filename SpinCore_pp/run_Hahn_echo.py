@@ -50,8 +50,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = '50mM_4AT_AOT_w3_cap'
-node_name = 'echo_5_noPower'
+output_name = '50mM_4AT_AOT_D2O_w3_cap'
+node_name = 'echo_1_repeat'
 adcOffset = 26
 
 user_sets_Freq = True
@@ -60,24 +60,24 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3489.68
+    true_B0 = 3489.9
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
 if not user_sets_Field:
-    desired_B0 = 3489.68 
+    desired_B0 = 3489.9
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
         print("My field in G is %f"%true_B0)
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.826123
+    carrierFreq_MHz = 14.827058
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
 if not user_sets_Freq:
-    gamma_eff = (14.824903/3489.4)
+    gamma_eff = (14.920455/3507.55)
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
