@@ -64,9 +64,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_150uM_cap_probe_FID_DNP_rd3_2'
-adcOffset = 47
-carrierFreq_MHz = 14.896944
+output_name = 'TEMPOL_129uM_rd5_1'
+adcOffset = 20
+carrierFreq_MHz = 14.897621
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 8
@@ -81,9 +81,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 2.185
+p90 = 2.23225
 deadtime = 10.0
-repetition = 19e6
+repetition = 6.2217e6
 
 SW_kHz = 48
 nPoints = 1024*2
@@ -175,7 +175,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.8175e9,9.825e9))
+    this_return = b.lock_on_dip(ini_range=(9.816e9,9.826e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
