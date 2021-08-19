@@ -64,12 +64,12 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_129uM_rd5_1'
+output_name = 'TEMPOL_129uM_rd6_1'
 adcOffset = 20
 carrierFreq_MHz = 14.897621
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 8
+nScans = 4
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
@@ -83,7 +83,7 @@ if not phase_cycling:
 #}}}
 p90 = 2.23225
 deadtime = 10.0
-repetition = 6.2217e6
+repetition = 10.3695e6
 
 SW_kHz = 48
 nPoints = 1024*2

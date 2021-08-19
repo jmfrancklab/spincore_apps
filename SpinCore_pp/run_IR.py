@@ -37,18 +37,18 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = '129uM_TEMPOL_capProbe'
-node_name = 'FIR_noPower_2'
-adcOffset = 25
-carrierFreq_MHz = 14.896161
+output_name = 'TEMPOL_129uM'
+node_name = 'FIR_30dBm_1'
+adcOffset = 20
+carrierFreq_MHz = 14.897621
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.69
+p90 = 4.4645
 deadtime = 10.0
-repetition = 8e6
+repetition = 6e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
@@ -94,10 +94,10 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 #vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #       1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
 #vd_list = np.linspace(5e1,1.8e5,32)
-vd_list = np.linspace(5e1,12e6,12)
-#vd_list = np.linspace(5e1,6e6,12) 
-#vd_list = np.linspace(5e1,10e6,12)
-#vd_list = np.linspace(53e1,4e6,16)
+#vd_list = np.linspace(5e1,12e6,12)
+#vd_list = np.linspace(5e1,15e6,15) 
+vd_list = np.linspace(5e1,10e6,12)
+#vd_list = np.linspace(5e1,4e6,16)
 for index,val in enumerate(vd_list):
     vd = val
     print("***")
