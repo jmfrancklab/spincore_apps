@@ -31,9 +31,10 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_150uM_cap_probe_FID_3'
-adcOffset = 47
-carrierFreq_MHz = 14.896944
+output_name = 'TEMPOL_129uM'
+node_str = 'rd1_1'
+adcOffset = 20
+carrierFreq_MHz = 14.897621
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 8
@@ -50,9 +51,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 2.185
+p90 = 2.23225
 deadtime = 10.0
-repetition = 0.2e6
+repetition = 0.2074e6
 
 SW_kHz = 48
 nPoints = 1024*2
@@ -134,7 +135,7 @@ for x in range(nScans):
         data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=np.complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:nScans])
-        data.name('signal')
+        data.name(node_str)
         data.set_prop('acq_params',acq_params)
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();

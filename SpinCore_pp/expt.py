@@ -43,3 +43,4 @@ if FIR:
     print("Estimated experiment time for 1 FIR:",expt/60.,"min.")
     FIR_expt = expt
 
+

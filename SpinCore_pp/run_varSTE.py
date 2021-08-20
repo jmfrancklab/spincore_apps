@@ -44,8 +44,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = '150uM_TEMPOL_TempProbe_oilFlow_STE'
-node_name = 'tau_80m_36dBm'
+output_name = '150uM_TEMPOL_TempProbe_oilFlow_varSTE'
+node_name = 'tau_36dBm'
 
 adcOffset = 29
 
@@ -55,7 +55,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3456.73
+    true_B0 = 3456.8
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -67,7 +67,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.686293
+    carrierFreq_MHz = 14.686622
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -83,10 +83,7 @@ nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
 date = datetime.now().strftime('%y%m%d')
-if phase_cycling:
-    nPhaseSteps = 8
-if not phase_cycling:
-    nPhaseSteps = 1
+nPhaseSteps = 8
 #{{{ note on timing
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
@@ -94,7 +91,7 @@ if not phase_cycling:
 #}}}
 p90 = 1.781
 deadtime = 10
-repetition = 10e6
+repetition = 15e6
 
 SW_kHz = 24
 nPoints = 1024*2
@@ -103,7 +100,11 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0
 deblank = 1.0
 tau1 = 2
-tau2 = 80000
+print(("ACQUISITION TIME:",acq_time,"ms"))
+print(("TAU 1 DELAY:",tau1,"us"))
+data_length = 2*nPoints*nEchoes*nPhaseSteps
+tau2_range = linspace(6000.,100000.,15,endpoint=False)
+#tau2_range = linspace(6000.,100000.,3,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -120,34 +121,31 @@ acq_params['nPoints'] = nPoints
 acq_params['tau_adjust_us'] = tau_adjust
 acq_params['deblank_us'] = deblank
 acq_params['tau1_us'] = tau1
-acq_params['tau2_us'] = tau2
-if phase_cycling:
-    acq_params['nPhaseSteps'] = nPhaseSteps
+acq_params['tau2_us'] = tau2_range
+acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
-print(("ACQUISITION TIME:",acq_time,"ms"))
-print(("TAU 1 DELAY:",tau1,"us"))
-print(("TAU 2 DELAY:",tau2,"us"))
-data_length = 2*nPoints*nEchoes*nPhaseSteps
-for x in range(nScans):
-    print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
-    print("\n*** *** ***\n")
-    print("CONFIGURING TRANSMITTER...")
-    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    print("\nTRANSMITTER CONFIGURED.")
-    print("***")
-    print("CONFIGURING RECEIVER...")
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
-    acq_params['acq_time_ms'] = acq_time
-    # acq_time is in msec!
-    print(("ACQUISITION TIME IS",acq_time,"ms"))
-    verifyParams()
-    print("\nRECEIVER CONFIGURED.")
-    print("***")
-    print("\nINITIALIZING PROG BOARD...\n")
-    SpinCore_pp.init_ppg();
-    print("PROGRAMMING BOARD...")
-    print("\nLOADING PULSE PROG...\n")
-    if phase_cycling:
+for tau2_index,tau2_val in enumerate(tau2_range):
+    for x in range(nScans):
+        tau2 = tau2_val
+        print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
+        print("INDEX %d - TAU 2 VAL %f"%(tau2_index,tau2_val))
+        print("\n*** *** ***\n")
+        print("CONFIGURING TRANSMITTER...")
+        SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+        print("\nTRANSMITTER CONFIGURED.")
+        print("***")
+        print("CONFIGURING RECEIVER...")
+        acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
+        acq_params['acq_time_ms'] = acq_time
+        # acq_time is in msec!
+        print(("ACQUISITION TIME IS",acq_time,"ms"))
+        verifyParams()
+        print("\nRECEIVER CONFIGURED.")
+        print("***")
+        print("\nINITIALIZING PROG BOARD...\n")
+        SpinCore_pp.init_ppg();
+        print("PROGRAMMING BOARD...")
+        print("\nLOADING PULSE PROG...\n")
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
@@ -164,40 +162,27 @@ for x in range(nScans):
             ('delay',repetition),
             ('jumpto','start')
             ])
-    if not phase_cycling:
-        SpinCore_pp.load([
-            ('marker','start',1),
-            ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,0),
-            ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-    print("\nSTOPPING PROG BOARD...\n")
-    SpinCore_pp.stop_ppg();
-    print("\nRUNNING BOARD...\n")
-    SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-    raw_data.astype(float)
-    data_array = []
-    data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print(("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0]))
-    print(("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0]))
-    dataPoints = float(np.shape(data_array)[0])
-    if x == 0:
-        time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=np.complex128)
-        data.setaxis('t',time_axis).set_units('t','s')
-        data.setaxis('nScans',r_[0:nScans])
-        data.name(node_name)
-        data.set_prop('acq_params',acq_params)
-    data['nScans',x] = data_array
-    SpinCore_pp.stopBoard();
+        print("\nSTOPPING PROG BOARD...\n")
+        SpinCore_pp.stop_ppg();
+        print("\nRUNNING BOARD...\n")
+        SpinCore_pp.runBoard();
+        raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+        raw_data.astype(float)
+        data_array = []
+        data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
+        print(("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0]))
+        print(("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0]))
+        dataPoints = float(np.shape(data_array)[0])
+        if x == 0 and tau2_index == 0:
+            time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+            data = ndshape([len(tau2_range),len(data_array),nScans],['tau2','t','nScans']).alloc(dtype=np.complex128)
+            data.setaxis('t',time_axis).set_units('t','s')
+            data.setaxis('nScans',r_[0:nScans])
+            data.setaxis('tau2',tau2_range).set_units('tau2','s')
+            data.name(node_name)
+            data.set_prop('acq_params',acq_params)
+        data['nScans',x]['tau2',tau2_index] = data_array
+SpinCore_pp.stopBoard();
 print("EXITING...")
 print("\n*** *** ***\n")
 save_file = True
@@ -233,22 +218,21 @@ print(" *** *** *** ")
 print("My field in G is %f"%true_B0)
 print("My frequency in MHz is",carrierFreq_MHz)
 print(" *** *** *** ")
-if phase_cycling:
-    data.chunk('t',['ph3','ph2','ph1','t2'],[2,2,2,-1])
-    data.setaxis('ph2',r_[0.,2.]/4)
-    data.setaxis('ph2',r_[0.,2.]/4)
-    data.setaxis('ph1',r_[0.,2.]/4)
-    if nScans > 1:
-        data.setaxis('nScans',r_[0:nScans])
-    fl.next('image')
-    data.mean('nScans')
-    fl.image(data)
-    data.ft('t2',shift=True)
-    fl.next('image - ft')
-    fl.image(data)
-    fl.next('image - ft, coherence')
-    data.ft(['ph1','ph2','ph3'])
-    fl.image(data)
-    fl.next('image - ft, coherence, exclude FID')
-    fl.image(data['ph1',1]['ph3',-1])
+data.chunk('t',['ph3','ph2','ph1','t2'],[2,2,2,-1])
+data.setaxis('ph2',r_[0.,2.]/4)
+data.setaxis('ph2',r_[0.,2.]/4)
+data.setaxis('ph1',r_[0.,2.]/4)
+if nScans > 1:
+    data.setaxis('nScans',r_[0:nScans])
+fl.next('image')
+data.mean('nScans')
+fl.image(data)
+data.ft('t2',shift=True)
+fl.next('image - ft')
+fl.image(data)
+fl.next('image - ft, coherence')
+data.ft(['ph1','ph2','ph3'])
+fl.image(data)
+fl.next('image - ft, coherence, exclude FID')
+fl.image(data['ph1',1]['ph3',-1])
 fl.show();quit()
