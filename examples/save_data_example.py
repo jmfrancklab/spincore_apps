@@ -4,6 +4,8 @@ from Instruments import *
 import os
 import sys
 import time
+long_delay = time.sleep(5)
+short_delay = time.sleep(0.1)
 #from SpinCore_pp.power_helper import gen_powerlist
 #{{{ params for Bridge 12/power
 "Helper functions for dealing with powers"
@@ -30,7 +32,7 @@ dB_settings = gen_powerlist(4,25)
 #}}}
 #{{{ time of pulse prog
 print("sleep")
-time.sleep(15)
+long_delay
 #}}}
 print("after sleep")
 #{{{where error occurs
@@ -43,14 +45,14 @@ with power_control() as p:
         print("setting power")
         p.set_power(this_dB)
         for k in range(10):
-            time.sleep(0.5)
-            if p.get_power_setting() >= this_dB: break
-        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
+            short_delay
+            #if p.get_power_setting() >= this_dB: break
+        #if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         print("sleeping again")
-        time.sleep(5)
-        meter_powers[j] = p.get_power_setting()
+        short_delay
+        #meter_powers[j] = p.get_power_setting()
         for B0_index,desired_B0 in enumerate(r_[3503:3508:0.1]):
-            time.sleep(3.0)
+            short_delay
     log_array, log_dict = p.stop_log()# where error occurred originally!
     #}}}
 
