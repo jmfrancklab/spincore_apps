@@ -59,7 +59,7 @@ def verifyParams():
 
 # Parameters for Bridge12
 max_power = 4 #W
-power_steps = 25
+power_steps = 18
 dB_settings = gen_powerlist(max_power,power_steps)
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -70,10 +70,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_129uM'
+output_name = 'K42R1a_Ras_capProbe'
 node_name = 'enhancement'
-adcOffset = 20
-carrierFreq_MHz = 14.897621
+adcOffset = 24
+carrierFreq_MHz = 14.901304
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -88,9 +88,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.4645
+p90 = 4.69
 deadtime = 10.0
-repetition = 21e6
+repetition = 15e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
