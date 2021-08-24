@@ -40,11 +40,19 @@ def verifyParams():
 
 mw_freqs = []
 #field_axis = r_[3475:3530:0.3]
-field_axis = r_[3479.55:3529.55:1]
+
+#uneven = 1.0*r_[3,2,1,1,2,3]
+#uneven /= sum(uneven)
+#uneven = cumsum(uneven)
+#start_field = 3500
+#stop_field = 33510
+#field_axis = start_field + (stop_field-start_field)*uneven
+
+field_axis = r_[3502:3508:.5]
 print("Here is my field axis:",field_axis)
 
 # Parameters for Bridge12
-powers = r_[3.16]
+powers = r_[3.98]
 min_dBm_step = 0.5
 for x in range(len(powers)):
     print(powers)
@@ -55,10 +63,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
-output_name = '100mM_TEMPO_hexane_field_dep_2'
-node_name = 'field_sweep'
-adcOffset = 32 
-gamma_eff = (14.889463/3504.55)
+output_name = '150uM_TEMPO_toluene_cap_probe_field_dep'
+node_name = 'field_sweep_1'
+adcOffset = 25
+gamma_eff = (14.892825/3505.43)
 #{{{ acq params
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -78,7 +86,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.69
 deadtime = 10.0
-repetition = 3e6
+repetition = 12e6
 
 SW_kHz = 24
 nPoints = 1024*2

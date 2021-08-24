@@ -61,21 +61,21 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'Ni_water_TempControl_probe_nutation_1'
-adcOffset = 31
-carrierFreq_MHz = 14.715760
+output_name = 'TEMPOL_129uM'
+adcOffset = 20
+carrierFreq_MHz = 14.897621
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 8
 if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 1e6
+repetition = 12e6
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
@@ -84,7 +84,7 @@ tau = 1000
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.,24.,120,endpoint=False)
+p90_range = linspace(1.,12.,60,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -118,7 +118,7 @@ for index,val in enumerate(p90_range):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
             ('delay',tau),
             ('delay_TTL',1.0),
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
