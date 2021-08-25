@@ -46,11 +46,8 @@ with power_control() as p:
         p.set_power(this_dB)
         for k in range(10):
             short_delay
-            #if p.get_power_setting() >= this_dB: break
-        #if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         print("sleeping again")
         short_delay
-        #meter_powers[j] = p.get_power_setting()
         for B0_index,desired_B0 in enumerate(r_[3503:3508:0.1]):
             short_delay
     log_array, log_dict = p.stop_log()# where error occurred originally!
