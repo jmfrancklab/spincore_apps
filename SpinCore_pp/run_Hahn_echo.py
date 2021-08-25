@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'K42R1a_Ras_capProbe'
-node_name = 'echo_noPower_end_2'
-adcOffset = 24
+output_name = 'TEMPOL_129uM'
+node_name = 'echo_36dBm_opt90_1'
+adcOffset = 20
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.901304
+    carrierFreq_MHz = 14.896020
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -97,9 +97,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.69
+p90 = 4.326
 deadtime = 10
-repetition = 5e6
+repetition = 20e6
 
 SW_kHz = 24
 nPoints = 1024*2
