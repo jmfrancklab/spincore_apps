@@ -1,3 +1,9 @@
+"""
+test of logging
+===============
+
+This test of the logging mimics an ODNP field sweep experiment.
+"""
 from numpy import *
 from numpy.random import rand
 from pyspecdata import *
@@ -6,8 +12,8 @@ import os
 import sys
 import time
 import random
-long_delay = time.sleep(5)
-short_delay = time.sleep(1)
+long_delay = 1e-3
+short_delay = 1e-4
 def gen_powerlist(max_power, steps, min_dBm_step=0.5):
     "generate a list of (roughly) evenly spaced powers up to max_power"
     lin_steps = steps
@@ -65,28 +71,28 @@ fields_Set = zeros_like(r_[3501:3530:0.001],dtype=float)
 
 with power_control() as p:
     for j,this_dB in enumerate(dB_settings):
+        print("I'm going to pretend to run",this_dB,"dBm")
         if j == 0:
-            short_delay
+            time.sleep(short_delay)
             p.start_log()
         p.set_power(this_dB)
         for k in range(10):
-            short_delay
+            time.sleep(short_delay)
             if p.get_power_setting() >= this_dB: break
-        long_delay
+        time.sleep(long_delay)
         meter_powers[j] = p.get_power_setting()
         if True:
+            # the following seems unrealistic for a field sweep -- what's
+            # up with that?
             for B0_index,desired_B0 in enumerate(r_[3501:3530:0.001]):
                 #carrierFreq_MHz = rand()
                 carrierFreqs_MHz[B0_index] = rand()
                 fields_Set[B0_index] = rand()
-                short_delay
+                time.sleep(short_delay)
                 if True:
-                    if DNP_data is None:
-                        DNP_data = run_scans(1,j,B0_index, DNP_data = None)
-                    else:
-                        DNP_data = run_scans(1,j,B0_index,DNP_data)
-                    long_delay
+                    DNP_data = run_scans(1,j,B0_index,DNP_data)
+                    time.sleep(long_delay)
     log_array, log_dict = p.stop_log()# where error occurred originally!
 print("EXITING...")    
-    #}}}
+#}}}
 
