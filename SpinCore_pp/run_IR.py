@@ -38,15 +38,15 @@ def verifyParams():
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
 output_name = 'TEMPOL_129uM'
-node_name = 'FIR_30dBm_1'
-adcOffset = 20
-carrierFreq_MHz = 14.897621
+node_name = 'FIR_noPower'
+adcOffset = 21
+carrierFreq_MHz = 14.896020
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.4645
+p90 = 4.326
 deadtime = 10.0
 repetition = 6e6
 SW_kHz = 24.0
@@ -96,7 +96,7 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 #vd_list = np.linspace(5e1,1.8e5,32)
 #vd_list = np.linspace(5e1,12e6,12)
 #vd_list = np.linspace(5e1,15e6,15) 
-vd_list = np.linspace(5e1,10e6,12)
+vd_list = np.linspace(5e1,10e6,16)
 #vd_list = np.linspace(5e1,4e6,16)
 for index,val in enumerate(vd_list):
     vd = val

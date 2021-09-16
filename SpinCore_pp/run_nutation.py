@@ -61,9 +61,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_129uM'
-adcOffset = 20
-carrierFreq_MHz = 14.897621
+output_name = 'TEMPOL_129uM_2'
+adcOffset = 21
+carrierFreq_MHz = 14.896020
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -84,7 +84,7 @@ tau = 1000
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.,12.,60,endpoint=False)
+p90_range = linspace(1.,15.,40,endpoint=False)
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
