@@ -14,10 +14,10 @@ import h5py
 # just mw will only run at one power
 just_MW = True
 # {{{ params to change for each sample
-output_name = '150uM_TEMPO_toluene_cap_probe'
-adcOffset = 26
-gamma_eff = (14.894179/3505.69)
-carrierFreq_MHz = 14.894179
+output_name = '6mM_TEMPOL_cap_probe'
+adcOffset = 25
+gamma_eff = (14.898641/3506.85)
+carrierFreq_MHz = 14.898641
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -25,7 +25,7 @@ nEchoes = 1
 date = datetime.now().strftime('%y%m%d')
 # all times in microseconds
 # note that acq_time_ms is always milliseconds
-p90_us = 4.69
+p90_us = 4.3755
 deadtime_us = 10.0
 repetition_us = 15e6
 SW_kHz = 24
@@ -44,7 +44,7 @@ print("Here is my field axis:",field_axis)
 #{{{ params for Bridge 12/power
 max_power = 3.5 #W
 power_steps = 25
-dB_settings = gen_powerlist(max_power,power_steps, threedown=False)
+dB_settings = gen_powerlist(max_power,power_steps, three_down=False)
 logger.info(strm("dB_settings",dB_settings,'\n',
     "correspond to powers in Watts",10**(dB_settings/10.-3)))
 myinput = input("Look ok?")
