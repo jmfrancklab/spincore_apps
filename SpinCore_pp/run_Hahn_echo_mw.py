@@ -70,10 +70,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'K42R1a_Ras_capProbe'
+output_name = 'I21R1a_Ras_capProbe'
 node_name = 'enhancement'
 adcOffset = 24
-carrierFreq_MHz = 14.901304
+carrierFreq_MHz = 14.900790
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -88,9 +88,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.69
+p90 = 4.326
 deadtime = 10.0
-repetition = 15e6
+repetition = 10e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -135,7 +135,8 @@ for x in range(nScans):
     acq_params['acq_time_ms'] = acq_time
     print("ACQUISITION TIME IS",acq_time,"ms")
     verifyParams()
-    print("\nRECEIVER CONFIGURED.")
+    print("\nRECEIVER CONFIGURED.")u01304
+
     print("***")
     print("\nINITIALIZING PROG BOARD...\n")
     SpinCore_pp.init_ppg();

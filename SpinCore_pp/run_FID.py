@@ -31,10 +31,10 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_129uM'
-node_str = 'rd1_38dBm_1'
-adcOffset = 20
-carrierFreq_MHz = 14.896020
+output_name = 'TEMPOL_129uM_capProbe'
+node_str = '34dBm_45rd11'
+adcOffset = 24
+carrierFreq_MHz = 14.895727
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 32
@@ -51,9 +51,9 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 2.163
+p90 = 2.18775
 deadtime = 10.0
-repetition = 0.1e6
+repetition = 15e6
 
 SW_kHz = 48
 nPoints = 1024*2
