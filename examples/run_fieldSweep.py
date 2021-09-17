@@ -11,7 +11,6 @@ from datetime import datetime
 from SpinCore_pp.verifyParams import verifyParams
 from SpinCore_pp.power_helper import gen_powerlist
 import h5py
-fl = figlist_var()
 # just mw will only run at one power
 just_MW = True
 # {{{ params to change for each sample
@@ -44,15 +43,10 @@ print("Here is my field axis:",field_axis)
 #}}}
 #{{{ params for Bridge 12/power
 max_power = 3.5 #W
-power_steps = 2
-dB_settings = gen_powerlist(max_power,power_steps)
-threedown = False
-if threedown:
-    append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
-            for frac in [0.75,0.5,0.25]]
-    dB_settings = append(dB_settings,append_dB)
-print("dB_settings",dB_settings)
-print("correspond to powers in Watts",10**(dB_settings/10.-3))
+power_steps = 25
+dB_settings = gen_powerlist(max_power,power_steps, threedown=False)
+logger.info(strm("dB_settings",dB_settings,'\n',
+    "correspond to powers in Watts",10**(dB_settings/10.-3)))
 myinput = input("Look ok?")
 time_list = [time.time()]
 if myinput.lower().startswith('n'):
@@ -71,17 +65,18 @@ def run_scans(nScans, power_idx, field_idx, DNP_data=None):
     (note that powers and other parameters are defined globally w/in the
     script, as this function is not designed to be moved outside the module
     """
-    print("about to run acquisition for POWER INDEX:",power_idx)
-    print("about to run acquisition for FIELD INDEX:",field_idx)
+    logger.info(strm("about to run acquisition for POWER INDEX:",power_idx))
+    logger.info(strm("about to run acquisition for FIELD INDEX:",field_idx))
     ph1_cyc = r_[0,1,2,3]
     ph2_cyc = r_[0]
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for x in range(nScans):
+        # the run_scans variables are tracking how long each
+        # segment of the program takes
         run_scans_time_list = [time.time()]
         run_scans_names = ['configure']
         print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
-        print("\n*** *** ***\n")
         print("CONFIGURING TRANSMITTER...")
         SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         print("\nTRANSMITTER CONFIGURED.")
