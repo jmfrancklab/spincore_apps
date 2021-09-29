@@ -70,10 +70,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'I21R1a_Ras_capProbe'
+output_name = '10mM_TEMPOL_capProbe'
 node_name = 'enhancement'
-adcOffset = 24
-carrierFreq_MHz = 14.900790
+adcOffset = 27
+carrierFreq_MHz = 14.898641
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -90,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.326
 deadtime = 10.0
-repetition = 10e6
+repetition = 1e6
 
 SW_kHz = 24.0
 nPoints = 1024*2
@@ -99,7 +99,7 @@ acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 1000.
+tau = 3500.
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -135,8 +135,7 @@ for x in range(nScans):
     acq_params['acq_time_ms'] = acq_time
     print("ACQUISITION TIME IS",acq_time,"ms")
     verifyParams()
-    print("\nRECEIVER CONFIGURED.")u01304
-
+    print("\nRECEIVER CONFIGURED.")
     print("***")
     print("\nINITIALIZING PROG BOARD...\n")
     SpinCore_pp.init_ppg();
@@ -202,7 +201,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.816e9,9.826e9))
+    this_return = b.lock_on_dip(ini_range=(9.8185e9,9.828e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)

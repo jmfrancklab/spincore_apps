@@ -37,24 +37,24 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'TEMPOL_129uM_capProbe'
-node_name = 'FIR_34dBm_1'
-adcOffset = 24
-carrierFreq_MHz = 14.895727
+output_name = '10mM_TEMPOL_capProbe'
+node_name = 'FIR_36dBm'
+adcOffset = 27
+carrierFreq_MHz = 14.898641
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.3755
+p90 = 4.326
 deadtime = 10.0
-repetition = 6e6
+repetition = 1e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-tau = 1000.
+tau = 3500.
 pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
@@ -98,8 +98,8 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 #vd_list = np.linspace(5e1,15e6,16)#5) 
 #vd_list = np.linspace(5e1,10e6,16)
 #vd_list = np.linspace(5e1,4e6,16)
-#vd_list = np.linspace(5e1,1e6,16)
-vd_list = np.linspace(5e1,6e6,16)
+vd_list = np.linspace(5e1,1e6,16)
+#vd_list = np.linspace(5e1,8e6,16)
 
 for index,val in enumerate(vd_list):
     vd = val
