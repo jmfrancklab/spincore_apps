@@ -15,10 +15,10 @@ fl = figlist_var()
 # just mw will only run at one power
 just_MW = True
 # {{{ params to change for each sample
-output_name = '150uM_TEMPO_toluene_cap_probe'
-adcOffset = 26
-gamma_eff = (14.894179/3505.69)
-carrierFreq_MHz = 14.894179
+output_name = '150uM_TEMPOL_cap_probe'
+adcOffset = 25
+gamma_eff = (14.898598/3506.75)
+carrierFreq_MHz = 14.898598
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -26,7 +26,7 @@ nEchoes = 1
 date = datetime.now().strftime('%y%m%d')
 # all times in microseconds
 # note that acq_time_ms is always milliseconds
-p90_us = 4.69
+p90_us = 4.326
 deadtime_us = 10.0
 repetition_us = 15e6
 SW_kHz = 24
@@ -39,12 +39,12 @@ pad_us = 0
 # }}}
 #{{{ axis for field sweep
 mw_freqs = []
-field_axis = r_[3503:3508:0.1]
+field_axis = r_[3503:3508:0.5]
 print("Here is my field axis:",field_axis)
 #}}}
 #{{{ params for Bridge 12/power
 max_power = 3.5 #W
-power_steps = 2
+power_steps = 18
 dB_settings = gen_powerlist(max_power,power_steps)
 threedown = False
 if threedown:
@@ -127,7 +127,6 @@ def run_scans(nScans, power_idx, field_idx, DNP_data=None):
         run_scans_time_list.append(time.time())
         run_scans_names.append('get data')
         raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-        raw_data = np.random.random(10) + np.random.random(10) * 1j
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
         data_array = complex128(raw_data[0::2]+1j*raw_data[1::2])
@@ -227,3 +226,4 @@ with h5py.File(myfilename, 'a') as f:
     for j,(k,v) in enumerate(log_dict.items()):
        dset.attrs['key%d'%j] = k 
        dset.attrs['val%d'%j] = v 
+
