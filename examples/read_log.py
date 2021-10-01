@@ -11,13 +11,13 @@ time_origin = parser.parse('0:00')
 def thetime(x, position):
     return (time_origin+timedelta(seconds=x)).strftime('%H:%M:%S')
 
-myfile = "210705_100mM_TEMPO_hexane_sweep_1.h5"
+myfile = "211001_150uM_TEMPO_tol_cap_probe.h5"
 #data = nddata_hdf5(myfile+"/enhancement_curve")
 #data = nddata_hdf5(myfile+"/FIR_noPower")
 #data = nddata_hdf5(myfile+"/FIR_32dBm")
 #print(data.get_prop('acq_params'))
 with h5py.File(myfile, 'r') as f:
-    log_grp = f['log']
+    log_grp = f['field_sweep']
     dset = log_grp['log']
     print("length of dset",dset.shape)
     # {{{ convert to a proper structured array
