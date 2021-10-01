@@ -70,10 +70,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = '10mM_TEMPOL_capProbe'
+output_name = 'S51R1a_Ras_capProbe'
 node_name = 'enhancement'
 adcOffset = 27
-carrierFreq_MHz = 14.898641
+carrierFreq_MHz = 14.901273
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -90,7 +90,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.326
 deadtime = 10.0
-repetition = 1e6
+repetition = 13e6
 
 SW_kHz = 24.0
 nPoints = 1024*2

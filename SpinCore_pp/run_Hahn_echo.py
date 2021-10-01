@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = '150uM_TEMPOL_capProbe'
+output_name = '150uM_TEMPO_tol_capProbe'
 node_name = 'echo_noPower'
-adcOffset = 25
+adcOffset = 26
 
 user_sets_Freq = False
 user_sets_Field = False
@@ -60,24 +60,24 @@ user_sets_Field = False
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3506.75
+    true_B0 = 3506.50
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
 if not user_sets_Field:
-    desired_B0 = 3506.75
+    desired_B0 = 3506.50
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
     print("My field in G is %f"%true_B0)
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.898598
+    carrierFreq_MHz = 14.897706
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
 if not user_sets_Freq:
-    gamma_eff = (14.898598/3506.75)
+    gamma_eff = (14.897706/3506.5)
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
@@ -98,7 +98,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.326
 deadtime = 10
-repetition = 15e6
+repetition = 20e6
 
 acq_ms = 85.3
 SW_kHz = 24
