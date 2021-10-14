@@ -50,8 +50,8 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'I21R1a_Ras_capProbe'
-node_name = 'echo_noPower'
+output_name = 'TEMPOL_capProbe'
+node_name = 'test_CPMG_params2'
 adcOffset = 25
 
 user_sets_Freq = True
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.901018
+    carrierFreq_MHz = 14.896048
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -96,13 +96,15 @@ if not phase_cycling:
 # all times in microseconds
 # acq is in milliseconds
 #}}}
-p90 = 4.326
+p90 = 4.477
 deadtime = 10
-repetition = 3e6
+repetition = 12e6
 
-acq_ms = 85.3
-SW_kHz = 24
-nPoints = int(acq_ms*SW_kHz+0.5)
+#acq_ms = 85.3
+#SW_kHz = 24
+#nPoints = int(acq_ms*SW_kHz+0.5)
+nPoints = 64
+SW_kHz = 2.0
 acq_ms = nPoints/SW_kHz
 # rounding may need to be power of 2
 # have to try this out

@@ -7,19 +7,19 @@ fl = figlist_var()
 
 date = datetime.now().strftime('%y%m%d')
 output_name = 'TEMPOL_capProbe'
-node_name = 'CPMG_1'
+node_name = 'CPMG_4step_1'
 adcOffset = 25
-carrierFreq_MHz = 14.896514
+carrierFreq_MHz = 14.896048
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.625765
+p90 = 4.477
 deadtime = 10.0
 repetition = 12e6
 deblank = 1.0
 marker = 1.0
 
-SW_kHz = 4.0
-nPoints = 128
+SW_kHz = 2.0
+nPoints = 64
 acq_time = nPoints/SW_kHz # ms
 
 tau_extra = 5000.0 # us, must be more than deadtime and more than deblank
@@ -32,7 +32,7 @@ nScans = 16
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 2
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1 
 #{{{ setting acq_params dictionary
@@ -78,17 +78,17 @@ for x in range(nScans):
             ('marker','start',1),
             ('phase_reset',1),
                 ('delay_TTL',deblank),
-                ('pulse_TTL',p90,'ph1',r_[0,2]),
+                ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
                 ('delay',tau1),
                 ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,1),
+                ('pulse_TTL',2.0*p90,0),
                 ('delay',deadtime),
                 ('delay',pad_start),
                 ('acquire',acq_time),
                 ('delay',pad_end),
                 ('marker','echo_label',(nEchoes-1)), # 1 us delay
                 ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,1),
+                ('pulse_TTL',2.0*p90,0),
                 ('delay',deadtime),
                 ('delay',pad_start),
                 ('acquire',acq_time),
