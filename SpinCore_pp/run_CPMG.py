@@ -6,14 +6,15 @@ from datetime import datetime
 fl = figlist_var()
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_cap_probe_CPMG_5'
-adcOffset = 42
+output_name = 'TEMPOL_capProbe'
+node_name = 'CPMG_1'
+adcOffset = 25
 carrierFreq_MHz = 14.896514
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 4.625765
 deadtime = 10.0
-repetition = 15e6
+repetition = 12e6
 deblank = 1.0
 marker = 1.0
 
@@ -136,7 +137,7 @@ for x in range(nScans):
         data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:nScans])
-        data.name('signal')
+        data.name(node_name)
         data.set_prop('acq_params',acq_params)
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
