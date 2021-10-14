@@ -37,10 +37,10 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'S51R1a_Ras_capProbe'
-node_name = 'FIR_34dBm'
-adcOffset = 27
-carrierFreq_MHz = 14.901273
+output_name = 'I21R1a_Ras_capProbe'
+node_name = 'FIR_noPower_end'
+adcOffset = 25
+carrierFreq_MHz = 14.901018
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -99,6 +99,7 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 #vd_list = np.linspace(5e1,10e6,16)
 #vd_list = np.linspace(5e1,4e6,16)
 vd_list = np.linspace(5e1,6e6,16)
+#vd_list = np.linspace(5e1,3e6,15)
 #vd_list = np.linspace(5e1,8e6,16)
 
 for index,val in enumerate(vd_list):
@@ -200,7 +201,7 @@ while save_file:
         print("\nEXCEPTION ERROR.")
         print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
         print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        output_name = input("ENTER dNEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
         if len(output_name) is not 0:
             vd_data.hdf5_write(date+'_'+output_name+'.h5')
             print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
@@ -220,5 +221,5 @@ vd_data.ft('t2',shift=True)
 fl.next('FT raw data')
 fl.image(vd_data.setaxis('vd','#'))
 fl.next('FT abs raw data')
-fl.image(abs(vd_data).setaxis('vd','#'))
+fl.image(abs(vd_data).setaxis('vd','#')['t2':(-1e3,1e3)])
 fl.show();quit()

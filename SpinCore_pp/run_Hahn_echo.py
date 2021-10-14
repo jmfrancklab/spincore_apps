@@ -50,17 +50,17 @@ def verifyParams():
     return
 #}}}
 
-output_name = '150uM_TEMPO_tol_capProbe'
+output_name = 'I21R1a_Ras_capProbe'
 node_name = 'echo_noPower'
-adcOffset = 26
+adcOffset = 25
 
-user_sets_Freq = False
-user_sets_Field = False
+user_sets_Freq = True
+user_sets_Field = True
 
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3506.50
+    true_B0 = 3507.3
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.897706
+    carrierFreq_MHz = 14.901018
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -98,7 +98,7 @@ if not phase_cycling:
 #}}}
 p90 = 4.326
 deadtime = 10
-repetition = 20e6
+repetition = 3e6
 
 acq_ms = 85.3
 SW_kHz = 24
