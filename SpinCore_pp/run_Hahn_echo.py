@@ -51,7 +51,7 @@ def verifyParams():
 #}}}
 
 output_name = 'TEMPOL_capProbe'
-node_name = 'test_CPMG_params2'
+node_name = 'test_CPMG_offRes'
 adcOffset = 25
 
 user_sets_Freq = True
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.896048
+    carrierFreq_MHz = 14.895548
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency

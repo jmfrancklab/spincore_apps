@@ -7,9 +7,9 @@ fl = figlist_var()
 
 date = datetime.now().strftime('%y%m%d')
 output_name = 'TEMPOL_capProbe'
-node_name = 'CPMG_4step_1'
+node_name = 'CPMG_4step_6'
 adcOffset = 25
-carrierFreq_MHz = 14.896048
+carrierFreq_MHz = 14.895548
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 p90 = 4.477
@@ -22,7 +22,7 @@ SW_kHz = 2.0
 nPoints = 64
 acq_time = nPoints/SW_kHz # ms
 
-tau_extra = 5000.0 # us, must be more than deadtime and more than deblank
+tau_extra = 1000.0 # us, must be more than deadtime and more than deblank
 pad_start = tau_extra - deadtime
 pad_end = tau_extra - deblank*2 # marker + deblank
 twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
