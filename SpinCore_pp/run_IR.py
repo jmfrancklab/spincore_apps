@@ -37,24 +37,24 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'TEMPOL_129uM_capProbe'
-node_name = 'FIR_34dBm_1'
-adcOffset = 24
-carrierFreq_MHz = 14.895727
+output_name = 'I21R1a_Ras_capProbe'
+node_name = 'FIR_noPower_end'
+adcOffset = 25
+carrierFreq_MHz = 14.901018
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.3755
+p90 = 4.326
 deadtime = 10.0
-repetition = 6e6
+repetition = 5e6
 SW_kHz = 24.0
 nPoints = 1024*2
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
 deblank = 1.0
-tau = 1000.
+tau = 3500.
 pad = 0.
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
@@ -98,8 +98,9 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 #vd_list = np.linspace(5e1,15e6,16)#5) 
 #vd_list = np.linspace(5e1,10e6,16)
 #vd_list = np.linspace(5e1,4e6,16)
-#vd_list = np.linspace(5e1,1e6,16)
 vd_list = np.linspace(5e1,6e6,16)
+#vd_list = np.linspace(5e1,3e6,15)
+#vd_list = np.linspace(5e1,8e6,16)
 
 for index,val in enumerate(vd_list):
     vd = val
@@ -200,7 +201,7 @@ while save_file:
         print("\nEXCEPTION ERROR.")
         print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
         print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        output_name = input("ENTER dNEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
         if len(output_name) is not 0:
             vd_data.hdf5_write(date+'_'+output_name+'.h5')
             print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
@@ -220,5 +221,5 @@ vd_data.ft('t2',shift=True)
 fl.next('FT raw data')
 fl.image(vd_data.setaxis('vd','#'))
 fl.next('FT abs raw data')
-fl.image(abs(vd_data).setaxis('vd','#'))
+fl.image(abs(vd_data).setaxis('vd','#')['t2':(-1e3,1e3)])
 fl.show();quit()

@@ -61,9 +61,9 @@ if set_field:
     API_sender(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_129uM_1'
-adcOffset = 24
-carrierFreq_MHz = 14.895727
+output_name = 'TEMPOL_capProbe'
+adcOffset = 25
+carrierFreq_MHz = 14.896101
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1

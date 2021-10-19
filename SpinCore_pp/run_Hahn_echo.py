@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_129uM_capProbe'
-node_name = '34dBm_45rd11'
-adcOffset = 24
+output_name = 'TEMPOL_capProbe'
+node_name = 'test_CPMG_offRes'
+adcOffset = 25
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -60,24 +60,24 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3507.42
+    true_B0 = 3507.3
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
 if not user_sets_Field:
-    desired_B0 = 3506.16
+    desired_B0 = 3506.50
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
     print("My field in G is %f"%true_B0)
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.895727
+    carrierFreq_MHz = 14.895548
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
 if not user_sets_Freq:
-    gamma_eff = (14.920455/3507.55)
+    gamma_eff = (14.897706/3506.5)
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
@@ -96,13 +96,15 @@ if not phase_cycling:
 # all times in microseconds
 # acq is in milliseconds
 #}}}
-p90 = 2.18775
-deadtime = 15
-repetition = 15e6
+p90 = 4.477
+deadtime = 10
+repetition = 12e6
 
-acq_ms = 85.3
-SW_kHz = 24
-nPoints = int(acq_ms*SW_kHz+0.5)
+#acq_ms = 85.3
+#SW_kHz = 24
+#nPoints = int(acq_ms*SW_kHz+0.5)
+nPoints = 64
+SW_kHz = 2.0
 acq_ms = nPoints/SW_kHz
 # rounding may need to be power of 2
 # have to try this out
@@ -110,7 +112,7 @@ acq_ms = nPoints/SW_kHz
 tau_adjust = 0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 1000
+tau = 3500
 pad = 0
 #{{{ setting acq_params dictionary
 acq_params = {}
