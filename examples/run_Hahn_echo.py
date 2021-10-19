@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_capProbe'
-node_name = 'test_CPMG_offRes'
-adcOffset = 25
+output_name = 'TEMPOL_echo'
+node_name = 'test'
+adcOffset = 30
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.895548
+    carrierFreq_MHz = 14.895863
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -98,7 +98,10 @@ if not phase_cycling:
 #}}}
 p90 = 4.477
 deadtime = 10
-repetition = 12e6
+repetition = 1e6
+
+SW_kHz = 24
+nPoints = 1024*2
 
 #acq_ms = 85.3
 #SW_kHz = 24

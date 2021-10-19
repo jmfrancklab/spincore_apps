@@ -202,9 +202,6 @@ def load(args):
         ppg_list.append(a_tuple)
     ppg_list,list_of_cycles_found = apply_cycles(ppg_list,[])
     for a_tuple in ppg_list:
-        print("trying to load ppg element",
-                list(map(str,a_tuple)),
-                list(map(str,map(type,a_tuple))))
         ppg_element(*a_tuple)
 
 
