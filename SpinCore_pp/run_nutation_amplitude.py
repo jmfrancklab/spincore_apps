@@ -73,6 +73,7 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
+GDS = True
 deadtime = 10.0
 repetition = 1.3e6
 SW_kHz = 50.0
@@ -86,6 +87,7 @@ print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 amp_range = np.linspace(0,0.5,200)[1:]#,endpoint=False)
+datalist = []
 #{{{ setting acq_params dictizaonary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -152,24 +154,39 @@ for index,val in enumerate(amp_range):
         SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
-    data = []
+    if GDS:
+        datalist=[]
+        with GDS_scope() as g:
+            g.acquire_mode('HIR')
+            for j in range(amp_range):
+                datalist.append(g.waveform(ch=1))
+    else:
+        data = []
     # according to JF, this commented out line
     # should work same as line below and be more effic
-    #data = raw_data.view(complex128)
-    data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
-    dataPoints = float(np.shape(data)[0])
-    time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-    data = nddata(np.array(data),'t')
-    data.setaxis('t',time_axis).set_units('t','s')
-    data.name('signal')
-    if index == 0:
-        nutation_data = ndshape([len(amp_range),len(time_axis)],['amp','t']).alloc(dtype=np.complex128)
-        nutation_data.setaxis('amp',amp_range).set_units('amp','arb_units')
-        nutation_data.setaxis('t',time_axis).set_units('t','s')
-    nutation_data['amp',index] = data
-SpinCore_pp.stopBoard();
+        data = raw_data.view(complex128)
+        data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
+        print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
+        print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
+        dataPoints = float(np.shape(data)[0])
+        time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+        data = nddata(np.array(data),'t')
+        data.setaxis('t',time_axis).set_units('t','s')
+        data.name('signal')
+        if index == 0:
+            nutation_data = ndshape([len(amp_range),len(time_axis)],['amp','t']).alloc(dtype=np.complex128)
+            nutation_data.setaxis('amp',amp_range).set_units('amp','arb_units')
+            nutation_data.setaxis('t',time_axis).set_units('t','s')
+        nutation_data['amp',index] = data
+    SpinCore_pp.stopBoard();
+nutation_data = concat(datalist,'repeats').reorder('t')
+
+
+
+
+
+
+
 print("EXITING...\n")
 print("\n*** *** ***\n")
 nutation_data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
