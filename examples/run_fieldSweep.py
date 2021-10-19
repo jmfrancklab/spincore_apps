@@ -122,7 +122,6 @@ def run_scans(nScans, power_idx, field_idx, DNP_data=None):
         run_scans_time_list.append(time.time())
         run_scans_names.append('get data')
         raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-        raw_data = np.random.random(10) + np.random.random(10) * 1j
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
         data_array = complex128(raw_data[0::2]+1j*raw_data[1::2])
