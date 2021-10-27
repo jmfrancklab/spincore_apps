@@ -1,4 +1,4 @@
-%module SpinCore_pp 
+%module(package="SpinCore_pp") SpinCore_pp 
 %{
 #define SWIG_FILE_WITH_INIT
 extern char *get_time();
