@@ -126,7 +126,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
         if DNP_data is None:
             time_axis = r_[0:dataPoints]/(SW_kHz*1e6) 
             DNP_data = ndshape([len(powers)+1,nScans,dataPoints],['indirect','nScans','t']).alloc(dtype=complex128)
-            DNP_data.setaxis('indirect',time.time()).set_units('s')
+            DNP_data.setaxis('indirect',zeros(len(powers)+1)).set_units('s')
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
@@ -159,6 +159,8 @@ with power_control() as p:
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
         time.sleep(5)
         meter_powers[j] = p.get_power_setting()
+        x = DNP_data.getaxis('indirect')
+        x[j] = time.time()
         run_scans(nScans,j+1,DNP_data)
     log_array, log_dict = p.stop_log() 
     p.arrange_quit()
