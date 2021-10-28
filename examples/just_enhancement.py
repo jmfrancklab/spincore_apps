@@ -13,7 +13,7 @@ import h5py
 fl = figlist_var()
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '100mM_TEMPO_hexane_test_1'
+output_name = '6mM_TEMPOL_test_1'
 adcOffset = 29
 carrierFreq_MHz = 14.896314
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -125,12 +125,13 @@ def run_scans(nScans, power_idx, DNP_data=None):
         dataPoints = int(shape(data_array)[0])
         if DNP_data is None:
             time_axis = r_[0:dataPoints]/(SW_kHz*1e6) 
-            DNP_data = ndshape([len(powers)+1,nScans,dataPoints],['power','nScans','t']).alloc(dtype=complex128)
-            DNP_data.setaxis('power',r_[0,powers]).set_units('W')
+            DNP_data = ndshape([len(powers)+1,nScans,dataPoints],['indirect','nScans','t']).alloc(dtype=complex128)
+            DNP_data.setaxis('indirect',time.time()).set_units('s')
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
-        DNP_data['power',power_idx]['nScans',x] = data_array
+        DNP_data['indirect',power_idx]['nScans',x] = data_array
+        DNP_data['indirect',power_idx] = time.time()
         SpinCore_pp.stopBoard()
         run_scans_time_list.append(time.time())
         this_array = array(run_scans_time_list)
@@ -141,21 +142,24 @@ def run_scans(nScans, power_idx, DNP_data=None):
             DNP_data.setaxis('nScans',r_[0:nScans])
         return DNP_data
 #}}}
+DNP_data = run_scans(nScans,0)
 time_list.append(time.time())
 meter_powers = zeros_like(dB_settings)
-DNP_data = None
 with power_control() as p:
     for j, this_dB in enumerate(dB_settings):
-        retval = p.dip_lock(9.81,9.83)
-        print(retval)
+        print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
         if j == 0:
+            retval = p.dip_lock(9.81,9.83)
+            print(retval)
             p.start_log()
-        time_list.append(time.time())    
         p.set_power(this_dB)
+        for k in range(10):
+            time.sleep(0.5)
+            if p.get_power_setting() >= this_dB: break
+        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
         time.sleep(5)
         meter_powers[j] = p.get_power_setting()
-        DNP_data = run_scans(nScans, j, DNP_data)
-        time.sleep(5)
+        run_scans(nScans,j+1,DNP_data)
     log_array, log_dict = p.stop_log() 
     p.arrange_quit()
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
@@ -167,7 +171,6 @@ DNP_data.chunk('t',['ph1','t2'],[4,-1])
 DNP_data.setaxis('ph1',r_[0,1,2,3]/4)
 time_list.append(time.time())
 time_array = array(time_list)
-DNP_data.setaxis('t2',time_array)
 while save_file:
     try:
         print("SAVING FILE...")
