@@ -164,8 +164,12 @@ with power_control() as p:
         power_settings[j] = p.get_power_setting()
         time_axis_coords[j] = time.time()
         run_scans(nScans,j+1,DNP_data)
-    log_array, log_dict = p.stop_log() # this is incorrect -- see test_power_control_server!!!!!
-    p.arrange_quit()
+        if j == dB_settings[-1]:
+            this_log=p.stop_log()
+log_array = this_log.total_log
+print("log array",repr(log_array))
+print("log array shape",log_array.shape)
+log_dict = this_log.log_dict
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
     'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
@@ -183,17 +187,11 @@ while save_file:
         print("Name of saved enhancement data", DNP_data.name())
         print("shape of saved enhancement data", ndshape(DNP_data))
         save_file=False
+        with h5py.File(myfilename, 'a') as f:
+            log_grp = f.create_group('log')
+            hdf_save_dict_to_group(log_grp,this_log.__getstate__())    
     except Exception as e:
         print(e)
         print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
         save_file = False
-with h5py.File(myfilename, 'a') as f:
-    log_grp = f.create_group('log')
-    # {{{ this is also wrong
-    dset = log_grp.create_dataset("log",data=log_array)
-    dset.attrs['dict_len'] = len(log_dict)
-    for j,(k,v) in enumerate(log_dict.items()):
-        dset.attrs['key%d'%j] = k
-        dset.attrs['val%d'%j] = v
-    # }}}
-    
+
