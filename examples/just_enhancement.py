@@ -124,7 +124,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
         print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
         dataPoints = int(shape(data_array)[0])
         if DNP_data is None:
-            time_axis = r_[0:dataPoints]/(SW_kHz*1e6) 
+            time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
             DNP_data = ndshape([len(powers)+1,nScans,dataPoints],['indirect','nScans','t']).alloc(dtype=complex128)
             DNP_data.setaxis('indirect',zeros(len(powers)+1)).set_units('s')
             DNP_data.setaxis('t',time_axis).set_units('t','s')
