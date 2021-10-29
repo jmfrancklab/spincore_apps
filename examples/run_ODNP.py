@@ -34,6 +34,7 @@ deblank_us = 1.0
 tau_us = 1000
 pad_us = 0
 # }}}
+# {{{ generate the power list
 max_power = 2 #W
 power_steps = 3
 dB_settings = gen_powerlist(max_power,power_steps)
@@ -50,6 +51,7 @@ if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 powers = 1e-3*10**(dB_settings/10.)
 time_list.append(time.time())
+# }}}
 #{{{ inversion recovery pulse prog
 def run_scans_IR(vd_list, node_name, nScans = 1, rd = 1e6, power_on = False):
     # nScans is number of scans you want

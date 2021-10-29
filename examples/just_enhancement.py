@@ -142,9 +142,12 @@ def run_scans(nScans, power_idx, DNP_data=None):
             DNP_data.setaxis('nScans',r_[0:nScans])
         return DNP_data
 #}}}
+ini_time = time.time() # needed b/c data object doesn't exist yet
 DNP_data = run_scans(nScans,0)
+time_axis_coords = DNP_data.getaxis('indirect')
+time_axis_coords[0] = ini_time
 time_list.append(time.time())
-meter_powers = zeros_like(dB_settings)
+power_settings = zeros_like(dB_settings)
 with power_control() as p:
     for j, this_dB in enumerate(dB_settings):
         print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
@@ -158,15 +161,14 @@ with power_control() as p:
             if p.get_power_setting() >= this_dB: break
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
         time.sleep(5)
-        meter_powers[j] = p.get_power_setting()
-        x = DNP_data.getaxis('indirect')
-        x[j] = time.time()
+        power_settings[j] = p.get_power_setting()
+        time_axis_coords[j] = time.time()
         run_scans(nScans,j+1,DNP_data)
-    log_array, log_dict = p.stop_log() 
+    log_array, log_dict = p.stop_log() # this is incorrect -- see test_power_control_server!!!!!
     p.arrange_quit()
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'meter_powers']}
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
 DNP_data.set_prop('acq_params',acq_params)
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
@@ -187,9 +189,11 @@ while save_file:
         save_file = False
 with h5py.File(myfilename, 'a') as f:
     log_grp = f.create_group('log')
+    # {{{ this is also wrong
     dset = log_grp.create_dataset("log",data=log_array)
     dset.attrs['dict_len'] = len(log_dict)
     for j,(k,v) in enumerate(log_dict.items()):
         dset.attrs['key%d'%j] = k
         dset.attrs['val%d'%j] = v
+    # }}}
     
