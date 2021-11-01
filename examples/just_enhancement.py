@@ -166,10 +166,10 @@ with power_control() as p:
         run_scans(nScans,j+1,DNP_data)
         if j == dB_settings[-1]:
             this_log=p.stop_log()
-log_array = this_log.total_log
-print("log array",repr(log_array))
-print("log array shape",log_array.shape)
-log_dict = this_log.log_dict
+#log_array = this_log.total_log
+#print("log array",repr(log_array))
+#print("log array shape",log_array.shape)
+#log_dict = this_log.log_dict
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
     'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}

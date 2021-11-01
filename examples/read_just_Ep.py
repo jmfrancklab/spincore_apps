@@ -13,6 +13,27 @@ fl=fl_mod()
 filename='211029_500uM_TEMPOL_test_1'
 f_slice=(-1e3,1e3)
 t_range=(0,200)
+#{{{Load/process enhancement
+for filename,nodename,file_location in [
+        (filename,'enhancement_curve','ODNP_NMR_comp/test_equipment')
+        ]:
+    s = find_file(filename,exp_type=file_location, expno=nodename)
+    s.setaxis('indirect',lambda x: x-start_time) # convert to a relative time axis:w
+    s.ft('t2',shift=True)
+    s.ft(['ph1'])
+    s.reorder(['ph1','indirect'])
+    fl.next('Raw')
+    fl.image(s)
+    s.ift('t2')
+    fl.next('raw time')
+    fl.image(s)
+    fl.show();quit()
+    s.rename('indirect','time')
+    s_start_time = s['time'][0]
+    s_relative_time = s['time'] - s_start_time
+    s.setaxis('time', s_relative_time)
+    fl.show();quit()
+#{{{create nddata of power vs time from log
 with h5py.File('211029_500uM_TEMPOL_test_1.h5','r') as f:
     log_grp = f['log']
     thislog = logobj()
@@ -43,40 +64,20 @@ for j, thisevent in enumerate(read_array[mask]):
     ax_power.text(thisevent['time']-start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_power)
 ax_power.legend(**dict(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.))
 plt.tight_layout()
-Rx_stuff = nddata(read_array['Rx'],[-1],['Rx'])
-time_axis = nddata(relative_time,[-1],['t2'])
-print(ndshape(Rx_stuff))
-print(ndshape(time_axis))
-Rx_stuff *= time_axis
-print(ndshape(Rx_stuff))
-fl.next('Rx')
-fl.plot(Rx_stuff,'.')
-
-for filename,nodename,file_location in [
-        (filename,'enhancement_curve','ODNP_NMR_comp/test_equipment')
-        ]:
-    s = find_file(filename,exp_type=file_location, expno=nodename)
-    s.setaxis('indirect',lambda x: x-start_time) # convert to a relative time axis:w
-    s.ft('t2',shift=True)
-    #s.ft(['ph1'],unitary=True)
-    s.reorder(['ph1','indirect'])
-    fl.next('Raw')
-    fl.image(s)
-    s.ift('t2')
-    fl.next('raw time')
-    fl.image(s)
-    fl.show();quit()
-    #DCCT(s,fl.next('Raw Data'))
-    s.ift('t2')
-    s.ift(['ph1'])
-    t_start = t_range[-1]/4
-    t_start *= 3
-    rx_offset_corr = s['t2':(t_start,None)]
-    rx_offset_corr = rx_offset_corr.data.mean()
-    s -= rx_offset_corr
-    s.ft('t2')
-    s.ft(['ph1'])
-    s = s['t2':f_slice]
-    print(s.getaxis(indirect))
+power_axis = nddata(read_array['power'],[-1],['time'])
+power_axis.setaxis('time',relative_time)
+fl.next('power axis')
+fl.plot(power_axis,'.')
+power_axis = nddata(read_array['power'],[-1],['time'])
+power_axis.setaxis('time',relative_time)
+power_axis.name('power')
+fl.next('power axis')
+fl.plot(power_axis,'.')
+#}}}
+#{{{finding average power over steps
+dnp_time_axis = list(s.getaxis('time'))+[None]
+power_list = []
+for time_start,time_stop in zip(dnp_time_axis[:-1],dnp_time_axis[1:]):
+    power_list.append(power_log['time':(time_start,time_stop)].mean('time'))
 fl.show()
 
