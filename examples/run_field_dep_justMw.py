@@ -88,13 +88,15 @@ p90 = 1.781
 deadtime = 10.0
 repetition = 12e6
 
-SW_kHz = 24
-nPoints = 1024*2
-
-acq_time = nPoints/SW_kHz # ms
+SW_kHz = 10
+acq_ms = 200.
+nPoints = int(acq_ms*SW_kHz+0.5)
+# rounding may need to be power of 2
+# have to try this out
 tau_adjust = 0
 deblank = 1.0
-tau = 3500.
+#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
+tau = 3500
 pad = 0
 #{{{ setting acq_params dictionary
 acq_params = {}
@@ -116,13 +118,15 @@ if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
 #}}}
+total_pts = nPoints*nPhaseSteps
+assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 
 with xepr() as x_server:
     with Bridge12() as b:
         b.set_wg(True)
         b.set_rf(True)
         b.set_amp(True)
-        this_return = b.lock_on_dip(ini_range=(9.819e9,9.825e9))
+        this_return = b.lock_on_dip(ini_range=(9.5820e9,9.5936e9))
         dip_f = this_return[2]
         print("Frequency",dip_f)
         mw_freqs.append(dip_f)

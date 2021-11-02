@@ -9,6 +9,8 @@ ext_modules = []
 # {{{ compile_SpinCore_pp implies that these are set in bashrc -- I don't know
 #     how they get set in the first place
 arg_list = []
+if "conda_headers" not in os.environ.keys():
+    raise ValueError("I don't see the environment variables that I expect -- please edit environment.sh so it describes your system, and then run it w/ `source environment.sh`")
 for j in ["conda_headers","spincore","numpy"]:
     arg_list.append('-I'+os.environ[j])
 for j in ["conda_libs","spincore"]:
