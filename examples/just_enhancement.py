@@ -166,7 +166,8 @@ with power_control() as p:
         time.sleep(5)
         power_settings[j] = p.get_power_setting()
         run_scans(nScans,j+1,DNP_data)
-    this_log=p.stop_log()
+        if j == dB_settings[-1]:
+            this_log=p.stop_log()
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
     'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings','pul_prog']}
