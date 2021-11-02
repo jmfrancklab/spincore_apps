@@ -10,29 +10,97 @@ from Instruments.logobj import logobj
 logger = init_logging("info")
 signal_pathway = {'ph1':1}
 fl=fl_mod()
-filename='211029_500uM_TEMPOL_test_1'
-f_slice=(-1e3,1e3)
-t_range=(0,200)
+filename='211102_500uM_TEMPOL_test_2'
+f_slice=(-0.5e3,0.5e3)
+t_range=(0,0.1)
+excluded_pathways = [(0,0)]
 #{{{Load/process enhancement
 for filename,nodename,file_location in [
         (filename,'enhancement_curve','ODNP_NMR_comp/test_equipment')
         ]:
     s = find_file(filename,exp_type=file_location, expno=nodename)
-    s.setaxis('indirect',lambda x: x-start_time) # convert to a relative time axis:w
     s.ft('t2',shift=True)
     s.ft(['ph1'])
     s.reorder(['ph1','indirect'])
+    s_start = s.getaxis('indirect')[1]
+    for j in range(len(s.getaxis('indirect'))):
+        rel_time = s.getaxis('indirect')[j] - s_start
+        s.getaxis('indirect')[j] = rel_time
+    s.getaxis('indirect')[0] = 0
+    #quit()
     fl.next('Raw')
-    fl.image(s)
+    fl.image(s.C.setaxis(
+'indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
     fl.next('raw time')
-    fl.image(s)
-    fl.show();quit()
+    fl.image(s.C.setaxis(
+'indirect','#').set_units('indirect','scan #'))
+    #fl.show();quit()
     s.rename('indirect','time')
-    s_start_time = s['time'][0]
-    s_relative_time = s['time'] - s_start_time
-    s.setaxis('time', s_relative_time)
+    s.ift(['ph1'])
+    t_start = t_range[-1]/4
+    t_start *= 3
+    rx_offset_corr = s['t2':(t_start,None)]
+    rx_offset = rx_offset_corr.data.mean()
+    #s -= rx_offset_corr
+    s.ft('t2')
+    s.ft(list(signal_pathway))
+    zero_crossing = abs(s['t2':f_slice]['ph1':1]).C.sum('t2').argmin('time',raw_index=True).item()
+    #}}}
+    s = s['t2':f_slice] 
+    s.ift('t2')
+    s /= zeroth_order_ph(select_pathway(s,signal_pathway))
+    s.mean('nScans')
+    s.ft('t2')
+    s.ift('t2')
+    best_shift = hermitian_function_test(select_pathway(s.C.mean('time'),signal_pathway),
+            aliasing_slop=1,fl=fl)
+    print("best shift is:",best_shift)
+    s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
+    s.ft('t2')
+    fl.next('phase corrected')
+    fl.image(s.C.setaxis(
+'time','#').set_units('time','scan #'))
+    mysgn = determine_sign(select_pathway(s['t2':f_slice],signal_pathway))
+    s.ift(['ph1'])
+    opt_shift,sigma, my_mask = correl_align(s*mysgn,indirect_dim='time',
+            signal_pathway=signal_pathway)
+    s.ift('t2')
+    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s.ft('t2')
+    s.ift('t2')
+    s.ft(['ph1'])
+    s.ft('t2')
+    s.reorder(['ph1','time','t2'])
+    fl.next('Aligned')
+    fl.image(s.C.setaxis(
+'time','#').set_units('time','scan #'))
+    ph0 = s.C.sum('t2')
+    s.ift('t2')
+    ph0 /= abs(ph0)
+    s /= ph0
+    d=s.C
+    d = d['t2':(0,None)]
+    d['t2':0] *= 0.5
+    d.ft('t2')
+    fl.next('FID sliced')
+    fl.image(d.C.setaxis(
+'time','#').set_units('time','scan #'))
+    error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
+            - set(excluded_pathways)
+            -set([(signal_pathway['ph1'])]))
+    error_pathway = [{'ph1':j} for j in error_pathway]
+    s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
+            convolve_method='Gaussian',
+            indirect='time',return_frq_slice=True,fl=fl)
+    s_int['time',:] /= s_int.data[0]
+    fl.next('E(p)')
+    s_int = 1-s_int
+    fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
+    fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
+    print(s_int.getaxis('time')) 
     fl.show();quit()
+
 #{{{create nddata of power vs time from log
 with h5py.File('211029_500uM_TEMPOL_test_1.h5','r') as f:
     log_grp = f['log']
