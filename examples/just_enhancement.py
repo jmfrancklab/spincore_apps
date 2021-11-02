@@ -15,7 +15,7 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '500uM_TEMPOL_test_1'
+output_name = '500uM_TEMPOL_test_final'
 adcOffset = 25
 carrierFreq_MHz = 14.896823
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -29,7 +29,7 @@ p90_us = 4.477
 deadtime_us = 10.0
 repetition_us = 12e6
 SW_kHz = 10 
-acq_time_ms = 200 # ms
+acq_time_ms = 200. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 tau_adjust_us = 0.0
 deblank_us = 1.0
@@ -39,7 +39,7 @@ pul_prog = 'ODNP_v3'
 # }}}
 #{{{Power settings
 max_power = 3 #W
-power_steps = 5
+power_steps = 18
 dB_settings = gen_powerlist(max_power,power_steps)
 power_start_times = []
 threedown = True
@@ -134,12 +134,11 @@ def run_scans(nScans, power_idx, DNP_data=None):
         dataPoints = float(shape(data_array)[0])
         if DNP_data is None:
             time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
-            DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['powers','nScans','t']).alloc(dtype=complex128)
-            #DNP_data.setaxis('power',zeros(len(powers)+1))
+            DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
-        DNP_data['powers',power_idx]['nScans',x] = data_array
+        DNP_data['indirect',power_idx]['nScans',x] = data_array
         SpinCore_pp.stopBoard()
         run_scans_time_list.append(time.time())
         this_array = array(run_scans_time_list)
@@ -152,8 +151,6 @@ def run_scans(nScans, power_idx, DNP_data=None):
 #}}}
 ini_time = time.time() # needed b/c data object doesn't exist yet
 DNP_data = run_scans(nScans,0)
-#time_axis_coords = DNP_data.getaxis('powers')
-#time_axis_coords[0] = ini_time
 time_list.append(time.time())
 power_settings = zeros_like(dB_settings)
 time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
@@ -168,7 +165,6 @@ with power_control() as p:
         p.set_power(this_dB)
         time.sleep(5)
         power_settings[j] = p.get_power_setting()
-        #time_axis_coords[j] = time.time()
         run_scans(nScans,j+1,DNP_data)
     this_log=p.stop_log()
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
@@ -183,7 +179,9 @@ print("THIS IS MY POWER START TIMES",power_start_times)
 print("*** *** *** *** *** *** ***")
 print("*** *** *** *** *** *** ***")
 print("*** *** *** *** *** *** ***")
-DNP_data.setaxis('powers',power_start_times)
+for q in range(len(power_start_times)):
+    power_start_times[q] = power_start_times[q] - power_start_times[0]
+DNP_data.setaxis('indirect',power_start_times)
 log_array = this_log.total_log
 log_dict = this_log.log_dict
 myfilename = date+'_'+output_name+'.h5'
