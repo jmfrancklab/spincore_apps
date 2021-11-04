@@ -22,11 +22,7 @@ for filename,nodename,file_location in [
     s.ft('t2',shift=True)
     s.ft(['ph1'])
     s.reorder(['ph1','indirect'])
-    s_start = s.getaxis('indirect')[1]
-    #for j in range(len(s.getaxis('indirect'))):
-    #    rel_time = s.getaxis('indirect')[j] - s_start
-    #    s.getaxis('indirect')[j] = rel_time
-    #s.getaxis('indirect')[0] = 0
+    s_start = s.getaxis('indirect')[0]
     fl.next('Raw')
     fl.image(s.C.setaxis(
 'indirect','#').set_units('indirect','scan #'))
@@ -83,21 +79,27 @@ for filename,nodename,file_location in [
     s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             convolve_method='Gaussian',
             indirect='time',return_frq_slice=True)
+    fl.next('1D diagnostic')
+    fl.plot(select_pathway(d,signal_pathway))
+    plt.axvline(x=frq_slice[0])
+    plt.axvline(x=frq_slice[-1])
     #{{{move first point to a more reasonable placement so we actually see the curve
-    ini_time = s_int.getaxis('time')[1] - (s_int.getaxis('time')[-1]-s_int.getaxis('time')[-2])
-    time_axis = s_int.getaxis('time')
-    time_axis[0] = ini_time
-    s_int.setaxis('time',time_axis)
-    s_int['time',:] -= s_int['time',0].data.item()
     #}}}
     #{{{Normalize and flip
     s_int /= np.real(s_int['time',0].data.item())
     s_int['time',1:] *= -1
+    ini_time = s_int.C.getaxis('time')[1] - (s_int.C.getaxis('time')[-1]-s_int.C.getaxis('time')[-2])
+    time_axis = s_int.getaxis('time')
+    time_axis[0] = ini_time
+    s_int.setaxis('time',time_axis)
+    print(s_int['time',:])
+    print(ini_time)
+    for j in range(len(s_int.getaxis('time'))):
+        time_axis[j] -= ini_time
     #}}}
     fl.next('E(p)')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
-
 #{{{create nddata of power vs time from log
 with h5py.File("211102_500uM_TEMPOL_test_final.h5",'r') as f:
     log_grp = f['log']
@@ -140,11 +142,16 @@ fl.next('power axis')
 fl.plot(power_axis,'.')
 #}}}
 #{{{finding average power over steps
-dnp_time_axis = list(s_int.getaxis('time'))+[None]
+dnp_time_axis = list(s_int.getaxis('time'))
 power_list = []
-print("DNP TIME AXIS IS:",dnp_time_axis)
-print("POWER LOG TIME AXIS IS:",power_axis.getaxis('time'))
 for time_start,time_stop in zip(dnp_time_axis[:-1],dnp_time_axis[1:]):
     power_list.append(power_axis['time':(time_start,time_stop)].mean('time'))
+    plt.axvline(x=time_start)
+for j in range(len(power_list)):
+    s_int.getaxis('time')[j] = power_list[j].data
+s_int.rename('time','power (dBm)')
+fl.next('final E(p)')
+fl.plot(s_int['power (dBm)',:-3],'ko',capsize=2,alpha=0.3)
+fl.plot(s_int['power (dBm)',-3:],'ro',capsize=2,alpha=0.3)
 fl.show()
 
