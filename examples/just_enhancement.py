@@ -134,7 +134,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
         dataPoints = float(shape(data_array)[0])
         if DNP_data is None:
             time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
-            DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
+            DNP_data = ndshape([len(powers),nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
