@@ -10,7 +10,7 @@ from Instruments.logobj import logobj
 logger = init_logging("info")
 signal_pathway = {'ph1':1}
 fl=fl_mod()
-filename='211102_500uM_TEMPOL_test_2'
+filename='211102_500uM_TEMPOL_test_final'
 f_slice=(-0.5e3,0.5e3)
 t_range=(0,0.1)
 excluded_pathways = [(0,0)]
@@ -23,11 +23,10 @@ for filename,nodename,file_location in [
     s.ft(['ph1'])
     s.reorder(['ph1','indirect'])
     s_start = s.getaxis('indirect')[1]
-    for j in range(len(s.getaxis('indirect'))):
-        rel_time = s.getaxis('indirect')[j] - s_start
-        s.getaxis('indirect')[j] = rel_time
-    s.getaxis('indirect')[0] = 0
-    #quit()
+    #for j in range(len(s.getaxis('indirect'))):
+    #    rel_time = s.getaxis('indirect')[j] - s_start
+    #    s.getaxis('indirect')[j] = rel_time
+    #s.getaxis('indirect')[0] = 0
     fl.next('Raw')
     fl.image(s.C.setaxis(
 'indirect','#').set_units('indirect','scan #'))
@@ -35,16 +34,8 @@ for filename,nodename,file_location in [
     fl.next('raw time')
     fl.image(s.C.setaxis(
 'indirect','#').set_units('indirect','scan #'))
-    #fl.show();quit()
     s.rename('indirect','time')
-    s.ift(['ph1'])
-    t_start = t_range[-1]/4
-    t_start *= 3
-    rx_offset_corr = s['t2':(t_start,None)]
-    rx_offset = rx_offset_corr.data.mean()
-    #s -= rx_offset_corr
     s.ft('t2')
-    s.ft(list(signal_pathway))
     zero_crossing = abs(s['t2':f_slice]['ph1':1]).C.sum('t2').argmin('time',raw_index=True).item()
     #}}}
     s = s['t2':f_slice] 
@@ -54,8 +45,7 @@ for filename,nodename,file_location in [
     s.ft('t2')
     s.ift('t2')
     best_shift = hermitian_function_test(select_pathway(s.C.mean('time'),signal_pathway),
-            aliasing_slop=1,fl=fl)
-    print("best shift is:",best_shift)
+            aliasing_slop=1)
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
     fl.next('phase corrected')
@@ -92,17 +82,24 @@ for filename,nodename,file_location in [
     error_pathway = [{'ph1':j} for j in error_pathway]
     s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             convolve_method='Gaussian',
-            indirect='time',return_frq_slice=True,fl=fl)
-    s_int['time',:] /= s_int.data[0]
+            indirect='time',return_frq_slice=True)
+    #{{{move first point to a more reasonable placement so we actually see the curve
+    ini_time = s_int.getaxis('time')[1] - (s_int.getaxis('time')[-1]-s_int.getaxis('time')[-2])
+    time_axis = s_int.getaxis('time')
+    time_axis[0] = ini_time
+    s_int.setaxis('time',time_axis)
+    s_int['time',:] -= s_int['time',0].data.item()
+    #}}}
+    #{{{Normalize and flip
+    s_int /= np.real(s_int['time',0].data.item())
+    s_int['time',1:] *= -1
+    #}}}
     fl.next('E(p)')
-    s_int = 1-s_int
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
-    print(s_int.getaxis('time')) 
-    fl.show();quit()
 
 #{{{create nddata of power vs time from log
-with h5py.File('211029_500uM_TEMPOL_test_1.h5','r') as f:
+with h5py.File("211102_500uM_TEMPOL_test_final.h5",'r') as f:
     log_grp = f['log']
     thislog = logobj()
     thislog.__setstate__(log_grp)
@@ -143,9 +140,11 @@ fl.next('power axis')
 fl.plot(power_axis,'.')
 #}}}
 #{{{finding average power over steps
-dnp_time_axis = list(s.getaxis('time'))+[None]
+dnp_time_axis = list(s_int.getaxis('time'))+[None]
 power_list = []
+print("DNP TIME AXIS IS:",dnp_time_axis)
+print("POWER LOG TIME AXIS IS:",power_axis.getaxis('time'))
 for time_start,time_stop in zip(dnp_time_axis[:-1],dnp_time_axis[1:]):
-    power_list.append(power_log['time':(time_start,time_stop)].mean('time'))
+    power_list.append(power_axis['time':(time_start,time_stop)].mean('time'))
 fl.show()
 
