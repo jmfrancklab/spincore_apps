@@ -120,7 +120,6 @@ def run_scans(nScans, power_idx, DNP_data=None):
         print("\nRUNNING BOARD...\n")
         this_time_var = time.time()
         SpinCore_pp.runBoard()
-        power_start_times.append(this_time_var)
         run_scans_time_list.append(time.time())
         run_scans_names.append('get data')
         raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
@@ -150,6 +149,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
         return DNP_data
 #}}}
 ini_time = time.time() # needed b/c data object doesn't exist yet
+power_start_times.append(time.time())
 DNP_data = run_scans(nScans,0)
 time_list.append(time.time())
 power_settings = zeros_like(dB_settings)
@@ -165,6 +165,7 @@ with power_control() as p:
         p.set_power(this_dB)
         time.sleep(5)
         power_settings[j] = p.get_power_setting()
+        power_start_times.append(time.time())
         run_scans(nScans,j+1,DNP_data)
         if j == dB_settings[-1]:
             this_log=p.stop_log()
@@ -173,15 +174,6 @@ acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 
     'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings','pul_prog']}
 DNP_data.set_prop('acq_params',acq_params)
 # can delete this after
-print("*** *** *** *** *** *** ***")
-print("*** *** *** *** *** *** ***")
-print("*** *** *** *** *** *** ***")
-print("THIS IS MY POWER START TIMES",power_start_times)
-print("*** *** *** *** *** *** ***")
-print("*** *** *** *** *** *** ***")
-print("*** *** *** *** *** *** ***")
-for q in range(len(power_start_times)):
-    power_start_times[q] = power_start_times[q] - power_start_times[0]
 DNP_data.setaxis('indirect',power_start_times)
 log_array = this_log.total_log
 log_dict = this_log.log_dict
