@@ -37,10 +37,12 @@ for filename,nodename,file_location in [
     s = s['t2':f_slice] 
     s.ift('t2')
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
-    s.mean('nScans')
+    if 'nScans' in s.dimlabels:
+        s.mean('nScans')
     s.ft('t2')
+    mysgn = determine_sign(select_pathway(s,signal_pathway))
     s.ift('t2')
-    best_shift = hermitian_function_test(select_pathway(s.C.mean('time'),signal_pathway),
+    best_shift = hermitian_function_test(select_pathway(s.C.mean('time')*mysgn,signal_pathway),
             aliasing_slop=1)
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
@@ -52,7 +54,7 @@ for filename,nodename,file_location in [
     opt_shift,sigma, my_mask = correl_align(s*mysgn,indirect_dim='time',
             signal_pathway=signal_pathway)
     s.ift('t2')
-    s *= np.exp(1j*2*pi*opt_shift*s.fromaxis('t2'))
+    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
     s.ift('t2')
     s.ft(['ph1'])
@@ -63,8 +65,6 @@ for filename,nodename,file_location in [
 'time','#').set_units('time','scan #'))
     ph0 = s.C.sum('t2')
     s.ift('t2')
-    ph0 /= abs(ph0)
-    s /= ph0
     d=s.C
     d = d['t2':(0,None)]
     d['t2':0] *= 0.5
@@ -87,7 +87,6 @@ for filename,nodename,file_location in [
     #}}}
     #{{{Normalize and flip
     s_int /= np.real(s_int['time',0].data.item())
-    #s_int['time',1:] *= -1
     ini_time = s_int.C.getaxis('time')[1] - (s_int.C.getaxis('time')[-1]-s_int.C.getaxis('time')[-2])
     time_axis = s_int.getaxis('time')
     time_axis[0] = ini_time
