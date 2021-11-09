@@ -142,19 +142,23 @@ power_axis.data = (10**((power_axis.data+coupler_atten)/10+3))/1e6 #convert to W
 fl.plot(power_axis,'.')
 #}}}
 #{{{finding average power over steps
-dnp_time_axis1 = s_int.getaxis('time').copy()
-dnp_time_axis = nddata(s_int.getaxis('time').copy(),[-1],['time'])
+dnp_time_axis = s_int.getaxis('time').copy()
+dnp_time_axis = r_[dnp_time_axis,power_axis.getaxis('time')[-1]]
+nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
 slop=2.0
-new_time_axis = dnp_time_axis.C.data - slop
+new_time_axis = nddata_time_axis.C.data - slop
 new_time_axis = nddata(new_time_axis,[-1],['time'])
-power_vs_time = ndshape(dnp_time_axis).alloc().set_units('time','s').set_error(0)
+power_vs_time = ndshape(nddata_time_axis).alloc().set_units('time','s').set_error(0)
 power_vs_time.setaxis('time',new_time_axis.data)
-for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis1[:None],dnp_time_axis1[0:])):
+for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[:-1],dnp_time_axis[1:])):
     power_vs_time['time',j] = power_axis['time':((time_start+slop),(time_stop-slop))].mean('time',std=True)
-    plt.axvline(x=time_start)
+    plt.axvline(x=time_start+slop)
 power_vs_time.set_units('time','s')
-fl.plot(power_vs_time,'ro',human_units=False)    
+power_vs_time.data[0] = 0
+fl.plot(power_vs_time,'ro',human_units=False)
+power_vs_time = power_vs_time['time',:-1]
 s_int.setaxis('time',power_vs_time.data)
+s_int.set_error('time',power_vs_time.get_error())
 s_int.rename('time','power')
 fl.next('Final E(p)')
 fl.plot(s_int['power',:-3],'ko',capsize=6,alpha=0.3)
