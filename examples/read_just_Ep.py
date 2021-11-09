@@ -86,7 +86,7 @@ for filename,nodename,file_location in [
     #{{{move first point to a more reasonable placement so we actually see the curve
     #}}}
     #{{{Normalize and flip
-    s_int /= np.real(s_int['time',0].data.item())
+    s_int /= np.real(s_int['time',0:1].data.item())
     ini_time = s_int.C.getaxis('time')[1] - (s_int.C.getaxis('time')[-1]-s_int.C.getaxis('time')[-2])
     time_axis = s_int.getaxis('time')
     time_axis[0] = ini_time
@@ -97,7 +97,7 @@ for filename,nodename,file_location in [
     fl.next('E(p)')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
-    fl.show();quit()
+    #fl.show();quit()
 #{{{create nddata of power vs time from log
 with h5py.File("211102_500uM_TEMPOL_test_final.h5",'r') as f:
     log_grp = f['log']
@@ -149,16 +149,15 @@ new_time_axis = dnp_time_axis.C.data - slop
 new_time_axis = nddata(new_time_axis,[-1],['time'])
 power_vs_time = ndshape(dnp_time_axis).alloc().set_units('time','s').set_error(0)
 power_vs_time.setaxis('time',new_time_axis.data)
-for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis1[:-1],dnp_time_axis1[1:])):
+for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis1[:None],dnp_time_axis1[0:])):
     power_vs_time['time',j] = power_axis['time':((time_start+slop),(time_stop-slop))].mean('time',std=True)
     plt.axvline(x=time_start)
 power_vs_time.set_units('time','s')
 fl.plot(power_vs_time,'ro',human_units=False)    
-
 s_int.setaxis('time',power_vs_time.data)
 s_int.rename('time','power')
 fl.next('Final E(p)')
-fl.plot(s_int['power',:-3],'ko',capsize=2,alpha=0.3)
-fl.plot(s_int['power',-3:],'ro',capsize=2,alpha=0.3)
+fl.plot(s_int['power',:-3],'ko',capsize=6,alpha=0.3)
+fl.plot(s_int['power',-3:],'ro',capsize=6,alpha=0.3)
 fl.show();quit()
 
