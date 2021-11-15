@@ -148,15 +148,17 @@ nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
 slop=2.0
 new_time_axis = nddata_time_axis.C.data - slop
 new_time_axis = nddata(new_time_axis,[-1],['time'])
-power_vs_time = ndshape(nddata_time_axis).alloc().set_units('time','s').set_error(0)
+power_vs_time = ndshape(nddata_time_axis).alloc().set_units('time','s')
+power_vs_time.set_error(0)
 power_vs_time.setaxis('time',new_time_axis.data)
-for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[:-1],dnp_time_axis[1:])):
-    power_vs_time['time',j] = power_axis['time':((time_start+slop),(time_stop-slop))].mean('time',std=True)
-    plt.axvline(x=time_start+slop)
+for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[1:-1],dnp_time_axis[2:])):
+    power_vs_time['time',j+1] = power_axis['time':((time_start),(time_stop-2.5*slop))].mean('time',std=True)
+    plt.axvline(x=time_start,color='k',alpha=0.5)
+    plt.axvline(x=time_stop-(2.5*slop),color='b',alpha=0.5)
 power_vs_time.set_units('time','s')
 power_vs_time.data[0] = 0
-fl.plot(power_vs_time,'ro',human_units=False)
 power_vs_time = power_vs_time['time',:-1]
+fl.plot(power_vs_time,'ro',capsize=6,human_units=False)
 s_int.setaxis('time',power_vs_time.data)
 s_int.set_error('time',power_vs_time.get_error())
 s_int.rename('time','power')
