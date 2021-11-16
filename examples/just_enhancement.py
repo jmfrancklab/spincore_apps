@@ -15,7 +15,7 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '10mM_TEMPOL_test_1'
+output_name = '10mM_TEMPOL_test_3'
 adcOffset = 29
 carrierFreq_MHz = 14.896563
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -29,7 +29,7 @@ p90_us = 4.477
 deadtime_us = 10.0
 repetition_us = 3e6
 SW_kHz = 10 
-acq_time_ms = 1000. # ms
+acq_time_ms = 200. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 tau_adjust_us = 0.0
 deblank_us = 1.0
@@ -39,7 +39,7 @@ pul_prog = 'ODNP_v3'
 # }}}
 #{{{Power settings
 max_power = 3 #W
-power_steps = 18
+power_steps = 5
 dB_settings = gen_powerlist(max_power,power_steps)
 threedown = True
 if threedown:
@@ -120,9 +120,13 @@ def run_scans(nScans, power_idx, DNP_data=None):
         run_scans_names.append('run')
         print("\nRUNNING BOARD...\n")
         SpinCore_pp.runBoard()
+        print("1")
         run_scans_time_list.append(time.time())
+        print("2")
         run_scans_names.append('get data')
+        print("3")
         raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+        print("4")
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
         data_array = complex128(raw_data[0::2]+1j*raw_data[1::2])
@@ -136,6 +140,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
+            print("NODENAME IS",DNP_data.name())
         DNP_data['indirect',power_idx]['nScans',x] = data_array
         SpinCore_pp.stopBoard()
         run_scans_time_list.append(time.time())
@@ -174,6 +179,8 @@ acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
     'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings','pul_prog']}
 DNP_data.set_prop('acq_params',acq_params)
+log_array = this_log.total_log
+log_dict = this_log.log_dict
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
 DNP_data.setaxis('ph1',r_[0,1,2,3]/4)
