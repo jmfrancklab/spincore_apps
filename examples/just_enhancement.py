@@ -15,9 +15,9 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '500uM_TEMPOL_test_final'
-adcOffset = 25
-carrierFreq_MHz = 14.896823
+output_name = '10mM_TEMPOL_test_1'
+adcOffset = 29
+carrierFreq_MHz = 14.896563
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -27,9 +27,9 @@ date = datetime.now().strftime('%y%m%d')
 # note that acq_time_ms is always milliseconds
 p90_us = 4.477
 deadtime_us = 10.0
-repetition_us = 12e6
+repetition_us = 3e6
 SW_kHz = 10 
-acq_time_ms = 200. # ms
+acq_time_ms = 1000. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 tau_adjust_us = 0.0
 deblank_us = 1.0
@@ -56,7 +56,8 @@ if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 powers = 1e-3*10**(dB_settings/10.)
 time_list.append(time.time())
-#{{{ enhancement curve pulse progza
+
+#{{{ enhancement curve pulse prog
 def run_scans(nScans, power_idx, DNP_data=None):
     """run nScans and slot them into he power_idx index of DNP_data -- assume
     that the first time this is run, it will be run with DNP_data=None and that
