@@ -15,7 +15,7 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '10mM_TEMPOL_test_6'
+output_name = '10mM_TEMPOL_test_final'
 adcOffset = 29
 carrierFreq_MHz = 14.896563
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -28,8 +28,8 @@ date = datetime.now().strftime('%y%m%d')
 p90_us = 4.477
 deadtime_us = 10.0
 repetition_us = 3e6
-SW_kHz = 10 
-acq_time_ms = 200. # ms
+SW_kHz = 5 
+acq_time_ms = 500. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 tau_adjust_us = 0.0
 deblank_us = 1.0
@@ -39,7 +39,7 @@ pul_prog = 'ODNP_v3'
 # }}}
 #{{{Power settings
 max_power = 3 #W
-power_steps = 5
+power_steps = 15
 dB_settings = gen_powerlist(max_power,power_steps)
 threedown = True
 if threedown:
@@ -124,20 +124,21 @@ def run_scans(nScans, power_idx, DNP_data=None):
         run_scans_time_list.append(time.time())
         run_scans_names.append('get data')
         raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+        raw_data.astype(float)
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
-        data_array = complex128(raw_data[0::2]+1j*raw_data[1::2])
+        data_array=[]
+        data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
         print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
         print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-        dataPoints = int(shape(data_array)[0])
+        dataPoints = float(shape(data_array)[0])
         if DNP_data is None:
             time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
-            DNP_data = ndshape([len(powers)+1,nScans,dataPoints],['indirect','nScans','t']).alloc(dtype=complex128)
+            DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
             DNP_data.setaxis('indirect',zeros(len(powers)+1)).set_units('s')
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
-            print("NODENAME IS",DNP_data.name())
         DNP_data['indirect',power_idx]['nScans',x] = data_array
         SpinCore_pp.stopBoard()
         run_scans_time_list.append(time.time())
@@ -186,8 +187,7 @@ time_array = array(time_list)
 while save_file:
     try:
         print("SAVING FILE...")
-        DNP_data.hdf5_write(myfilename,
-                directory=getDATADIR(exp_type='ODNP'))
+        DNP_data.hdf5_write(myfilename)        
         print("FILE SAVED")
         print("Name of saved enhancement data", DNP_data.name())
         print("shape of saved enhancement data", ndshape(DNP_data))
