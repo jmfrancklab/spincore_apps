@@ -180,7 +180,8 @@ DNP_data.setaxis('ph1',r_[0,1,2,3]/4)
 while save_file:
     try:
         print("SAVING FILE...")
-        DNP_data.hdf5_write(myfilename)
+        DNP_data.hdf5_write(myfilename,
+                directory=getDATADIR(exp_type='ODNP'))
         print("FILE SAVED")
         print("Name of saved enhancement data", DNP_data.name())
         print("shape of saved enhancement data", ndshape(DNP_data))
