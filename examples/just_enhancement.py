@@ -15,7 +15,7 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '10mM_TEMPOL_test_3'
+output_name = '10mM_TEMPOL_test_6'
 adcOffset = 29
 carrierFreq_MHz = 14.896563
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -50,10 +50,11 @@ print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 myinput = input("Look ok?")
 #}}}
+time_list = [time.time()]
 if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 powers = 1e-3*10**(dB_settings/10.)
-
+time_list.append(time.time())
 #{{{ enhancement curve pulse prog
 def run_scans(nScans, power_idx, DNP_data=None):
     """run nScans and slot them into he power_idx index of DNP_data -- assume
@@ -120,13 +121,9 @@ def run_scans(nScans, power_idx, DNP_data=None):
         run_scans_names.append('run')
         print("\nRUNNING BOARD...\n")
         SpinCore_pp.runBoard()
-        print("1")
         run_scans_time_list.append(time.time())
-        print("2")
         run_scans_names.append('get data')
-        print("3")
         raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-        print("4")
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
         data_array = complex128(raw_data[0::2]+1j*raw_data[1::2])
@@ -152,11 +149,13 @@ def run_scans(nScans, power_idx, DNP_data=None):
 #}}}
 ini_time = time.time() # needed b/c data object doesn't exist yet
 DNP_data = run_scans(nScans,0)
+time_list.append(time.time())
 time_axis_coords = DNP_data.getaxis('indirect')
 time_axis_coords[0] = ini_time
 DNP_data.set_prop('start_time', ini_time)
 DNP_data.set_prop('thermal_done_time', time.time())
 power_settings = zeros_like(dB_settings)
+time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 with power_control() as p:
     for j, this_dB in enumerate(dB_settings):
         print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
@@ -179,11 +178,11 @@ acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
     'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings','pul_prog']}
 DNP_data.set_prop('acq_params',acq_params)
-log_array = this_log.total_log
-log_dict = this_log.log_dict
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
 DNP_data.setaxis('ph1',r_[0,1,2,3]/4)
+time_list.append(time.time())
+time_array = array(time_list)
 while save_file:
     try:
         print("SAVING FILE...")
@@ -200,3 +199,4 @@ while save_file:
 with h5py.File(myfilename, 'a') as f:
     log_grp = f.create_group('log')
     hdf_save_dict_to_group(log_grp,this_log.__getstate__())
+
