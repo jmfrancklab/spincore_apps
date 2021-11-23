@@ -148,7 +148,161 @@ def run_scans(nScans, power_idx, DNP_data=None):
         print("stored scan",x,"for power_idx",power_idx)
         return DNP_data
 #}}}
+def run_scans_IR(vd_list, node_name, nScans = 1, rd = 1e6, power_on = False):
+    # nScans is number of scans you want
+    # rd is the repetition delay
+    # power_setting is what you want to run power at
+    # vd list is a list of the vd's you want to use
+    # node_name is the name of the node must specify power
+    ph1_cyc = r_[0,2]
+    ph2_cyc = r_[0,2]
+    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
+    data_length = 2*nPoints*nEchoes*nPhaseSteps
+    for index,val in enumerate(vd_list):
+        vd = val
+        print("***")
+        print("INDEX %d - VARIABLE DELAY %f"%(index,val))
+        print("***")
+        for x in range(nScans):
+            run_scans_names = ['configure']
+            SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+            acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+            run_scans_time_list.append(time.time())
+            run_scans_names.append('configure Rx')
+            verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90_us, tau_us=tau_us)
+            run_scans_time_list.append(time.time())
+            run_scans_names.append('init')
+            SpinCore_pp.init_ppg();
+            run_scans_time_list.append(time.time())
+            run_scans_names.append('prog')
+            nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
+            SpinCore_pp.load([
+                ('marker','start',1),
+                ('phase_reset',1),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',2.0*p90_us,'ph1',ph1_cyc),
+                ('delay',vd),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',p90_us,'ph2',ph2_cyc),
+                ('delay',tau_us),
+                ('delay_TTL',1.0),
+                ('pulse_TTL',2.0*p90_us,0),
+                ('delay',deadtime_us),
+                ('acquire',acq_time),
+                ('delay',repetition_us),
+                ('jumpto','start')
+                ])
+            run_scans_time_list.append(time.time())
+            run_scans_names.append('prog')
+            SpinCore_pp.stop_ppg();
+            print("\nRUNNING BOARD...\n")
+            run_scans_time_list.append(time.time())
+            run_scans_names.append('run')
+            SpinCore_pp.runBoard();
+            run_scans_time_list.append(time.time())
+            run_scans_names.append('get data')
+            raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+            raw_data.astype(float)
+            run_scans_time_list.append(time.time())
+            run_scans_names.append('shape data')
+            data_array=[]
+            data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+            print("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0])
+            print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
+            dataPoints = float(np.shape(data_array)[0])
+            if vd_data is None:
+                vd_data = ndshape([len(vd_list),nScans,len(time_axis),len(vd_list)+1],['vd','nScans','t','indirect']).alloc(dtype=complex128)
+                vd_data.setaxis('indirect',zeros(len(vd_list)+1)).set_units('s')
+                vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
+                vd_data.setaxis('nScans',r_[0:nScans])
+                vd_data.setaxis('t',time_axis).set_units('t','s')
+                vd_data.name('FIR_noPower')
+            vd_data['vd',index]['nScans',x]['indirect',power_idx] = data_array
+            vd_data.name(node_name)
+            SpinCore_pp.stopBoard();
+            run_scans_time_list.append(time.time())
+            this_array = array(run_scans_time_list)
+            print("checkpoints:",this_array-this_array[0])
+            print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
+            print("stored scan",x,"for power_idx",power_idx)
+            if nScans > 1:
+                vd_data.setaxis('nScans',r_[0:nScans])
+    return vd_data
+#}}}
+vd_list = r_[5e1,7.3e4,1e6]
 ini_time = time.time() # needed b/c data object doesn't exist yet
+vd_data = run_scans_IR(vd_list,'FID_noPower',nScans,0.7e6)
+time_list.append(time.time())
+time_axis_coords_IR = vd_data.getaxis('indirect')
+time_axis_coords_IR[0]=ini_time
+vd_data.set_prop('start_time',ini_time)
+meter_power=0
+save_file = True
+acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
+    'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+vd_data.set_prop('acq_params',acq_params)
+myfilename = date+'_'+output_name+'.h5'
+ph1ir_cyc = r_[0,2]
+ph2ir_cyc = r_[0,2]
+vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+vd_data.setaxis('ph1',ph1ir_cyc/4)
+vd_data.setaxis('ph2',ph2ir_cyc/4)
+# Need error handling (JF has posted something on this..)
+print("SAVING FILE...")
+vd_data.hdf5_write(myfilename)
+print("\n*** FILE SAVED ***\n")
+print(("Name of saved data",vd_data.name()))
+print(("Units of saved data",vd_data.get_units('t2')))
+print(("Shape of saved data",ndshape(vd_data)))
+T1_powers_dB = r_[30,32]
+T1_node_names = ['FIR_30dBm','FIR_32dBm']
+time_list.append(time.time())
+time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+with power_control() as p:
+    for j,this_dB in enumerate(T1_powers_dB):
+        if j==0:
+            MWfreq = p.dip_lock(9.81,9.83)
+        p.start_log()
+        p.set_power(this_dB)
+        for k in range(10):
+            time.sleep(0.5)
+            if p.get_power_setting()>= this_dB: break
+        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
+        time.sleep(5)
+        meter_power = p.get_power_setting()
+        vd_data = run_scans_IR(vd_list,T1_nod_names[j], nScans, 0.7e6, power_on=True)
+    IR_log = p.stop_log()
+vd_data.set_prop('stop_time', time.time())
+acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
+    'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+vd_data.set_prop('acq_params',acq_params)
+vd_data.name(T1_node_names[j])
+myfilename = date+'_'+output_name+'.h5'
+ph1ir_cyc = r_[0,2]
+ph2ir_cyc = r_[0,2]
+vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+vd_data.setaxis('ph1',ph1ir_cyc/4)
+vd_data.setaxis('ph2',ph2ir_cyc/4)
+time_list.append(time.time())
+save_file = True
+while save_file:
+    try:
+        print("SAVING FILE...")
+        DNP_data.hdf5_write(myfilename)        
+        print("FILE SAVED")
+        print("Name of saved enhancement data", DNP_data.name())
+        print("shape of saved enhancement data", ndshape(DNP_data))
+        save_file=False
+    except Exception as e:
+        print(e)
+        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
+        save_file = False
+with h5py.File(myfilename, 'a') as f:
+    log_grp = f.create_group('IR_log')
+    hdf_save_dict_to_group(log_grp,IR_log.__getstate__())
+
 DNP_data = run_scans(nScans,0)
 time_list.append(time.time())
 time_axis_coords = DNP_data.getaxis('indirect')
@@ -197,6 +351,6 @@ while save_file:
         print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
         save_file = False
 with h5py.File(myfilename, 'a') as f:
-    log_grp = f.create_group('log')
+    log_grp = f.create_group('Ep_log')
     hdf_save_dict_to_group(log_grp,this_log.__getstate__())
 
