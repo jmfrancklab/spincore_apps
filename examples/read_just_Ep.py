@@ -8,12 +8,126 @@ from pyspecProcScripts import *
 from pyspecProcScripts import lookup_table
 from Instruments.logobj import logobj
 logger = init_logging("info")
-signal_pathway = {'ph1':1}
+Ep_signal_pathway = {'ph1':1}
 fl=fl_mod()
 filename='211124_10mM_TEMPOL_test_1log'
+file_location = 'ODNP_NMR_comp/ODNP'
 Ep_f_slice=(-1e3,1e3)
+IR_f_slice=(-1e3,1e3)
+t_range = (0,0.2)
 excluded_pathways = [(0,0)]
 
+#{{{IR processing
+for nodename, postproc, signal_pathway, clock_correction in [
+        ('FIR_27dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        ('FIR_30dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        ('FIR_32dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        ('FIR_33dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        ]:
+    IR = find_file(filename,exp_type=file_location,expno=nodename,
+            postproc=postproc,lookup=lookup_table,fl=fl)
+    times = IR['indirect':-1]
+    IR.mean('indirect')
+    fl.next('Raw IR')
+    fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
+    #fl.show();quit()
+    IR['ph2',0]['ph1',0]['t2':0]=0 #kill axial noise
+    IR.ift('t2')
+    IR.ift(['ph1','ph2'])
+    t_start = t_range[-1]/4
+    t_start *= 3
+    rx_offset_corr = IR['t2':(t_start,None)]
+    rx_offset_corr = rx_offset_corr.data.mean()
+    IR -= rx_offset_corr
+    IR.ft('t2')
+    IR.ft(['ph1','ph2'])
+    zero_crossing = abs(select_pathway(IR['t2':IR_f_slice],signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
+    IR=IR['t2':IR_f_slice]
+    if 'nScans' in IR.dimlabels:
+        IR.mean('nScans')
+    IR.ift('t2')
+    #{{{clock correction
+    if clock_correction:
+        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
+        IR.ft('t2')
+        if fl is not None:
+            fl.next('before clock correction')
+            fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
+        s_clock=IR['ph1',1]['ph2',0].sum('t2')
+        IR.ift(['ph1','ph2'])
+        min_index = abs(s_clock).argmin('vd',raw_index=True).item()
+        s_clock *= np.exp(-1j*clock_corr*IR.fromaxis('vd'))
+        s_clock['vd',:min_index+1] *=-1
+        s_clock.sum('vd').run(abs)
+        if fl is not None:
+            fl.next('clock correction')
+            fl.plot(s_clock,'.',alpha=0.7)
+        clock_corr = s_clock.argmax('clock_corr').item()
+        plt.axvline(x=clock_corr, alpha=0.5, color='r')
+        IR *= np.exp(-1j*clock_corr*IR.fromaxis('vd'))
+        IR.ft(['ph1','ph2'])
+        if fl is not None:
+            fl.next('after auto-clock correction')
+            fl.image(IR.C.setaxis('vd','#'))
+        IR.ift('t2')
+    #}}}
+    #{{{phasing
+    IR /= zeroth_order_ph(select_pathway(IR,signal_pathway))
+    if 'nScans' in IR.dimlabels:
+        IR.mean('nScans')
+    IR.ft('t2')
+    mysgn = determine_sign(select_pathway(IR.C.mean('vd'),signal_pathway))
+    IR.ift('t2')
+    best_shift = hermitian_function_test(select_pathway(IR.C.mean('vd')*mysgn,
+        signal_pathway),aliasing_slop=1)
+    IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
+    IR.ft('t2')
+    fl.next('Phase corrected')
+    fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
+    #}}}
+    #{{{Alignment
+    mysgn = determine_sign(select_pathway(IR['t2':IR_f_slice],signal_pathway))
+    IR.ift(['ph1','ph2'])
+    opt_shift,sigma, my_mask = correl_align(IR.C*mysgn,indirect_dim='vd',
+            signal_pathway=signal_pathway)
+    IR.ift('t2')
+    IR *= np.exp(-1j*2*pi*opt_shift*IR.fromaxis('t2'))
+    IR.ft('t2')
+    IR.ift('t2')
+    IR.ft(['ph1','ph2'])
+    IR.ft('t2')
+    IR.reorder(['ph1','ph2','vd','t2'])
+    fl.next('Aligned')
+    fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
+    #}}}
+    IR.ift('t2')
+    #{{{FID slice
+    d=IR.C
+    d = d['t2':(0,None)]
+    d['t2':0] *= 0.5
+    d.ft('t2')
+    fl.next('FID sliced')
+    fl.image(d.C.setaxis(
+'vd','#').set_units('vd','scan #'))
+    #}}}
+    #{{{Integrate with error
+    error_pathway = (set(((j,k) for j in range(ndshape(d)['ph1']) for k in range(ndshape(d)['ph2'])))
+            - set(excluded_pathways)
+            -set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
+    error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
+    s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
+            convolve_method='Gaussian',
+            indirect='vd',return_frq_slice=True)
+    fl.next('1D diagnostic')
+    fl.plot(select_pathway(d,signal_pathway))
+    plt.axvline(x=frq_slice[0])
+    plt.axvline(x=frq_slice[-1])
+    #}}}
+    s_int*= -1
+    fl.next('IR %s'%nodename)
+    fl.plot(s_int,'ko',capsize=2,alpha=0.3)
+    #}}}
+    fl.show()
 #{{{Load/process enhancement
 for filename,nodename,file_location in [
         (filename,'enhancement_curve','ODNP_NMR_comp/ODNP')
@@ -36,14 +150,14 @@ for filename,nodename,file_location in [
     s = s['t2':Ep_f_slice] 
     s.ift('t2')
     #{{{phasing
-    s /= zeroth_order_ph(select_pathway(s,signal_pathway))
+    s /= zeroth_order_ph(select_pathway(s,Ep_signal_pathway))
     if 'nScans' in s.dimlabels:
         s.mean('nScans')
     s.ft('t2')
-    mysgn = determine_sign(select_pathway(s,signal_pathway))
+    mysgn = determine_sign(select_pathway(s,Ep_signal_pathway))
     s.ift('t2')
     best_shift = hermitian_function_test(select_pathway(s.C.mean('time')*mysgn,
-        signal_pathway),aliasing_slop=1)
+        Ep_signal_pathway),aliasing_slop=1)
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
     fl.next('phase corrected')
@@ -51,10 +165,10 @@ for filename,nodename,file_location in [
 'time','#').set_units('time','scan #'))
     #}}}
     #{{{Alignment
-    mysgn = determine_sign(select_pathway(s['t2':Ep_f_slice],signal_pathway))
+    mysgn = determine_sign(select_pathway(s['t2':Ep_f_slice],Ep_signal_pathway))
     s.ift(['ph1'])
     opt_shift,sigma, my_mask = correl_align(s.C*mysgn,indirect_dim='time',
-            signal_pathway=signal_pathway)
+            signal_pathway=Ep_signal_pathway)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
     s.ft('t2')
@@ -79,13 +193,13 @@ for filename,nodename,file_location in [
     #{{{Integrate with error
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
-            -set([(signal_pathway['ph1'])]))
+            -set([(Ep_signal_pathway['ph1'])]))
     error_pathway = [{'ph1':j} for j in error_pathway]
-    s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
+    s_int,frq_slice = integral_w_errors(d,Ep_signal_pathway,error_pathway,
             convolve_method='Gaussian',
             indirect='time',return_frq_slice=True)
     fl.next('1D diagnostic')
-    fl.plot(select_pathway(d,signal_pathway))
+    fl.plot(select_pathway(d,Ep_signal_pathway))
     plt.axvline(x=frq_slice[0])
     plt.axvline(x=frq_slice[-1])
     #}}}
