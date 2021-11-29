@@ -10,10 +10,10 @@ from Instruments.logobj import logobj
 logger = init_logging("info")
 signal_pathway = {'ph1':1}
 fl=fl_mod()
-filename='211116_10mM_TEMPOL_test_final'
-f_slice=(-0.5e3,0.5e3)
-t_range=(0,0.1)
+filename='211124_10mM_TEMPOL_test_1log'
+Ep_f_slice=(-1e3,1e3)
 excluded_pathways = [(0,0)]
+
 #{{{Load/process enhancement
 for filename,nodename,file_location in [
         (filename,'enhancement_curve','ODNP_NMR_comp/ODNP')
@@ -30,28 +30,30 @@ for filename,nodename,file_location in [
     fl.next('raw time')
     fl.image(s.C.setaxis(
 'indirect','#').set_units('indirect','scan #'))
-    #fl.show();quit()
     s.rename('indirect','time')
     s.ft('t2')
-    zero_crossing = abs(s['t2':f_slice]['ph1':1]).C.sum('t2').argmin('time',raw_index=True).item()
-    #}}}
-    s = s['t2':f_slice] 
+    zero_crossing = abs(s['t2':Ep_f_slice]['ph1':1]).C.sum('t2').argmin('time',raw_index=True).item()
+    s = s['t2':Ep_f_slice] 
     s.ift('t2')
+    #{{{phasing
     s /= zeroth_order_ph(select_pathway(s,signal_pathway))
     if 'nScans' in s.dimlabels:
         s.mean('nScans')
     s.ft('t2')
     mysgn = determine_sign(select_pathway(s,signal_pathway))
     s.ift('t2')
-    best_shift = hermitian_function_test(select_pathway(s.C.mean('time')*mysgn,signal_pathway),aliasing_slop=1)
+    best_shift = hermitian_function_test(select_pathway(s.C.mean('time')*mysgn,
+        signal_pathway),aliasing_slop=1)
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
     fl.next('phase corrected')
     fl.image(s.C.setaxis(
 'time','#').set_units('time','scan #'))
-    mysgn = determine_sign(select_pathway(s['t2':f_slice],signal_pathway))
+    #}}}
+    #{{{Alignment
+    mysgn = determine_sign(select_pathway(s['t2':Ep_f_slice],signal_pathway))
     s.ift(['ph1'])
-    opt_shift,sigma, my_mask = correl_align(s*mysgn,indirect_dim='time',
+    opt_shift,sigma, my_mask = correl_align(s.C*mysgn,indirect_dim='time',
             signal_pathway=signal_pathway)
     s.ift('t2')
     s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
@@ -63,8 +65,9 @@ for filename,nodename,file_location in [
     fl.next('Aligned')
     fl.image(s.C.setaxis(
 'time','#').set_units('time','scan #'))
-    ph0 = s.C.sum('t2')
+    #}}}
     s.ift('t2')
+    #{{{FID slice
     d=s.C
     d = d['t2':(0,None)]
     d['t2':0] *= 0.5
@@ -72,6 +75,8 @@ for filename,nodename,file_location in [
     fl.next('FID sliced')
     fl.image(d.C.setaxis(
 'time','#').set_units('time','scan #'))
+    #}}}
+    #{{{Integrate with error
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
             - set(excluded_pathways)
             -set([(signal_pathway['ph1'])]))
@@ -83,21 +88,25 @@ for filename,nodename,file_location in [
     fl.plot(select_pathway(d,signal_pathway))
     plt.axvline(x=frq_slice[0])
     plt.axvline(x=frq_slice[-1])
-    #{{{Normalize and flip
-    s_int.getaxis('time')[0] = s.get_prop('start_time')
-    time_axis = s_int.getaxis('time')
-    ini_time = s_int.getaxis('time')[0]
-    time_axis[-1] = s.get_prop('stop_time')    
-    for j in range(len(s_int.getaxis('time'))):
-        time_axis[j] -= ini_time
-    s_int /= np.real(s_int['time',0:1].data.item())
     #}}}
+    #{{{Normalize and flip
+    time_axis = s_int.getaxis('time')
+    #time_axis[0] = s.get_prop('start_time')
+    #ini_time = time_axis[0]
+    time_axis[-1] = s.get_prop('stop_time')    
+    #for j in range(len(s_int.getaxis('time'))):
+    #    time_axis[j] -= ini_time
+    s_int.setaxis('time',time_axis)
+    #}}}
+    s_int /= np.real(s_int['time',0:1].data.item())
+    s_int['time',zero_crossing+1:] *= -1
     fl.next('E(p)')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
+    #}}}
 #{{{create nddata of power vs time from log
 with h5py.File(search_filename(filename+".h5",exp_type='ODNP_NMR_comp/ODNP',unique=True),'r') as f:
-    log_grp = f['log']
+    log_grp = f['Ep_log']
     thislog = logobj()
     thislog.__setstate__(log_grp)
     read_array = thislog.total_log
@@ -108,7 +117,7 @@ fig, (ax_Rx,ax_power) = plt.subplots(2,1, figsize=(10,8))
 fl.next("log figure",fig=fig)
 ax_Rx.set_ylabel('Rx/mV')
 start_time = read_array['time'][0]
-relative_time = read_array['time'] - ini_time
+relative_time = read_array['time'] #- ini_time
 ax_Rx.plot(relative_time, read_array['Rx'],'.')
 ax_power.set_ylabel('power/dBm')
 ax_power.plot(relative_time,read_array['power'],'.')
@@ -148,6 +157,7 @@ new_time_axis = nddata(new_time_axis,[-1],['time'])
 power_vs_time = ndshape(nddata_time_axis).alloc().set_units('time','s')
 power_vs_time.set_error(0)
 power_vs_time.setaxis('time',new_time_axis.data)
+#{{{find values for Ep
 for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[1:],dnp_time_axis[2:-1])):
     if time_stop == dnp_time_axis[-2]:
         power_vs_time['time',j+1] = power_axis['time':((time_start),(time_stop))].mean('time',std=True)
@@ -162,6 +172,8 @@ power_vs_time.set_units('time','s')
 power_vs_time.data[0] = 0
 power_vs_time = power_vs_time['time',:-1]
 fl.plot(power_vs_time,'ro',capsize=6,human_units=False)
+#}}}
+#{{{set time axis to power for Ep
 s_int.rename('time','power')
 power_axis = np.real(power_vs_time.data)
 s_int.setaxis('power',power_axis)
@@ -170,5 +182,6 @@ s_int = s_int['power',:-1] #taking out point from when it was added in in line 1
 fl.next('Final E(p)')
 fl.plot(np.real(s_int['power',:-3]),'ko',capsize=6,alpha=0.3)
 fl.plot(np.real(s_int['power',-3:]),'ro',capsize=6,alpha=0.3)
+#}}}
 fl.show();quit()
 
