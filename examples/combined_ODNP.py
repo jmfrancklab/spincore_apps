@@ -140,7 +140,8 @@ def run_scans(nScans, power_idx, DNP_data=None):
         if DNP_data is None:
             time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
             DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
-            DNP_data.setaxis('indirect',zeros(len(powers)+1)).set_units('s')
+            DNP_data['indirect'] = dtype([('start_times',double),('stop_times',double)])
+            DNP_data.setaxis('indirect',zeros(len(powers)+1),dtype=DNP_data['indirect']).set_units('s')
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
@@ -153,6 +154,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
         print("stored scan",x,"for power_idx",power_idx)
         return DNP_data
 #}}}
+#{{{IR ppg
 def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_on = False, vd_data=None):
     # nScans is number of scans you want
     # rd is the repetition delay
@@ -294,14 +296,18 @@ with power_control() as p:
         time_list.append(time.time())
 #}}}
 #{{{run enhancement
+DNP_ini_time = time.time()
 DNP_data = run_scans(nScans,0)
 time_list.append(time.time())
 time_axis_coords = DNP_data.getaxis('indirect')
-time_axis_coords[0] = ini_time
-DNP_data.set_prop('start_time', ini_time)
+time_axis_coords[0]['start_times'] = DNP_ini_time
+# w/ struct array, this becomes time_axis_coords[0]['start_time']
+DNP_data.set_prop('start_time', DNP_ini_time)
 DNP_data.set_prop('thermal_done_time', time.time())
+# w/ struct array, we can add time_axis_coords[0]['stop_time'], and the above becomes obsolete
 power_settings = zeros_like(dB_settings)
 time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+time_axis_coords[0]['stop_times'] = time.time()
 with power_control() as p:
     for j, this_dB in enumerate(dB_settings):
         print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
@@ -315,8 +321,9 @@ with power_control() as p:
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
         time.sleep(5)
         power_settings[j] = p.get_power_setting()
-        time_axis_coords[j] = time.time()
+        time_axis_coords[j]['start_times'] = time.time()
         run_scans(nScans,j+1,DNP_data)
+        time_axis_coords[j]['stop_times'] = time.time()
     this_log=p.stop_log()
 DNP_data.set_prop('stop_time', time.time())
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',

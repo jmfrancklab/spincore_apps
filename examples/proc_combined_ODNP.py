@@ -276,7 +276,7 @@ for filename,nodename,file_location in [
     #}}}
     #{{{finding average power over steps
     dnp_time_axis = s_int.C.getaxis('time').copy()
-    dnp_time_axis = r_[dnp_time_axis,power_axis.getaxis('time')[-1]]
+    dnp_time_axis = r_[dnp_time_axis]#,power_axis.getaxis('time')[-1]]
     nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
     slop=3.0
     new_time_axis = nddata_time_axis.C.data
