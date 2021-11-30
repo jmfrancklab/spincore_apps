@@ -19,7 +19,9 @@ IR_f_slice=(-1e3,1e3)
 t_range = (0,0.2)
 excluded_pathways = [(0,0)]
 R1w = 1/2.172
-nPowers = 18
+nPowers = 14
+ppt = 1.5167e-3
+C=0.01
 #{{{load in log
 with h5py.File(search_filename(filename+".h5",exp_type='ODNP_NMR_comp/ODNP',unique=True),'r') as f:
     log_grp = f['Ep_log']
@@ -129,7 +131,7 @@ for nodename, postproc, signal_pathway, clock_correction in [
         signal_pathway),aliasing_slop=1)
     IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     IR.ft('t2')
-    fl.next('Phase corrected')
+    fl.next('Phase corrected IR')
     fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
     #{{{Alignment
@@ -144,7 +146,7 @@ for nodename, postproc, signal_pathway, clock_correction in [
     IR.ft(['ph1','ph2'])
     IR.ft('t2')
     IR.reorder(['ph1','ph2','vd','t2'])
-    fl.next('Aligned')
+    fl.next('Aligned IR')
     fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
     IR.ift('t2')
@@ -153,7 +155,7 @@ for nodename, postproc, signal_pathway, clock_correction in [
     d = d['t2':(0,None)]
     d['t2':0] *= 0.5
     d.ft('t2')
-    fl.next('FID sliced')
+    fl.next('FID sliced IR')
     fl.image(d.C.setaxis(
 'vd','#').set_units('vd','scan #'))
     #}}}
@@ -165,7 +167,7 @@ for nodename, postproc, signal_pathway, clock_correction in [
     s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             convolve_method='Gaussian',
             indirect='vd',return_frq_slice=True)
-    fl.next('1D diagnostic')
+    fl.next('1D diagnostic IR')
     fl.plot(select_pathway(d,signal_pathway))
     plt.axvline(x=frq_slice[0])
     plt.axvline(x=frq_slice[-1])
@@ -204,13 +206,10 @@ for filename,nodename,file_location in [
     s.ft(['ph1'])
     s.reorder(['ph1','indirect'])
     s_start = s.getaxis('indirect')[0]
-    fl.next('Raw')
+    fl.next('Raw Ep')
     fl.image(s.C.setaxis(
 'indirect','#').set_units('indirect','scan #'))
     s.ift('t2')
-    fl.next('raw time')
-    fl.image(s.C.setaxis(
-'indirect','#').set_units('indirect','scan #'))
     s.rename('indirect','time')
     s.ft('t2')
     zero_crossing = abs(s['t2':Ep_f_slice]['ph1':1]).C.sum('t2').argmin('time',raw_index=True).item()
@@ -227,7 +226,7 @@ for filename,nodename,file_location in [
         Ep_signal_pathway),aliasing_slop=1)
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
-    fl.next('phase corrected')
+    fl.next('phase corrected Ep')
     fl.image(s.C.setaxis(
 'time','#').set_units('time','scan #'))
     #}}}
@@ -243,7 +242,7 @@ for filename,nodename,file_location in [
     s.ft(['ph1'])
     s.ft('t2')
     s.reorder(['ph1','time','t2'])
-    fl.next('Aligned')
+    fl.next('Aligned Ep')
     fl.image(s,human_units=False)
     #}}}
     s.ift('t2')
@@ -252,7 +251,7 @@ for filename,nodename,file_location in [
     d = d['t2':(0,None)]
     d['t2':0] *= 0.5
     d.ft('t2')
-    fl.next('FID sliced')
+    fl.next('FID sliced Ep')
     fl.image(d,human_units=False)
     #}}}
     #{{{Integrate with error
@@ -263,23 +262,15 @@ for filename,nodename,file_location in [
     s_int,frq_slice = integral_w_errors(d,Ep_signal_pathway,error_pathway,
             convolve_method='Gaussian',
             indirect='time',return_frq_slice=True)
-    #fl.next('1D diagnostic')
-    #fl.plot(select_pathway(d,Ep_signal_pathway))
-    #plt.axvline(x=frq_slice[0])
-    #plt.axvline(x=frq_slice[-1])
     #}}}
     #{{{Normalize and flip
     time_axis = s_int.getaxis('time')
-    #time_axis[0] = s.get_prop('start_time')
-    #ini_time = time_axis[0]
     time_axis[-1] = s.get_prop('stop_time')    
-    #for j in range(len(s_int.getaxis('time'))):
-    #    time_axis[j] -= ini_time
     s_int.setaxis('time',time_axis)
     #}}}
     s_int /= np.real(s_int['time',0:1].data.item())
     s_int['time',zero_crossing+1:] *= -1
-    fl.next('E(p)')
+    fl.next('E(p) before power correction')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
     #}}}
@@ -294,6 +285,7 @@ for filename,nodename,file_location in [
     power_vs_time.set_error(0)
     power_vs_time.setaxis('time',new_time_axis.data)
     #{{{find values for Ep
+    fl.next('power axis W')
     for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[1:],dnp_time_axis[2:-1])):
         if time_stop == dnp_time_axis[-2]:
             power_vs_time['time',j+1] = power_axis['time':((time_start),(time_stop))].mean('time',std=True)
@@ -316,21 +308,24 @@ for filename,nodename,file_location in [
     s_int.setaxis('power',power_axis)
     s_int.set_error('power',power_vs_time.get_error())
     s_int = s_int['power',:-1] #taking out point from when it was added in in line 143 for the last power in the power axis
+    idx_maxpower = np.argmax(s_int.getaxis('power'))
+    enhancement=s_int
     fl.next('Final E(p)')
     fl.plot(np.real(s_int['power',:-3]),'ko',capsize=6,alpha=0.3)
     fl.plot(np.real(s_int['power',-3:]),'ro',capsize=6,alpha=0.3)
     #}}}
+#{{{Relaxation rates and making Flinear
 T1p = nddata(T1_list,[-1],['power']).setaxis('power',power_list)
-R1p = T1p.C**-1
-fl.next(r'$T_{1}(p) vs power')
+R1p = T1p**-1
+fl.next(r'$T_{1}$(p) vs power')
 fl.plot(T1p,'o')
 Flinear = ((R1p - R1p['power':0.001]+R1w)**-1)
 polyorder = 1
-coeff, _ = Flinear.polyfit('power',order=polyorder)
+coeff = Flinear.polyfit('power',order=polyorder)
 power = nddata(np.linspace(0,R1p.getaxis('power')[-1],nPowers),'power')
 Flinear_fine = 0
 for j in range(polyorder + 1):
-    Flinear_fine += coeff * power **j
+    Flinear_fine += coeff[j] * power **j
 fl.next('Flinear',legend=True)
 Flinear.set_units('power',s_int.get_units('power'))
 fl.plot(Flinear,'o',label='Flinear')
@@ -345,5 +340,21 @@ R1p_fine.set_units('power',R1p.get_units('power'))
 fl.plot(R1p_fine)
 plt.title("relaxation rates")
 plt.ylabel("$R_{1}(p)$")
+#}}}
+#{{{ plotting with correction for heating
+ksigs_T = (ppt/C)*(1-enhancement['power',:idx_maxpower+1])*(R1p_fine)
+fl.next('ksig_smax for %s'%filename)
+x = enhancement['power',:idx_maxpower+1].fromaxis('power')
+fitting_line = fitdata(ksigs_T)
+k,p_half,power = symbols("k, p_half, power",real=True)
+ksigs_functional_form = (k*power)/(p_half+power)
+fitting_line.functional_form = ksigs_functional_form
+fitting_line.fit()
+fl.plot(ksigs_T,'o',label='with heating correction')
+fl.plot(fitting_line.eval(100),label='fit')
+plt.text(0.75,0.25,fitting_line.latex(), transform=plt.gca().transAxes,size='large',
+        horizontalalignment='center',color='k')
+plt.title('ksigmas(p) vs Power')
+plt.ylabel('ksigmas(p)')
 fl.show();quit()
 
