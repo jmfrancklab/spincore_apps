@@ -7,56 +7,12 @@ from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 import time
 from datetime import datetime
+from SpinCore_pp.verifyParams import verifyParams
+from SpinCore_pp.power_helper import gen_powerlist
 
 fl = figlist_var()
-def gen_powerlist(max_power, steps, min_dBm_step=0.5):
-    "generate a list of (roughly) evenly spaced powers up to max_power"
-    lin_steps = steps
-    def det_allowed(lin_steps):
-        powers = r_[0:max_power:1j*lin_steps][1:]
-        vectorize(powers)
-        rdB_settings = ones_like(powers)
-        for x in range(len(powers)):
-            rdB_settings[x] = round(10*(log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
-        return unique(rdB_settings)
-    dB_settings = det_allowed(lin_steps)
-    while len(dB_settings) < steps-1:
-        lin_steps += 1
-        dB_settings = det_allowed(lin_steps)
-        if lin_steps >= 200:
-            raise ValueError("I think I'm in an infinite loop -- maybe you"
-                    "can't request %d steps between 0 and %f W without going"
-                    "below %f a step?")%(steps,max_power,min_dBm_step)
-    return dB_settings
-#{{{ Verify arguments compatible with board
-def verifyParams():
-    if (nPoints > 16*1024 or nPoints < 1):
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
-    return
-#}}}
 
+# {{{ experimental parameters
 # Parameters for Bridge12
 max_power = 4 #W
 power_steps = 18
@@ -70,10 +26,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'I21R1a_Ras_capProbe'
+output_name = 'TEMPOL_289uM_heat_exch_0C'
 node_name = 'enhancement'
-adcOffset = 25
-carrierFreq_MHz = 14.901018
+adcOffset = 28
+carrierFreq_MHz = 14.549013
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -89,18 +45,20 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.326
+p90 = 1.781
 deadtime = 10.0
 repetition = 10e6
 
-SW_kHz = 24.0
-nPoints = 1024*2
-
-acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
+SW_kHz = 10
+acq_ms = 200.
+nPoints = int(acq_ms*SW_kHz+0.5)
+tau_adjust = 0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 3500.
+tau = 3500
+pad = 0
+total_pts = nPoints*nPhaseSteps
+assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -120,6 +78,7 @@ acq_params['tau_us'] = tau
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
+# }}}
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 #print "PAD DELAY:",pad,"us"
@@ -135,11 +94,11 @@ for x in range(nScans):
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
     acq_params['acq_time_ms'] = acq_time
     print("ACQUISITION TIME IS",acq_time,"ms")
-    verifyParams()
+    verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90, tau_us=tau)
     print("\nRECEIVER CONFIGURED.")
     print("***")
     print("\nINITIALIZING PROG BOARD...\n")
-    SpinCore_pp.init_ppg();
+    SpinCore_pp.init_ppg()
     print("PROGRAMMING BOARD...")
     print("\nLOADING PULSE PROG...\n")
     if phase_cycling:
@@ -178,31 +137,27 @@ for x in range(nScans):
     SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
     raw_data.astype(float)
-    data = []
-    data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+    data_array = []
+    data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+    print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
     print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-    dataPoints = float(shape(data)[0])
+    dataPoints = float(shape(data_array)[0])
     if x == 0:
         time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-        #data = ndshape([len(data)],['t']).alloc(dtype=np.complex128)
-        #data.setaxis('t',time_axis).set_units('t','s')
-        #data.name('signal')
-        #data.set_prop('acq_params',acq_params)
         DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['power','nScans','t']).alloc(dtype=complex128)
         DNP_data.setaxis('power',r_[0,powers]).set_units('W')
         DNP_data.setaxis('t',time_axis).set_units('t','s')
         DNP_data.setaxis('nScans',r_[0:nScans])
-    data = nddata(array(data),'t')
-    data.setaxis('t',time_axis)
+    data_array = nddata(array(data_array),'t')
+    data_array.setaxis('t',time_axis)
     # Define nddata to store along the new power dimension
-    DNP_data['power',0]['nScans',x] = data
+    DNP_data['power',0]['nScans',x] = data_array
 
 with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.8185e9,9.828e9))
+    this_return = b.lock_on_dip(ini_range=(9.579e9,9.595e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
@@ -293,16 +248,16 @@ with Bridge12() as b:
             SpinCore_pp.runBoard();
             raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
             raw_data.astype(float)
-            data = []
-            data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-            print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
+            data_array = []
+            data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+            print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
             print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-            dataPoints = float(shape(data)[0])
+            dataPoints = float(shape(data_array)[0])
             time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-            data = nddata(array(data),'t')
-            data.setaxis('t',time_axis).set_units('t','s')
-            data.name('signal')
-            DNP_data['power',j+1]['nScans',x] = data
+            data_array = nddata(array(data_array),'t')
+            data_array.setaxis('t',time_axis).set_units('t','s')
+            data_array.name('signal')
+            DNP_data['power',j+1]['nScans',x] = data_array
         last_power = this_power
 DNP_data.name(node_name)
 DNP_data.set_prop('meter_powers',meter_powers)
@@ -320,9 +275,9 @@ while save_file:
         print("*** *** *** *** *** *** *** *** *** *** ***")
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print("*** *** *** *** *** *** *** *** *** *** ***")
-        print("Name of saved data",DNP_data.name())
-        print("Units of saved data",DNP_data.get_units('t'))
-        print("Shape of saved data",ndshape(DNP_data))
+        print("Name of saved data_array",DNP_data.name())
+        print("Units of saved data_array",DNP_data.get_units('t'))
+        print("Shape of saved data_array",ndshape(DNP_data))
         save_file = False
     except Exception as e:
         print("\nEXCEPTION ERROR.")
@@ -339,15 +294,15 @@ while save_file:
             print("*** *** ***\n")
             break
         save_file = False
-fl.next('raw data')
+fl.next('raw data_array')
 fl.image(DNP_data.C.setaxis('power',
     '#').set_units('power','scan #'))
-fl.next('abs raw data')
+fl.next('abs raw data_array')
 fl.image(abs(DNP_data).C.setaxis('power',
     '#').set_units('power','scan #'))
-data.ft('t',shift=True)
-fl.next('raw data - ft')
+data_array.ft('t',shift=True)
+fl.next('raw data_array - ft')
 fl.image(DNP_data.C.setaxis('power','#'))
-fl.next('abs raw data - ft')
+fl.next('abs raw data_array - ft')
 fl.image(abs(DNP_data.C.setaxis('power','#')))
 fl.show();quit()

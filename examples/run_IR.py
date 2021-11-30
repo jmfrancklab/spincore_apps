@@ -37,25 +37,30 @@ def verifyParams():
 #}}}
 date = datetime.now().strftime('%y%m%d')
 clock_correction = 0
-output_name = 'I21R1a_Ras_capProbe'
+output_name = 'TEMPOL_289uM_heat_exch_0C'
 node_name = 'FIR_noPower_end'
-adcOffset = 25
-carrierFreq_MHz = 14.901018
+adcOffset = 28
+carrierFreq_MHz = 14.549013
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.326
+p90 = 1.781
 deadtime = 10.0
-repetition = 5e6
-SW_kHz = 24.0
-nPoints = 1024*2
-acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
+repetition = 4e6
+SW_kHz = 10
+acq_ms = 200.
+nPoints = int(acq_ms*SW_kHz+0.5)
+# rounding may need to be power of 2
+# have to try this out
+tau_adjust = 0
 deblank = 1.0
-tau = 3500.
-pad = 0.
+#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
+tau = 3500
+pad = 0
+total_pts = nPoints*nPhaseSteps
+assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 phase_cycling = True

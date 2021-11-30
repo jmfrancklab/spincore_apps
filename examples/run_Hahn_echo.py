@@ -50,9 +50,9 @@ def verifyParams():
     return
 #}}}
 
-output_name = 'TEMPOL_capProbe'
-node_name = 'test_CPMG_offRes'
-adcOffset = 25
+output_name = 'test'
+node_name = 'echo'
+adcOffset = 28
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -60,7 +60,7 @@ user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3507.3
+    true_B0 = 3424.42
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
@@ -72,7 +72,7 @@ if not user_sets_Field:
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.895548
+    carrierFreq_MHz = 14.8978438
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
@@ -98,17 +98,13 @@ if not phase_cycling:
 #}}}
 p90 = 4.477
 deadtime = 10
-repetition = 12e6
+repetition = 1e6
 
-#acq_ms = 85.3
-#SW_kHz = 24
-#nPoints = int(acq_ms*SW_kHz+0.5)
-nPoints = 64
-SW_kHz = 2.0
-acq_ms = nPoints/SW_kHz
+SW_kHz = 10
+acq_ms = 200.
+nPoints = int(acq_ms*SW_kHz+0.5)
 # rounding may need to be power of 2
 # have to try this out
-
 tau_adjust = 0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
@@ -134,6 +130,8 @@ acq_params['pad_us'] = pad
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
+total_pts = nPoints*nPhaseSteps
+assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 print(("ACQUISITION TIME:",acq_ms,"ms"))
 print(("TAU DELAY:",tau,"us"))
 print(("PAD DELAY:",pad,"us"))
@@ -167,7 +165,6 @@ for x in range(nScans):
             ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
             ('delay',deadtime),
             ('acquire',acq_ms),
-            #('delay',pad),
             ('delay',repetition),
             ('jumpto','start')
             ])
@@ -182,7 +179,6 @@ for x in range(nScans):
             ('pulse_TTL',2.0*p90,0),
             ('delay',deadtime),
             ('acquire',acq_ms),
-            #('delay',pad),
             ('delay',repetition),
             ('jumpto','start')
             ])
