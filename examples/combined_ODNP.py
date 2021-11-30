@@ -62,7 +62,7 @@ powers = 1e-3*10**(dB_settings/10.)
 time_list.append(time.time())
 #{{{ enhancement curve pulse prog
 def run_scans(nScans, power_idx, DNP_data=None):
-    """run nScans and slot them into he power_idx index of DNP_data -- assume
+    """run nScans and slot them into the power_idx index of DNP_data -- assume
     that the first time this is run, it will be run with DNP_data=None and that
     after that, you will pass in DNP_data
     
@@ -292,11 +292,6 @@ with power_control() as p:
         vd_data.setaxis('ph2',ph2ir_cyc/4)
         vd_data.hdf5_write(myfilename)
         time_list.append(time.time())
-    #IR_log = p.stop_log()
-            
-#with h5py.File(myfilename, 'a') as f:
-#    log_grp = f.create_group('IR_log')
-#    hdf_save_dict_to_group(log_grp,IR_log.__getstate__())
 #}}}
 #{{{run enhancement
 DNP_data = run_scans(nScans,0)
@@ -313,7 +308,6 @@ with power_control() as p:
         if j == 0:
             retval = p.dip_lock(9.81,9.83)
             print(retval)
-            #p.start_log()
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
