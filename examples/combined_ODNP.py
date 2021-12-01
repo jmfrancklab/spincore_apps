@@ -140,8 +140,9 @@ def run_scans(nScans, power_idx, DNP_data=None):
         if DNP_data is None:
             time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
             DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
-            DNP_data['indirect'] = dtype([('start_times',double),('stop_times',double)])
-            DNP_data.setaxis('indirect',zeros(len(powers)+1),dtype=DNP_data['indirect']).set_units('s')
+            times_dtype = dtype([('start_times',double),('stop_times',double)])
+            mytimes = zeros(len(powers)+1,dtype=times_dtype)
+            DNP_data.setaxis('indirect',mytimes)
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
