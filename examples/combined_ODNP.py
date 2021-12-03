@@ -15,9 +15,9 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '10mM_TEMPOL_test_1log'
-adcOffset = 30
-carrierFreq_MHz = 14.896329
+output_name = '10mM_TEMPOL_test_final'
+adcOffset = 29
+carrierFreq_MHz = 14.893778
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -27,8 +27,8 @@ date = datetime.now().strftime('%y%m%d')
 # note that acq_time_ms is always milliseconds
 p90_us = 4.464
 deadtime_us = 10.0
-repetition_us = 3e6
-FIR_rd = 1e6
+repetition_us = 6e6
+FIR_rd = 3e6
 SW_kHz = 5 
 acq_time_ms = 500. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
@@ -37,7 +37,7 @@ deblank_us = 1.0
 tau_us = 3500
 pad_us = 0
 pul_prog = 'ODNP_v3'
-vd_list = r_[5e1,5e3,7.3e4,8e5,1e6]
+vd_list = r_[5e1,7.3e4,8e5,1e6,1.5e6,2e6]
 T1_powers_dB = r_[27,30,32,33]
 T1_node_names = ['FIR_27dBm','FIR_30dBm','FIR_32dBm','FIR_33dBm']
 
