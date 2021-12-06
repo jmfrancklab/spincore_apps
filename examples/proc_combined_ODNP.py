@@ -12,10 +12,10 @@ from Instruments.logobj import logobj
 logger = init_logging("info")
 Ep_signal_pathway = {'ph1':1}
 fl=fl_mod()
-filename='211124_10mM_TEMPOL_test_1log'
+filename='211203_10mM_TEMPOL_test_final_noMod'
 file_location = 'ODNP_NMR_comp/ODNP'
-Ep_f_slice=(-1e3,1e3)
-IR_f_slice=(-1e3,1e3)
+Ep_f_slice=(-0.5e3,0.5e3)
+IR_f_slice=(-0.5e3,0.7e3)
 t_range = (0,0.2)
 excluded_pathways = [(0,0)]
 R1w = 1/2.172
@@ -68,18 +68,24 @@ fl.plot(power_axis,'.')
 #{{{IR processing
 T1_list = []
 power_list = []
+start_times = []
+errors=[]
 for nodename, postproc, signal_pathway, clock_correction in [
-        ('FIR_27dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
-        ('FIR_30dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
-        ('FIR_32dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        #('FID_noPower','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        #('FIR_27dBm','spincore_IR_v1',{'ph1':0,'ph2':1},True),
+        #('FIR_30dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        #('FIR_32dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
         ('FIR_33dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
-            postproc=postproc,lookup=lookup_table,fl=fl)
+            postproc=postproc,lookup=lookup_table)
     times = IR.C.getaxis('indirect').copy()
     IR.mean('indirect')
     fl.next('Raw IR')
     fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
+    #fl.next('1D diagnostic IR raw data')
+    #fl.plot(select_pathway(IR.C.mean('nScans'),signal_pathway))
+    #fl.show();quit()
     IR['ph2',0]['ph1',0]['t2':0]=0 #kill axial noise
     IR.ift('t2')
     IR.ift(['ph1','ph2'])
@@ -120,34 +126,46 @@ for nodename, postproc, signal_pathway, clock_correction in [
             fl.image(IR.C.setaxis('vd','#'))
         IR.ift('t2')
     #}}}
+    #fl.next('1D diagnostic IR after clock')
+    #IR.ft('t2')
+    #fl.plot(select_pathway(IR,signal_pathway))
+    #IR.ift('t2')
     #{{{phasing
-    IR /= zeroth_order_ph(select_pathway(IR,signal_pathway))
-    if 'nScans' in IR.dimlabels:
-        IR.mean('nScans')
     IR.ft('t2')
-    mysgn = determine_sign(select_pathway(IR.C.mean('vd'),signal_pathway))
+    #mysgn = determine_sign(select_pathway(IR.C.mean('vd'),signal_pathway))
     IR.ift('t2')
-    best_shift = hermitian_function_test(select_pathway(IR.C.mean('vd')*mysgn,
+    best_shift = hermitian_function_test(select_pathway(IR.C.mean('vd'),
         signal_pathway),aliasing_slop=1)
+    print("BEST SHIFT IS:",best_shift)
     IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     IR.ft('t2')
+    #fl.next('1D diagnostic IR after herm')
+    #fl.plot(select_pathway(IR,signal_pathway))
+    IR.ift('t2')
+    IR /= zeroth_order_ph(select_pathway(IR,signal_pathway))
+    #fl.next('1D diagnostic IR zeroth correct 2')
+    #IR.ft('t2')
+    #fl.plot(select_pathway(IR,signal_pathway))
+    #IR.ift('t2')
+    IR.ft('t2')    
+    #fl.show();quit()
     fl.next('Phase corrected IR')
     fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
     #{{{Alignment
-    mysgn = determine_sign(select_pathway(IR['t2':IR_f_slice],signal_pathway))
+    mysgn = determine_sign(select_pathway(IR['t2':IR_f_slice].C,signal_pathway))
     IR.ift(['ph1','ph2'])
     opt_shift,sigma, my_mask = correl_align(IR.C*mysgn,indirect_dim='vd',
-            signal_pathway=signal_pathway)
+            signal_pathway=signal_pathway,sigma=150)
     IR.ift('t2')
     IR *= np.exp(-1j*2*pi*opt_shift*IR.fromaxis('t2'))
     IR.ft('t2')
     IR.ift('t2')
     IR.ft(['ph1','ph2'])
     IR.ft('t2')
-    IR.reorder(['ph1','ph2','vd','t2'])
     fl.next('Aligned IR')
     fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
+    #fl.show();quit()
     #}}}
     IR.ift('t2')
     #{{{FID slice
@@ -167,14 +185,16 @@ for nodename, postproc, signal_pathway, clock_correction in [
     s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             convolve_method='Gaussian',
             indirect='vd',return_frq_slice=True)
-    fl.next('1D diagnostic IR')
-    fl.plot(select_pathway(d,signal_pathway))
-    plt.axvline(x=frq_slice[0])
-    plt.axvline(x=frq_slice[-1])
+    #fl.next('1D diagnostic IR')
+    #fl.plot(select_pathway(d,signal_pathway))
+    #plt.axvline(x=frq_slice[0])
+    #plt.axvline(x=frq_slice[-1])
+    #fl.show();quit()
     #}}}
-    s_int*= -1
+    s_int['vd',:zero_crossing]*= -1
     fl.next('IR %s'%nodename)
     fl.plot(s_int,'ko',capsize=2,alpha=0.3)
+    #fl.show();quit()
     #{{{Fitting Routine
     x = s_int.fromaxis('vd')
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd",Real=True)
@@ -186,17 +206,29 @@ for nodename, postproc, signal_pathway, clock_correction in [
     fl.next('fit',legend=True)
     fl.plot(s_int,'o',capsize=6,label='actual data')
     fl.plot(f.eval(100),label='fit for %s'%nodename)
-    print('T1:',T1)
+    #fl.show();quit()
     T1_list.append(T1)
     #}}}
     #}}}
-    #start time doesn't seem to show anywhere so I am using the stop time and subtracting to get a good range to take the mean over
-    slop=80
-    power_list.append(power_axis['time':((IR.get_prop('stop_time')-slop),
-        (IR.get_prop('stop_time')))].mean('time').item())
+#{{{finding average power for each T1
+#start time doesn't seem to show anywhere so I am using the stop time and subtracting to get a good range to take the mean over
+    slop=170
+    avg_power = power_axis['time':((IR.get_prop('stop_time')-slop),
+        (IR.get_prop('stop_time')))].mean('time',std=True)
+    errors.append(avg_power.get_error())
+    power_list.append(avg_power)
     fl.next('power axis W')
-    plt.axvline(x=IR.get_prop('stop_time')-slop,color='k',alpha=0.5)
+    start_time = IR.get_prop('stop_time')-slop
+    start_times.append(start_time)
+    plt.axvline(x=start_time,color='k',alpha=0.5)
     plt.axvline(x=IR.get_prop('stop_time'),color='b',alpha=0.5)
+nddata_p_vs_t = nddata(power_list,[-1],['time'])
+nddata_p_vs_t.setaxis('time',start_times)
+for j in range(len(power_list)):
+    nddata_p_vs_t['time',j] = power_list[j]
+nddata_p_vs_t.set_error(errors)
+fl.plot(nddata_p_vs_t,'ro',capsize=6)
+#}}}
 #{{{Load/process enhancement
 for filename,nodename,file_location in [
         (filename,'enhancement_curve','ODNP_NMR_comp/ODNP')
@@ -205,101 +237,114 @@ for filename,nodename,file_location in [
     s.ft('t2',shift=True)
     s.ft(['ph1'])
     s.reorder(['ph1','indirect'])
-    s_start = s.getaxis('indirect')[0]
+    #s_start = s.getaxis('indirect')[0]
     fl.next('Raw Ep')
-    fl.image(s.C.setaxis(
-'indirect','#').set_units('indirect','scan #'))
-    s.ift('t2')
-    s.rename('indirect','time')
-    s.ft('t2')
-    zero_crossing = abs(s['t2':Ep_f_slice]['ph1':1]).C.sum('t2').argmin('time',raw_index=True).item()
-    s = s['t2':Ep_f_slice] 
-    s.ift('t2')
+    fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
+    fl.next('1D diagnostic of raw Ep')
+    fl.plot(select_pathway(s.C.mean('nScans'),Ep_signal_pathway))
+    fl.show();quit()
+    #s.ift('t2')
+    #s.rename('indirect','time')
+    #s.ft('t2')
+    #zero_crossing = abs(s['t2':Ep_f_slice]['ph1':1]).C.sum('t2').argmin('time',raw_index=True).item()
+    #s = s['t2':Ep_f_slice] 
+    #s.ift('t2')
     #{{{phasing
-    s /= zeroth_order_ph(select_pathway(s,Ep_signal_pathway))
-    if 'nScans' in s.dimlabels:
-        s.mean('nScans')
-    s.ft('t2')
-    mysgn = determine_sign(select_pathway(s,Ep_signal_pathway))
-    s.ift('t2')
-    best_shift = hermitian_function_test(select_pathway(s.C.mean('time')*mysgn,
-        Ep_signal_pathway),aliasing_slop=1)
-    s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
-    s.ft('t2')
-    fl.next('phase corrected Ep')
-    fl.image(s.C.setaxis(
-'time','#').set_units('time','scan #'))
+    #s /= zeroth_order_ph(select_pathway(s,Ep_signal_pathway))
+    #if 'nScans' in s.dimlabels:
+    #    s.mean('nScans')
+    #s.ft('t2')
+    #mysgn = determine_sign(select_pathway(s,Ep_signal_pathway))
+    #s.ift('t2')
+    #best_shift = hermitian_function_test(select_pathway(s.C.mean('time')*mysgn,
+    #    Ep_signal_pathway),aliasing_slop=1)
+    #s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
+    #s.ft('t2')
+    #fl.next('phase corrected Ep')
+    #fl.image(s.C.setaxis(
+#'time','#').set_units('time','scan #'))
     #}}}
     #{{{Alignment
-    mysgn = determine_sign(select_pathway(s['t2':Ep_f_slice],Ep_signal_pathway))
-    s.ift(['ph1'])
-    opt_shift,sigma, my_mask = correl_align(s.C*mysgn,indirect_dim='time',
-            signal_pathway=Ep_signal_pathway)
-    s.ift('t2')
-    s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
-    s.ft('t2')
-    s.ift('t2')
-    s.ft(['ph1'])
-    s.ft('t2')
-    s.reorder(['ph1','time','t2'])
-    fl.next('Aligned Ep')
-    fl.image(s,human_units=False)
+    #mysgn = determine_sign(select_pathway(s['t2':Ep_f_slice],Ep_signal_pathway))
+    #s.ift(['ph1'])
+    #opt_shift,sigma, my_mask = correl_align(s.C*mysgn,indirect_dim='time',
+    #        signal_pathway=Ep_signal_pathway)
+    #s.ift('t2')
+    #s *= np.exp(-1j*2*pi*opt_shift*s.fromaxis('t2'))
+    #s.ft('t2')
+    #s.ift('t2')
+    #s.ft(['ph1'])
+    #s.ft('t2')
+    #s.reorder(['ph1','time','t2'])
+    #fl.next('Aligned Ep')
+    #fl.image(s,human_units=False)
     #}}}
-    s.ift('t2')
+    #s.ift('t2')
     #{{{FID slice
-    d=s.C
-    d = d['t2':(0,None)]
-    d['t2':0] *= 0.5
-    d.ft('t2')
-    fl.next('FID sliced Ep')
-    fl.image(d,human_units=False)
+    #d=s.C
+    #d = d['t2':(0,None)]
+    #d['t2':0] *= 0.5
+    #d.ft('t2')
+    #fl.next('FID sliced Ep')
+    #fl.image(d,human_units=False)
     #}}}
     #{{{Integrate with error
-    error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
-            - set(excluded_pathways)
-            -set([(Ep_signal_pathway['ph1'])]))
-    error_pathway = [{'ph1':j} for j in error_pathway]
-    s_int,frq_slice = integral_w_errors(d,Ep_signal_pathway,error_pathway,
-            convolve_method='Gaussian',
-            indirect='time',return_frq_slice=True)
+    #error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
+    #        - set(excluded_pathways)
+    #        -set([(Ep_signal_pathway['ph1'])]))
+    #error_pathway = [{'ph1':j} for j in error_pathway]
+    #s_int,frq_slice = integral_w_errors(d,Ep_signal_pathway,error_pathway,
+    #        convolve_method='Gaussian',
+    #        indirect='time',return_frq_slice=True)
     #}}}
     #{{{Normalize and flip
-    time_axis = s_int.getaxis('time')
-    time_axis[-1] = s.get_prop('stop_time')    
-    s_int.setaxis('time',time_axis)
+    #quit()
+    #time_axis = s_int.getaxis('time')[:]['start_times']
+    #time_axis[-1] = s.get_prop('stop_time')    
+    #s_int.setaxis('time',time_axis)
     #}}}
-    s_int /= np.real(s_int['time',0:1].data.item())
-    s_int['time',zero_crossing+1:] *= -1
-    fl.next('E(p) before power correction')
-    fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
-    fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
+    #s_int /= np.real(s_int['time',0:1].data.item())
+    #s_int['time',zero_crossing+1:] *= -1
+    #fl.next('E(p) before power correction')
+    #fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
+    #fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
+    #fl.show();quit()
     #}}}
     #{{{finding average power over steps
-    dnp_time_axis = s_int.C.getaxis('time').copy()
-    dnp_time_axis = r_[dnp_time_axis]#,power_axis.getaxis('time')[-1]]
+    s.getaxis('indirect')[-1]['stop_times'] = s.get_prop('stop_time')
+    dnp_time_axis = s.C.getaxis('indirect').copy()
+    dnp_time_axis = r_[dnp_time_axis[:-1]]
     nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
-    slop=3.0
     new_time_axis = nddata_time_axis.C.data
+    new_time_axis[-1] = s.get_prop('stop_time')
     new_time_axis = nddata(new_time_axis,[-1],['time'])
     power_vs_time = ndshape(nddata_time_axis).alloc().set_units('time','s')
     power_vs_time.set_error(0)
     power_vs_time.setaxis('time',new_time_axis.data)
     #{{{find values for Ep
     fl.next('power axis W')
-    for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[1:],dnp_time_axis[2:-1])):
-        if time_stop == dnp_time_axis[-2]:
-            power_vs_time['time',j+1] = power_axis['time':((time_start),(time_stop))].mean('time',std=True)
-        else:    
-            power_vs_time['time',j+1] = power_axis['time':((time_start),(time_stop-2.5*slop))].mean('time',std=True)
+    for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[:]['start_times'],dnp_time_axis[:]['stop_times'])):
+        power_vs_time['time',j] = power_axis['time':((time_start),(time_stop))].mean('time',std=True)
         plt.axvline(x=time_start,color='k',alpha=0.5)
-        if time_stop == dnp_time_axis[-2]:
-            plt.axvline(x=time_stop,color='b',alpha=0.5)
-        else:    
-            plt.axvline(x=time_stop-(2.5*slop),color='b',alpha=0.5)
+        plt.axvline(x=time_stop,color='b',alpha=0.5)
     power_vs_time.set_units('time','s')
-    power_vs_time.data[0] = 0
-    power_vs_time = power_vs_time['time',:-1]
-    fl.plot(power_vs_time,'ro',capsize=6,human_units=False)
+    avg_p_vs_t = nddata(power_vs_time.data,[-1],['time'])
+    avg_p_vs_t.set_error(power_vs_time.get_error())
+    start_times = s.C.getaxis('indirect')[:-1]['start_times']
+    avg_p_vs_t.setaxis('time',start_times)
+    #power_vs_time.data[0] = 0
+    #power_vs_time = power_vs_time['time',:-1]
+    #print(power_vs_time)
+    print(avg_p_vs_t)
+    #time_axis = avg_p_vs_t.getaxis('time')
+    #print(time_axis)
+    #time_axis[-1] = s.get_prop('stop_time')
+    #print(time_axis)
+    #avg_p_vs_t.setaxis('time',time_axis)
+    #print(avg_p_vs_t)
+    #avg_p_vs_t = avg_p_vs_t['time',:-1]
+    fl.plot(avg_p_vs_t,'ro',capsize=6)
+    fl.show();quit()
     #}}}
     #}}}
     #{{{set time axis to power for Ep
