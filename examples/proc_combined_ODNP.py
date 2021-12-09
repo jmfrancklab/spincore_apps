@@ -20,7 +20,7 @@ Ep_t_range = (0,0.2)
 t_range = (0,0.2)
 excluded_pathways = [(0,0)]
 R1w = 1/2.172
-nPowers = 14
+nPowers = 15
 ppt = 1.5167e-3
 C=0.01
 #{{{load in log
@@ -294,10 +294,9 @@ for filename,nodename,file_location in [
     for j in range(len(s_int.getaxis('time'))):
         s_int.getaxis('time')[j]['start_times'] -= log_start_time
         s_int.getaxis('time')[j]['stop_times'] -= log_start_time
-    s_int.getaxis('time')[-1]['stop_times'] =power_axis.getaxis('time')[-1]
-    print("THERMAL DONE TIME",s.get_prop('thermal_done_time')-log_start_time)
     print(s_int.getaxis('time'))
-    quit()
+    fl.show();quit()
+    s_int.getaxis('time')[-1]['stop_times'] =power_axis.getaxis('time')[-1]
     time_axis = s_int.getaxis('time')[:]['start_times']
     s_int.setaxis('time',time_axis)
     #}}}
