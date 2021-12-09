@@ -44,13 +44,9 @@ T1_node_names = ['FIR_27dBm','FIR_30dBm','FIR_32dBm','FIR_33dBm']
 # }}}
 #{{{Power settings
 max_power = 3 #W
-power_steps = 15
-dB_settings = gen_powerlist(max_power,power_steps)
+power_steps = 14
 threedown = True
-if threedown:
-    append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
-            for frac in [0.75,0.5,0.25]]
-    dB_settings = append(dB_settings,append_dB)
+dB_settings = gen_powerlist(max_power,power_steps+1, threedown=threedown)
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 myinput = input("Look ok?")
@@ -300,16 +296,17 @@ with power_control() as p:
 #{{{run enhancement
 DNP_ini_time = time.time()
 DNP_data = run_scans(nScans,0)
+DNP_thermal_done = time.time()
 time_list.append(time.time())
 time_axis_coords = DNP_data.getaxis('indirect')
 time_axis_coords[0]['start_times'] = DNP_ini_time
 # w/ struct array, this becomes time_axis_coords[0]['start_time']
 DNP_data.set_prop('start_time', DNP_ini_time)
-DNP_data.set_prop('thermal_done_time', time.time())
+DNP_data.set_prop('thermal_done_time', DNP_thermal_done)
+time_axis_coords[0]['stop_times'] = DNP_thermal_done
 # w/ struct array, we can add time_axis_coords[0]['stop_time'], and the above becomes obsolete
 power_settings = zeros_like(dB_settings)
 time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-time_axis_coords[0]['stop_times'] = time.time()
 with power_control() as p:
     for j, this_dB in enumerate(dB_settings):
         print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
@@ -323,9 +320,9 @@ with power_control() as p:
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
         time.sleep(5)
         power_settings[j] = p.get_power_setting()
-        time_axis_coords[j]['start_times'] = time.time()
+        time_axis_coords[j+1]['start_times'] = time.time()
         run_scans(nScans,j+1,DNP_data)
-        time_axis_coords[j]['stop_times'] = time.time()
+        time_axis_coords[j+1]['stop_times'] = time.time()
     this_log=p.stop_log()
 DNP_data.set_prop('stop_time', time.time())
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',

@@ -4,8 +4,11 @@ from numpy import *
 
 
 def gen_powerlist(max_power, steps, min_dBm_step=0.5, three_down=False):
-    """generate a list of (roughly) evenly spaced powers up
-    to max_power
+    """Generate a list of (roughly) evenly spaced powers up
+    to max_power.
+    With `three_down` set to False, generate steps-1 steps, as is appropriate
+    for an enhancement curve with `steps` indirect points.
+    With `three_down` set to True, adds three points going down in power at the end.
 
     Parameters
     ==========
