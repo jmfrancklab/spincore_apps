@@ -15,9 +15,9 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '10mM_TEMPOL_test_final'
-adcOffset = 29
-carrierFreq_MHz = 14.893778
+output_name = '10mM_TEMPOL_test'
+adcOffset = 32
+carrierFreq_MHz = 14.894974
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -37,7 +37,7 @@ deblank_us = 1.0
 tau_us = 3500
 pad_us = 0
 pul_prog = 'ODNP_v3'
-vd_list = r_[5e1,7.3e4,8e5,1e6,1.5e6,2e6]
+vd_list = r_[2.1e3,2.1e4,2.1e5,4.3e5,6.4e5,8.8e5,1.1e6,1.3e6,1.5e6,1.7e6,1.9e6,2.5e6,3e6,3.3e6]
 T1_powers_dB = r_[27,30,32,33]
 T1_node_names = ['FIR_27dBm','FIR_30dBm','FIR_32dBm','FIR_33dBm']
 
@@ -241,7 +241,7 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
 #}}}
 #{{{run IR
 ini_time = time.time() # needed b/c data object doesn't exist yet
-vd_data = run_scans_IR(vd_list,'FID_noPower',
+vd_data = run_scans_IR(vd_list,'FIR_noPower',
         nScans=nScans, power_idx=0)
 time_list.append(time.time())
 time_axis_coords_IR = vd_data.getaxis('indirect')
@@ -280,6 +280,7 @@ with power_control() as p:
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         meter_power = p.get_power_setting()
+        vd_data.set_prop('start_time', time.time())
         vd_data = run_scans_IR(vd_list,T1_node_names[j], nScans=nScans, power_idx=j+1,
                 power_on=True,vd_data=vd_data)
         vd_data.set_prop('stop_time', time.time())
@@ -349,6 +350,6 @@ while save_file:
         print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
         save_file = False
 with h5py.File(myfilename, 'a') as f:
-    log_grp = f.create_group('Ep_log')
+    log_grp = f.create_group('log')
     hdf_save_dict_to_group(log_grp,this_log.__getstate__())
 #}}}
