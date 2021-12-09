@@ -35,8 +35,9 @@ for j in range(len(read_array)):
 fig, (ax_Rx,ax_power) = plt.subplots(2,1, figsize=(10,8))
 fl.next("log figure",fig=fig)
 ax_Rx.set_ylabel('Rx/mV')
-start_time = read_array['time'][0]
-relative_time = read_array['time'] #- ini_time
+log_start_time = read_array['time'][0]
+print("LOG START TIME IS:",log_start_time)
+relative_time = read_array['time']
 ax_Rx.plot(relative_time, read_array['Rx'],'.')
 ax_power.set_ylabel('power/dBm')
 ax_power.plot(relative_time,read_array['power'],'.')
@@ -47,15 +48,16 @@ trans_power = transforms.blended_transform_factory(
 trans_Rx = transforms.blended_transform_factory(
         ax_Rx.transData, ax_Rx.transAxes)
 for j, thisevent in enumerate(read_array[mask]):
-    ax_Rx.axvline(x=thisevent['time']-start_time)
-    ax_power.axvline(x=thisevent['time']-start_time)
+    ax_Rx.axvline(x=thisevent['time']-log_start_time)
+    ax_power.axvline(x=thisevent['time']-log_start_time)
     y_pos = j/n_events
-    ax_Rx.text(thisevent['time']-start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_Rx)
-    ax_power.text(thisevent['time']-start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_power)
+    ax_Rx.text(thisevent['time']-log_start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_Rx)
+    ax_power.text(thisevent['time']-log_start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_power)
 ax_power.legend(**dict(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.))
 plt.tight_layout()
 power_axis = nddata(read_array['power'],[-1],['time'])
 power_axis.setaxis('time',relative_time)
+power_axis.setaxis('time',lambda x: x - log_start_time)
 fl.next('power axis')
 fl.plot(power_axis,'.')
 power_axis = nddata(read_array['power'],[-1],['time'])
@@ -70,12 +72,13 @@ fl.plot(power_axis,'.')
 T1_list = []
 power_list = []
 start_times = []
+stop_times = []
 errors=[]
 for nodename, postproc, signal_pathway, clock_correction in [
-        ('FIR_noPower','spincore_IR_v1',{'ph1':0,'ph2':1},False),
-        ('FIR_27dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
-        ('FIR_30dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
-        ('FIR_32dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        #('FIR_noPower','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        #('FIR_27dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        #('FIR_30dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        #('FIR_32dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
         ('FIR_33dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
@@ -190,22 +193,17 @@ for nodename, postproc, signal_pathway, clock_correction in [
     #}}}
     #}}}
 #{{{finding average power for each T1
-    if nodename == 'FIR_noPower':
-        no_power = 0
-        power_list.append(no_power)
-        errors.append(0)
-        start_time = IR.get_prop('start_time')
-        start_times.append(start_time)
-    else:
-        avg_power = power_axis['time':((IR.get_prop('start_time')),
-            (IR.get_prop('stop_time')))].mean('time',std=True)
-        errors.append(avg_power.get_error())
-        power_list.append(avg_power)
-        fl.next('power axis W')
-        start_time = IR.get_prop('start_time')
-        start_times.append(start_time)
-        plt.axvline(x=start_time,color='k',alpha=0.5)
-        plt.axvline(x=IR.get_prop('stop_time'),color='b',alpha=0.5)
+    start_time = IR.get_prop('start_time')-log_start_time
+    stop_time = IR.get_prop('stop_time')-log_start_time
+    avg_power = power_axis['time':(start_time,
+        stop_time)].mean('time',std=True)
+    errors.append(avg_power.get_error())
+    power_list.append(avg_power)
+    fl.next('power axis W')
+    start_times.append(start_time)
+    stop_times.append(stop_time)
+    plt.axvline(x=start_time,color='k',alpha=0.5)
+    plt.axvline(x=stop_time,color='b',alpha=0.5)
 nddata_p_vs_t = nddata(power_list,[-1],['time'])
 nddata_p_vs_t.setaxis('time',start_times)
 for j in range(len(power_list)):
@@ -215,10 +213,11 @@ fl.plot(nddata_p_vs_t,'ro',capsize=6)
 logger.info(strm("T1 list:",T1_list))
 logger.info(strm("Power list:",power_list))
 #}}}
-#{{{Load/process enhancement
+#{{{Load process enhancement
 for filename,nodename,file_location in [
         (filename,'enhancement_curve','ODNP_NMR_comp/ODNP')
         ]:
+    #{{{
     s = find_file(filename,exp_type=file_location, expno=nodename)
     s.ft('t2',shift=True)
     s.ft(['ph1'])
@@ -241,6 +240,7 @@ for filename,nodename,file_location in [
     if 'nScans' in s.dimlabels:
         s.mean('nScans')
     s.ift('t2')
+    #}}}
     #{{{phasing
     s.ft('t2')
     s.ift('t2')
@@ -291,8 +291,15 @@ for filename,nodename,file_location in [
     plt.axvline(x=frq_slice[-1])
     #}}}
     #{{{Normalize and flip
+    for j in range(len(s_int.getaxis('time'))):
+        s_int.getaxis('time')[j]['start_times'] -= log_start_time
+        s_int.getaxis('time')[j]['stop_times'] -= log_start_time
+    s_int.getaxis('time')[-1]['stop_times'] =power_axis.getaxis('time')[-1]
+    spacing = s_int.getaxis('time')[-2]['start_times'] - s_int.getaxis('time')[-3]['stop_times']
+    print(spacing)
+    s_int.getaxis('time')[-1]['start_times'] = (s_int.getaxis('time')[-1]['stop_times']-spacing)
+    print(s_int.getaxis('time'))
     time_axis = s_int.getaxis('time')[:]['start_times']
-    time_axis[-1] = s.get_prop('stop_time')    
     s_int.setaxis('time',time_axis)
     #}}}
     s_int['time',zero_crossing+1:] *= -1
@@ -300,14 +307,20 @@ for filename,nodename,file_location in [
     fl.next('E(p) before power correction')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
+    fl.show();quit()
+    print("SHOULD BE:",s_int.getaxis('time'))
     #}}}
     #{{{finding average power over steps
-    s.getaxis('time')[-1]['stop_times'] = s.get_prop('stop_time')
-    dnp_time_axis = s.C.getaxis('time').copy()
-    dnp_time_axis = r_[dnp_time_axis[:-1]]
+    dnp_time_axis = dnp_time_axis1.C.getaxis('time').copy()
+    dnp_time_axis[:]['start_times'] = s_int.getaxis('time')
+    dnp_time_axis[-1]['stop_times'] = s.get_prop('stop_time')
+    print(dnp_time_axis)
+    for j in range(len(dnp_time_axis['start_times'])):
+        #dnp_time_axis[j]['start_times'] -= log_start_time
+        dnp_time_axis[j]['stop_times'] -= log_start_time
+    print(dnp_time_axis)    
     nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
     new_time_axis = nddata_time_axis.C.data
-    new_time_axis[-1] = s.get_prop('stop_time')
     new_time_axis = nddata(new_time_axis,[-1],['time'])
     power_vs_time = ndshape(nddata_time_axis).alloc().set_units('time','s')
     power_vs_time.set_error(0)
@@ -321,15 +334,14 @@ for filename,nodename,file_location in [
     power_vs_time.set_units('time','s')
     avg_p_vs_t = nddata(power_vs_time.data,[-1],['time'])
     avg_p_vs_t.set_error(power_vs_time.get_error())
-    start_times = s.C.getaxis('time')[:-1]['start_times']
-    avg_p_vs_t.setaxis('time',start_times)
+    avg_p_vs_t.setaxis('time',dnp_time_axis[:]['start_times'])
+    print("DOES IT MATCH?",avg_p_vs_t.getaxis('time'))
     fl.plot(avg_p_vs_t,'ro',capsize=6)
     #}}}
     #}}}
     #{{{set time axis to power for Ep
     s_int.rename('time','power')
     power_axis = np.real(power_vs_time.data)
-    s_int = s_int['power',:-1] #taking out point from when it was added in in line 143 for the last power in the power axis
     s_int.setaxis('power',power_axis)
     s_int.set_error('power',power_vs_time.get_error())
     idx_maxpower = np.argmax(s_int.getaxis('power'))
@@ -337,10 +349,14 @@ for filename,nodename,file_location in [
     fl.next('Final E(p)')
     fl.plot(np.real(s_int['power',:-3]),'ko',capsize=6,alpha=0.3)
     fl.plot(np.real(s_int['power',-3:]),'ro',capsize=6,alpha=0.3)
+    print(np.real(s_int))
+    fl.show();quit()
     #}}}
 #{{{Relaxation rates and making Flinear
 T1p = nddata(T1_list,[-1],['power'])
 T1_powers=[]
+print(T1p)
+print(power_list)
 for j in range(len(power_list)):
     if j == 0:
         T1_powers.append(power_list[j])
@@ -349,10 +365,12 @@ for j in range(len(power_list)):
 T1p.setaxis('power',T1_powers)
 T1p.set_error('power',nddata_p_vs_t.get_error())
 T1p['power',0] = 0.29
+print(T1p)
+quit()
 fl.next(r'$T_{1}$(p) vs power')
 fl.plot(T1p.data,'o')
 R1p=T1p.C**-1
-Flinear = ((R1p - R1p['power':0]+R1w)**-1)
+Flinear = ((R1p - R1p['power':0.001]+R1w)**-1)
 polyorder = 1
 coeff = abs(Flinear).polyfit('power',order=polyorder)
 power = nddata(np.linspace(0,R1p.getaxis('power')[-1],nPowers),'power')
