@@ -51,8 +51,8 @@ for j, thisevent in enumerate(read_array[mask]):
     ax_Rx.axvline(x=thisevent['time']-log_start_time)
     ax_power.axvline(x=thisevent['time']-log_start_time)
     y_pos = j/n_events
-    ax_Rx.text(thisevent['time']-log_start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_Rx)
-    ax_power.text(thisevent['time']-log_start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_power)
+    #ax_Rx.text(thisevent['time']-log_start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_Rx)
+    #ax_power.text(thisevent['time']-log_start_time,y_pos,read_dict[thisevent['cmd']],transform=trans_power)
 ax_power.legend(**dict(bbox_to_anchor=(1.05,1),loc=2,borderaxespad=0.))
 plt.tight_layout()
 power_axis = nddata(read_array['power'],[-1],['time'])
@@ -295,10 +295,9 @@ for filename,nodename,file_location in [
         s_int.getaxis('time')[j]['start_times'] -= log_start_time
         s_int.getaxis('time')[j]['stop_times'] -= log_start_time
     s_int.getaxis('time')[-1]['stop_times'] =power_axis.getaxis('time')[-1]
-    spacing = s_int.getaxis('time')[-2]['start_times'] - s_int.getaxis('time')[-3]['stop_times']
-    print(spacing)
-    s_int.getaxis('time')[-1]['start_times'] = (s_int.getaxis('time')[-1]['stop_times']-spacing)
+    print("THERMAL DONE TIME",s.get_prop('thermal_done_time')-log_start_time)
     print(s_int.getaxis('time'))
+    quit()
     time_axis = s_int.getaxis('time')[:]['start_times']
     s_int.setaxis('time',time_axis)
     #}}}

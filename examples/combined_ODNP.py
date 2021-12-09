@@ -240,9 +240,12 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
     return vd_data
 #}}}
 #{{{run IR
+power_control().start_log()
+time_list.append(time.time())
 ini_time = time.time() # needed b/c data object doesn't exist yet
 vd_data = run_scans_IR(vd_list,'FIR_noPower',
         nScans=nScans, power_idx=0)
+vd_data.set_prop('stop_time',time.time())
 time_list.append(time.time())
 time_axis_coords_IR = vd_data.getaxis('indirect')
 time_axis_coords_IR[0]=ini_time
@@ -272,7 +275,6 @@ with power_control() as p:
     for j,this_dB in enumerate(T1_powers_dB):
         if j==0:
             MWfreq = p.dip_lock(9.81,9.83)
-        p.start_log()
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
@@ -299,6 +301,7 @@ with power_control() as p:
 #}}}
 #{{{run enhancement
 DNP_ini_time = time.time()
+time_list.append(time.time())
 DNP_data = run_scans(nScans,0)
 time_list.append(time.time())
 time_axis_coords = DNP_data.getaxis('indirect')
@@ -310,6 +313,7 @@ DNP_data.set_prop('thermal_done_time', time.time())
 power_settings = zeros_like(dB_settings)
 time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 time_axis_coords[0]['stop_times'] = time.time()
+time_list.append(time.time())
 with power_control() as p:
     for j, this_dB in enumerate(dB_settings):
         print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
