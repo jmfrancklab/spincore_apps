@@ -166,10 +166,6 @@ for nodename, postproc, signal_pathway, clock_correction in [
     s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
             convolve_method='Lorentzian',
             indirect='vd',return_frq_slice=True)
-    fl.next('1D diagnostic IR')
-    fl.plot(select_pathway(d,signal_pathway))
-    plt.axvline(x=frq_slice[0])
-    plt.axvline(x=frq_slice[-1])
     #}}}
     #{{{Fitting Routine
     x = s_int.fromaxis('vd')
@@ -331,62 +327,6 @@ for filename,nodename,file_location in [
     fl.next('Final E(p)')
     fl.plot(np.real(s_int['power',:-3]),'ko',capsize=6,alpha=0.3)
     fl.plot(np.real(s_int['power',-3:]),'ro',capsize=6,alpha=0.3)
-    fl.show();quit()
     #}}}
-#{{{Relaxation rates and making Flinear
-T1p = nddata(T1_list,[-1],['power'])
-T1_powers=[]
-print(T1p)
-print(power_list)
-for j in range(len(power_list)):
-    if j == 0:
-        T1_powers.append(power_list[j])
-    else:    
-        T1_powers.append(power_list[j].data)
-T1p.setaxis('power',T1_powers)
-T1p.set_error('power',nddata_p_vs_t.get_error())
-T1p['power',0] = 0.29
-print(T1p)
-quit()
-fl.next(r'$T_{1}$(p) vs power')
-fl.plot(T1p.data,'o')
-R1p=T1p.C**-1
-Flinear = ((R1p - R1p['power':0.001]+R1w)**-1)
-polyorder = 1
-coeff = abs(Flinear).polyfit('power',order=polyorder)
-power = nddata(np.linspace(0,R1p.getaxis('power')[-1],nPowers),'power')
-Flinear_fine = 0
-for j in range(polyorder + 1):
-    Flinear_fine += coeff[j] * power **j
-fl.next('Flinear',legend=True)
-Flinear.set_units('power',s_int.get_units('power'))
-fl.plot(Flinear,'o',label='Flinear')
-Flinear_fine.set_units('power',s_int.get_units('power'))
-fl.plot(Flinear_fine,label='Flinear_fine')
-plt.title('polynomial fit of linear equation')
-plt.ylabel("$F_{linear}$")
-fl.next('R1p vs power')
-R1p_fine = ((Flinear_fine)**-1) +R1p['power':0.001]-R1w
-fl.plot(R1p,'x')
-R1p_fine.set_units('power',R1p.get_units('power'))
-fl.plot(R1p_fine)
-plt.title("relaxation rates")
-plt.ylabel("$R_{1}(p)$")
-#}}}
-#{{{ plotting with correction for heating
-ksigs_T = (ppt/C)*(1-enhancement['power',:-3])*(R1p_fine)
-fl.next('ksig_smax for %s'%filename)
-x = enhancement['power',:-3].fromaxis('power')
-fitting_line = fitdata(ksigs_T)
-k,p_half,power = symbols("k, p_half, power",real=True)
-ksigs_functional_form = (k*power)/(p_half+power)
-fitting_line.functional_form = ksigs_functional_form
-fitting_line.fit()
-fl.plot(ksigs_T,'o',label='with heating correction')
-fl.plot(fitting_line.eval(100),label='fit')
-plt.text(0.75,0.25,fitting_line.latex(), transform=plt.gca().transAxes,size='large',
-        horizontalalignment='center',color='k')
-plt.title('ksigmas(p) vs Power')
-plt.ylabel('ksigmas(p)')
 fl.show();quit()
 
