@@ -12,10 +12,10 @@ from Instruments.logobj import logobj
 logger = init_logging("info")
 Ep_signal_pathway = {'ph1':1}
 fl=fl_mod()
-filename='211207_10mM_TEMPOL_test'
+filename='211213_10mM_TEMPOL_test'
 file_location = 'ODNP_NMR_comp/ODNP'
-Ep_f_slice=(-0.5e3,0.5e3)
-IR_f_slice=(-0.4e3,0.4e3)
+Ep_f_slice=(0.15e3,0.4e3)
+IR_f_slice=(0.15e3,0.4e3)
 Ep_t_range = (0,0.2)
 t_range = (0,0.2)
 excluded_pathways = [(0,0)]
@@ -75,10 +75,10 @@ start_times = []
 stop_times = []
 errors=[]
 for nodename, postproc, signal_pathway, clock_correction in [
-        #('FIR_noPower','spincore_IR_v1',{'ph1':0,'ph2':1},False),
-        #('FIR_27dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
-        #('FIR_30dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
-        #('FIR_32dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        ('FIR_noPower','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        ('FIR_27dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        ('FIR_30dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
+        ('FIR_32dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
         ('FIR_33dBm','spincore_IR_v1',{'ph1':0,'ph2':1},False),
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
@@ -131,29 +131,25 @@ for nodename, postproc, signal_pathway, clock_correction in [
     IR.ft('t2')
     IR.ift('t2')
     best_shift = hermitian_function_test(select_pathway(IR.C.mean('vd'),
-        signal_pathway),aliasing_slop=1)
-    logger.info(strm("BEST SHIFT IS:",best_shift))
+        signal_pathway),aliasing_slop=0)
+    best_shift = 0.0035 #this data is bad (bad tuning) so I hard set the shift
     IR.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     IR.ft('t2')
     IR.ift('t2')
     IR /= zeroth_order_ph(select_pathway(IR,signal_pathway))
     IR.ft('t2')    
-    fl.next('Phase corrected IR')
-    fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
     #{{{Alignment
     mysgn = determine_sign(select_pathway(IR['t2':IR_f_slice].C,signal_pathway))
     IR.ift(['ph1','ph2'])
     opt_shift,sigma, my_mask = correl_align(IR.C*mysgn,indirect_dim='vd',
-            signal_pathway=signal_pathway)
+            signal_pathway=signal_pathway,sigma=150)#again, bad data
     IR.ift('t2')
     IR *= np.exp(-1j*2*pi*opt_shift*IR.fromaxis('t2'))
     IR.ft('t2')
     IR.ift('t2')
     IR.ft(['ph1','ph2'])
     IR.ft('t2')
-    fl.next('Aligned IR')
-    fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
     IR.ift('t2')
     #{{{FID slice
@@ -161,9 +157,6 @@ for nodename, postproc, signal_pathway, clock_correction in [
     d = d['t2':(0,None)]
     d['t2':0] *= 0.5
     d.ft('t2')
-    fl.next('FID sliced IR')
-    fl.image(d.C.setaxis(
-'vd','#').set_units('vd','scan #'))
     #}}}
     #{{{Integrate with error
     error_pathway = (set(((j,k) for j in range(ndshape(d)['ph1']) for k in range(ndshape(d)['ph2'])))
@@ -171,7 +164,7 @@ for nodename, postproc, signal_pathway, clock_correction in [
             -set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
     s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
-            convolve_method='Gaussian',
+            convolve_method='Lorentzian',
             indirect='vd',return_frq_slice=True)
     fl.next('1D diagnostic IR')
     fl.plot(select_pathway(d,signal_pathway))
@@ -186,31 +179,32 @@ for nodename, postproc, signal_pathway, clock_correction in [
     f.functional_form = functional_form
     f.fit()
     T1 = 1./f.output('R_1')
-    fl.next('fit',legend=True)
-    fl.plot(s_int,'o',capsize=6,label='actual data')
-    fl.plot(f.eval(100),label='fit for %s'%nodename)
+    fit = f.eval(100)
     T1_list.append(T1)
     #}}}
     #}}}
 #{{{finding average power for each T1
-    start_time = IR.get_prop('start_time')-log_start_time
-    stop_time = IR.get_prop('stop_time')-log_start_time
-    avg_power = power_axis['time':(start_time,
-        stop_time)].mean('time',std=True)
-    errors.append(avg_power.get_error())
-    power_list.append(avg_power)
-    fl.next('power axis W')
-    start_times.append(start_time)
-    stop_times.append(stop_time)
-    plt.axvline(x=start_time,color='k',alpha=0.5)
-    plt.axvline(x=stop_time,color='b',alpha=0.5)
-nddata_p_vs_t = nddata(power_list,[-1],['time'])
-nddata_p_vs_t.setaxis('time',start_times)
-for j in range(len(power_list)):
-    nddata_p_vs_t['time',j] = power_list[j]
-nddata_p_vs_t.set_error(errors)
-fl.plot(nddata_p_vs_t,'ro',capsize=6)
-logger.info(strm("T1 list:",T1_list))
+    if nodename == 'FIR_noPower':
+        pass
+    else:
+        start_time = IR.get_prop('start_time')-log_start_time
+        stop_time = IR.get_prop('stop_time')-log_start_time
+        avg_power = power_axis['time':(start_time,
+            stop_time)].mean('time',std=True)
+        errors.append(avg_power.get_error())
+        power_list.append(avg_power)
+        fl.next('power axis W')
+        start_times.append(start_time)
+        stop_times.append(stop_time)
+        plt.axvline(x=start_time,color='k',alpha=0.5)
+        plt.axvline(x=stop_time,color='b',alpha=0.5)
+        nddata_p_vs_t = nddata(power_list,[-1],['time'])
+        nddata_p_vs_t.setaxis('time',start_times)
+        for j in range(len(power_list)):
+            nddata_p_vs_t['time',j] = power_list[j]
+        nddata_p_vs_t.set_error(errors)
+        fl.plot(nddata_p_vs_t,'ro',capsize=6)
+logger.info(strm("T1 list:",T1_list)) #we don't expect good T1s since bad tuning
 logger.info(strm("Power list:",power_list))
 #}}}
 #{{{Load process enhancement
@@ -245,14 +239,13 @@ for filename,nodename,file_location in [
     s.ft('t2')
     s.ift('t2')
     best_shift = hermitian_function_test(select_pathway(s.C.mean('time'),
-        Ep_signal_pathway),aliasing_slop=1)
+        Ep_signal_pathway),aliasing_slop=0)
+    best_shift = 0.0035 #this data is bad so I have to hard code the shift
     s.setaxis('t2',lambda x: x-best_shift).register_axis({'t2':0})
     s.ft('t2')
     s.ift('t2')
     s /= zeroth_order_ph(select_pathway(s,Ep_signal_pathway))
     s.ft('t2')    
-    fl.next('phase corrected Ep')
-    fl.image(s.C.setaxis('time','#').set_units('time','scan #'))
     #}}}
     #{{{Alignment
     s.ift(['ph1'])
@@ -265,8 +258,6 @@ for filename,nodename,file_location in [
     s.ift('t2')
     s.ft(['ph1'])
     s.ft('t2')
-    fl.next('Aligned Ep')
-    fl.image(s.C.setaxis('time','#').set_units('time','scan #'))
     #}}}
     s.ift('t2')
     #{{{FID slice
@@ -274,8 +265,6 @@ for filename,nodename,file_location in [
     d = d['t2':Ep_t_range]
     d['t2':0] *= 0.5
     d.ft('t2')
-    fl.next('FID sliced Ep')
-    fl.image(d.C.setaxis('time','#').set_units('time','scan #'))
     #}}}
     #{{{Integrate with error
     error_pathway = (set(((j) for j in range(ndshape(d)['ph1'])))
@@ -290,33 +279,27 @@ for filename,nodename,file_location in [
     plt.axvline(x=frq_slice[0])
     plt.axvline(x=frq_slice[-1])
     #}}}
-    #{{{Normalize and flip
-    for j in range(len(s_int.getaxis('time'))):
-        s_int.getaxis('time')[j]['start_times'] -= log_start_time
-        s_int.getaxis('time')[j]['stop_times'] -= log_start_time
-    print(s_int.getaxis('time'))
-    fl.show();quit()
+    #{{{set time axis
+    s_int.getaxis('time')[:]['start_times'] -= log_start_time
+    s_int.getaxis('time')[:]['stop_times'] -= log_start_time
     s_int.getaxis('time')[-1]['stop_times'] =power_axis.getaxis('time')[-1]
     time_axis = s_int.getaxis('time')[:]['start_times']
     s_int.setaxis('time',time_axis)
     #}}}
-    s_int['time',zero_crossing+1:] *= -1
+    #{{{Normalize and flip
+    s_int['time',zero_crossing:] *= -1
     s_int /= np.real(s_int['time',0:1].data.item())
     fl.next('E(p) before power correction')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
-    fl.show();quit()
-    print("SHOULD BE:",s_int.getaxis('time'))
+    #}}}
     #}}}
     #{{{finding average power over steps
-    dnp_time_axis = dnp_time_axis1.C.getaxis('time').copy()
-    dnp_time_axis[:]['start_times'] = s_int.getaxis('time')
-    dnp_time_axis[-1]['stop_times'] = s.get_prop('stop_time')
-    print(dnp_time_axis)
-    for j in range(len(dnp_time_axis['start_times'])):
-        #dnp_time_axis[j]['start_times'] -= log_start_time
-        dnp_time_axis[j]['stop_times'] -= log_start_time
-    print(dnp_time_axis)    
+    dnp_time_axis = s.C.getaxis('time').copy()
+    dnp_time_axis[0]['stop_times'] = s.get_prop('thermal_done_time')+50
+    dnp_time_axis[0]['start_times'] = s.get_prop('start_time')+10
+    dnp_time_axis[:]['start_times'] -= log_start_time
+    dnp_time_axis[:]['stop_times'] -= log_start_time
     nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
     new_time_axis = nddata_time_axis.C.data
     new_time_axis = nddata(new_time_axis,[-1],['time'])
@@ -327,13 +310,14 @@ for filename,nodename,file_location in [
     fl.next('power axis W')
     for j,(time_start,time_stop) in enumerate(zip(dnp_time_axis[:]['start_times'],dnp_time_axis[:]['stop_times'])):
         power_vs_time['time',j] = power_axis['time':((time_start),(time_stop))].mean('time',std=True)
-        plt.axvline(x=time_start,color='k',alpha=0.5)
-        plt.axvline(x=time_stop,color='b',alpha=0.5)
-    power_vs_time.set_units('time','s')
+        power_vs_time.set_units('time','s')
+        plt.axvline(x=time_start,color='red')
+        plt.axvline(x=time_stop,color='blue')
     avg_p_vs_t = nddata(power_vs_time.data,[-1],['time'])
     avg_p_vs_t.set_error(power_vs_time.get_error())
     avg_p_vs_t.setaxis('time',dnp_time_axis[:]['start_times'])
-    print("DOES IT MATCH?",avg_p_vs_t.getaxis('time'))
+    avg_p_vs_t.data[0] = 0
+    avg_p_vs_t['time',0].set_error(0)
     fl.plot(avg_p_vs_t,'ro',capsize=6)
     #}}}
     #}}}
@@ -347,7 +331,6 @@ for filename,nodename,file_location in [
     fl.next('Final E(p)')
     fl.plot(np.real(s_int['power',:-3]),'ko',capsize=6,alpha=0.3)
     fl.plot(np.real(s_int['power',-3:]),'ro',capsize=6,alpha=0.3)
-    print(np.real(s_int))
     fl.show();quit()
     #}}}
 #{{{Relaxation rates and making Flinear
