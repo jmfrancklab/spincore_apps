@@ -16,6 +16,7 @@ save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
 output_name = '150uM_TEMPOL'
+IR_postproc = 'spincore_IR_v1'
 adcOffset = 26
 carrierFreq_MHz = 14.897196
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -306,7 +307,7 @@ with power_control() as p:
 DNP_data.set_prop('stop_time', time.time())
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings','pul_prog']}
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings','pul_prog','IR_postproc']}
 DNP_data.set_prop('acq_params',acq_params)
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
