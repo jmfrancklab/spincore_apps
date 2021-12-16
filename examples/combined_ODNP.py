@@ -15,9 +15,9 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '10mM_TEMPOL_test'
-adcOffset = 32
-carrierFreq_MHz = 14.894974
+output_name = '150uM_TEMPOL'
+adcOffset = 26
+carrierFreq_MHz = 14.897196
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -27,8 +27,8 @@ date = datetime.now().strftime('%y%m%d')
 # note that acq_time_ms is always milliseconds
 p90_us = 4.464
 deadtime_us = 10.0
-repetition_us = 6e6
-FIR_rd = 3e6
+repetition_us = 12e6
+FIR_rd = 7e6
 SW_kHz = 5 
 acq_time_ms = 500. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
@@ -38,15 +38,14 @@ tau_us = 3500
 pad_us = 0
 pul_prog = 'ODNP_v3'
 vd_list = r_[2.1e3,2.1e4,2.1e5,4.3e5,6.4e5,8.8e5,1.1e6,1.3e6,1.5e6,1.7e6,1.9e6,2.5e6,3e6,3.3e6]
-T1_powers_dB = r_[27,30,32,33]
-T1_node_names = ['FIR_27dBm','FIR_30dBm','FIR_32dBm','FIR_33dBm']
-
+T1_powers_dB = r_[30,32,33,34]
+T1_node_names = ['FIR_30dBm','FIR_32dBm','FIR_33dBm','FIR_34dBm']
 # }}}
 #{{{Power settings
 max_power = 3 #W
 power_steps = 14
 threedown = True
-dB_settings = gen_powerlist(max_power,power_steps+1, threedown=threedown)
+dB_settings = gen_powerlist(max_power,power_steps+1, three_down=threedown)
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 myinput = input("Look ok?")
@@ -238,7 +237,7 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
 #{{{run IR
 ini_time = time.time() # needed b/c data object doesn't exist yet
 vd_data = run_scans_IR(vd_list,'FIR_noPower',
-        nScans=nScans, power_idx=0)
+        nScans=2, power_idx=0)
 time_list.append(time.time())
 time_axis_coords_IR = vd_data.getaxis('indirect')
 time_axis_coords_IR[0]=ini_time
