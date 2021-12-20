@@ -11,41 +11,28 @@ from SpinCore_pp.power_helper import gen_powerlist
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 import h5py
 # {{{ from run_Hahn_echo_mw.py
-fl = figlist_var()
-save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
 output_name = '150uM_TEMPOL'
 IR_postproc = 'spincore_IR_v1'
+Ep_postproc = 'ODNP_v3'
 adcOffset = 26
 carrierFreq_MHz = 14.897196
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
 nScans = 1
 nEchoes = 1
-date = datetime.now().strftime('%y%m%d')
 # all times in microseconds
 # note that acq_time_ms is always milliseconds
 p90_us = 4.464
-deadtime_us = 10.0
 repetition_us = 12e6
 FIR_rd = 7e6
-SW_kHz = 5 
-acq_time_ms = 500. # ms
-nPoints = int(acq_time_ms*SW_kHz+0.5)
-tau_adjust_us = 0.0
-deblank_us = 1.0
-tau_us = 3500
-pad_us = 0
-pul_prog = 'ODNP_v3'
 vd_list = r_[2.1e3,2.1e4,2.1e5,4.3e5,6.4e5,8.8e5,1.1e6,1.3e6,1.5e6,1.7e6,1.9e6,2.5e6,3e6,3.3e6]
 T1_powers_dB = r_[30,32,33,34]
-T1_node_names = ['FIR_30dBm','FIR_32dBm','FIR_33dBm','FIR_34dBm']
-# }}}
-#{{{Power settings
+T1_node_names = ['FIR_%ddBm'%j for j in T1_powers_dB]
 max_power = 3 #W
 power_steps = 14
 threedown = True
+# }}}
+#{{{Power settings
 dB_settings = gen_powerlist(max_power,power_steps+1, three_down=threedown)
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
@@ -56,6 +43,21 @@ if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 powers = 1e-3*10**(dB_settings/10.)
 time_list.append(time.time())
+fl = figlist_var()
+save_file=True
+SW_kHz = 5 
+acq_time_ms = 500. # ms
+nPoints = int(acq_time_ms*SW_kHz+0.5)
+tau_adjust_us = 0.0
+deblank_us = 1.0
+tau_us = 3500
+pad_us = 0
+tx_phases = r_[0.0,90.0,180.0,270.0]
+amplitude = 1.0
+deadtime_us = 10.0
+date = datetime.now().strftime('%y%m%d')
+IR_postproc = 'spincore_IR_v1'
+Ep_postproc = 'ODNP_v3'
 #{{{ enhancement curve pulse prog
 def run_scans(nScans, power_idx, DNP_data=None):
     """run nScans and slot them into the power_idx index of DNP_data -- assume
@@ -264,6 +266,7 @@ with power_control() as p:
             'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
             'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
         vd_data.set_prop('acq_params',acq_params)
+        vd_data.set_prop('postproc_type',IR_postproc)
         vd_data.name(T1_node_names[j])
         myfilename = date+'_'+output_name+'.h5'
         ph1ir_cyc = r_[0,2]
@@ -305,9 +308,10 @@ with power_control() as p:
         time_axis_coords[j+1]['stop_times'] = time.time()
     this_log=p.stop_log()
 DNP_data.set_prop('stop_time', time.time())
+DNP_data.set_prop('postproc_type',Ep_postproc)
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings','pul_prog','IR_postproc']}
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
 DNP_data.set_prop('acq_params',acq_params)
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])

@@ -74,20 +74,19 @@ stop_times = []
 errors=[]
 for nodename, postproc in [
         ('FIR_noPower','spincore_IR_v1'),
-        #('FIR_27dBm','spincore_IR_v1'),
-        #('FIR_30dBm','spincore_IR_v1'),
-        #('FIR_32dBm','spincore_IR_v1'),
-        #('FIR_33dBm','spincore_IR_v1'),
+        ('FIR_30dBm','spincore_IR_v1'),
+        ('FIR_32dBm','spincore_IR_v1'),
+        ('FIR_33dBm','spincore_IR_v1'),
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
-            postproc=get_prop('acq_params')['IR_postproc'],lookup=lookup_table)
+            postproc='spincore_IR_v1',lookup=lookup_table)
     times = IR.C.getaxis('indirect').copy()
     IR.mean('indirect')
+    if 'nScans' in IR.dimlabels:
+        IR.mean('nScans')
     fl.next('Raw IR')
     fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
     IR['ph2',0]['ph1',0]['t2':0]=0 #kill axial noise
-    if 'nScans' in IR.dimlabels:
-        IR.mean('nScans')
     zero_crossing = abs(select_pathway(IR['t2':IR_f_slice],IR_signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
     IR=IR['t2':IR_f_slice]
     IR.ift('t2')
@@ -108,13 +107,16 @@ for nodename, postproc in [
     #{{{Integrate with error
     error_pathway = (set(((j,k) for j in range(ndshape(d)['ph1']) for k in range(ndshape(d)['ph2'])))
             - set(excluded_pathways)
-            -set([(signal_pathway['ph1'],signal_pathway['ph2'])]))
+            -set([(IR_signal_pathway['ph1'],IR_signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice = integral_w_errors(d,signal_pathway,error_pathway,
-            convolve_method='Lorentzian',
+    s_int,frq_slice = integral_w_errors(d,IR_signal_pathway,error_pathway,
+            convolve_method='Gaussian',
             indirect='vd',return_frq_slice=True)
     #}}}
     #{{{Fitting Routine
+    fl.next('Fit with data')
+    s_int['vd',:zero_crossing+1] *= -1
+    fl.plot(s_int, 'o', label = 'data')
     x = s_int.fromaxis('vd')
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd",Real=True)
     functional_form = Mi + (M0-Mi) * s_exp(-vd*R1)
@@ -123,6 +125,7 @@ for nodename, postproc in [
     f.fit()
     T1 = 1./f.output('R_1')
     fit = f.eval(100)
+    fl.plot(fit,label='fit')
     T1_list.append(T1)
     #}}}
     #}}}
