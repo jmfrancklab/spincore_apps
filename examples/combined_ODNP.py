@@ -123,19 +123,25 @@ def run_scans(nScans, power_idx, DNP_data=None):
         data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
         dataPoints = float(shape(data_array)[0])
         if DNP_data is None:
-            time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
-            DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
             times_dtype = dtype([('start_times',double),('stop_times',double)])
             mytimes = zeros(len(powers)+1,dtype=times_dtype)
-            DNP_data.setaxis('indirect',mytimes)
-            DNP_data.setaxis('t',time_axis).set_units('t','s')
-            DNP_data.setaxis('nScans',r_[0:nScans])
-            DNP_data.name('enhancement_curve')
-        data_array = nddata(array(data_array),'t')
-        data_array.setaxis('t',time_axis)
-        DNP_data['indirect',power_idx]['nScans',x] = data_array
-        run_scans_time_list.append(time.time())
-        this_array = array(run_scans_time_list)
+            if x == 0:
+                time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
+                DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
+                DNP_data.setaxis('indirect',mytimes)
+                DNP_data.setaxis('t',time_axis).set_units('t','s')
+                DNP_data.setaxis('nScans',r_[0:nScans])
+            data_array = nddata(array(data_array),'t')
+            data_array.setaxis('t',time_axis)
+            DNP_data['indirect',power_idx]['nScans',x] = data_array
+            run_scans_time_list.append(time.time())
+            this_array = array(run_scans_time_list)
+        else:
+            time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
+            data_array = nddata(array(data_array),'t')
+            data_array.setaxis('t',time_axis).set_units('t','s')
+            data_array.name('enhancement')
+            DNP_data['indirect',j+1]['nScans',x] = data_array
         print("stored scan",x,"for power_idx",power_idx)
         return DNP_data
 #}}}
@@ -309,6 +315,7 @@ with power_control() as p:
         time_axis_coords[j+1]['start_times'] = time.time()
         run_scans(nScans,j+1,DNP_data)
         time_axis_coords[j+1]['stop_times'] = time.time()
+    DNP_data.name('enhancement')
     this_log=p.stop_log()
     SpinCore_pp.stopBoard()
 DNP_data.set_prop('stop_time', time.time())

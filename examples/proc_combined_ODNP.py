@@ -11,10 +11,10 @@ from pyspecProcScripts import lookup_table
 from Instruments.logobj import logobj
 logger = init_logging("info")
 fl=fl_mod()
-filename='211215_150uM_TEMPOL'
+filename='211227_150mM_TEMPOL_DNP'
 file_location = 'ODNP_NMR_comp/ODNP'
-Ep_f_slice=(0.2e3,0.2e3)
-Ep_t_range = (0,0.5)
+Ep_f_slice=(-0.6e3,0.4e3)
+Ep_t_range = (0,0.1)
 Ep_signal_pathway = {'ph1':1}
 t_center_echo = 0.0035
 IR_f_slice=(-0.2e3,0.2e3)
@@ -73,10 +73,10 @@ start_times = []
 stop_times = []
 errors=[]
 for nodename, postproc in [
-        ('FIR_noPower','spincore_IR_v1'),
-        ('FIR_30dBm','spincore_IR_v1'),
-        ('FIR_32dBm','spincore_IR_v1'),
-        ('FIR_33dBm','spincore_IR_v1'),
+        #('FIR_noPower','spincore_IR_v1'),
+        #('FIR_30dBm','spincore_IR_v1'),
+        #('FIR_32dBm','spincore_IR_v1'),
+        #('FIR_33dBm','spincore_IR_v1'),
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
             postproc='spincore_IR_v1',lookup=lookup_table)
@@ -208,6 +208,7 @@ for filename,nodename,file_location in [
     fl.next('E(p) before power correction')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
+    fl.show();quit()
     #}}}
     #}}}
     #{{{finding average power over steps
