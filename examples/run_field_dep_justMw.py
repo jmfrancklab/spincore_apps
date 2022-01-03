@@ -64,7 +64,6 @@ powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
 output_name = 'TEMPOL_heat_exch_289uM_field_dep'
-node_name = 'field_sweep_1'
 adcOffset = 28
 gamma_eff = (14.549013/3424.42)
 #{{{ acq params
@@ -95,45 +94,100 @@ nPoints = int(acq_ms*SW_kHz+0.5)
 # have to try this out
 tau_adjust = 0
 deblank = 1.0
-#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
 tau = 3500
 pad = 0
-#{{{ setting acq_params dictionary
-acq_params = {}
-acq_params['adcOffset'] = adcOffset
-acq_params['field_axis_G'] = field_axis
-acq_params['amplitude'] = amplitude
-acq_params['nScans'] = nScans
-acq_params['nEchoes'] = nEchoes
-acq_params['p90_us'] = p90
-acq_params['deadtime_us'] = deadtime
-acq_params['repetition_us'] = repetition
-acq_params['SW_kHz'] = SW_kHz
-acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
-acq_params['deblank_us'] = deblank
-acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
-if phase_cycling:
-    acq_params['nPhaseSteps'] = nPhaseSteps
-#}}}
 #}}}
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
-
+#{{{ppg
+def run_sweep(fieldaxis, nScans=1, B0_index, data = None):
+    print("About to run run_scans for", power_idx)
+    ph1_cyc = r_[0,1,2,3]
+    ph2_cyc = r_[0]
+    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
+    total_pts = nPoints*nPhaseSteps
+    data_length = 2*nPoints*nEchoes*nPhaseSteps
+    for x in range(nScans):
+            print("\n*** *** *** *** ***\n")
+            print("\n*** *** ***\n")
+            print("CONFIGURING TRANSMITTER...")
+            SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+            print("\nTRANSMITTER CONFIGURED.")
+            print("***")
+            print("CONFIGURING RECEIVER...")
+            acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+            print("\nRECEIVER CONFIGURED.")
+            print("***")
+            print("\nINITIALIZING PROG BOARD...\n")
+            SpinCore_pp.init_ppg();
+            print("\nLOADING PULSE PROG...\n")
+            if phase_cycling:
+                SpinCore_pp.load([
+                    ('marker','start',1),
+                    ('phase_reset',1),
+                    ('delay_TTL',deblank),
+                    ('pulse_TTL',p90,'ph1',ph1_cyc),
+                    ('delay',tau),
+                    ('delay_TTL',deblank),
+                    ('pulse_TTL',2.0*p90,'ph2',ph2_cyc),
+                    ('delay',deadtime),
+                    ('acquire',acq_time),
+                    ('delay',repetition),
+                    ('jumpto','start')
+                    ])
+                #{{{
+            if not phase_cycling:
+                SpinCore_pp.load([
+                    ('marker','start',nScans),
+                    ('phase_reset',1),
+                    ('delay_TTL',deblank),
+                    ('pulse_TTL',p90,0.0),
+                    ('delay',tau),
+                    ('delay_TTL',deblank),
+                    ('pulse_TTL',2.0*p90,0.0),
+                    ('delay',deadtime),
+                    ('acquire',acq_time),
+                    ('delay',repetition),
+                    ('jumpto','start')
+                    ])
+                #}}}
+            print("\nSTOPPING PROG BOARD...\n")
+            SpinCore_pp.stop_ppg();
+            print("\nRUNNING BOARD...\n")
+            SpinCore_pp.runBoard();
+            raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+            raw_data.astype(float)
+            data_array = []
+            data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+            print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
+            print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
+            dataPoints = float(np.shape(data_array)[0])
+            if data is None:
+                time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
+                data = ndshape([len(data_array),nScans,len(field_axis),1],['t','nScans','Field','power']).alloc(dtype=np.complex128)
+                data.setaxis('t',time_axis).set_units('t','s')
+                data.setaxis('nScans',r_[0:nScans])
+                data.setaxis('Field',field_axis)
+                data.setaxis('power',r_[powers])
+                data.name('Field_sweep')
+                data.set_prop('acq_params',acq_params)
+            data['nScans',x]['Field',B0_index]['power',0] = data_array
+            print("FINISHED B0 INDEX %d..."%B0_index)
+            print("\n*** *** ***\n")
+            #last_power = this_power
+            SpinCore_pp.stopBoard();
+            return data
 with xepr() as x_server:
     with Bridge12() as b:
         b.set_wg(True)
         b.set_rf(True)
         b.set_amp(True)
-        this_return = b.lock_on_dip(ini_range=(9.5820e9,9.5936e9))
-        dip_f = this_return[2]
+        _, dip_f = b.lock_on_dip(ini_range=(9.81e9,9.83e9))
         print("Frequency",dip_f)
         mw_freqs.append(dip_f)
-        acq_params['mw_freqs'] = mw_freqs
         b.set_freq(dip_f)
         meter_powers = zeros_like(dB_settings)
-        for j,this_power in enumerate(r_[dB_settings]):
+        for j,this_dB in enumerate(r_[dB_settings]):
             print("\n*** *** *** *** ***\n") 
             if j>0 and this_power > last_power + 3:
                 last_power += 3
@@ -170,84 +224,19 @@ with xepr() as x_server:
             time.sleep(3.0)
             carrierFreq_MHz = gamma_eff*true_B0
             print("My frequency in MHz is",carrierFreq_MHz)
-            acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-            data_length = 2*nPoints*nEchoes*nPhaseSteps
-            for x in range(nScans):
-                print("\n*** *** *** *** ***\n")
-                print("\n*** *** ***\n")
-                print("CONFIGURING TRANSMITTER...")
-                SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-                print("\nTRANSMITTER CONFIGURED.")
-                print("***")
-                print("CONFIGURING RECEIVER...")
-                acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-                print("\nRECEIVER CONFIGURED.")
-                print("***")
-                print("\nINITIALIZING PROG BOARD...\n")
-                SpinCore_pp.init_ppg();
-                print("\nLOADING PULSE PROG...\n")
-                if phase_cycling:
-                    SpinCore_pp.load([
-                        ('marker','start',1),
-                        ('phase_reset',1),
-                        ('delay_TTL',deblank),
-                        ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-                        ('delay',tau),
-                        ('delay_TTL',deblank),
-                        ('pulse_TTL',2.0*p90,0),
-                        ('delay',deadtime),
-                        ('acquire',acq_time),
-                        ('delay',repetition),
-                        ('jumpto','start')
-                        ])
-                    #{{{
-                if not phase_cycling:
-                    SpinCore_pp.load([
-                        ('marker','start',nScans),
-                        ('phase_reset',1),
-                        ('delay_TTL',deblank),
-                        ('pulse_TTL',p90,0.0),
-                        ('delay',tau),
-                        ('delay_TTL',deblank),
-                        ('pulse_TTL',2.0*p90,0.0),
-                        ('delay',deadtime),
-                        ('acquire',acq_time),
-                        ('delay',repetition),
-                        ('jumpto','start')
-                        ])
-                    #}}}
-                print("\nSTOPPING PROG BOARD...\n")
-                SpinCore_pp.stop_ppg();
-                print("\nRUNNING BOARD...\n")
-                SpinCore_pp.runBoard();
-                raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-                raw_data.astype(float)
-                data_array = []
-                data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-                print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
-                print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-                dataPoints = float(np.shape(data_array)[0])
-                if x == 0 and B0_index == 0:
-                    time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-                    data = ndshape([len(data_array),nScans,len(field_axis),1],['t','nScans','Field','power']).alloc(dtype=np.complex128)
-                    data.setaxis('t',time_axis).set_units('t','s')
-                    data.setaxis('nScans',r_[0:nScans])
-                    data.setaxis('Field',field_axis)
-                    data.setaxis('power',r_[powers])
-                    data.name(node_name)
-                    data.set_prop('acq_params',acq_params)
-                data['nScans',x]['Field',B0_index]['power',0] = data_array
-                print("FINISHED B0 INDEX %d..."%B0_index)
-                print("\n*** *** ***\n")
-        last_power = this_power
-        SpinCore_pp.stopBoard();
-print("EXITING...")
-print("\n*** *** ***\n")
+            carrier_Freq_MHz = carrierFreq_MHz
+            data = run_sweep(fieldaxis, nScans, B0_index) 
+#}}}        
+acq_params = {j:eval(j) for j in dir() if j in ['tx_phases', 'carrierFreq_MHz','amplitude',
+    'nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust',
+    'deblank','tau','nPhaseSteps']}
+data.set_prop('acq_params',acq_params)
+myfilename = date+'_'+output_name+'.h5'
 save_file = True
 while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
-        data.hdf5_write(date+'_'+output_name+'.h5',
+        data.hdf5_write(myfilename,
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
@@ -269,10 +258,8 @@ while save_file:
             print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
             print("*** *** ***\n")
             break
-
 data.set_units('t','data')
 # {{{ once files are saved correctly, the following become obsolete
-print(ndshape(data))
 if not phase_cycling:
     fl.next('raw data')
     fl.plot(data)

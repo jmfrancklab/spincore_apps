@@ -39,16 +39,8 @@ def verifyParams():
 #}}}
 
 mw_freqs = []
-#field_axis = r_[3475:3530:0.3]
 
-#uneven = 1.0*r_[3,2,1,1,2,3]
-#uneven /= sum(uneven)
-#uneven = cumsum(uneven)
-#start_field = 3500
-#stop_field = 33510
-#field_axis = start_field + (stop_field-start_field)*uneven
-
-field_axis = r_[3422:3426:.5]
+field_axis = r_[3502:3508:.5]
 print("Here is my field axis:",field_axis)
 
 # Parameters for Bridge12
@@ -63,10 +55,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
-output_name = 'TEMPOL_heat_exch_289uM_field_dep'
+output_name = '150uM_TEMPO_toluene_cap_probe_field_dep'
 node_name = 'field_sweep_1'
-adcOffset = 28
-gamma_eff = (14.549013/3424.42)
+adcOffset = 25
+gamma_eff = (14.892825/3505.43)
 #{{{ acq params
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -84,7 +76,7 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 1.781
+p90 = 4.69
 deadtime = 10.0
 repetition = 12e6
 
@@ -117,49 +109,19 @@ if phase_cycling:
 #}}}
 #}}}
 
-with xepr() as x_server:
-    with Bridge12() as b:
-        b.set_wg(True)
-        b.set_rf(True)
-        b.set_amp(True)
-        this_return = b.lock_on_dip(ini_range=(9.819e9,9.825e9))
-        dip_f = this_return[2]
-        print("Frequency",dip_f)
-        mw_freqs.append(dip_f)
-        acq_params['mw_freqs'] = mw_freqs
-        b.set_freq(dip_f)
-        meter_powers = zeros_like(dB_settings)
-        for j,this_power in enumerate(r_[dB_settings]):
-            print("\n*** *** *** *** ***\n") 
-            if j>0 and this_power > last_power + 3:
-                last_power += 3
-                print("SETTING TO...",last_power)
-                b.set_power(last_power)
-                time.sleep(3.0)
-                while this_power > last_power+3:
-                    last_power += 3
-                    print("SETTING TO...",last_power)
-                    b.set_power(last_power)
-                    time.sleep(3.0)
-                print("FINALLY - SETTING TO DESIRED POWER")
-                b.set_power(this_power)
-            elif j == 0:
-                threshold_power = 10
-                if this_power > threshold_power:
-                    next_power = threshold_power + 3
-                    while next_power < this_power:
-                        print("SETTING To...",next_power)
-                        b.set_power(next_power)
-                        time.sleep(3.0)
-                        next_power += 3
-                b.set_power(this_power)
-            else:
-                b.set_power(this_power)
-            time.sleep(15)
-            with prologix_connection() as p:
-                with gigatronics(prologix_instance=p, address=7) as g:
-                    meter_powers = g.read_power()
-                    print("POWER READING",meter_powers)
+with power_control() as p:
+    for j,this_power in enumerate(r_[dB_settings]):
+        if j==0:
+            dip_f = p.dip_lock(9.819,9.825)
+            print("Frequency",dip_f)
+            mw_freqs.append(dip_f)
+        p.set_power(this_power)
+        for k in range(10):
+            time.sleep(0.5)
+            if p.get_power_setting()>=this_power: break
+        if p.get_power_setting() < this_power: raise ValueError('After 10 tries, the power has still not settled')
+        time.sleep(5)
+        meter_power = p.get_power_setting()
         for B0_index,desired_B0 in enumerate(field_axis):
             true_B0 = x_server.set_field(desired_B0)
             print("My field in G is %f"%true_B0)

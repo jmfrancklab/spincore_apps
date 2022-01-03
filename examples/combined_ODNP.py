@@ -11,40 +11,28 @@ from SpinCore_pp.power_helper import gen_powerlist
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 import h5py
 # {{{ from run_Hahn_echo_mw.py
-fl = figlist_var()
-save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '150uM_TEMPOL_DNP'
-adcOffset = 30
-carrierFreq_MHz = 14.895097
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
+output_name = '150uM_TEMPOL'
+IR_postproc = 'spincore_IR_v1'
+Ep_postproc = 'ODNP_v3'
+adcOffset = 26
+carrierFreq_MHz = 14.897196
 nScans = 1
 nEchoes = 1
-date = datetime.now().strftime('%y%m%d')
 # all times in microseconds
 # note that acq_time_ms is always milliseconds
 p90_us = 4.464
-deadtime_us = 10.0
 repetition_us = 12e6
-FIR_rd = 6e6
-SW_kHz = 5 
-acq_time_ms = 500. # ms
-nPoints = int(acq_time_ms*SW_kHz+0.5)
-tau_adjust_us = 0.0
-deblank_us = 1.0
-tau_us = 3500
-pad_us = 0
-pul_prog = 'ODNP_v3'
-vd_list = r_[5e1,4.5e5,9e5,1.4e6,1.8e6,2.3e6,2.7e6,3.2e6,3.6e6,4.1e6,4.5e6,5e6]
-T1_powers_dB = r_[30,33,34,36]
-T1_node_names = ['FIR_30dBm','FIR_33dBm','FIR_34dBm','FIR_36dBm']
-# }}}
-#{{{Power settings
-max_power = 4 #W
+FIR_rd = 7e6
+vd_list = r_[2.1e3,2.1e4,2.1e5,4.3e5,6.4e5,8.8e5,1.1e6,1.3e6,1.5e6,1.7e6,1.9e6,2.5e6,3e6,3.3e6]
+T1_powers_dB = r_[30,32,33,34]
+T1_node_names = ['FIR_%ddBm'%j for j in T1_powers_dB]
+max_power = 3 #W
 power_steps = 14
 threedown = True
+# }}}
+#{{{Power settings
 dB_settings = gen_powerlist(max_power,power_steps+1, three_down=threedown)
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
@@ -55,6 +43,21 @@ if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 powers = 1e-3*10**(dB_settings/10.)
 time_list.append(time.time())
+fl = figlist_var()
+save_file=True
+SW_kHz = 5 
+acq_time_ms = 500. # ms
+nPoints = int(acq_time_ms*SW_kHz+0.5)
+tau_adjust_us = 0.0
+deblank_us = 1.0
+tau_us = 3500
+pad_us = 0
+tx_phases = r_[0.0,90.0,180.0,270.0]
+amplitude = 1.0
+deadtime_us = 10.0
+date = datetime.now().strftime('%y%m%d')
+IR_postproc = 'spincore_IR_v1'
+Ep_postproc = 'ODNP_v3'
 #{{{ enhancement curve pulse prog
 def run_scans(nScans, power_idx, DNP_data=None):
     """run nScans and slot them into the power_idx index of DNP_data -- assume
@@ -78,28 +81,19 @@ def run_scans(nScans, power_idx, DNP_data=None):
         run_scans_time_list = [time.time()]
         run_scans_names = ['configure']
         print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
-        print("\n*** *** ***\n")
-        print("CONFIGURING TRANSMITTER...")
         SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-        print("\nTRANSMITTER CONFIGURED.")
         run_scans_time_list.append(time.time())
         run_scans_names.append('configure Rx')
         print("***")
         print("CONFIGURING RECEIVER...")
         acq_time_ms = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
         # acq_time_ms is in msec!
-        print("ACQUISITION TIME IS",acq_time_ms,"ms")
         verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90_us, tau_us=tau_us)
         run_scans_time_list.append(time.time())
         run_scans_names.append('init')
-        print("\nRECEIVER CONFIGURED.")
-        print("***")
-        print("\nINITIALIZING PROG BOARD...\n")
         SpinCore_pp.init_ppg()
         run_scans_time_list.append(time.time())
         run_scans_names.append('prog')
-        print("PROGRAMMING BOARD...")
-        print("\nLOADING PULSE PROG...\n")
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
@@ -115,11 +109,9 @@ def run_scans(nScans, power_idx, DNP_data=None):
             ])
         run_scans_time_list.append(time.time())
         run_scans_names.append('prog')
-        print("\nSTOPPING PROG BOARD...\n")
         SpinCore_pp.stop_ppg()
         run_scans_time_list.append(time.time())
         run_scans_names.append('run')
-        print("\nRUNNING BOARD...\n")
         SpinCore_pp.runBoard()
         run_scans_time_list.append(time.time())
         run_scans_names.append('get data')
@@ -129,8 +121,6 @@ def run_scans(nScans, power_idx, DNP_data=None):
         run_scans_names.append('shape data')
         data_array=[]
         data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-        print("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
-        print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
         dataPoints = float(shape(data_array)[0])
         if DNP_data is None:
             time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
@@ -146,8 +136,6 @@ def run_scans(nScans, power_idx, DNP_data=None):
         DNP_data['indirect',power_idx]['nScans',x] = data_array
         run_scans_time_list.append(time.time())
         this_array = array(run_scans_time_list)
-        print("checkpoints:",this_array-this_array[0])
-        print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
         print("stored scan",x,"for power_idx",power_idx)
         return DNP_data
 #}}}
@@ -256,12 +244,9 @@ vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
 vd_data.setaxis('ph1',ph1ir_cyc/4)
 vd_data.setaxis('ph2',ph2ir_cyc/4)
 # Need error handling (JF has posted something on this..)
-print("SAVING FILE...")
 vd_data.hdf5_write(myfilename)
 print("\n*** FILE SAVED ***\n")
 print(("Name of saved data",vd_data.name()))
-print(("Units of saved data",vd_data.get_units('t2')))
-print(("Shape of saved data",ndshape(vd_data)))
 time_list.append(time.time())
 time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 with power_control() as p:
@@ -284,6 +269,7 @@ with power_control() as p:
             'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
             'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
         vd_data.set_prop('acq_params',acq_params)
+        vd_data.set_prop('postproc_type',IR_postproc)
         vd_data.name(T1_node_names[j])
         myfilename = date+'_'+output_name+'.h5'
         ph1ir_cyc = r_[0,2]
@@ -326,9 +312,10 @@ with power_control() as p:
     this_log=p.stop_log()
     SpinCore_pp.stopBoard()
 DNP_data.set_prop('stop_time', time.time())
+DNP_data.set_prop('postproc_type',Ep_postproc)
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings','pul_prog']}
+    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
 DNP_data.set_prop('acq_params',acq_params)
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
@@ -345,8 +332,9 @@ while save_file:
         save_file=False
     except Exception as e:
         print(e)
-        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST.")
+        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST. LOOPING TO ALLOW YOU TO CHANGE NAME OF PREEXISTING FILE")
         save_file = False
+        time.sleep(3)
 with h5py.File(myfilename, 'a') as f:
     log_grp = f.create_group('log')
     hdf_save_dict_to_group(log_grp,this_log.__getstate__())
