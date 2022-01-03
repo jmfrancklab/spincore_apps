@@ -15,9 +15,9 @@ fl = figlist_var()
 save_file=True
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '150uM_TEMPOL'
-adcOffset = 26
-carrierFreq_MHz = 14.897196
+output_name = '150uM_TEMPOL_DNP'
+adcOffset = 30
+carrierFreq_MHz = 14.895097
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -28,7 +28,7 @@ date = datetime.now().strftime('%y%m%d')
 p90_us = 4.464
 deadtime_us = 10.0
 repetition_us = 12e6
-FIR_rd = 7e6
+FIR_rd = 6e6
 SW_kHz = 5 
 acq_time_ms = 500. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
@@ -37,12 +37,12 @@ deblank_us = 1.0
 tau_us = 3500
 pad_us = 0
 pul_prog = 'ODNP_v3'
-vd_list = r_[2.1e3,2.1e4,2.1e5,4.3e5,6.4e5,8.8e5,1.1e6,1.3e6,1.5e6,1.7e6,1.9e6,2.5e6,3e6,3.3e6]
-T1_powers_dB = r_[30,32,33,34]
-T1_node_names = ['FIR_30dBm','FIR_32dBm','FIR_33dBm','FIR_34dBm']
+vd_list = r_[5e1,4.5e5,9e5,1.4e6,1.8e6,2.3e6,2.7e6,3.2e6,3.6e6,4.1e6,4.5e6,5e6]
+T1_powers_dB = r_[30,33,34,36]
+T1_node_names = ['FIR_30dBm','FIR_33dBm','FIR_34dBm','FIR_36dBm']
 # }}}
 #{{{Power settings
-max_power = 3 #W
+max_power = 4 #W
 power_steps = 14
 threedown = True
 dB_settings = gen_powerlist(max_power,power_steps+1, three_down=threedown)
@@ -86,7 +86,7 @@ def run_scans(nScans, power_idx, DNP_data=None):
         run_scans_names.append('configure Rx')
         print("***")
         print("CONFIGURING RECEIVER...")
-        acq_time_ms = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
+        acq_time_ms = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
         # acq_time_ms is in msec!
         print("ACQUISITION TIME IS",acq_time_ms,"ms")
         verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90_us, tau_us=tau_us)
@@ -141,8 +141,9 @@ def run_scans(nScans, power_idx, DNP_data=None):
             DNP_data.setaxis('t',time_axis).set_units('t','s')
             DNP_data.setaxis('nScans',r_[0:nScans])
             DNP_data.name('enhancement_curve')
+        data_array = nddata(array(data_array),'t')
+        data_array.setaxis('t',time_axis)
         DNP_data['indirect',power_idx]['nScans',x] = data_array
-        SpinCore_pp.stopBoard()
         run_scans_time_list.append(time.time())
         this_array = array(run_scans_time_list)
         print("checkpoints:",this_array-this_array[0])
@@ -323,6 +324,7 @@ with power_control() as p:
         run_scans(nScans,j+1,DNP_data)
         time_axis_coords[j+1]['stop_times'] = time.time()
     this_log=p.stop_log()
+    SpinCore_pp.stopBoard()
 DNP_data.set_prop('stop_time', time.time())
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
