@@ -13,7 +13,7 @@ import h5py
 # {{{ from run_Hahn_echo_mw.py
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '150uM_TEMPOL'
+output_name = '150mM_TEMPOL_short_DNP'
 IR_postproc = 'spincore_IR_v1'
 Ep_postproc = 'ODNP_v3'
 adcOffset = 26
@@ -23,13 +23,13 @@ nEchoes = 1
 # all times in microseconds
 # note that acq_time_ms is always milliseconds
 p90_us = 4.464
-repetition_us = 12e6
-FIR_rd = 7e6
-vd_list = r_[2.1e3,2.1e4,2.1e5,4.3e5,6.4e5,8.8e5,1.1e6,1.3e6,1.5e6,1.7e6,1.9e6,2.5e6,3e6,3.3e6]
-T1_powers_dB = r_[30,32,33,34]
+repetition_us = 1e6
+FIR_rd = 0.5e6
+vd_list = r_[2.1e3,6.1e4,1.2e5,1.8e5,2.4e5,3e5]
+T1_powers_dB = r_[30]
 T1_node_names = ['FIR_%ddBm'%j for j in T1_powers_dB]
-max_power = 3 #W
-power_steps = 14
+max_power = 4 #W
+power_steps = 4
 threedown = True
 # }}}
 #{{{Power settings
@@ -232,7 +232,7 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
 #{{{run IR
 ini_time = time.time() # needed b/c data object doesn't exist yet
 vd_data = run_scans_IR(vd_list,'FIR_noPower',
-        nScans=2, power_idx=0)
+        nScans=1, power_idx=0)
 time_list.append(time.time())
 time_axis_coords_IR = vd_data.getaxis('indirect')
 time_axis_coords_IR[0]=ini_time
@@ -287,6 +287,8 @@ with power_control() as p:
 #}}}
 #{{{run enhancement
 DNP_ini_time = time.time()
+with power_control() as p:
+    p.mw_off()
 DNP_data = run_scans(nScans,0)
 DNP_thermal_done = time.time()
 time_list.append(time.time())
