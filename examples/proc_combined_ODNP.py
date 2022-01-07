@@ -11,9 +11,9 @@ from pyspecProcScripts import lookup_table
 from Instruments.logobj import logobj
 logger = init_logging("info")
 fl=fl_mod()
-filename='211227_150mM_TEMPOL_DNP'
+filename='220103_150mM_TEMPOL'
 file_location = 'ODNP_NMR_comp/ODNP'
-Ep_f_slice=(-0.6e3,0.4e3)
+Ep_f_slice=(-0.3e3,0.3e3)
 Ep_t_range = (0,0.1)
 Ep_signal_pathway = {'ph1':1}
 t_center_echo = 0.0035
@@ -155,7 +155,7 @@ logger.info(strm("Power list:",power_list))
 #}}}
 #{{{Load process enhancement
 for filename,nodename,file_location in [
-        (filename,'enhancement_curve','ODNP_NMR_comp/ODNP')
+        (filename,'enhancement','ODNP_NMR_comp/ODNP')
         ]:
     #{{{
     s = find_file(filename,exp_type=file_location, expno=nodename)
@@ -208,7 +208,6 @@ for filename,nodename,file_location in [
     fl.next('E(p) before power correction')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
     fl.plot(s_int['time',-3:],'ro',capsize=2,alpha=0.3)
-    fl.show();quit()
     #}}}
     #}}}
     #{{{finding average power over steps
