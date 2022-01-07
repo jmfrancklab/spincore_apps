@@ -165,47 +165,18 @@ def run_sweep(fieldaxis, nScans=1, B0_index, data = None):
             #last_power = this_power
             SpinCore_pp.stopBoard();
             return data
-with xepr() as x_server:
-    with Bridge12() as b:
-        b.set_wg(True)
-        b.set_rf(True)
-        b.set_amp(True)
-        _, dip_f = b.lock_on_dip(ini_range=(9.81e9,9.83e9))
-        print("Frequency",dip_f)
-        mw_freqs.append(dip_f)
-        b.set_freq(dip_f)
+with power_contro() as p:
+    dip_f=p.dip_lock(9.81,9.83)
+    mw_freqs.append(dip_f)
+    with j, this_dB in enumerate(r_[dB_settings]):
+        print("\n*** *** *** *** ***\n")
+        p.set_power(this_dB)
+        for k in range(10):
+            time.sleep(0.5)
+            if p.get_power_setting()>= this_dB: break
+        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
         meter_powers = zeros_like(dB_settings)
-        for j,this_dB in enumerate(r_[dB_settings]):
-            print("\n*** *** *** *** ***\n") 
-            if j>0 and this_power > last_power + 3:
-                last_power += 3
-                print("SETTING TO...",last_power)
-                b.set_power(last_power)
-                time.sleep(3.0)
-                while this_power > last_power+3:
-                    last_power += 3
-                    print("SETTING TO...",last_power)
-                    b.set_power(last_power)
-                    time.sleep(3.0)
-                print("FINALLY - SETTING TO DESIRED POWER")
-                b.set_power(this_power)
-            elif j == 0:
-                threshold_power = 10
-                if this_power > threshold_power:
-                    next_power = threshold_power + 3
-                    while next_power < this_power:
-                        print("SETTING To...",next_power)
-                        b.set_power(next_power)
-                        time.sleep(3.0)
-                        next_power += 3
-                b.set_power(this_power)
-            else:
-                b.set_power(this_power)
-            time.sleep(15)
-            with prologix_connection() as p:
-                with gigatronics(prologix_instance=p, address=7) as g:
-                    meter_powers = g.read_power()
-                    print("POWER READING",meter_powers)
+with xepr() as x_server:
         for B0_index,desired_B0 in enumerate(field_axis):
             true_B0 = x_server.set_field(desired_B0)
             print("My field in G is %f"%true_B0)
