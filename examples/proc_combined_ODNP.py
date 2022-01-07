@@ -11,9 +11,9 @@ from pyspecProcScripts import lookup_table
 from Instruments.logobj import logobj
 logger = init_logging("info")
 fl=fl_mod()
-filename='220103_150mM_TEMPOL'
+filename='220106_150mM_TEMPOL_DNP'
 file_location = 'ODNP_NMR_comp/ODNP'
-Ep_f_slice=(-0.3e3,0.3e3)
+Ep_f_slice=(-0.5e3,0.5e3)
 Ep_t_range = (0,0.1)
 Ep_signal_pathway = {'ph1':1}
 t_center_echo = 0.0035
@@ -21,10 +21,6 @@ IR_f_slice=(-0.2e3,0.2e3)
 t_range = (0,0.2)
 IR_signal_pathway = {'ph1':0,'ph2':1}
 excluded_pathways = [(0,0)]
-R1w = 1/2.172
-nPowers = 15
-ppt = 1.5167e-3
-C=0.15
 #{{{load in log
 with h5py.File(search_filename(filename+".h5",exp_type='ODNP_NMR_comp/ODNP',unique=True),'r') as f:
     log_grp = f['log']
@@ -63,7 +59,7 @@ fl.plot(power_axis,'.')
 power_axis.name('power')
 fl.next('power axis W')
 coupler_atten = 22
-power_axis.data = (10**((power_axis.data+coupler_atten)/10+3))/1e6 #convert to W
+power_axis.data = (10**((power_axis.data+coupler_atten)/10-3)) #convert to W
 fl.plot(power_axis,'.')
 #}}}
 #{{{IR processing
@@ -72,16 +68,19 @@ power_list = []
 start_times = []
 stop_times = []
 errors=[]
-for nodename, postproc in [
-        #('FIR_noPower','spincore_IR_v1'),
-        #('FIR_30dBm','spincore_IR_v1'),
-        #('FIR_32dBm','spincore_IR_v1'),
-        #('FIR_33dBm','spincore_IR_v1'),
+for nodename, postproc, clock_correction in [
+        ('FIR_noPower','spincore_IR_v1',False),
+        ('FIR_30dBm','spincore_IR_v1',False),
+        ('FIR_32dBm','spincore_IR_v1',False),
+        ('FIR_34dBm','spincore_IR_v1',False),
+        ('FIR_36dBm','spincore_IR_v1',False)
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
             postproc='spincore_IR_v1',lookup=lookup_table)
     times = IR.C.getaxis('indirect').copy()
-    IR.mean('indirect')
+    #IR.mean('indirect')
+    print(IR.getaxis('indirect'))
+    quit()
     if 'nScans' in IR.dimlabels:
         IR.mean('nScans')
     fl.next('Raw IR')
@@ -90,6 +89,31 @@ for nodename, postproc in [
     zero_crossing = abs(select_pathway(IR['t2':IR_f_slice],IR_signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
     IR=IR['t2':IR_f_slice]
     IR.ift('t2')
+    #{{{clock correction
+    if clock_correction:
+        clock_corr = nddata(np.linspace(-3,3,2500),'clock_corr')
+        IR.ft('t2')
+        if fl is not None:
+            fl.next('before clock correction')
+            fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
+        s_clock=IR['ph1',0]['ph2',1].sum('t2')
+        IR.ift(['ph1','ph2'])
+        min_index = abs(s_clock).argmin('vd',raw_index=True).item()
+        s_clock *= np.exp(-1j*clock_corr*IR.fromaxis('vd'))
+        s_clock['vd',:min_index+1] *=-1
+        s_clock.sum('vd').run(abs)
+        if fl is not None:
+            fl.next('clock correction')
+            fl.plot(s_clock,'.',alpha=0.7)
+        clock_corr = s_clock.argmax('clock_corr').item()
+        plt.axvline(x=clock_corr, alpha=0.5, color='r')
+        IR *= np.exp(-1j*clock_corr*IR.fromaxis('vd'))
+        IR.ft(['ph1','ph2'])
+        if fl is not None:
+            fl.next('after auto-clock correction')
+            fl.image(IR.C.setaxis('vd','#'))
+        IR.ift('t2')
+    #}}}
     #{{{phasing
     IR.setaxis('t2',lambda x: x-t_center_echo).register_axis({'t2':0})
     IR.ft('t2')
