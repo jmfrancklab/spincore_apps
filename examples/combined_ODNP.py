@@ -10,10 +10,10 @@ from SpinCore_pp.verifyParams import verifyParams
 from SpinCore_pp.power_helper import gen_powerlist
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 import h5py
-# {{{ from run_Hahn_echo_mw.py
+# {{{ Combined ODNP
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '150mM_TEMPOL_short_DNP'
+output_name = '150mM_TEMPOL_DNP'
 IR_postproc = 'spincore_IR_v1'
 Ep_postproc = 'ODNP_v3'
 adcOffset = 26
@@ -25,11 +25,11 @@ nEchoes = 1
 p90_us = 4.464
 repetition_us = 1e6
 FIR_rd = 0.5e6
-vd_list = r_[2.1e3,6.1e4,1.2e5,1.8e5,2.4e5,3e5]
-T1_powers_dB = r_[30]
+vd_list = r_[2.1e3,2.1e4,3.3e4,6.1e4,1.2e5,1.8e5,2.4e5,3e5]
+T1_powers_dB = r_[30,32,33,34]
 T1_node_names = ['FIR_%ddBm'%j for j in T1_powers_dB]
 max_power = 4 #W
-power_steps = 4
+power_steps = 14
 threedown = True
 # }}}
 #{{{Power settings
@@ -288,38 +288,38 @@ with power_control() as p:
 #{{{run enhancement
 DNP_ini_time = time.time()
 with power_control() as p:
+    retval_thermal = p.dip_lock(9.81,9.83)
     p.mw_off()
-DNP_data = run_scans(nScans,0)
-DNP_thermal_done = time.time()
-time_list.append(time.time())
-time_axis_coords = DNP_data.getaxis('indirect')
-time_axis_coords[0]['start_times'] = DNP_ini_time
-# w/ struct array, this becomes time_axis_coords[0]['start_time']
-DNP_data.set_prop('start_time', DNP_ini_time)
-DNP_data.set_prop('thermal_done_time', DNP_thermal_done)
-time_axis_coords[0]['stop_times'] = DNP_thermal_done
-# w/ struct array, we can add time_axis_coords[0]['stop_time'], and the above becomes obsolete
-power_settings = zeros_like(dB_settings)
-time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-with power_control() as p:
-    for j, this_dB in enumerate(dB_settings):
-        print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
-        if j == 0:
-            retval = p.dip_lock(9.81,9.83)
-            print(retval)
-        p.set_power(this_dB)
-        for k in range(10):
-            time.sleep(0.5)
-            if p.get_power_setting() >= this_dB: break
-        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
-        time.sleep(5)
-        power_settings[j] = p.get_power_setting()
-        time_axis_coords[j+1]['start_times'] = time.time()
-        run_scans(nScans,j+1,DNP_data)
-        time_axis_coords[j+1]['stop_times'] = time.time()
-    DNP_data.name('enhancement')
-    this_log=p.stop_log()
-    SpinCore_pp.stopBoard()
+    DNP_data = run_scans(nScans,0)
+    DNP_thermal_done = time.time()
+    time_list.append(time.time())
+    time_axis_coords = DNP_data.getaxis('indirect')
+    time_axis_coords[0]['start_times'] = DNP_ini_time
+    # w/ struct array, this becomes time_axis_coords[0]['start_time']
+    DNP_data.set_prop('start_time', DNP_ini_time)
+    DNP_data.set_prop('thermal_done_time', DNP_thermal_done)
+    time_axis_coords[0]['stop_times'] = DNP_thermal_done
+    # w/ struct array, we can add time_axis_coords[0]['stop_time'], and the above becomes obsolete
+    power_settings = zeros_like(dB_settings)
+    time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+    with power_control() as p:
+        for j, this_dB in enumerate(dB_settings):
+            print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
+            if j == 0:
+                retval = p.dip_lock(9.81,9.83)
+            p.set_power(this_dB)
+            for k in range(10):
+                time.sleep(0.5)
+                if p.get_power_setting() >= this_dB: break
+            if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
+            time.sleep(5)
+            power_settings[j] = p.get_power_setting()
+            time_axis_coords[j+1]['start_times'] = time.time()
+            run_scans(nScans,j+1,DNP_data)
+            time_axis_coords[j+1]['stop_times'] = time.time()
+        final_frq=p.dip_lock(9.81,9.83)
+        this_log=p.stop_log()
+SpinCore_pp.stopBoard()
 DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
@@ -334,6 +334,7 @@ time_array = array(time_list)
 while save_file:
     try:
         print("SAVING FILE...")
+        DNP_data.name('enhancement')
         DNP_data.hdf5_write(myfilename)        
         print("FILE SAVED")
         print("Name of saved enhancement data", DNP_data.name())
