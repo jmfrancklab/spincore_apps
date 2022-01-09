@@ -26,7 +26,6 @@ p90_us = 4.464
 repetition_us = 1e6
 FIR_rd = 0.5e6
 vd_list = r_[2.1e3,2.1e4,3.3e4,6.1e4,1.2e5,1.8e5,2.4e5,3e5]
-T1_powers_dB = r_[30,32,33,34]
 T1_node_names = ['FIR_%ddBm'%j for j in T1_powers_dB]
 max_power = 4 #W
 power_steps = 14
@@ -34,20 +33,22 @@ threedown = True
 # }}}
 #{{{Power settings
 dB_settings = gen_powerlist(max_power,power_steps+1, three_down=threedown)
+T1_powers_dB = gen_powerlist(max_power, 5, three_down=False)
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
+print("T1_powers_dB",T1_powers_dB)
+print("correspond to powers in Watts",10**(T1_powers_dB/10.-3))
 myinput = input("Look ok?")
-#}}}
-time_list = [time.time()]
 if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
+#}}}
 powers = 1e-3*10**(dB_settings/10.)
-time_list.append(time.time())
 fl = figlist_var()
 save_file=True
 SW_kHz = 5 
 acq_time_ms = 500. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
+acq_time_ms = nPoints/SW_kHz
 tau_adjust_us = 0.0
 deblank_us = 1.0
 tau_us = 3500
@@ -56,8 +57,6 @@ tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 deadtime_us = 10.0
 date = datetime.now().strftime('%y%m%d')
-IR_postproc = 'spincore_IR_v1'
-Ep_postproc = 'ODNP_v3'
 #{{{ enhancement curve pulse prog
 def run_scans(nScans, power_idx, DNP_data=None):
     """run nScans and slot them into the power_idx index of DNP_data -- assume
@@ -75,7 +74,6 @@ def run_scans(nScans, power_idx, DNP_data=None):
     ph1_cyc = r_[0,1,2,3]
     ph2_cyc = r_[0]
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
-    total_pts = nPoints*nPhaseSteps
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for x in range(nScans):
         run_scans_time_list = [time.time()]
@@ -116,7 +114,6 @@ def run_scans(nScans, power_idx, DNP_data=None):
         run_scans_time_list.append(time.time())
         run_scans_names.append('get data')
         raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-        raw_data.astype(float)
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
         data_array=[]
@@ -133,20 +130,19 @@ def run_scans(nScans, power_idx, DNP_data=None):
                 DNP_data.setaxis('nScans',r_[0:nScans])
             data_array = nddata(array(data_array),'t')
             data_array.setaxis('t',time_axis)
-            DNP_data['indirect',power_idx]['nScans',x] = data_array
-            run_scans_time_list.append(time.time())
-            this_array = array(run_scans_time_list)
-        else:
-            time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
-            data_array = nddata(array(data_array),'t')
-            data_array.setaxis('t',time_axis).set_units('t','s')
-            data_array.name('enhancement')
-            DNP_data['indirect',j+1]['nScans',x] = data_array
+        # (delete on reading) JF edited -- there was an else block
+        # w/ reference to "j", but j is not defined in the function!
+        # If I assume that j+1 was intended to be power_idx, then
+        # the following works for "if" as well as "else"
+        DNP_data['indirect',power_idx]['nScans',x] = data_array
+        run_scans_time_list.append(time.time())
+        this_array = array(run_scans_time_list)
         print("stored scan",x,"for power_idx",power_idx)
         return DNP_data
 #}}}
 #{{{IR ppg
 def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_on = False, vd_data=None):
+    # (JF delete on reading): convert this to a real docstring!!
     # nScans is number of scans you want
     # rd is the repetition delay
     # power_setting is what you want to run power at
@@ -154,7 +150,8 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
     # node_name is the name of the node must specify power
     ph1_cyc = r_[0,2]
     ph2_cyc = r_[0,2]
-    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
+    ph3_cyc = r_[0]
+    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)*len(ph3_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for index,val in enumerate(vd_list):
         vd = val
@@ -165,43 +162,41 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
             run_scans_time_list = [time.time()]
             run_scans_names = ['configure']
             SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-            acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+            acq_time_ms = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
             run_scans_time_list.append(time.time())
             run_scans_names.append('configure Rx')
             verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90_us, tau_us=tau_us)
             run_scans_time_list.append(time.time())
             run_scans_names.append('init')
-            SpinCore_pp.init_ppg();
+            SpinCore_pp.init_ppg()
             run_scans_time_list.append(time.time())
             run_scans_names.append('prog')
-            nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
             SpinCore_pp.load([
                 ('marker','start',1),
                 ('phase_reset',1),
-                ('delay_TTL',1.0),
+                ('delay_TTL',deblank_us),
                 ('pulse_TTL',2.0*p90_us,'ph1',ph1_cyc),
                 ('delay',vd),
                 ('delay_TTL',1.0),
                 ('pulse_TTL',p90_us,'ph2',ph2_cyc),
                 ('delay',tau_us),
-                ('delay_TTL',1.0),
-                ('pulse_TTL',2.0*p90_us,0),
+                ('delay_TTL',deblank_us),
+                ('pulse_TTL',2.0*p90_us,ph3_cyc),
                 ('delay',deadtime_us),
-                ('acquire',acq_time),
+                ('acquire',acq_time_ms),
                 ('delay',repetition_us),
                 ('jumpto','start')
                 ])
             run_scans_time_list.append(time.time())
             run_scans_names.append('prog')
-            SpinCore_pp.stop_ppg();
+            SpinCore_pp.stop_ppg()
             print("\nRUNNING BOARD...\n")
             run_scans_time_list.append(time.time())
             run_scans_names.append('run')
-            SpinCore_pp.runBoard();
+            SpinCore_pp.runBoard()
             run_scans_time_list.append(time.time())
             run_scans_names.append('get data')
             raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-            raw_data.astype(float)
             run_scans_time_list.append(time.time())
             run_scans_names.append('shape data')
             data_array=[]
@@ -216,7 +211,6 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
                 vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
                 vd_data.setaxis('nScans',r_[0:nScans])
                 vd_data.setaxis('t',time_axis).set_units('t','s')
-                vd_data.name('FIR_noPower')
             vd_data['vd',index]['nScans',x]['indirect',power_idx] = data_array
             vd_data.name(node_name)
             SpinCore_pp.stopBoard();
@@ -233,7 +227,6 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
 ini_time = time.time() # needed b/c data object doesn't exist yet
 vd_data = run_scans_IR(vd_list,'FIR_noPower',
         nScans=1, power_idx=0)
-time_list.append(time.time())
 time_axis_coords_IR = vd_data.getaxis('indirect')
 time_axis_coords_IR[0]=ini_time
 vd_data.set_prop('start_time',ini_time)
@@ -253,7 +246,6 @@ vd_data.setaxis('ph2',ph2ir_cyc/4)
 vd_data.hdf5_write(myfilename)
 print("\n*** FILE SAVED ***\n")
 print(("Name of saved data",vd_data.name()))
-time_list.append(time.time())
 time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 with power_control() as p:
     for j,this_dB in enumerate(T1_powers_dB):
@@ -283,7 +275,6 @@ with power_control() as p:
         vd_data.setaxis('ph1',ph1ir_cyc/4)
         vd_data.setaxis('ph2',ph2ir_cyc/4)
         vd_data.hdf5_write(myfilename)
-        time_list.append(time.time())
 #}}}
 #{{{run enhancement
 DNP_ini_time = time.time()
@@ -292,7 +283,6 @@ with power_control() as p:
     p.mw_off()
     DNP_data = run_scans(nScans,0)
     DNP_thermal_done = time.time()
-    time_list.append(time.time())
     time_axis_coords = DNP_data.getaxis('indirect')
     time_axis_coords[0]['start_times'] = DNP_ini_time
     # w/ struct array, this becomes time_axis_coords[0]['start_time']
@@ -322,6 +312,7 @@ with power_control() as p:
 SpinCore_pp.stopBoard()
 DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)
+# the following line needs to be done separately for the IR and the E(p)
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
     'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
@@ -329,8 +320,6 @@ DNP_data.set_prop('acq_params',acq_params)
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
 DNP_data.setaxis('ph1',r_[0,1,2,3]/4)
-time_list.append(time.time())
-time_array = array(time_list)
 while save_file:
     try:
         print("SAVING FILE...")
