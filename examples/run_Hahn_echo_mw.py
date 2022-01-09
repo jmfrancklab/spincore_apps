@@ -26,10 +26,10 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'I21R1a_Ras_capProbe'
+output_name = 'TEMPOL_289uM_heat_exch_0C'
 node_name = 'enhancement'
-adcOffset = 25
-carrierFreq_MHz = 14.901018
+adcOffset = 28
+carrierFreq_MHz = 14.549013
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
@@ -45,18 +45,20 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.326
+p90 = 1.781
 deadtime = 10.0
 repetition = 10e6
 
-SW_kHz = 24.0
-nPoints = 1024*2
-
-acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
+SW_kHz = 10
+acq_ms = 200.
+nPoints = int(acq_ms*SW_kHz+0.5)
+tau_adjust = 0
 deblank = 1.0
 #tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 3500.
+tau = 3500
+pad = 0
+total_pts = nPoints*nPhaseSteps
+assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 #{{{ setting acq_params dictionary
 acq_params = {}
 acq_params['adcOffset'] = adcOffset
@@ -92,7 +94,7 @@ for x in range(nScans):
     acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
     acq_params['acq_time_ms'] = acq_time
     print("ACQUISITION TIME IS",acq_time,"ms")
-    verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90_us, tau_us=tau_us)
+    verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90, tau_us=tau)
     print("\nRECEIVER CONFIGURED.")
     print("***")
     print("\nINITIALIZING PROG BOARD...\n")
@@ -155,7 +157,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.8185e9,9.828e9))
+    this_return = b.lock_on_dip(ini_range=(9.579e9,9.595e9))
     dip_f = this_return[2]
     print("Frequency",dip_f)
     b.set_freq(dip_f)
