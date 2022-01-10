@@ -27,7 +27,7 @@ def verifyParams():
         quit()
     else:
         print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
+    if (tau_us < 0.065):
         print("ERROR: DELAY TIME TOO SMALL.")
         print("EXITING.")
         quit()
@@ -77,10 +77,10 @@ SW_kHz = 10
 acq_ms = 200.
 nPoints = int(acq_ms*SW_kHz+0.5)
 # rounding may need to be power of 2
-tau_adjust = 0
-deblank = 1.0
-tau = 3500.
-pad = 0
+tau_adjust_us = 0
+deblank_us = 1.0
+tau_us = 3500.
+pad_us = 0
 #}}}
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
@@ -109,10 +109,10 @@ def run_scans(fieldaxis, nScans=1, B0_index, data = None):
             SpinCore_pp.load([
                 ('marker','start',1),
                 ('phase_reset',1),
-                ('delay_TTL',deblank),
+                ('delay_TTL',deblank_us),
                 ('pulse_TTL',p90,'ph1',ph1_cyc),
-                ('delay',tau),
-                ('delay_TTL',deblank),
+                ('delay',tau_us),
+                ('delay_TTL',deblank_us),
                 ('pulse_TTL',2.0*p90,'ph2',ph2_cyc),
                 ('delay',deadtime),
                 ('acquire',acq_time),
@@ -166,8 +166,8 @@ with xepr() as x_server:
             data = run_scans(fieldaxis, nScans, B0_index) 
 #}}}        
 acq_params = {j:eval(j) for j in dir() if j in ['tx_phases', 'carrierFreq_MHz','amplitude',
-    'nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust',
-    'deblank','tau','nPhaseSteps']}
+    'nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust_us',
+    'deblank_us','tau_us','nPhaseSteps']}
 data.set_prop('acq_params',acq_params)
 myfilename = date+'_'+output_name+'.h5'
 save_file = True

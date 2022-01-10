@@ -28,8 +28,6 @@ with h5py.File(search_filename(filename+".h5",exp_type='ODNP_NMR_comp/ODNP',uniq
     thislog.__setstate__(log_grp)
     read_array = thislog.total_log
     read_dict = thislog.log_dict
-for j in range(len(read_array)):
-    thistime,thisrx,thispower,thiscmd = read_array[j]
 fig, (ax_Rx,ax_power) = plt.subplots(2,1, figsize=(10,8))
 fl.next("log figure",fig=fig)
 ax_Rx.set_ylabel('Rx/mV')
