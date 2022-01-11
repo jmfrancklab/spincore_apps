@@ -17,7 +17,7 @@ Ep_f_slice=(-0.5e3,0.5e3)
 Ep_t_range = (0,0.1)
 Ep_signal_pathway = {'ph1':1}
 t_center_echo = 0.0035
-IR_f_slice=(-0.2e3,0.2e3)
+IR_f_slice=(-0.15e3,0.15e3)
 t_range = (0,0.2)
 IR_signal_pathway = {'ph1':0,'ph2':1}
 excluded_pathways = [(0,0)]
@@ -32,7 +32,6 @@ fig, (ax_Rx,ax_power) = plt.subplots(2,1, figsize=(10,8))
 fl.next("log figure",fig=fig)
 ax_Rx.set_ylabel('Rx/mV')
 log_start_time = read_array['time'][0]
-print("LOG START TIME IS:",log_start_time)
 relative_time = read_array['time']
 ax_Rx.plot(relative_time, read_array['Rx'],'.')
 ax_power.set_ylabel('power/dBm')
@@ -66,25 +65,22 @@ power_list = []
 start_times = []
 stop_times = []
 errors=[]
-for nodename, postproc, clock_correction in [
-        ('FIR_noPower','spincore_IR_v1',False),
-        ('FIR_30dBm','spincore_IR_v1',False),
-        ('FIR_32dBm','spincore_IR_v1',False),
-        ('FIR_34dBm','spincore_IR_v1',False),
-        ('FIR_36dBm','spincore_IR_v1',False)
+for nodename, clock_correction in [
+        ('FIR_noPower',False),
+        ('FIR_30dBm',False),
+        ('FIR_32dBm',False),
+        ('FIR_34dBm',False),
+        ('FIR_36dBm',False)
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
             postproc='spincore_IR_v1',lookup=lookup_table)
     times = IR.C.getaxis('indirect').copy()
-    #IR.mean('indirect')
-    print(IR.getaxis('indirect'))
-    quit()
+    IR.mean('indirect')
     if 'nScans' in IR.dimlabels:
         IR.mean('nScans')
     fl.next('Raw IR')
     fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
     IR['ph2',0]['ph1',0]['t2':0]=0 #kill axial noise
-    zero_crossing = abs(select_pathway(IR['t2':IR_f_slice],IR_signal_pathway)).C.sum('t2').argmin('vd',raw_index=True).item()
     IR=IR['t2':IR_f_slice]
     IR.ift('t2')
     #{{{clock correction
@@ -117,7 +113,9 @@ for nodename, postproc, clock_correction in [
     IR.ft('t2')
     IR.ift('t2')
     IR /= zeroth_order_ph(select_pathway(IR,IR_signal_pathway))
-    IR.ft('t2')    
+    IR.ft('t2') 
+    fl.next('IR phased data')
+    fl.image(IR.C.setaxis('vd','#').set_units('vd','scan #'))
     #}}}
     IR.ift('t2')
     #{{{FID slice
@@ -137,7 +135,6 @@ for nodename, postproc, clock_correction in [
     #}}}
     #{{{Fitting Routine
     fl.next('Fit with data')
-    s_int['vd',:zero_crossing+1] *= -1
     fl.plot(s_int, 'o', label = 'data')
     x = s_int.fromaxis('vd')
     M0,Mi,R1,vd = symbols("M_0 M_inf R_1 vd",Real=True)
@@ -190,16 +187,17 @@ for filename,nodename,file_location in [
     s.rename('indirect','time')
     zero_crossing = abs(select_pathway(s['t2':Ep_f_slice],Ep_signal_pathway)).C.sum('t2').argmin('time',raw_index=True).item()
     s = s['t2':Ep_f_slice]
-    if 'nScans' in s.dimlabels:
-        s.mean('nScans')
     s.ift('t2')
     #}}}
     #{{{phasing
+    s /= zeroth_order_ph(select_pathway(s,Ep_signal_pathway))
+    if 'nScans' in s.dimlabels:
+        s.mean('nScans')
     s.setaxis('t2',lambda x: x-t_center_echo).register_axis({'t2':0})
     s.ft('t2')
-    s.ift('t2')
-    s /= zeroth_order_ph(select_pathway(s,Ep_signal_pathway))
-    s.ft('t2')    
+    fl.next('Ep phased data')
+    fl.image(s.C.setaxis(
+'time','#').set_units('time','scan #'))
     #}}}
     s.ift('t2')
     #{{{FID slice
@@ -225,7 +223,7 @@ for filename,nodename,file_location in [
     s_int.setaxis('time',time_axis)
     #}}}
     #{{{Normalize and flip
-    s_int['time',zero_crossing:] *= -1
+    #s_int['time',zero_crossing:] *= -1
     s_int /= np.real(s_int['time',0:1].data.item())
     fl.next('E(p) before power correction')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
@@ -234,8 +232,8 @@ for filename,nodename,file_location in [
     #}}}
     #{{{finding average power over steps
     dnp_time_axis = s.C.getaxis('time').copy()
-    dnp_time_axis[0]['stop_times'] = s.get_prop('thermal_done_time')+50
-    dnp_time_axis[0]['start_times'] = s.get_prop('start_time')+10
+    dnp_time_axis[0]['stop_times'] = s.get_prop('thermal_done_time')
+    dnp_time_axis[0]['start_times'] = s.get_prop('start_time')+5
     dnp_time_axis[:]['start_times'] -= log_start_time
     dnp_time_axis[:]['stop_times'] -= log_start_time
     nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
@@ -264,7 +262,6 @@ for filename,nodename,file_location in [
     power_axis = np.real(power_vs_time.data)
     s_int.setaxis('power',power_axis)
     s_int.set_error('power',power_vs_time.get_error())
-    idx_maxpower = np.argmax(s_int.getaxis('power'))
     enhancement=s_int
     fl.next('Final E(p)')
     fl.plot(np.real(s_int['power',:-3]),'ko',capsize=6,alpha=0.3)
