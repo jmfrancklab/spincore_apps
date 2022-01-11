@@ -1,3 +1,12 @@
+"""
+Field Sweep at set power
+========================
+
+Runs a field sweep of 5-8 points around the 
+estimated field for the electron resonance at the
+highest power one plans to run the combined DNP
+at. 
+"""
 import sys
 import SpinCore_pp
 from datetime import datetime

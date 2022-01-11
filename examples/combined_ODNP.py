@@ -150,8 +150,7 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
     # node_name is the name of the node must specify power
     ph1_cyc = r_[0,2]
     ph2_cyc = r_[0,2]
-    ph3_cyc = r_[0]
-    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)*len(ph3_cyc)
+    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for index,val in enumerate(vd_list):
         vd = val
@@ -181,7 +180,7 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
                 ('pulse_TTL',p90_us,'ph2',ph2_cyc),
                 ('delay',tau_us),
                 ('delay_TTL',deblank_us),
-                ('pulse_TTL',2.0*p90_us,ph3_cyc),
+                ('pulse_TTL',2.0*p90_us,0),
                 ('delay',deadtime_us),
                 ('acquire',acq_time_ms),
                 ('delay',repetition_us),

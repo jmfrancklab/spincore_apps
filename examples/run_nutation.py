@@ -60,21 +60,25 @@ if set_field:
     B0 = 3497 # Determine this from Field Sweep
     API_sender(B0)
 #}}}
-date = datetime.now().strftime('%y%m%d')
+#{{{Parameters that change for new samples
 output_name = 'TEMPOL_capillary_probe_nutation_1'
-ph1_cyc = r_[0,2]
-ph2_cyc = r_[0,2]
-nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
 adcOffset = 39
 carrierFreq_MHz = 14.896010
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
+repetition = 12e6
+p90_range = linspace(1.,15.,40,endpoint=False)
+#}}}
+#{{{These should stay the same regardless of sample
+date = datetime.now().strftime('%y%m%d')
+ph1_cyc = r_[0,2]
+ph2_cyc = r_[0,2]
+nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
+tx_phases = r_[0.0,90.0,180.0,270.0]
+amplitude = 1.0
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 deadtime = 10.0
-repetition = 12e6
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
@@ -83,7 +87,6 @@ tau = deadtime_us + acq_time_ms*1e3*0.5 + tau_adjust_us
 print("ACQUISITION TIME:",acq_times,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.,15.,40,endpoint=False)
 deblank_us = 1.0
 #}}}
 for index,val in enumerate(p90_range):
