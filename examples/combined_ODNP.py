@@ -23,10 +23,9 @@ nEchoes = 1
 # all times in microseconds
 # note that acq_time_ms is always milliseconds
 p90_us = 4.464
-repetition_us = 1e6
+repetition_us = 0.5e6
 FIR_rd = 0.5e6
-vd_list = r_[2.1e3,2.1e4,3.3e4,6.1e4,1.2e5,1.8e5,2.4e5,3e5]
-T1_node_names = ['FIR_%ddBm'%j for j in T1_powers_dB]
+vd_list =r_[2.1e3,1.12e4,2.23e4,3.3e4,4.4e4,5.6e4,6.7e4,7.8e4,8.9e4,1e5] 
 max_power = 4 #W
 power_steps = 14
 threedown = True
@@ -34,6 +33,7 @@ threedown = True
 #{{{Power settings
 dB_settings = gen_powerlist(max_power,power_steps+1, three_down=threedown)
 T1_powers_dB = gen_powerlist(max_power, 5, three_down=False)
+T1_node_names = ['FIR_%ddBm'%j for j in T1_powers_dB]
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 print("T1_powers_dB",T1_powers_dB)
@@ -45,8 +45,8 @@ if myinput.lower().startswith('n'):
 powers = 1e-3*10**(dB_settings/10.)
 fl = figlist_var()
 save_file=True
-SW_kHz = 5 
-acq_time_ms = 500. # ms
+SW_kHz = 3.9 
+acq_time_ms = 1024. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 acq_time_ms = nPoints/SW_kHz
 tau_adjust_us = 0.0
@@ -150,7 +150,8 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
     # node_name is the name of the node must specify power
     ph1_cyc = r_[0,2]
     ph2_cyc = r_[0,2]
-    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
+    ph3_cyc = r_[0]
+    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)*len(ph3_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for index,val in enumerate(vd_list):
         vd = val
@@ -180,7 +181,7 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
                 ('pulse_TTL',p90_us,'ph2',ph2_cyc),
                 ('delay',tau_us),
                 ('delay_TTL',deblank_us),
-                ('pulse_TTL',2.0*p90_us,0),
+                ('pulse_TTL',2.0*p90_us,ph3_cyc),
                 ('delay',deadtime_us),
                 ('acquire',acq_time_ms),
                 ('delay',repetition_us),
@@ -222,71 +223,19 @@ def run_scans_IR(vd_list, node_name, power_idx, nScans = 1, rd = FIR_rd, power_o
                 vd_data.setaxis('nScans',r_[0:nScans])
     return vd_data
 #}}}
-#{{{run IR
-ini_time = time.time() # needed b/c data object doesn't exist yet
-vd_data = run_scans_IR(vd_list,'FIR_noPower',
-        nScans=1, power_idx=0)
-time_axis_coords_IR = vd_data.getaxis('indirect')
-time_axis_coords_IR[0]=ini_time
-vd_data.set_prop('start_time',ini_time)
-meter_power=0
-save_file = True
-acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
-    'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
-vd_data.set_prop('acq_params',acq_params)
-myfilename = date+'_'+output_name+'.h5'
-ph1ir_cyc = r_[0,2]
-ph2ir_cyc = r_[0,2]
-vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
-vd_data.setaxis('ph1',ph1ir_cyc/4)
-vd_data.setaxis('ph2',ph2ir_cyc/4)
-# Need error handling (JF has posted something on this..)
-vd_data.hdf5_write(myfilename)
-print("\n*** FILE SAVED ***\n")
-print(("Name of saved data",vd_data.name()))
-time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-with power_control() as p:
-    for j,this_dB in enumerate(T1_powers_dB):
-        if j==0:
-            MWfreq = p.dip_lock(9.81,9.83)
-        p.start_log()
-        p.set_power(this_dB)
-        for k in range(10):
-            time.sleep(0.5)
-            if p.get_power_setting()>= this_dB: break
-        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
-        time.sleep(5)
-        meter_power = p.get_power_setting()
-        vd_data.set_prop('start_time', time.time())
-        vd_data = run_scans_IR(vd_list,T1_node_names[j], nScans=nScans, power_idx=j+1,
-                power_on=True,vd_data=vd_data)
-        vd_data.set_prop('stop_time', time.time())
-        acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
-            'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-            'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
-        vd_data.set_prop('acq_params',acq_params)
-        vd_data.set_prop('postproc_type',IR_postproc)
-        vd_data.name(T1_node_names[j])
-        myfilename = date+'_'+output_name+'.h5'
-        ph1ir_cyc = r_[0,2]
-        ph2ir_cyc = r_[0,2]
-        vd_data.setaxis('ph1',ph1ir_cyc/4)
-        vd_data.setaxis('ph2',ph2ir_cyc/4)
-        vd_data.hdf5_write(myfilename)
-#}}}
 #{{{run enhancement
 DNP_ini_time = time.time()
 with power_control() as p:
     retval_thermal = p.dip_lock(9.81,9.83)
+    p.start_log()
     p.mw_off()
     DNP_data = run_scans(nScans,0)
     DNP_thermal_done = time.time()
     time_axis_coords = DNP_data.getaxis('indirect')
     time_axis_coords[0]['start_times'] = DNP_ini_time
     # w/ struct array, this becomes time_axis_coords[0]['start_time']
-    DNP_data.set_prop('start_time', DNP_ini_time)
-    DNP_data.set_prop('thermal_done_time', DNP_thermal_done)
+    DNP_data.set_prop('Ep_start_time', DNP_ini_time)
+    DNP_data.set_prop('Ep_thermal_done_time', DNP_thermal_done)
     time_axis_coords[0]['stop_times'] = DNP_thermal_done
     # w/ struct array, we can add time_axis_coords[0]['stop_time'], and the above becomes obsolete
     power_settings = zeros_like(dB_settings)
@@ -306,9 +255,6 @@ with power_control() as p:
             time_axis_coords[j+1]['start_times'] = time.time()
             run_scans(nScans,j+1,DNP_data)
             time_axis_coords[j+1]['stop_times'] = time.time()
-        final_frq=p.dip_lock(9.81,9.83)
-        this_log=p.stop_log()
-SpinCore_pp.stopBoard()
 DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)
 # the following line needs to be done separately for the IR and the E(p)
@@ -333,7 +279,65 @@ while save_file:
         print("EXCEPTION ERROR - FILE MAY ALREADY EXIST. LOOPING TO ALLOW YOU TO CHANGE NAME OF PREEXISTING FILE")
         save_file = False
         time.sleep(3)
+#}}}
+#{{{run IR
+ini_time = time.time() # needed b/c data object doesn't exist yet
+with power_control() as p:
+    retval_IR = p.dip_lock(9.81,9.83)
+    p.mw_off()
+    vd_data = run_scans_IR(vd_list,'FIR_noPower',
+            nScans=nScans, power_idx=0)
+    time_axis_coords_IR = vd_data.getaxis('indirect')
+    time_axis_coords_IR[0]=ini_time
+    vd_data.set_prop('start_time',ini_time)
+    meter_power=0
+    acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
+        'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
+        'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+    vd_data.set_prop('acq_params',acq_params)
+    myfilename = date+'_'+output_name+'.h5'
+    ph1ir_cyc = r_[0,2]
+    ph2ir_cyc = r_[0,2]
+    vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+    vd_data.setaxis('ph1',ph1ir_cyc/4)
+    vd_data.setaxis('ph2',ph2ir_cyc/4)
+    # Need error handling (JF has posted something on this..)
+    vd_data.hdf5_write(myfilename)
+    print("\n*** FILE SAVED ***\n")
+    print(("Name of saved data",vd_data.name()))
+    time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+    for j,this_dB in enumerate(T1_powers_dB):
+        if j==0:
+            MWfreq = p.dip_lock(9.81,9.83)
+        p.set_power(this_dB)
+        for k in range(10):
+            time.sleep(0.5)
+            if p.get_power_setting()>= this_dB: break
+        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
+        time.sleep(5)
+        meter_power = p.get_power_setting()
+        vd_data.set_prop('start_time', time.time())
+        vd_data = run_scans_IR(vd_list,T1_node_names[j], nScans=nScans, power_idx=j+1,
+                power_on=True,vd_data=vd_data)
+        vd_data.set_prop('stop_time', time.time())
+        acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
+            'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
+            'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+        vd_data.set_prop('acq_params',acq_params)
+        vd_data.set_prop('postproc_type',IR_postproc)
+        vd_data.name(T1_node_names[j])
+        myfilename = date+'_'+output_name+'.h5'
+        ph1ir_cyc = r_[0,2]
+        ph2ir_cyc = r_[0,2]
+        vd_data.setaxis('ph1',ph1ir_cyc/4)
+        vd_data.setaxis('ph2',ph2ir_cyc/4)
+        vd_data.hdf5_write(myfilename)
+    final_frq = p.dip_lock(9.81,9.83)
+    this_log = p.stop_log()
+SpinCore_pp.stopBoard()    
+#}}}
 with h5py.File(myfilename, 'a') as f:
     log_grp = f.create_group('log')
     hdf_save_dict_to_group(log_grp,this_log.__getstate__())
-#}}}
+
+
