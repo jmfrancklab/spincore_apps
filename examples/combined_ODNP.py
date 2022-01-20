@@ -49,7 +49,6 @@ SW_kHz = 3.9
 acq_time_ms = 1024. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 acq_time_ms = nPoints/SW_kHz
-tau_adjust_us = 0.0
 deblank_us = 1.0
 tau_us = 3500
 pad_us = 0
@@ -260,7 +259,7 @@ DNP_data.set_prop('postproc_type',Ep_postproc)
 # the following line needs to be done separately for the IR and the E(p)
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
+    'nPoints', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
 DNP_data.set_prop('acq_params',acq_params)
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
@@ -293,7 +292,7 @@ with power_control() as p:
     meter_power=0
     acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
         'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-        'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+        'nPoints', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
     vd_data.set_prop('acq_params',acq_params)
     myfilename = date+'_'+output_name+'.h5'
     ph1ir_cyc = r_[0,2]
@@ -322,7 +321,7 @@ with power_control() as p:
         vd_data.set_prop('stop_time', time.time())
         acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
             'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-            'nPoints', 'tau_adjust_us', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+            'nPoints', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
         vd_data.set_prop('acq_params',acq_params)
         vd_data.set_prop('postproc_type',IR_postproc)
         vd_data.name(T1_node_names[j])
