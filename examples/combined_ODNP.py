@@ -18,8 +18,8 @@ import h5py
 output_name = '150mM_TEMPOL_DNP'
 IR_postproc = 'spincore_IR_v1'
 Ep_postproc = 'ODNP_v3'
-adcOffset = 26
-carrierFreq_MHz = 14.897196
+adcOffset = 28
+carrierFreq_MHz = 14.893200
 nScans = 1
 nEchoes = 1
 # all times in microseconds
@@ -51,12 +51,8 @@ SW_kHz = 3.9 #AAB and FS have found the min SW without loss to be 1.9 kHz
 acq_time_ms = 1024. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 acq_time_ms = nPoints/SW_kHz
-deblank_us = 1.0
 tau_us = 3500
 pad_us = 0
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-deadtime_us = 10.0
 Ep_ph1_cyc = r_[0,1,2,3]
 Ep_ph2_cyc = r_[0]
 IR_ph1_cyc = r_[0,2]
@@ -68,7 +64,10 @@ with power_control() as p:
     retval_thermal = p.dip_lock(9.81,9.83)
     p.start_log()
     p.mw_off()
-    DNP_data = run_spin_echo(nScans,0,len(powers)+1) # assume that the power
+    DNP_data = run_spin_echo(nScans,indirect_idx = 0,indirect_len = len(powers)+1,
+            nPoints = nPoints,nEchoes=nEchoes,adc_offset = adcOffset,
+            carrierFreq_MHz = carrierFreq_MHz, p90_us = p90_us,
+            SW_kHz=SW_kHz, tau_us = tau_us) # assume that the power
     #                                                  axis is 1 longer than
     #                                                  the "powers" array, so
     #                                                  that we can also store
@@ -104,7 +103,10 @@ with power_control() as p:
             time.sleep(5)
             power_settings[j] = p.get_power_setting()
             time_axis_coords[j+1]['start_times'] = time.time()
-            run_spin_echo(nScans,j+1,DNP_data)
+            run_spin_echo(nScans,indirect_idx = j+1,nPoints = nPoints,nEchoes=nEchoes,
+                    adc_offset = adcOffset,carrierFreq_MHz = carrierFreq_MHz,p90_us = p90_us,
+                    SW_kHz = SW_kHz, tau_us = tau_us,
+                    DNP_data=DNP_data)
             time_axis_coords[j+1]['stop_times'] = time.time()
 DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)
@@ -137,7 +139,9 @@ with power_control() as p:
     retval_IR = p.dip_lock(9.81,9.83)
     p.mw_off()
     vd_data = run_scans_IR(vd_list,'FIR_noPower',indirect_idx=0,
-            nScans=nScans, rd = FIR_rd)
+            nScans=nScans, rd = FIR_rd,nPoints = nPoints, nEchoes= nEchoes,
+            carrierFreq_MHz = carrierFreq_MHz, p90_us = p90_us,tau_us = tau_us,
+            SW_kHz = SW_kHz, adc_offset = adcOffset)
     time_axis_coords_IR = vd_data.getaxis('indirect')
     time_axis_coords_IR[0]=ini_time
     vd_data.set_prop('start_time',ini_time)
@@ -165,7 +169,9 @@ with power_control() as p:
         meter_power = p.get_power_setting()
         vd_data.set_prop('start_time', time.time())
         run_scans_IR(vd_list,T1_node_names[j],indirect_idx=j+1,
-                 nScans=nScans, rd = FIR_rd, power_on=True, vd_data=vd_data)
+                 nScans=nScans, rd = FIR_rd,nPoints = nPoints, nEchoes= nEchoes,
+                 carrierFreq_MHz = carrierFreq_MHz,adc_offset = adcOffset,p90_us = p90_us,tau_us = tau_us,
+                 SW_kHz=SW_kHz, power_on=True, vd_data=vd_data)
         vd_data.set_prop('stop_time', time.time())
         acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
             'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',

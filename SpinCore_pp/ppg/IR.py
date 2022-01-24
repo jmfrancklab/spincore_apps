@@ -1,9 +1,11 @@
-from .. import configureRX, configureRX, init_ppg stop_ppg, runBoard, getData
+from .. import configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
-
+from pyspecdata import *
 #{{{IR ppg
-def run_scans_IR(vd_list, node_name, indirect_idx, nScans, rd, ph1_cyc = r_[0,2], 
-        ph2_cyc = r_[0,2], power_on = False, vd_data=None):
+def run_scans_IR(vd_list, node_name, indirect_idx, nScans, rd, 
+        carrierFreq_MHz, adc_offset,nPoints, nEchoes,p90_us, tau_us,SW_kHz,
+        deblank_us = 1.0,deadtime_us = 10.0,
+        ph1_cyc = r_[0,2], ph2_cyc = r_[0,2],power_on = False, vd_data=None):
     """run nScans and slots them into the indirect idx  index of vd_data. We assume the first    time this is run, vd_data=None, after which we will pass in vd_data. 
     Generates an "indirect" axis.
 
@@ -38,6 +40,7 @@ def run_scans_IR(vd_list, node_name, indirect_idx, nScans, rd, ph1_cyc = r_[0,2]
     # power_setting is what you want to run power at
     # vd list is a list of the vd's you want to use
     # node_name is the name of the node must specify power
+    tx_phases = r_[0.0,90.0,180.0,270.0]
     ph3_cyc = 0    
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)*len(ph3_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps

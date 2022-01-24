@@ -1,7 +1,11 @@
-from .. import configureRX, configureRX, init_ppg stop_ppg, runBoard, getData
+from .. import configureTX,configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
-def run_spin_echo(nScans, indirect_idx, indirect_len, ph1_cyc = r_[0,1,2,3],
-        ph2_cyc = r_[0], DNP_data=None):
+from pyspecdata import *
+import time
+def run_spin_echo(nScans, indirect_idx, indirect_len,adc_offset, carrierFreq_MHz, 
+        nPoints, nEchoes,p90_us, tau_us, SW_kHz, deblank_us = 1.0, deadtime_us = 10.0,
+        ph1_cyc = r_[0,1,2,3],ph2_cyc = r_[0], 
+        DNP_data=None):
     """run nScans and slot them into the indirect_idx index of DNP_data -- assume
     that the first time this is run, it will be run with DNP_data=None and that
     after that, you will pass in DNP_data this generates an "indirect" axis.
@@ -24,6 +28,8 @@ def run_spin_echo(nScans, indirect_idx, indirect_len, ph1_cyc = r_[0,1,2,3],
                     returned data from previous run. If it is the first run DNP_data will
                     be None.
     """
+    amplitude = 1.0
+    tx_phases = r_[0.0,90.0,180.0,270.0]
     print("about to run run_spin_echo for",indirect_idx)
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
@@ -31,7 +37,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len, ph1_cyc = r_[0,1,2,3],
         run_scans_time_list = [time.time()]
         run_scans_names = ['configure']
         print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
-        configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+        configureTX(adc_offset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append('configure Rx')
         print("***")
