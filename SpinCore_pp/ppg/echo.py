@@ -1,15 +1,30 @@
 from .. import configureRX, configureRX, init_ppg stop_ppg, runBoard, getData
 from .. import load as spincore_load
-def run_spin_echo(nScans, indirect_idx, indirect_len, DNP_data=None):
+def run_spin_echo(nScans, indirect_idx, indirect_len, ph1_cyc = r_[0,1,2,3],
+        ph2_cyc = r_[0], DNP_data=None):
     """run nScans and slot them into the indirect_idx index of DNP_data -- assume
     that the first time this is run, it will be run with DNP_data=None and that
-    after that, you will pass in DNP_data
-    
-    this generates an "indirect" axis
+    after that, you will pass in DNP_data this generates an "indirect" axis.
+
+    Parameters
+    ==========
+    nScans: int
+            number of averages over data
+    indirect_idx:   int
+                    indirect axis number
+    indirect_len:   int
+                    size of indirect axis. When performing Ep, assume the power axis is
+                    1 longer than the "powers" array, so that we can store the thermally
+                    polarized signal in this array.
+    ph1_cyc:        array
+                    phase steps for the first pulse
+    ph2_cyc:        array
+                    phase steps for the second pulse
+    DNP_data:       nddata
+                    returned data from previous run. If it is the first run DNP_data will
+                    be None.
     """
     print("about to run run_spin_echo for",indirect_idx)
-    ph1_cyc = r_[0,1,2,3]
-    ph2_cyc = r_[0]
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for x in range(nScans):
