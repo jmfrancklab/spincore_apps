@@ -144,11 +144,13 @@ def run_scans(B0_index, nScans=1, sweep_data = None):
             logger.debug("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
             dataPoints = float(np.shape(data_array)[0])
             if x ==0 and B0_index == 0:
+                freqs_dtype = dtype([('Field',double),('carrierFreq',double)])
+                myfreqs = zeros(len(field_axis),dtype = freqs_dtype)
                 time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
-                sweep_data = ndshape([len(time_axis),nScans,len(field_axis),1],['t','nScans','Field','power']).alloc(dtype=np.complex128)
+                sweep_data = ndshape([len(time_axis),nScans,len(field_axis),1],['t','nScans','indirect','power']).alloc(dtype=np.complex128)
                 sweep_data.setaxis('t',time_axis).set_units('t','s')
                 sweep_data.setaxis('nScans',r_[0:nScans])
-                sweep_data.setaxis('Field',field_axis)
+                sweep_data.setaxis('indirect',myfreqs)
                 sweep_data.setaxis('power',r_[powers])
             if sweep_data == None:
                 time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
@@ -156,7 +158,7 @@ def run_scans(B0_index, nScans=1, sweep_data = None):
                 data_array.setaxis('t',time_axis)
                 sweep_data.name('Field_sweep')
             print(sweep_data)    
-            sweep_data['nScans',x]['Field',B0_index]['power',0] = data_array
+            sweep_data['nScans',x]['indirect',B0_index]['power',0] = data_array
             logger.debug(strm("FINISHED B0 INDEX %d..."%B0_index))
             logger.debug("\n*** *** ***\n")
             return sweep_data
@@ -177,18 +179,21 @@ with power_control() as p:
         time.sleep(3.0)
         carrierFreq_MHz = gamma_eff*first_B0
         sweep_data = run_scans(B0_index = 0,sweep_data = None)
+        myfreqs_fields = sweep_data.getaxis('indirect')
+        myfreqs_fields[0]['Field'] = first_B0
+        myfreqs_fields[0]['carrierFreq'] = carrierFreq_MHz
         for B0_index,desired_B0 in enumerate(field_axis[1:]):
                 true_B0 = x_server.set_field(desired_B0)
                 print("My field in G is %f"%true_B0)
                 time.sleep(3.0)
-                carrierFreq_MHz = gamma_eff*true_B0
-                print("My frequency in MHz is",carrierFreq_MHz)
+                new_carrierFreq_MHz = gamma_eff*true_B0
+                myfreqs_fields[B0_index]['Field'] = true_B0
+                myfreqs_fields[B0_index]['carrierFreq'] = new_carrierFreq_MHz
+                print("My frequency in MHz is",new_carrierFreq_MHz)
                 sweep_data = run_scans(B0_index+1,sweep_data = sweep_data)
         SpinCore_pp.stopBoard()
-        acq_params = {j:eval(j) for j in dir() if j in ['tx_phases', 'carrierFreq_MHz','amplitude',
-            'nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust_us',
-            'deblank_us','tau_us','nPhaseSteps']}
-        sweep_data.set_prop('acq_params',acq_params)
+acq_params = {j:eval(j) for j in dir() if j in ['tx_phases', 'carrierFreq_MHz','amplitude','nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust_us','deblank_us','tau_us','nPhaseSteps']}
+sweep_data.set_prop('acq_params',acq_params)
 
 #}}}        
 myfilename = date+'_'+output_name+'.h5'
