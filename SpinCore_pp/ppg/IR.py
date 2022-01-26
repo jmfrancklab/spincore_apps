@@ -1,6 +1,7 @@
 from .. import configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
 from pyspecdata import *
+from numpy import *
 #{{{IR ppg
 def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
         p90_us, tau_us, repetition, output_name, SW_kHz, indirect_idx, node_name, 

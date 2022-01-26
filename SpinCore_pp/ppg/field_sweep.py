@@ -1,12 +1,13 @@
 from .. import configureTX,configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
 from pyspecdata import *
+from numpy import *
 import time
-def run_field_sweep(B0_idx, indirect_len, nScans, adcoffset, carrierFreq_MHz, 
+def run_field_sweep(B0_idx, indirect_len, nScans, adcOffset, carrierFreq_MHz, 
         nPoints, SW_kHz, nEchoes, tau_us, p90_us, repetition_us, output_name, 
-        ph1_cyc = r_[0,1,2,3],ph2_cyc = r_[0], sweep_data = None):
-        print("About to run run_scans for", B0_index)
-        deadtime_us = 10.0
+        powers, ph1_cyc = r_[0,1,2,3],ph2_cyc = r_[0], sweep_data = None):
+        print("About to run run_scans for", B0_idx)
+        deadtime = 10.0
         deblank_us = 1.0
         amplitude = 1.0
         tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -19,7 +20,8 @@ def run_field_sweep(B0_idx, indirect_len, nScans, adcoffset, carrierFreq_MHz,
                 logger.debug("\nTRANSMITTER CONFIGURED.")
                 logger.debug("***")
                 logger.debug("CONFIGURING RECEIVER...")
-                acq_time = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)                logger.debug("\nRECEIVER CONFIGURED.")
+                acq_time = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)                
+                logger.debug("\nRECEIVER CONFIGURED.")
                 logger.debug("***")
                 logger.debug("\nINITIALIZING PROG BOARD...\n")
                 init_ppg();
@@ -61,7 +63,7 @@ def run_field_sweep(B0_idx, indirect_len, nScans, adcoffset, carrierFreq_MHz,
                     data_array.setaxis('t',time_axis)
                     sweep_data.name('Field_sweep')
                 sweep_data['nScans',x]['indirect',B0_idx]['power',0] = data_array
-                logger.debug(strm("FINISHED B0 INDEX %d..."%B0_index))
+                logger.debug(strm("FINISHED B0 INDEX %d..."%B0_idx))
                 logger.debug("\n*** *** ***\n")
                 return sweep_data
 

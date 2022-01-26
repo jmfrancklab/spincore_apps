@@ -1,6 +1,7 @@
 from .. import configureTX,configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
 from pyspecdata import *
+from numpy import *
 import time
 def run_spin_echo(nScans, indirect_idx, indirect_len,adc_offset, carrierFreq_MHz, 
         nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name,
