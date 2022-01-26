@@ -65,9 +65,8 @@ with power_control() as p:
     p.start_log()
     p.mw_off()
     DNP_data = run_spin_echo(nScans,indirect_idx = 0,indirect_len = len(powers)+1,
-            nPoints = nPoints,nEchoes=nEchoes,adc_offset = adcOffset,
-            carrierFreq_MHz = carrierFreq_MHz, p90_us = p90_us,
-            SW_kHz=SW_kHz, tau_us = tau_us) # assume that the power
+            adcOffset, carrierFreq_MHz, nPoints, nEchoes, p90_us,
+            repetition_us, tau_us, SW_kHz, output_name)# assume that the power
     #                                                  axis is 1 longer than
     #                                                  the "powers" array, so
     #                                                  that we can also store
@@ -103,10 +102,10 @@ with power_control() as p:
             time.sleep(5)
             power_settings[j] = p.get_power_setting()
             time_axis_coords[j+1]['start_times'] = time.time()
-            run_spin_echo(nScans,indirect_idx = j+1,nPoints = nPoints,nEchoes=nEchoes,
-                    adc_offset = adcOffset,carrierFreq_MHz = carrierFreq_MHz,p90_us = p90_us,
-                    SW_kHz = SW_kHz, tau_us = tau_us,
-                    DNP_data=DNP_data)
+            run_spin_echo(nScans,indirect_idx = j+1,
+                    indirect_len = len(powers)+1, adcOffset, carrierFreq_MHz, 
+                    nPoints, nEchoes, p90_us, repetition_us, tau_us, SW_kHz, 
+                    output_name, DNP_data=DNP_data)
             time_axis_coords[j+1]['stop_times'] = time.time()
 DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)
@@ -138,16 +137,16 @@ ini_time = time.time() # needed b/c data object doesn't exist yet
 with power_control() as p:
     retval_IR = p.dip_lock(9.81,9.83)
     p.mw_off()
-    vd_data = run_scans_IR(vd_list,'FIR_noPower',indirect_idx=0,
-            nScans=nScans, rd = FIR_rd,nPoints = nPoints, nEchoes= nEchoes,
-            carrierFreq_MHz = carrierFreq_MHz, p90_us = p90_us,tau_us = tau_us,
-            SW_kHz = SW_kHz, adc_offset = adcOffset)
+    vd_data = run_scans_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
+            carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
+            indirect_idx = 0, node_name = 'FIR_noPower', vd_data=None)
     time_axis_coords_IR = vd_data.getaxis('indirect')
     time_axis_coords_IR[0]=ini_time
     vd_data.set_prop('start_time',ini_time)
     meter_power=0
     acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude','nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz', 'nPoints', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
     vd_data.set_prop('acq_params',acq_params)
+    vd_data.name('FIR_noPower')
     myfilename = date+'_'+output_name+'.h5'
     vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
     vd_data.setaxis('ph1',IR_ph1_cyc/4)
@@ -168,17 +167,15 @@ with power_control() as p:
         time.sleep(5)
         meter_power = p.get_power_setting()
         vd_data.set_prop('start_time', time.time())
-        run_scans_IR(vd_list,T1_node_names[j],indirect_idx=j+1,
-                 nScans=nScans, rd = FIR_rd,nPoints = nPoints, nEchoes= nEchoes,
-                 carrierFreq_MHz = carrierFreq_MHz,adc_offset = adcOffset,p90_us = p90_us,tau_us = tau_us,
-                 SW_kHz=SW_kHz, power_on=True, vd_data=vd_data)
+        run_scans_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
+            carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
+            indirect_idx = j+1, node_name = T1_node_names[j], vd_data=vd_data)
         vd_data.set_prop('stop_time', time.time())
         acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
             'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
             'nPoints', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
         vd_data.set_prop('acq_params',acq_params)
         vd_data.set_prop('postproc_type',IR_postproc)
-        vd_data.name(T1_node_names[j])
         myfilename = date+'_'+output_name+'.h5'
         vd_data.setaxis('ph1',IR_ph1_cyc/4)
         vd_data.setaxis('ph2',IR_ph2_cyc/4)

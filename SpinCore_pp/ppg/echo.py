@@ -3,23 +3,41 @@ from .. import load as spincore_load
 from pyspecdata import *
 import time
 def run_spin_echo(nScans, indirect_idx, indirect_len,adc_offset, carrierFreq_MHz, 
-        nPoints, nEchoes,p90_us, tau_us, SW_kHz, deblank_us = 1.0, deadtime_us = 10.0,
-        ph1_cyc = r_[0,1,2,3],ph2_cyc = r_[0], 
-        DNP_data=None):
+        nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name,
+        ph1_cyc = r_[0,1,2,3],ph2_cyc = r_[0], DNP_data=None):
     """run nScans and slot them into the indirect_idx index of DNP_data -- assume
     that the first time this is run, it will be run with DNP_data=None and that
     after that, you will pass in DNP_data this generates an "indirect" axis.
 
     Parameters
     ==========
-    nScans: int
-            number of averages over data
+    nScans:         int
+                    number of averages over data
     indirect_idx:   int
                     indirect axis number
     indirect_len:   int
                     size of indirect axis. When performing Ep, assume the power axis is
                     1 longer than the "powers" array, so that we can store the thermally
                     polarized signal in this array.
+    adc_offset:     int
+                    Offset of the ADC
+    carrierFreq_MHz:    int
+                        carrier frequency to be set in MHz
+    nPoints:        int
+                    number of points for the data
+    nEchoes:        int
+                    Number of Echoes to be acquired
+    p90_us:         int
+                    90 time of the probe in us
+    repetition:     int
+                    3-5 x T1 of the sample in seconds
+    tau_us:         int
+                    Echo Time should be a few ms for a good hermitian function to be
+                    applied later in processing. Standard tau_us = 3500.
+    SW_kHz:         int
+                    spectral width of the data centered at 0. Minimum = 1.9
+    output_name:    str
+                    file name the data will be saved under
     ph1_cyc:        array
                     phase steps for the first pulse
     ph2_cyc:        array
@@ -28,6 +46,8 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adc_offset, carrierFreq_MHz
                     returned data from previous run. If it is the first run DNP_data will
                     be None.
     """
+    deadtime_us = 10.0
+    deblank_us = 1.0
     amplitude = 1.0
     tx_phases = r_[0.0,90.0,180.0,270.0]
     print("about to run run_spin_echo for",indirect_idx)
@@ -60,7 +80,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adc_offset, carrierFreq_MHz
             ('pulse_TTL',2.0*p90_us,'ph2',ph2_cyc),
             ('delay',deadtime_us),
             ('acquire',acq_time_ms),
-            ('delay',repetition_us),
+            ('delay',repetition),
             ('jumpto','start')
             ])
         run_scans_time_list.append(time.time())

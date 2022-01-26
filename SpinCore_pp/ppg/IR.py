@@ -2,33 +2,46 @@ from .. import configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
 from pyspecdata import *
 #{{{IR ppg
-def run_scans_IR(vd_list, node_name, indirect_idx, nScans, rd, 
-        carrierFreq_MHz, adc_offset,nPoints, nEchoes,p90_us, tau_us,SW_kHz,
-        deblank_us = 1.0,deadtime_us = 10.0,
-        ph1_cyc = r_[0,2], ph2_cyc = r_[0,2],power_on = False, vd_data=None):
+def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
+        p90_us, tau_us, repetition, output_name, SW_kHz, indirect_idx, node_name, 
+        ph1_cyc = r_[0,2], ph2_cyc = r_[0,2],vd_data=None):
     """run nScans and slots them into the indirect idx  index of vd_data. We assume the first    time this is run, vd_data=None, after which we will pass in vd_data. 
     Generates an "indirect" axis.
 
     Parameters
     ==========
+    nPoints:    int
+                Number of points to be collected for dataset
+    nEchoes:    int
+                Number of echoes for each T1
     vd_list:    array
                 array of varied delays for IR experiment
+    nScans: int 
+            number of averages over data
+    adcOffset:  int 
+                offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
+    carrierFreq_MHz:    int
+                        carrier frequency in MHz
+    p90_us:     int
+                90 time of probe in use in us.
+    tau_us:     int
+                echo time in us. Our standard is 3500.
+    repetition:     int
+                    repetition delay (3-5 x T1)
+    output_name:    str
+                    filename for the data to be saved under
+    SW_kHz:     int
+                spectral width for data acquisition in kHz. Minimum is 1.9 kHz
+    indirect_idx:   int
+                    index of the indirect dimension which we are storing the data to
     node_name:  str
                 nodename for which the data will be saved under
                 useful when running multiple IR at different temps
                 or powers.
-    indirect_idx:   int
-                    indirect axis number
-    nScans: int 
-            number of averages over data
-    rd:     int
-            repetition delay (in microseconds)
     ph1_cyc:    array
                 phase steps for first pulse
     ph_2_cyc:   array
                 phase steps for second pulse
-    power_on:   bool
-                whether the microwave power will be on or off
     vd_data:    nddata
                 returned data from previous run (useful when keeping the 
                 same dataname but multiple nodenames e.g. testing the same 
@@ -40,6 +53,8 @@ def run_scans_IR(vd_list, node_name, indirect_idx, nScans, rd,
     # power_setting is what you want to run power at
     # vd list is a list of the vd's you want to use
     # node_name is the name of the node must specify power
+    deblank_us = 1.0
+    deadtime_us = 10.0
     tx_phases = r_[0.0,90.0,180.0,270.0]
     ph3_cyc = 0    
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)*len(ph3_cyc)
@@ -75,7 +90,7 @@ def run_scans_IR(vd_list, node_name, indirect_idx, nScans, rd,
                 ('pulse_TTL',2.0*p90_us,ph3_cyc),
                 ('delay',deadtime_us),
                 ('acquire',acq_time_ms),
-                ('delay',repetition_us),
+                ('delay',repetition),
                 ('jumpto','start')
                 ])
             run_scans_time_list.append(time.time())
