@@ -17,6 +17,7 @@ from Instruments import power_control,Bridge12,prologix_connection,gigatronics
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
 from pylab import *
+from SpinCore_pp.ppg import run_field_sweep
 
 fl = figlist_var()
 #logger = init_logging(level='debug')
@@ -97,72 +98,6 @@ pad_us = 0
 #}}}
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
-#{{{ppg
-def run_scans(B0_index, nScans=1, sweep_data = None):
-    print("About to run run_scans for", B0_index)
-    ph1_cyc = r_[0,1,2,3]
-    ph2_cyc = r_[0]
-    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
-    total_pts = nPoints*nPhaseSteps
-    data_length = 2*nPoints*nEchoes*nPhaseSteps
-    for x in range(nScans):
-            logger.debug("\n*** *** *** *** ***\n")
-            logger.debug("\n*** *** ***\n")
-            logger.debug("CONFIGURING TRANSMITTER...")
-            SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-            logger.debug("\nTRANSMITTER CONFIGURED.")
-            logger.debug("***")
-            logger.debug("CONFIGURING RECEIVER...")
-            acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-            logger.debug("\nRECEIVER CONFIGURED.")
-            logger.debug("***")
-            logger.debug("\nINITIALIZING PROG BOARD...\n")
-            SpinCore_pp.init_ppg();
-            logger.debug("\nLOADING PULSE PROG...\n")
-            SpinCore_pp.load([
-                ('marker','start',1),
-                ('phase_reset',1),
-                ('delay_TTL',deblank_us),
-                ('pulse_TTL',p90,'ph1',ph1_cyc),
-                ('delay',tau_us),
-                ('delay_TTL',deblank_us),
-                ('pulse_TTL',2.0*p90,'ph2',ph2_cyc),
-                ('delay',deadtime),
-                ('acquire',acq_time),
-                ('delay',repetition),
-                ('jumpto','start')
-                ])
-            logger.debug("\nSTOPPING PROG BOARD...\n")
-            SpinCore_pp.stop_ppg();
-            logger.debug("\nRUNNING BOARD...\n")
-            SpinCore_pp.runBoard();
-            raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-            raw_data.astype(float)
-            data_array = []
-            data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-            logger.debug("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0])
-            logger.debug("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-            dataPoints = float(np.shape(data_array)[0])
-            if x ==0 and B0_index == 0:
-                freqs_dtype = dtype([('Field',double),('carrierFreq',double)])
-                myfreqs = zeros(len(field_axis),dtype = freqs_dtype)
-                time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
-                sweep_data = ndshape([len(time_axis),nScans,len(field_axis),1],['t','nScans','indirect','power']).alloc(dtype=np.complex128)
-                sweep_data.setaxis('t',time_axis).set_units('t','s')
-                sweep_data.setaxis('nScans',r_[0:nScans])
-                sweep_data.setaxis('indirect',myfreqs)
-                sweep_data.setaxis('power',r_[powers])
-            if sweep_data == None:
-                time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
-                data_array = nddata(array(data_array),'t')
-                data_array.setaxis('t',time_axis)
-                sweep_data.name('Field_sweep')
-            print(sweep_data)    
-            sweep_data['nScans',x]['indirect',B0_index]['power',0] = data_array
-            logger.debug(strm("FINISHED B0 INDEX %d..."%B0_index))
-            logger.debug("\n*** *** ***\n")
-            return sweep_data
-#}}}        
 with power_control() as p:
     dip_f=p.dip_lock(9.81,9.83)
     mw_freqs.append(dip_f)
@@ -178,7 +113,10 @@ with power_control() as p:
         first_B0 = x_server.set_field(field_axis[0])
         time.sleep(3.0)
         carrierFreq_MHz = gamma_eff*first_B0
-        sweep_data = run_scans(B0_index = 0,sweep_data = None)
+        sweep_data = run_field_sweep(B0_index = 0, indirect_len = len(field_axis), nScans=nScans,
+                adcoffset = adcOffset, carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
+                SW_kHz = SW_kHz, nEchoes = nEchoes, tau_us = tau_us, p90_us=p90, 
+                repetition_us = repetition, output_name = output_name, sweep_data = None)
         myfreqs_fields = sweep_data.getaxis('indirect')
         myfreqs_fields[0]['Field'] = first_B0
         myfreqs_fields[0]['carrierFreq'] = carrierFreq_MHz
@@ -190,7 +128,11 @@ with power_control() as p:
                 myfreqs_fields[B0_index]['Field'] = true_B0
                 myfreqs_fields[B0_index]['carrierFreq'] = new_carrierFreq_MHz
                 print("My frequency in MHz is",new_carrierFreq_MHz)
-                sweep_data = run_scans(B0_index+1,sweep_data = sweep_data)
+                sweep_data = run_field_sweep(B0_idx = B0_index+1,indirect_len = len(field_axis), 
+                        nScans=nScans, adcoffset = adcOffset, carrierFreq_MHz = new_carrierFreq_MHz, 
+                        nPoints = nPoints, SW_kHz = SW_kHz, nEchoes = nEchoes, tau_us = tau_us, 
+                        p90_us=p90, repetition_us = repetition, output_name = output_name, 
+                        sweep_data = sweep_data)
         SpinCore_pp.stopBoard()
 acq_params = {j:eval(j) for j in dir() if j in ['tx_phases', 'carrierFreq_MHz','amplitude','nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust_us','deblank_us','tau_us','nPhaseSteps']}
 sweep_data.set_prop('acq_params',acq_params)
