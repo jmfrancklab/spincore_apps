@@ -1,9 +1,9 @@
-from .. import configureTX,configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
+from .. import configureTX,configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData, verifyParams
 from .. import load as spincore_load
 from pyspecdata import *
 from numpy import *
 import time
-def run_spin_echo(nScans, indirect_idx, indirect_len,adc_offset, carrierFreq_MHz, 
+def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz, 
         nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name,
         ph1_cyc = r_[0,1,2,3],ph2_cyc = r_[0], DNP_data=None):
     """run nScans and slot them into the indirect_idx index of DNP_data -- assume
@@ -20,7 +20,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adc_offset, carrierFreq_MHz
                     size of indirect axis. When performing Ep, assume the power axis is
                     1 longer than the "powers" array, so that we can store the thermally
                     polarized signal in this array.
-    adc_offset:     int
+    adcOffset:     int
                     Offset of the ADC
     carrierFreq_MHz:    int
                         carrier frequency to be set in MHz
@@ -58,14 +58,13 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adc_offset, carrierFreq_MHz
         run_scans_time_list = [time.time()]
         run_scans_names = ['configure']
         print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
-        configureTX(adc_offset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+        configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append('configure Rx')
         print("***")
         print("CONFIGURING RECEIVER...")
         acq_time_ms = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
         # acq_time_ms is in msec!
-        verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90_us, tau_us=tau_us)
         run_scans_time_list.append(time.time())
         run_scans_names.append('init')
         init_ppg()
