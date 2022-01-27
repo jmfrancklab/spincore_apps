@@ -11,18 +11,16 @@ from pyspecProcScripts import lookup_table
 from Instruments.logobj import logobj
 logger = init_logging("info")
 fl=fl_mod()
-filename='220106_150mM_TEMPOL_DNP'
+filename='220127_150mM_TEMPOL_DNP_1'
 file_location = 'ODNP_NMR_comp/ODNP'
 Ep_f_slice=(-0.5e3,0.5e3)
-Ep_t_range = (0,0.1)
 Ep_signal_pathway = {'ph1':1}
 t_center_echo = 0.0035
 IR_f_slice=(-0.15e3,0.15e3)
-t_range = (0,0.2)
 IR_signal_pathway = {'ph1':0,'ph2':1}
 excluded_pathways = [(0,0)]
 #{{{load in log
-with h5py.File(search_filename(filename+".h5",exp_type='ODNP_NMR_comp/ODNP',unique=True),'r') as f:
+with h5py.File(search_filename(filename+".h5",exp_type=file_location,unique=True),'r') as f:
     log_grp = f['log']
     thislog = logobj()
     thislog.__setstate__(log_grp)
@@ -68,14 +66,14 @@ errors=[]
 for nodename, clock_correction in [
         ('FIR_noPower',False),
         ('FIR_30dBm',False),
-        ('FIR_32dBm',False),
-        ('FIR_34dBm',False),
+        ('FIR_33dBm',False),
+        ('FIR_35dBm',False),
         ('FIR_36dBm',False)
         ]:
     IR = find_file(filename,exp_type=file_location,expno=nodename,
             postproc='spincore_IR_v1',lookup=lookup_table)
     times = IR.C.getaxis('indirect').copy()
-    IR.mean('indirect')
+    #IR.mean('indirect')
     if 'nScans' in IR.dimlabels:
         IR.mean('nScans')
     fl.next('Raw IR')
@@ -129,7 +127,7 @@ for nodename, clock_correction in [
             - set(excluded_pathways)
             -set([(IR_signal_pathway['ph1'],IR_signal_pathway['ph2'])]))
     error_pathway = [{'ph1':j,'ph2':k} for j,k in error_pathway]
-    s_int,frq_slice = integral_w_errors(d,IR_signal_pathway,error_pathway,
+    s_int,frq_slice = integral_w_errors(d.C.mean('indirect'),IR_signal_pathway,error_pathway,
             convolve_method='Gaussian',
             indirect='vd',return_frq_slice=True)
     #}}}
@@ -150,31 +148,34 @@ for nodename, clock_correction in [
     #}}}
 #{{{finding average power for each T1
     if nodename == 'FIR_noPower':
-        pass
+        start_time = IR.get_prop('start_time')-log_start_time
+        start_time += 50 #time between Ep and start
+        stop_time = start_time + 60 #as of right now the FIR_no power doesn't have a prop
+        #                            called stop time. This will need to be implemented
     else:
         start_time = IR.get_prop('start_time')-log_start_time
         stop_time = IR.get_prop('stop_time')-log_start_time
-        avg_power = power_axis['time':(start_time,
-            stop_time)].mean('time',std=True)
-        errors.append(avg_power.get_error())
-        power_list.append(avg_power)
-        fl.next('power axis W')
-        start_times.append(start_time)
-        stop_times.append(stop_time)
-        plt.axvline(x=start_time,color='k',alpha=0.5)
-        plt.axvline(x=stop_time,color='b',alpha=0.5)
-        nddata_p_vs_t = nddata(power_list,[-1],['time'])
-        nddata_p_vs_t.setaxis('time',start_times)
-        for j in range(len(power_list)):
-            nddata_p_vs_t['time',j] = power_list[j]
-        nddata_p_vs_t.set_error(errors)
-        fl.plot(nddata_p_vs_t,'ro',capsize=6)
+    avg_power = power_axis['time':(start_time,
+        stop_time)].mean('time',std=True)
+    errors.append(avg_power.get_error())
+    power_list.append(avg_power)
+    fl.next('power axis W')
+    start_times.append(start_time)
+    stop_times.append(stop_time)
+    plt.axvline(x=start_time,color='k',alpha=0.5)
+    plt.axvline(x=stop_time,color='b',alpha=0.5)
+    nddata_p_vs_t = nddata(power_list,[-1],['time'])
+    nddata_p_vs_t.setaxis('time',start_times)
+    for j in range(len(power_list)):
+        nddata_p_vs_t['time',j] = power_list[j]
+    nddata_p_vs_t.set_error(errors)
+    fl.plot(nddata_p_vs_t,'ro',capsize=6)
 logger.info(strm("T1 list:",T1_list)) #we don't expect good T1s since bad tuning
 logger.info(strm("Power list:",power_list))
 #}}}
 #{{{Load process enhancement
-for filename,nodename,file_location in [
-        (filename,'enhancement','ODNP_NMR_comp/ODNP')
+for filename,nodename in [
+        (filename,'enhancement')
         ]:
     #{{{
     s = find_file(filename,exp_type=file_location, expno=nodename)
@@ -185,14 +186,12 @@ for filename,nodename,file_location in [
     fl.image(s.C.setaxis('indirect','#').set_units('indirect','scan #'))
     s['ph1',0]['t2':0] = 0 #kill axial noise
     s.rename('indirect','time')
-    zero_crossing = abs(select_pathway(s['t2':Ep_f_slice],Ep_signal_pathway)).C.sum('t2').argmin('time',raw_index=True).item()
+    zero_crossing = abs(select_pathway(s['t2':Ep_f_slice].C.mean('nScans'),Ep_signal_pathway)).C.sum('t2').argmin('time',raw_index=True).item()
     s = s['t2':Ep_f_slice]
     s.ift('t2')
     #}}}
     #{{{phasing
     s /= zeroth_order_ph(select_pathway(s,Ep_signal_pathway))
-    if 'nScans' in s.dimlabels:
-        s.mean('nScans')
     s.setaxis('t2',lambda x: x-t_center_echo).register_axis({'t2':0})
     s.ft('t2')
     fl.next('Ep phased data')
@@ -202,7 +201,7 @@ for filename,nodename,file_location in [
     s.ift('t2')
     #{{{FID slice
     d=s.C
-    d = d['t2':Ep_t_range]
+    d = d['t2':(0,None)]
     d['t2':0] *= 0.5
     d.ft('t2')
     #}}}
@@ -211,7 +210,7 @@ for filename,nodename,file_location in [
             - set(excluded_pathways)
             -set([(Ep_signal_pathway['ph1'])]))
     error_pathway = [{'ph1':j} for j in error_pathway]
-    s_int,frq_slice = integral_w_errors(d,Ep_signal_pathway,error_pathway,
+    s_int,frq_slice = integral_w_errors(d.C.mean('nScans'),Ep_signal_pathway,error_pathway,
             convolve_method='Gaussian',
             indirect='time',return_frq_slice=True)
     #}}}
@@ -223,7 +222,6 @@ for filename,nodename,file_location in [
     s_int.setaxis('time',time_axis)
     #}}}
     #{{{Normalize and flip
-    #s_int['time',zero_crossing:] *= -1
     s_int /= np.real(s_int['time',0:1].data.item())
     fl.next('E(p) before power correction')
     fl.plot(s_int['time',:-3],'ko',capsize=2,alpha=0.3)
@@ -232,8 +230,7 @@ for filename,nodename,file_location in [
     #}}}
     #{{{finding average power over steps
     dnp_time_axis = s.C.getaxis('time').copy()
-    dnp_time_axis[0]['stop_times'] = s.get_prop('thermal_done_time')
-    dnp_time_axis[0]['start_times'] = s.get_prop('start_time')+5
+    dnp_time_axis[0]['start_times'] = log_start_time
     dnp_time_axis[:]['start_times'] -= log_start_time
     dnp_time_axis[:]['stop_times'] -= log_start_time
     nddata_time_axis = nddata(dnp_time_axis,[-1],['time'])
