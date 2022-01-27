@@ -48,19 +48,17 @@ def run_field_sweep(B0_idx, indirect_len, nScans, adcOffset, carrierFreq_MHz,
                 data_array = []
                 data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
                 dataPoints = float(np.shape(data_array)[0])
-                if x ==0 and B0_idx == 0:
+                if sweep_data is None:
                     freqs_dtype = dtype([('Field',double),('carrierFreq',double)])
                     myfreqs = zeros(indirect_len,dtype = freqs_dtype)
-                    time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
-                    sweep_data = ndshape([len(time_axis),nScans,indirect_len,1],['t','nScans','indirect','power']).alloc(dtype=np.complex128)
-                    sweep_data.setaxis('t',time_axis).set_units('t','s')
-                    sweep_data.setaxis('nScans',r_[0:nScans])
-                    sweep_data.setaxis('indirect',myfreqs)
-                    sweep_data.setaxis('power',r_[powers])
-                if sweep_data == None:
-                    time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
+                    if x ==0 and B0_idx == 0:
+                        time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
+                        sweep_data = ndshape([len(time_axis),nScans,indirect_len,1],['t','nScans','indirect','power']).alloc(dtype=np.complex128)
+                        sweep_data.setaxis('t',time_axis).set_units('t','s')
+                        sweep_data.setaxis('nScans',r_[0:nScans])
+                        sweep_data.setaxis('indirect',myfreqs)
+                        sweep_data.setaxis('power',r_[powers])
                     data_array = nddata(array(data_array),'t')
-                    data_array.setaxis('t',time_axis)
                     sweep_data.name('Field_sweep')
                 sweep_data['nScans',x]['indirect',B0_idx]['power',0] = data_array
                 logger.debug(strm("FINISHED B0 INDEX %d..."%B0_idx))
