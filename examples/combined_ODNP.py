@@ -6,7 +6,7 @@ import SpinCore_pp
 import time
 from Instruments import power_control
 from datetime import datetime
-from SpinCore_pp.ppg import run_spin_echo
+from SpinCore_pp.ppg import run_spin_echo, run_scans_IR
 # do the same with the inversion recovery
 from SpinCore_pp.power_helper import gen_powerlist
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
@@ -14,18 +14,18 @@ import h5py
 # {{{ Combined ODNP
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '150mM_TEMPOL_DNP_test'
+output_name = '150mM_TEMPOL_DNP_1'
 IR_postproc = 'spincore_IR_v1'
 Ep_postproc = 'ODNP_v3'
-adcOffset = 24
-carrierFreq_MHz = 14.893260
+adcOffset = 25
+carrierFreq_MHz = 14.895528
 nScans = 1
 nEchoes = 1
 # all times in microseconds
 # note that acq_time_ms is always milliseconds
 p90_us = 4.464
 repetition_us = 0.5e6
-FIR_rd = 0.5e6
+FIR_rd = 0.3e6
 vd_list =r_[2.1e3,1.12e4,2.23e4,3.3e4,4.4e4,5.6e4,6.7e4,7.8e4,8.9e4,1e5] 
 max_power = 4 #W
 power_steps = 14
@@ -90,27 +90,29 @@ with power_control() as p:
     # w/ struct array, we can add time_axis_coords[0]['stop_time'], and the above becomes obsolete
     power_settings = zeros_like(dB_settings)
     time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-    with power_control() as p:
-        for j, this_dB in enumerate(dB_settings):
-            print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
-            if j == 0:
-                retval = p.dip_lock(9.81,9.83)
-            p.set_power(this_dB)
-            for k in range(10):
-                time.sleep(0.5)
-                if p.get_power_setting() >= this_dB: break
-            if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
-            time.sleep(5)
-            power_settings[j] = p.get_power_setting()
-            time_axis_coords[j+1]['start_times'] = time.time()
-            run_spin_echo(nScans=nScans,indirect_idx = j+1,
-                    indirect_len = len(powers)+1, adcOffset=adcOffset, 
-                    carrierFreq_MHz = carrierFreq_MHz, 
-                    nPoints=nPoints, nEchoes = nEchoes, p90_us=p90_us, 
-                    repetition = repetition_us, tau_us=tau_us, 
-                    SW_kHz=SW_kHz, 
-                    output_name = output_name, DNP_data=DNP_data)
-            time_axis_coords[j+1]['stop_times'] = time.time()
+    for j, this_dB in enumerate(dB_settings):
+        print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
+        if j == 0:
+            retval = p.dip_lock(9.81,9.83)
+        print('done with dip lock 1')
+        p.set_power(this_dB)
+        print('power was set')
+        for k in range(10):
+            time.sleep(0.5)
+            if p.get_power_setting() >= this_dB: break
+        if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
+        time.sleep(5)
+        power_settings[j] = p.get_power_setting()
+        time_axis_coords[j+1]['start_times'] = time.time()
+        print('gonna run the Ep for this power')
+        run_spin_echo(nScans=nScans,indirect_idx = j+1,
+                indirect_len = len(powers)+1, adcOffset=adcOffset, 
+                carrierFreq_MHz = carrierFreq_MHz, 
+                nPoints=nPoints, nEchoes = nEchoes, p90_us=p90_us, 
+                repetition = repetition_us, tau_us=tau_us, 
+                SW_kHz=SW_kHz, 
+                output_name = output_name, DNP_data=DNP_data)
+        time_axis_coords[j+1]['stop_times'] = time.time()
 DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)
 # the following line needs to be done separately for the IR and the E(p)
@@ -118,13 +120,13 @@ acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
     'nPoints', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
 DNP_data.set_prop('acq_params',acq_params)
+DNP_data.name('enhancement')
 myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
 DNP_data.setaxis('ph1',Ep_ph1_cyc/4)
 while save_file:
     try:
         print("SAVING FILE...")
-        DNP_data.name('enhancement')
         DNP_data.hdf5_write(myfilename)        
         print("FILE SAVED")
         print("Name of saved enhancement data", DNP_data.name())

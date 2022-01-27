@@ -114,6 +114,5 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         # the following works for "if" as well as "else"
         DNP_data['indirect',indirect_idx]['nScans',x] = data_array
         run_scans_time_list.append(time.time())
-        this_array = array(run_scans_time_list)
         print("stored scan",x,"for indirect_idx",indirect_idx)
         return DNP_data

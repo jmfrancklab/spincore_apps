@@ -1,7 +1,8 @@
-from .. import configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
+from .. import configureTX, configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
 from pyspecdata import *
 from numpy import *
+import time
 #{{{IR ppg
 def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
         p90_us, tau_us, repetition, output_name, SW_kHz, indirect_idx, node_name, 
@@ -56,9 +57,10 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
     # node_name is the name of the node must specify power
     deblank_us = 1.0
     deadtime_us = 10.0
+    amplitude = 1.0
     tx_phases = r_[0.0,90.0,180.0,270.0]
     ph3_cyc = 0    
-    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)*len(ph3_cyc)
+    nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for index,val in enumerate(vd_list):
         vd = val
@@ -72,13 +74,12 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
             acq_time_ms = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
             run_scans_time_list.append(time.time())
             run_scans_names.append('configure Rx')
-            verifyParams(nPoints=nPoints, nScans=nScans, p90_us=p90_us, tau_us=tau_us)
             run_scans_time_list.append(time.time())
             run_scans_names.append('init')
             init_ppg()
             run_scans_time_list.append(time.time())
             run_scans_names.append('prog')
-            Spincore_load([
+            spincore_load([
                 ('marker','start',1),
                 ('phase_reset',1),
                 ('delay_TTL',deblank_us),
