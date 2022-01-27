@@ -76,7 +76,7 @@ amplitude = 1.0
 nScans = 1
 nEchoes = 1
 coherence_pathway = [('ph1',1)]
-date = '220126'#datetime.now().strftime('%y%m%d')
+date = datetime.now().strftime('%y%m%d')
 nPhaseSteps = 4
 #{{{ note on timing
 # putting all times in microseconds
