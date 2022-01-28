@@ -2,10 +2,11 @@ from .. import configureTX, configureRX, configureRX, init_ppg, stop_ppg, runBoa
 from .. import load as spincore_load
 # remove import *
 from pyspecdata import *
-from numpy import *
+import numpy as np
+from numpy import r_
 import time
 #{{{IR ppg
-def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
+def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
         p90_us, tau_us, repetition, output_name, SW_kHz,
         ph1_cyc = r_[0,2], ph2_cyc = r_[0,2],ret_data=None):
     """Run an inversion recovery and generate a single nddata with a vd dimension.
@@ -22,7 +23,7 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
                     offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
     carrierFreq_MHz:    int
                         carrier frequency in MHz
-    vd_list:        list or array
+    vd_list_us:        list or array
                     list of varied delays for IR experiment,
                     in microseconds
     p90_us:         float
@@ -50,7 +51,7 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
     tx_phases = r_[0.0,90.0,180.0,270.0]
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
-    for index,val in enumerate(vd_list):
+    for index,val in enumerate(vd_list_us):
         vd = val
         print("***")
         print("INDEX %d - VARIABLE DELAY %f"%(index,val))
@@ -98,14 +99,14 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
             run_scans_time_list.append(time.time())
             run_scans_names.append('shape data')
             data_array=[]
-            data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+            data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
             dataPoints = float(np.shape(data_array)[0])
             if ret_data is None:
-                indirect_len = len(vd_list)
+                indirect_len = len(vd_list_us)
                 time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
                 ret_data = ndshape([indirect_len,nScans,len(time_axis)],
-                        ['vd','nScans','t']).alloc(dtype=complex128)
-                ret_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
+                        ['vd','nScans','t']).alloc(dtype=np.complex128)
+                ret_data.setaxis('vd',vd_list_us*1e-6).set_units('vd','s')
                 ret_data.setaxis('t',time_axis).set_units('t','s')
                 ret_data.setaxis('nScans',r_[0:nScans])
             ret_data['vd',index]['nScans',x]['indirect',indirect_idx] = data_array
@@ -113,9 +114,5 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
             this_array = array(run_scans_time_list)
             print("checkpoints:",this_array-this_array[0])
             print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
-            print("stored scan",x,"for indirect_idx",indirect_idx)
-            if nScans > 1:
-                ret_data.setaxis('nScans',r_[0:nScans])
     return ret_data
 #}}}
-

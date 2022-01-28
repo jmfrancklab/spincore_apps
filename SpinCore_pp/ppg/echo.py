@@ -6,10 +6,10 @@ from numpy import *
 import time
 def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz, 
         nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name,
-        ph1_cyc=r_[0,1,2,3], ph2_cyc=r_[0], DNP_data=None):
-    """run nScans and slot them into the indirect_idx index of DNP_data -- assume
-    that the first time this is run, it will be run with DNP_data=None and that
-    after that, you will pass in DNP_data this generates an "indirect" axis.
+        ph1_cyc=r_[0,1,2,3], ph2_cyc=r_[0], ret_data=None):
+    """run nScans and slot them into the indirect_idx index of ret_data -- assume
+    that the first time this is run, it will be run with ret_data=None and that
+    after that, you will pass in ret_data this generates an "indirect" axis.
 
     Parameters
     ==========
@@ -44,14 +44,13 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
                     phase steps for the first pulse
     ph2_cyc:        array
                     phase steps for the second pulse
-    DNP_data:       nddata (default None)
+    ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
     """
     deadtime_us = 10.0
     deblank_us = 1.0
     amplitude = 1.0
     tx_phases = r_[0.0,90.0,180.0,270.0]
-    print("about to run run_spin_echo for",indirect_idx)
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for x in range(nScans):
@@ -61,10 +60,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append('configure Rx')
-        print("***")
-        print("CONFIGURING RECEIVER...")
         acq_time_ms = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
-        # acq_time_ms is in msec!
         run_scans_time_list.append(time.time())
         run_scans_names.append('init')
         init_ppg()
@@ -99,22 +95,20 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         run_scans_names.append('shape data')
         data_array=[]
         data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-        dataPoints = float(shape(data_array)[0])
-        if DNP_data is None:
+        dataPoints = float(np.shape(data_array)[0])
+        if ret_data is None:
             times_dtype = dtype([('start_times',double),('stop_times',double)])
-            mytimes = zeros(indirect_len,dtype=times_dtype)
+            mytimes = np.zeros(indirect_len,dtype=times_dtype)
             time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
-            DNP_data = ndshape([indirect_len,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
-            DNP_data.setaxis('indirect',mytimes)
-            DNP_data.setaxis('t',time_axis).set_units('t','s')
-            DNP_data.setaxis('nScans',r_[0:nScans])
-            data_array = nddata(array(data_array),[-1],['t'])
-            data_array.setaxis('t',time_axis)
-        # (delete on reading) JF edited -- there was an else block
-        # w/ reference to "j", but j is not defined in the function!
-        # If I assume that j+1 was intended to be indirect_idx, then
-        # the following works for "if" as well as "else"
-        DNP_data['indirect',indirect_idx]['nScans',x] = data_array
+            ret_data = ndshape([indirect_len,nScans,len(time_axis)],
+                    ['indirect','nScans','t']).alloc(dtype=complex128)
+            ret_data.setaxis('indirect',mytimes)
+            ret_data.setaxis('t',time_axis).set_units('t','s')
+            ret_data.setaxis('nScans',r_[0:nScans])
+        ret_data['indirect',indirect_idx]['nScans',x] = data_array
         run_scans_time_list.append(time.time())
+        this_array = array(run_scans_time_list)
+        print("checkpoints:",this_array-this_array[0])
+        print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
         print("stored scan",x,"for indirect_idx",indirect_idx)
-        return DNP_data
+        return ret_data

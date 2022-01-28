@@ -75,7 +75,7 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
+vd_list_us = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
         3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
 #{{{ setting acq_params dictionary
 acq_params = {}
@@ -98,7 +98,7 @@ acq_params['nPoints'] = nPoints
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
-for index,val in enumerate(vd_list):
+for index,val in enumerate(vd_list_us):
     vd = val
     print("***")
     print("INDEX %d - VARIABLE DELAY %f"%(index,val))
@@ -183,8 +183,8 @@ for index,val in enumerate(vd_list):
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
     if index == 0:
-        data_2d = ndshape([len(vd_list),len(time_axis)],['vd','t']).alloc(dtype=complex128)
-        data_2d.setaxis('vd',vd_list*1e-6).set_units('vd','s')
+        data_2d = ndshape([len(vd_list_us),len(time_axis)],['vd','t']).alloc(dtype=complex128)
+        data_2d.setaxis('vd',vd_list_us*1e-6).set_units('vd','s')
         data_2d.setaxis('t',time_axis).set_units('t','s')
     data_2d['vd',index] = data
 SpinCore_pp.stopBoard();

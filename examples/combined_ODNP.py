@@ -26,7 +26,7 @@ nEchoes = 1
 p90_us = 4.464
 repetition_us = 0.5e6
 FIR_rd = 0.3e6
-vd_list =r_[2.1e3,1.12e4,2.23e4,3.3e4,4.4e4,5.6e4,6.7e4,7.8e4,8.9e4,1e5] 
+vd_list_us =r_[2.1e3,1.12e4,2.23e4,3.3e4,4.4e4,5.6e4,6.7e4,7.8e4,8.9e4,1e5] 
 max_power = 4 #W
 power_steps = 14
 threedown = True
@@ -143,7 +143,7 @@ ini_time = time.time() # needed b/c data object doesn't exist yet
 with power_control() as p:
     retval_IR = p.dip_lock(9.81,9.83)
     p.mw_off()
-    vd_data = run_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
+    vd_data = run_IR(nPoints, nEchoes, vd_list_us, nScans,adcOffset,
             carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
             ph1_cyc=IR_ph1_cyc,
             ph2_cyc=IR_ph2_cyc,
@@ -178,7 +178,7 @@ with power_control() as p:
         time.sleep(5)
         meter_power = p.get_power_setting()
         ini_time = time.time()
-        run_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
+        run_IR(nPoints, nEchoes, vd_list_us, nScans,adcOffset,
             carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
             vd_data=None)
         vd_data.set_prop('start_time', ini_time)

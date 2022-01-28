@@ -51,7 +51,7 @@ if myinput.lower().startswith('n'):
 powers = 1e-3*10**(dB_settings/10.)
 time_list.append(time.time())
 #{{{ inversion recovery pulse prog
-def run_IR(vd_list, node_name, nScans = 1, rd = 1e6, power_on = False):
+def run_IR(vd_list_us, node_name, nScans = 1, rd = 1e6, power_on = False):
     # nScans is number of scans you want
     # rd is the repetition delay
     # power_setting is what you want to run power at
@@ -61,7 +61,7 @@ def run_IR(vd_list, node_name, nScans = 1, rd = 1e6, power_on = False):
     ph2_cyc = r_[0,2]
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
-    for index,val in enumerate(vd_list):
+    for index,val in enumerate(vd_list_us):
         vd = val
         print("***")
         print("INDEX %d - VARIABLE DELAY %f"%(index,val))
@@ -101,8 +101,8 @@ def run_IR(vd_list, node_name, nScans = 1, rd = 1e6, power_on = False):
             data.setaxis('t',time_axis).set_units('t','s')
             data.name('signal')
             if index == 0 and x == 0:
-                vd_data = ndshape([len(vd_list),nScans,len(time_axis)],['vd','nScans','t']).alloc(dtype=complex128)
-                vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
+                vd_data = ndshape([len(vd_list_us),nScans,len(time_axis)],['vd','nScans','t']).alloc(dtype=complex128)
+                vd_data.setaxis('vd',vd_list_us*1e-6).set_units('vd','s')
                 vd_data.setaxis('nScans',r_[0:nScans])
                 vd_data.setaxis('t',time_axis).set_units('t','s')
             vd_data['vd',index]['nScans',x] = data
@@ -203,8 +203,8 @@ def run_scans(nScans, power_idx, DNP_data=None):
         return DNP_data
 #}}}
 
-vd_list = r_[5e1,7.3e4,1e6]
-vd_data = run_IR( vd_list, 'FIR_noPower', nScans, 0.7e6)
+vd_list_us = r_[5e1,7.3e4,1e6]
+vd_data = run_IR( vd_list_us, 'FIR_noPower', nScans, 0.7e6)
 meter_power = 0
 save_file = True
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
@@ -241,7 +241,7 @@ with power_control() as p:
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         meter_power = p.get_power_setting()
-        vd_data = run_IR(vd_list, T1_node_names[j], nScans, 0.7e6, power_on = True)
+        vd_data = run_IR(vd_list_us, T1_node_names[j], nScans, 0.7e6, power_on = True)
         log_array_IR, log_dict_IR = p.stop_log()
         save_file = True
         acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
