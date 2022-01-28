@@ -59,7 +59,6 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
     deadtime_us = 10.0
     amplitude = 1.0
     tx_phases = r_[0.0,90.0,180.0,270.0]
-    ph3_cyc = 0    
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for index,val in enumerate(vd_list):
@@ -89,7 +88,7 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
                 ('pulse_TTL',p90_us,'ph2',ph2_cyc),
                 ('delay',tau_us),
                 ('delay_TTL',deblank_us),
-                ('pulse_TTL',2.0*p90_us,ph3_cyc),
+                ('pulse_TTL',2.0*p90_us,0),
                 ('delay',deadtime_us),
                 ('acquire',acq_time_ms),
                 ('delay',repetition),

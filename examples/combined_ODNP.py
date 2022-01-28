@@ -46,14 +46,13 @@ if myinput.lower().startswith('n'):
 powers = 1e-3*10**(dB_settings/10.)
 fl = figlist_var()
 save_file=True
-SW_kHz = 3.9 #AAB and FS have found the min SW without loss to be 1.9 kHz 
+SW_kHz = 3.9 # AAB and FS have found the min SW without loss to be 1.9 kHz 
 acq_time_ms = 1024. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 acq_time_ms = nPoints/SW_kHz
 tau_us = 3500
 pad_us = 0
 Ep_ph1_cyc = r_[0,1,2,3]
-Ep_ph2_cyc = r_[0]
 IR_ph1_cyc = r_[0,2]
 IR_ph2_cyc = r_[0,2]
 date = datetime.now().strftime('%y%m%d')
@@ -64,6 +63,7 @@ with power_control() as p:
     p.start_log()
     p.mw_off()
     DNP_data = run_spin_echo(nScans=nScans,indirect_idx = 0,indirect_len = len(powers)+1,
+            ph1_cyc=Ep_ph1_cyc,
             adcOffset=adcOffset, carrierFreq_MHz = carrierFreq_MHz, nPoints=nPoints, 
             nEchoes = nEchoes, p90_us = p90_us,
             repetition=repetition_us, tau_us = tau_us, SW_kHz=SW_kHz, 
@@ -145,6 +145,8 @@ with power_control() as p:
     p.mw_off()
     vd_data = run_scans_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
             carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
+            ph1_cyc=IR_ph1_cyc,
+            ph2_cyc=IR_ph2_cyc,
             indirect_idx = 0, node_name = 'FIR_noPower', vd_data=None)
     time_axis_coords_IR = vd_data.getaxis('indirect')
     time_axis_coords_IR[0]=ini_time

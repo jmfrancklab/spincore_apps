@@ -5,7 +5,7 @@ from numpy import *
 import time
 def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz, 
         nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name,
-        ph1_cyc = r_[0,1,2,3],ph2_cyc = r_[0], DNP_data=None):
+        ph1_cyc=r_[0,1,2,3], ph2_cyc=r_[0], DNP_data=None):
     """run nScans and slot them into the indirect_idx index of DNP_data -- assume
     that the first time this is run, it will be run with DNP_data=None and that
     after that, you will pass in DNP_data this generates an "indirect" axis.
