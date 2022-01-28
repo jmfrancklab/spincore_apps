@@ -6,7 +6,7 @@ import SpinCore_pp
 import time
 from Instruments import power_control
 from datetime import datetime
-from SpinCore_pp.ppg import run_spin_echo, run_scans_IR
+from SpinCore_pp.ppg import run_spin_echo, run_IR
 # do the same with the inversion recovery
 from SpinCore_pp.power_helper import gen_powerlist
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
@@ -143,7 +143,7 @@ ini_time = time.time() # needed b/c data object doesn't exist yet
 with power_control() as p:
     retval_IR = p.dip_lock(9.81,9.83)
     p.mw_off()
-    vd_data = run_scans_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
+    vd_data = run_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
             carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
             ph1_cyc=IR_ph1_cyc,
             ph2_cyc=IR_ph2_cyc,
@@ -175,7 +175,7 @@ with power_control() as p:
         time.sleep(5)
         meter_power = p.get_power_setting()
         vd_data.set_prop('start_time', time.time())
-        run_scans_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
+        run_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
             carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
             indirect_idx = j+1, node_name = T1_node_names[j], vd_data=vd_data)
         vd_data.set_prop('stop_time', time.time())
