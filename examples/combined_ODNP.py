@@ -147,16 +147,19 @@ with power_control() as p:
             carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
             ph1_cyc=IR_ph1_cyc,
             ph2_cyc=IR_ph2_cyc,
-            indirect_idx = 0, node_name = 'FIR_noPower', vd_data=None)
-    time_axis_coords_IR = vd_data.getaxis('indirect')
-    time_axis_coords_IR[0]=ini_time
+            indirect_idx = 0, vd_data=None)
     vd_data.set_prop('start_time',ini_time)
+    vd_data.set_prop('stop_time',ini_time)
     meter_power=0
-    acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude','nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz', 'nPoints', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
+    acq_params = {j:eval(j) for j in dir() if j in ['adcOffset',
+        'carrierFreq_MHz', 'amplitude','nScans', 'nEchoes', 'p90_us',
+        'deadtime_us', 'repetition_us', 'SW_kHz', 'nPoints', 'deblank_us',
+        'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
     vd_data.set_prop('acq_params',acq_params)
+    vd_data.set_prop('postproc_type',IR_postproc)
     vd_data.name('FIR_noPower')
     myfilename = date+'_'+output_name+'.h5'
-    vd_data.chunk('t',['ph2','ph1','t2'],[2,2,-1])
+    vd_data.chunk('t',['ph1','ph2','t2'],[len(IR_ph1_cyc),len(IR_ph2_cyc),-1])
     vd_data.setaxis('ph1',IR_ph1_cyc/4)
     vd_data.setaxis('ph2',IR_ph2_cyc/4)
     # Need error handling (JF has posted something on this..)
@@ -174,17 +177,20 @@ with power_control() as p:
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         meter_power = p.get_power_setting()
-        vd_data.set_prop('start_time', time.time())
+        ini_time = time.time()
         run_IR(nPoints, nEchoes, vd_list, nScans,adcOffset,
             carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
-            indirect_idx = j+1, node_name = T1_node_names[j], vd_data=vd_data)
+            vd_data=None)
+        vd_data.set_prop('start_time', ini_time)
         vd_data.set_prop('stop_time', time.time())
         acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
             'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
             'nPoints', 'deblank_us', 'tau_us', 'MWfreq', 'acq_time_ms', 'meter_power']}
         vd_data.set_prop('acq_params',acq_params)
         vd_data.set_prop('postproc_type',IR_postproc)
+        vd_data.name(T1_node_names[j])
         myfilename = date+'_'+output_name+'.h5'
+        vd_data.chunk('t',['ph1','ph2','t2'],[len(IR_ph1_cyc),len(IR_ph2_cyc),-1])
         vd_data.setaxis('ph1',IR_ph1_cyc/4)
         vd_data.setaxis('ph2',IR_ph2_cyc/4)
         vd_data.hdf5_write(myfilename)

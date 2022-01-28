@@ -1,62 +1,51 @@
 from .. import configureTX, configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
+# remove import *
 from pyspecdata import *
 from numpy import *
 import time
 #{{{IR ppg
 def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
-        p90_us, tau_us, repetition, output_name, SW_kHz, indirect_idx, node_name, 
-        ph1_cyc = r_[0,2], ph2_cyc = r_[0,2],vd_data=None):
-    """run nScans and slots them into the indirect idx  index of vd_data. We assume the first    time this is run, vd_data=None, after which we will pass in vd_data. 
+        p90_us, tau_us, repetition, output_name, SW_kHz,
+        ph1_cyc = r_[0,2], ph2_cyc = r_[0,2],ret_data=None):
+    """Run an inversion recovery and generate a single nddata with a vd dimension.
+    We assume the first time this is run, ret_data=None, after which we will pass in ret_data. 
     Generates an "indirect" axis.
 
     Parameters
     ==========
-    nPoints:    int
-                Number of points to be collected for dataset
-    nEchoes:    int
-                Number of echoes for each T1
-    vd_list:    array
-                array of varied delays for IR experiment
-    nScans: int 
-            number of averages over data
-    adcOffset:  int 
-                offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
+    nScans:         int
+                    number of repeats of the pulse sequence (for averaging over data)
+    nEchoes:        int
+                    Number of echoes for each T1
+    adcOffset:      int 
+                    offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
     carrierFreq_MHz:    int
                         carrier frequency in MHz
-    p90_us:     int
-                90 time of probe in use in us.
-    tau_us:     int
-                echo time in us. Our standard is 3500.
+    vd_list:        list or array
+                    list of varied delays for IR experiment,
+                    in microseconds
+    p90_us:         float
+                    90 time of the probe in us
     repetition:     int
-                    repetition delay (3-5 x T1)
+                    3-5 x T1 of the sample in seconds
+    tau_us:         float
+                    Echo Time should be a few ms for a good hermitian function to be
+                    applied later in processing. Standard tau_us = 3500.
+    SW_kHz:         float
+                    spectral width of the data. Minimum = 1.9
     output_name:    str
-                    filename for the data to be saved under
-    SW_kHz:     int
-                spectral width for data acquisition in kHz. Minimum is 1.9 kHz
-    indirect_idx:   int
-                    index of the indirect dimension which we are storing the data to
-    node_name:  str
-                nodename for which the data will be saved under
-                useful when running multiple IR at different temps
-                or powers.
+                    file name the data will be saved under??
+                    (as noted below this might be obsolete/bogus)
     ph1_cyc:    array
-                phase steps for first pulse
-    ph_2_cyc:   array
-                phase steps for second pulse
-    vd_data:    nddata
-                returned data from previous run (useful when keeping the 
-                same dataname but multiple nodenames e.g. testing the same 
-                sample at different powers)
+                phase steps for the first pulse
+    ph2_cyc:    array
+                phase steps for the second pulse
+    ret_data:       nddata (default None)
+                    returned data from previous run or `None` for the first run.
     """
-    # (JF delete on reading): convert this to a real docstring!!
-    # nScans is number of scans you want
-    # rd is the repetition delay
-    # power_setting is what you want to run power at
-    # vd list is a list of the vd's you want to use
-    # node_name is the name of the node must specify power
-    deblank_us = 1.0
     deadtime_us = 10.0
+    deblank_us = 1.0
     amplitude = 1.0
     tx_phases = r_[0.0,90.0,180.0,270.0]
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
@@ -70,9 +59,9 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
             run_scans_time_list = [time.time()]
             run_scans_names = ['configure']
             configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-            acq_time_ms = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
             run_scans_time_list.append(time.time())
             run_scans_names.append('configure Rx')
+            acq_time_ms = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
             run_scans_time_list.append(time.time())
             run_scans_names.append('init')
             init_ppg()
@@ -97,36 +86,36 @@ def run_scans_IR(nPoints, nEchoes, vd_list, nScans, adcOffset, carrierFreq_MHz,
             run_scans_time_list.append(time.time())
             run_scans_names.append('prog')
             stop_ppg()
-            print("\nRUNNING BOARD...\n")
             run_scans_time_list.append(time.time())
             run_scans_names.append('run')
             runBoard()
             run_scans_time_list.append(time.time())
             run_scans_names.append('get data')
+        # On reviewing the code, and comparing to line 119-120 of
+        # SpinCore_pp.i, it looks like this last argument is not used -- could
+        # it just be removed?? 
             raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
             run_scans_time_list.append(time.time())
             run_scans_names.append('shape data')
             data_array=[]
             data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-            print("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0])
-            print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
             dataPoints = float(np.shape(data_array)[0])
-            if vd_data is None:
+            if ret_data is None:
+                indirect_len = len(vd_list)
                 time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
-                vd_data = ndshape([len(vd_list),nScans,len(time_axis),len(vd_list)+1],['vd','nScans','t','indirect']).alloc(dtype=complex128)
-                vd_data.setaxis('indirect',zeros(len(vd_list)+1)).set_units('s')
-                vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
-                vd_data.setaxis('nScans',r_[0:nScans])
-                vd_data.setaxis('t',time_axis).set_units('t','s')
-            vd_data['vd',index]['nScans',x]['indirect',indirect_idx] = data_array
-            vd_data.name(node_name)
+                ret_data = ndshape([indirect_len,nScans,len(time_axis)],
+                        ['vd','nScans','t']).alloc(dtype=complex128)
+                ret_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
+                ret_data.setaxis('t',time_axis).set_units('t','s')
+                ret_data.setaxis('nScans',r_[0:nScans])
+            ret_data['vd',index]['nScans',x]['indirect',indirect_idx] = data_array
             run_scans_time_list.append(time.time())
             this_array = array(run_scans_time_list)
             print("checkpoints:",this_array-this_array[0])
             print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
             print("stored scan",x,"for indirect_idx",indirect_idx)
             if nScans > 1:
-                vd_data.setaxis('nScans',r_[0:nScans])
-    return vd_data
+                ret_data.setaxis('nScans',r_[0:nScans])
+    return ret_data
 #}}}
 

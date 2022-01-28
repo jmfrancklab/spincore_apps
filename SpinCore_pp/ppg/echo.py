@@ -1,5 +1,6 @@
 from .. import configureTX,configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData, verifyParams
 from .. import load as spincore_load
+# remove import *
 from pyspecdata import *
 from numpy import *
 import time
@@ -13,39 +14,38 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
     Parameters
     ==========
     nScans:         int
-                    number of averages over data
+                    number of repeats of the pulse sequence (for averaging over data)
     indirect_idx:   int
-                    indirect axis number
+                    index along the 'indirect' dimension
     indirect_len:   int
-                    size of indirect axis. When performing Ep, assume the power axis is
-                    1 longer than the "powers" array, so that we can store the thermally
-                    polarized signal in this array.
-    adcOffset:     int
-                    Offset of the ADC
-    carrierFreq_MHz:    int
+                    size of indirect axis.
+                    Used to allocate space for the data once the first scan is run.
+    adcOffset:      int 
+                    offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
+    carrierFreq_MHz:    float
                         carrier frequency to be set in MHz
     nPoints:        int
                     number of points for the data
     nEchoes:        int
                     Number of Echoes to be acquired
-    p90_us:         int
+    p90_us:         float
                     90 time of the probe in us
     repetition:     int
                     3-5 x T1 of the sample in seconds
-    tau_us:         int
+    tau_us:         float
                     Echo Time should be a few ms for a good hermitian function to be
                     applied later in processing. Standard tau_us = 3500.
-    SW_kHz:         int
-                    spectral width of the data centered at 0. Minimum = 1.9
+    SW_kHz:         float
+                    spectral width of the data. Minimum = 1.9
     output_name:    str
-                    file name the data will be saved under
+                    file name the data will be saved under??
+                    (as noted below this might be obsolete/bogus)
     ph1_cyc:        array
                     phase steps for the first pulse
     ph2_cyc:        array
                     phase steps for the second pulse
-    DNP_data:       nddata
-                    returned data from previous run. If it is the first run DNP_data will
-                    be None.
+    DNP_data:       nddata (default None)
+                    returned data from previous run or `None` for the first run.
     """
     deadtime_us = 10.0
     deblank_us = 1.0
@@ -91,6 +91,9 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         runBoard()
         run_scans_time_list.append(time.time())
         run_scans_names.append('get data')
+        # On reviewing the code, and comparing to line 119-120 of
+        # SpinCore_pp.i, it looks like this last argument is not used -- could
+        # it just be removed?? 
         raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
@@ -100,13 +103,12 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         if DNP_data is None:
             times_dtype = dtype([('start_times',double),('stop_times',double)])
             mytimes = zeros(indirect_len,dtype=times_dtype)
-            if x == 0:
-                time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
-                DNP_data = ndshape([indirect_len,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
-                DNP_data.setaxis('indirect',mytimes)
-                DNP_data.setaxis('t',time_axis).set_units('t','s')
-                DNP_data.setaxis('nScans',r_[0:nScans])
-            data_array = nddata(array(data_array),'t')
+            time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
+            DNP_data = ndshape([indirect_len,nScans,len(time_axis)],['indirect','nScans','t']).alloc(dtype=complex128)
+            DNP_data.setaxis('indirect',mytimes)
+            DNP_data.setaxis('t',time_axis).set_units('t','s')
+            DNP_data.setaxis('nScans',r_[0:nScans])
+            data_array = nddata(array(data_array),[-1],['t'])
             data_array.setaxis('t',time_axis)
         # (delete on reading) JF edited -- there was an else block
         # w/ reference to "j", but j is not defined in the function!
