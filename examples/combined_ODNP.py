@@ -14,11 +14,11 @@ import h5py
 # {{{ Combined ODNP
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '150mM_TEMPOL_DNP_1'
+output_name = '150mM_TEMPOL_DNP'
 IR_postproc = 'spincore_IR_v1'
 Ep_postproc = 'ODNP_v3'
-adcOffset = 25
-carrierFreq_MHz = 14.895528
+adcOffset = 26
+carrierFreq_MHz = 14.902706
 nScans = 1
 nEchoes = 1
 # all times in microseconds
@@ -44,7 +44,7 @@ if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 #}}}
 powers = 1e-3*10**(dB_settings/10.)
-fl = figlist_var()
+fl = psp.figlist_var()
 save_file=True
 SW_kHz = 3.9 # AAB and FS have found the min SW without loss to be 1.9 kHz 
 acq_time_ms = 1024. # ms
@@ -68,7 +68,7 @@ with power_control() as p:
             nEchoes = nEchoes, p90_us = p90_us,
             repetition=repetition_us, tau_us = tau_us, SW_kHz=SW_kHz, 
             output_name = output_name,indirect_dim1 = 'start_times',
-            indirect_dime2='stop_times',DNP_data = None)# assume that the power
+            indirect_dim2='stop_times',ret_data = None)# assume that the power
     #                                                  axis is 1 longer than
     #                                                  the "powers" array, so
     #                                                  that we can also store
@@ -112,7 +112,7 @@ with power_control() as p:
                 nPoints=nPoints, nEchoes = nEchoes, p90_us=p90_us, 
                 repetition = repetition_us, tau_us=tau_us, 
                 SW_kHz=SW_kHz, 
-                output_name = output_name, DNP_data=DNP_data)
+                output_name = output_name, ret_data=DNP_data)
         time_axis_coords[j+1]['stop_times'] = time.time()
 DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)

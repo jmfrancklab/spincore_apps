@@ -5,7 +5,7 @@ import pyspecdata as psp
 import numpy as np
 import time
 #{{{IR ppg
-def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
+def run_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
         p90_us, tau_us, repetition, output_name, SW_kHz,
         ph1_cyc = psp.r_[0,2], ph2_cyc = psp.r_[0,2],ret_data=None):
     """Run an inversion recovery and generate a single nddata with a vd dimension.
