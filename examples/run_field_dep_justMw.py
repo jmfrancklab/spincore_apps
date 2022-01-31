@@ -17,9 +17,9 @@ from Instruments import power_control,Bridge12,prologix_connection,gigatronics
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
 from pylab import *
-from SpinCore_pp.ppg import run_field_sweep
+from SpinCore_pp.ppg import run_spin_echo
 
-fl = figlist_var()
+fl = psp.figlist_var()
 #logger = init_logging(level='debug')
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -67,9 +67,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
-output_name = '150mM_TEMPOL_field_dep'
+output_name = '150mM_TEMPOL_field_dep_final'
 adcOffset = 24
-gamma_eff = (14.904100/3507.57)
+gamma_eff = (14.904151/3507.52)
 #{{{ acq params
 tx_phases = psp.r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
@@ -116,7 +116,7 @@ with power_control() as p:
         sweep_data = run_spin_echo(nScans = nScans, indirect_idx = 0, 
                 indirect_len = len(field_axis), adcOffset = adcOffset,
                 carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
-                nEchoes = nEchoes, p90_us = p90, repetition_us = repetition,
+                nEchoes = nEchoes, p90_us = p90, repetition = repetition,
                 tau_us = tau_us, SW_kHz=SW_kHz, output_name = output_name, 
                 indirect_dim1 = 'Field', indirect_dim2 = 'carrierFreq',
                 ret_data = None)
@@ -133,11 +133,11 @@ with power_control() as p:
                 print("My frequency in MHz is",new_carrierFreq_MHz)
                 sweep_data = run_spin_echo(nScans = nScans, indirect_idx = B0_index+1,
                         indirect_len = len(field_axis), adcOffset = adcOffset,
-                        carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
-                        nEchoes = nEchoes, p90_us = p90, repetition_us = repetition,
+                        carrierFreq_MHz = new_carrierFreq_MHz, nPoints = nPoints,
+                        nEchoes = nEchoes, p90_us = p90, repetition = repetition,
                         tau_us = tau_us, SW_kHz=SW_kHz, output_name = output_name, 
                         indirect_dim1 = 'Field', indirect_dim2 = 'carrierFreq',
-                        ret_data = ret_data)
+                        ret_data = sweep_data)
         SpinCore_pp.stopBoard()
 acq_params = {j:eval(j) for j in dir() if j in ['tx_phases', 'carrierFreq_MHz','amplitude','nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust_us','deblank_us','tau_us','nPhaseSteps']}
 sweep_data.set_prop('acq_params',acq_params)

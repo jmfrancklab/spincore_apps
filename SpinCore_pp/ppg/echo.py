@@ -6,7 +6,7 @@ import time
 def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz, 
         nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name, 
         indirect_dim1='start_times', indirect_dim2='stop_times', 
-        ph1_cyc=r_[0,1,2,3], ph2_cyc=r_[0], ret_data=None):
+        ph1_cyc=psp.r_[0,1,2,3], ph2_cyc=psp.r_[0], ret_data=None):
     """run nScans and slot them into the indirect_idx index of ret_data -- assume
     that the first time this is run, it will be run with ret_data=None and that
     after that, you will pass in ret_data this generates an "indirect" axis.
@@ -105,7 +105,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
             times_dtype = np.dtype([(indirect_dim1,np.double),(indirect_dim2,np.double)])
             mytimes = np.zeros(indirect_len,dtype=times_dtype)
             time_axis = psp.r_[0:dataPoints]/(SW_kHz*1e3) 
-            ret_data = ndshape([indirect_len,nScans,len(time_axis)],
+            ret_data = psp.ndshape([indirect_len,nScans,len(time_axis)],
                     ['indirect','nScans','t']).alloc(dtype=np.complex128)
             ret_data.setaxis('indirect',mytimes)
             ret_data.setaxis('t',time_axis).set_units('t','s')
@@ -114,6 +114,6 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
         print("checkpoints:",this_array-this_array[0])
-        print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
+        print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(np.diff(this_array))])
         print("stored scan",x,"for indirect_idx",indirect_idx)
         return ret_data
