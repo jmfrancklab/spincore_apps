@@ -41,6 +41,11 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
     output_name:    str
                     file name the data will be saved under??
                     (as noted below this might be obsolete/bogus)
+    indirect_dim1:  str
+                    name for the structured array dim1 being stored on indirect dimension
+    indirect_dim2:  str
+                    name for the second dimension in the structured array stored in the
+                    indirect dimension
     ph1_cyc:        array
                     phase steps for the first pulse
     ph2_cyc:        array

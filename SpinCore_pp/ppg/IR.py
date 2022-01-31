@@ -17,15 +17,19 @@ def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MH
     ==========
     nScans:         int
                     number of repeats of the pulse sequence (for averaging over data)
-    nEchoes:        int
-                    Number of echoes for each T1
+    indirect_idx:   int
+                    index along the 'indirect' dimension
+    indirect_len:   int
+                    size of indirect axis.
+                    Used to allocate space for the data once the first scan is run.
     adcOffset:      int 
                     offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
-    carrierFreq_MHz:    int
-                        carrier frequency in MHz
-    vd_list_us:        list or array
-                    list of varied delays for IR experiment,
-                    in microseconds
+    carrierFreq_MHz:    float
+                        carrier frequency to be set in MHz
+    nPoints:        int
+                    number of points for the data
+    nEchoes:        int
+                    Number of Echoes to be acquired
     p90_us:         float
                     90 time of the probe in us
     repetition:     int
@@ -38,10 +42,15 @@ def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MH
     output_name:    str
                     file name the data will be saved under??
                     (as noted below this might be obsolete/bogus)
-    ph1_cyc:    array
-                phase steps for the first pulse
-    ph2_cyc:    array
-                phase steps for the second pulse
+    indirect_dim1:  str
+                    name for the structured array dim1 being stored on indirect dimension
+    indirect_dim2:  str
+                    name for the second dimension in the structured array stored in the
+                    indirect dimension
+    ph1_cyc:        array
+                    phase steps for the first pulse
+    ph2_cyc:        array
+                    phase steps for the second pulse
     ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
     """
