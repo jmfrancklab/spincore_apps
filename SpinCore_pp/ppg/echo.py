@@ -1,8 +1,7 @@
 from .. import configureTX,configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData, verifyParams
 from .. import load as spincore_load
-# remove import *
-from pyspecdata import *
-from numpy import *
+import pyspecdata as psp
+import numpy as np
 import time
 def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz, 
         nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name, 
@@ -56,7 +55,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
     deadtime_us = 10.0
     deblank_us = 1.0
     amplitude = 1.0
-    tx_phases = r_[0.0,90.0,180.0,270.0]
+    tx_phases = psp.r_[0.0,90.0,180.0,270.0]
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for x in range(nScans):
@@ -100,20 +99,20 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
         data_array=[]
-        data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
+        data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
         if ret_data is None:
-            times_dtype = dtype([(indirect_dim1,double),(indirect_dim2,double)])
+            times_dtype = np.dtype([(indirect_dim1,np.double),(indirect_dim2,np.double)])
             mytimes = np.zeros(indirect_len,dtype=times_dtype)
-            time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
+            time_axis = psp.r_[0:dataPoints]/(SW_kHz*1e3) 
             ret_data = ndshape([indirect_len,nScans,len(time_axis)],
-                    ['indirect','nScans','t']).alloc(dtype=complex128)
+                    ['indirect','nScans','t']).alloc(dtype=np.complex128)
             ret_data.setaxis('indirect',mytimes)
             ret_data.setaxis('t',time_axis).set_units('t','s')
-            ret_data.setaxis('nScans',r_[0:nScans])
+            ret_data.setaxis('nScans',psp.r_[0:nScans])
         ret_data['indirect',indirect_idx]['nScans',x] = data_array
         run_scans_time_list.append(time.time())
-        this_array = array(run_scans_time_list)
+        this_array = np.array(run_scans_time_list)
         print("checkpoints:",this_array-this_array[0])
         print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
         print("stored scan",x,"for indirect_idx",indirect_idx)

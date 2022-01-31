@@ -1,9 +1,8 @@
 from .. import configureTX, configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
 # remove import *
-from pyspecdata import *
+import pyspecdata as psp
 import numpy as np
-from numpy import r_
 import time
 #{{{IR ppg
 def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
@@ -57,7 +56,7 @@ def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MH
     deadtime_us = 10.0
     deblank_us = 1.0
     amplitude = 1.0
-    tx_phases = r_[0.0,90.0,180.0,270.0]
+    tx_phases = psp.r_[0.0,90.0,180.0,270.0]
     nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for index,val in enumerate(vd_list_us):
@@ -103,7 +102,7 @@ def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MH
             run_scans_names.append('get data')
         # On reviewing the code, and comparing to line 119-120 of
         # SpinCore_pp.i, it looks like this last argument is not used -- could
-        # it just be removed?? 
+        # it just be removed?? (output_name) 
             raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
             run_scans_time_list.append(time.time())
             run_scans_names.append('shape data')
@@ -112,7 +111,7 @@ def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MH
             dataPoints = float(np.shape(data_array)[0])
             if ret_data is None:
                 indirect_len = len(vd_list_us)
-                time_axis = r_[0:dataPoints]/(SW_kHz*1e3)
+                time_axis = psp.r_[0:dataPoints]/(SW_kHz*1e3)
                 ret_data = ndshape([indirect_len,nScans,len(time_axis)],
                         ['vd','nScans','t']).alloc(dtype=np.complex128)
                 ret_data.setaxis('vd',vd_list_us*1e-6).set_units('vd','s')
@@ -120,7 +119,7 @@ def run_scans_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MH
                 ret_data.setaxis('nScans',r_[0:nScans])
             ret_data['vd',index]['nScans',x]['indirect',indirect_idx] = data_array
             run_scans_time_list.append(time.time())
-            this_array = array(run_scans_time_list)
+            this_array = np.array(run_scans_time_list)
             print("checkpoints:",this_array-this_array[0])
             print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
     return ret_data
