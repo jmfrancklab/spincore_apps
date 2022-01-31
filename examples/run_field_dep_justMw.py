@@ -113,7 +113,7 @@ with power_control() as p:
         first_B0 = x_server.set_field(field_axis[0])
         time.sleep(3.0)
         carrierFreq_MHz = gamma_eff*first_B0
-        sweep_data = run_field_sweep(nScans = nScans, indirect_idx = 0, 
+        sweep_data = run_spin_echo(nScans = nScans, indirect_idx = 0, 
                 indirect_len = len(field_axis), adcOffset = adcOffset,
                 carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
                 nEchoes = nEchoes, p90_us = p90, repetition_us = repetition,
@@ -131,7 +131,7 @@ with power_control() as p:
                 myfreqs_fields[B0_index]['Field'] = true_B0
                 myfreqs_fields[B0_index]['carrierFreq'] = new_carrierFreq_MHz
                 print("My frequency in MHz is",new_carrierFreq_MHz)
-                sweep_data = run_field_sweep(nScans = nScans, indirect_idx = B0_index+1,
+                sweep_data = run_spin_echo(nScans = nScans, indirect_idx = B0_index+1,
                         indirect_len = len(field_axis), adcOffset = adcOffset,
                         carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
                         nEchoes = nEchoes, p90_us = p90, repetition_us = repetition,
