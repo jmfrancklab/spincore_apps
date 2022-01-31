@@ -7,8 +7,8 @@ estimated field for the electron resonance at the
 highest power one plans to run the combined DNP
 at. 
 """
-from numpy import *
-from pyspecdata import *
+import numpy as np
+import pyspecdata as psp
 import os
 import sys
 import SpinCore_pp
@@ -52,15 +52,15 @@ def verifyParams():
 
 mw_freqs = []
 
-field_axis = r_[3504:3509:.5]
+field_axis = psp.r_[3504:3509:.5]
 print("Here is my field axis:",field_axis)
 
 # Parameters for Bridge12
-powers = r_[3.98]
+powers = psp.r_[3.98]
 min_dBm_step = 0.5
 for x in range(len(powers)):
     print(powers)
-    dB_settings = round(10*(log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
+    dB_settings = round(10*(np.log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
@@ -71,7 +71,7 @@ output_name = '150mM_TEMPOL_field_dep'
 adcOffset = 24
 gamma_eff = (14.904100/3507.57)
 #{{{ acq params
-tx_phases = r_[0.0,90.0,180.0,270.0]
+tx_phases = psp.r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 1
 nEchoes = 1
@@ -108,7 +108,7 @@ with power_control() as p:
         time.sleep(0.5)
         if p.get_power_setting()>= this_dB: break
     if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
-    meter_powers = zeros_like(dB_settings)
+    meter_powers = np.zeros_like(dB_settings)
     with xepr() as x_server:
         first_B0 = x_server.set_field(field_axis[0])
         time.sleep(3.0)

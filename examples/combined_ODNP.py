@@ -1,5 +1,5 @@
-from numpy import *
-from pyspecdata import *
+import numpy as np
+import pyspecdata as psp
 import os
 import sys
 import SpinCore_pp
@@ -26,7 +26,7 @@ nEchoes = 1
 p90_us = 4.464
 repetition_us = 0.5e6
 FIR_rd = 0.3e6
-vd_list_us =r_[2.1e3,1.12e4,2.23e4,3.3e4,4.4e4,5.6e4,6.7e4,7.8e4,8.9e4,1e5] 
+vd_list_us =psp.r_[2.1e3,1.12e4,2.23e4,3.3e4,4.4e4,5.6e4,6.7e4,7.8e4,8.9e4,1e5] 
 max_power = 4 #W
 power_steps = 14
 threedown = True
@@ -52,9 +52,9 @@ nPoints = int(acq_time_ms*SW_kHz+0.5)
 acq_time_ms = nPoints/SW_kHz
 tau_us = 3500
 pad_us = 0
-Ep_ph1_cyc = r_[0,1,2,3]
-IR_ph1_cyc = r_[0,2]
-IR_ph2_cyc = r_[0,2]
+Ep_ph1_cyc = psp.r_[0,1,2,3]
+IR_ph1_cyc = psp.r_[0,2]
+IR_ph2_cyc = psp.r_[0,2]
 date = datetime.now().strftime('%y%m%d')
 #{{{run enhancement
 DNP_ini_time = time.time()
@@ -89,7 +89,7 @@ with power_control() as p:
     DNP_data.set_prop('Ep_thermal_done_time', DNP_thermal_done)
     time_axis_coords[0]['stop_times'] = DNP_thermal_done
     # w/ struct array, we can add time_axis_coords[0]['stop_time'], and the above becomes obsolete
-    power_settings = zeros_like(dB_settings)
+    power_settings = np.zeros_like(dB_settings)
     time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
         print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
