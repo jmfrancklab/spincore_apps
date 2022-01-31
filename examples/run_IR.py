@@ -90,24 +90,24 @@ if phase_cycling:
 #}}}
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-#vd_list_us = r_[5e1,2e5,4e5,6e5,8e5]
+#vd_list = r_[5e1,2e5,4e5,6e5,8e5]
 #        1e6,1.2e6,1.4e6,1.6e6,1.8e6,2e6]
-#vd_list_us = r_[5e1,9.1e4,1.8e5,2.7e5,3.6e5,
+#vd_list = r_[5e1,9.1e4,1.8e5,2.7e5,3.6e5,
 #        #4.5e5,5.5e5,6.4e5,7.3e5,8.2e5,9.1e5,1e6]
-#vd_list_us = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
+#vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #        1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-#vd_list_us = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
+#vd_list = r_[5e1,1.8e4,3.6e4,5.5e4,7.3e4,9.1e4,
 #       1.8e5,3.44e5,5.08e5,6.72e5,8.36e5,1e6]
-#vd_list_us = np.linspace(5e1,1.8e5,32)
-#vd_list_us = np.linspace(5e1,12e6,12)
-#vd_list_us = np.linspace(5e1,15e6,16)#5) 
-#vd_list_us = np.linspace(5e1,10e6,16)
-#vd_list_us = np.linspace(5e1,4e6,16)
-vd_list_us = np.linspace(5e1,6e6,16)
-#vd_list_us = np.linspace(5e1,3e6,15)
-#vd_list_us = np.linspace(5e1,8e6,16)
+#vd_list = np.linspace(5e1,1.8e5,32)
+#vd_list = np.linspace(5e1,12e6,12)
+#vd_list = np.linspace(5e1,15e6,16)#5) 
+#vd_list = np.linspace(5e1,10e6,16)
+#vd_list = np.linspace(5e1,4e6,16)
+vd_list = np.linspace(5e1,6e6,16)
+#vd_list = np.linspace(5e1,3e6,15)
+#vd_list = np.linspace(5e1,8e6,16)
 
-for index,val in enumerate(vd_list_us):
+for index,val in enumerate(vd_list):
     vd = val
     print("***")
     print("INDEX %d - VARIABLE DELAY %f"%(index,val))
@@ -169,8 +169,8 @@ for index,val in enumerate(vd_list_us):
         data.name('signal')
         data.set_prop('acq_params',acq_params)
         if index == 0 and x == 0:
-            vd_data = ndshape([len(vd_list_us),nScans,len(time_axis)],['vd','nScans','t']).alloc(dtype=np.complex128)
-            vd_data.setaxis('vd',vd_list_us*1e-6).set_units('vd','s')
+            vd_data = ndshape([len(vd_list),nScans,len(time_axis)],['vd','nScans','t']).alloc(dtype=np.complex128)
+            vd_data.setaxis('vd',vd_list*1e-6).set_units('vd','s')
             vd_data.setaxis('nScans',r_[0:nScans])
             vd_data.setaxis('t',time_axis).set_units('t','s')
         vd_data['vd',index]['nScans',x] = data
