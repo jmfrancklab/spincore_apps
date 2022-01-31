@@ -67,7 +67,8 @@ with power_control() as p:
             adcOffset=adcOffset, carrierFreq_MHz = carrierFreq_MHz, nPoints=nPoints, 
             nEchoes = nEchoes, p90_us = p90_us,
             repetition=repetition_us, tau_us = tau_us, SW_kHz=SW_kHz, 
-            output_name = output_name,DNP_data = None)# assume that the power
+            output_name = output_name,indirect_dim1 = 'start_times',
+            indirect_dime2='stop_times',DNP_data = None)# assume that the power
     #                                                  axis is 1 longer than
     #                                                  the "powers" array, so
     #                                                  that we can also store

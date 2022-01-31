@@ -113,11 +113,13 @@ with power_control() as p:
         first_B0 = x_server.set_field(field_axis[0])
         time.sleep(3.0)
         carrierFreq_MHz = gamma_eff*first_B0
-        sweep_data = run_field_sweep(B0_idx = 0, indirect_len = len(field_axis), nScans=nScans,
-                adcOffset = adcOffset, carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
-                SW_kHz = SW_kHz, nEchoes = nEchoes, tau_us = tau_us, p90_us=p90, 
-                repetition_us = repetition, output_name = output_name, powers = powers,
-                sweep_data = None)
+        sweep_data = run_field_sweep(nScans = nScans, indirect_idx = 0, 
+                indirect_len = len(field_axis), adcOffset = adcOffset,
+                carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
+                nEchoes = nEchoes, p90_us = p90, repetition_us = repetition,
+                tau_us = tau_us, SW_kHz=SW_kHz, output_name = output_name, 
+                indirect_dim1 = 'Field', indirect_dim2 = 'carrierFreq',
+                ret_data = None)
         myfreqs_fields = sweep_data.getaxis('indirect')
         myfreqs_fields[0]['Field'] = first_B0
         myfreqs_fields[0]['carrierFreq'] = carrierFreq_MHz
@@ -129,15 +131,17 @@ with power_control() as p:
                 myfreqs_fields[B0_index]['Field'] = true_B0
                 myfreqs_fields[B0_index]['carrierFreq'] = new_carrierFreq_MHz
                 print("My frequency in MHz is",new_carrierFreq_MHz)
-                sweep_data = run_field_sweep(B0_idx = B0_index+1,indirect_len = len(field_axis), 
-                        nScans=nScans, adcOffset = adcOffset, carrierFreq_MHz = new_carrierFreq_MHz, 
-                        nPoints = nPoints, SW_kHz = SW_kHz, nEchoes = nEchoes, tau_us = tau_us, 
-                        p90_us=p90, repetition_us = repetition, output_name = output_name, 
-                        powers=powers,sweep_data = sweep_data)
+                sweep_data = run_field_sweep(nScans = nScans, indirect_idx = B0_index+1,
+                        indirect_len = len(field_axis), adcOffset = adcOffset,
+                        carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
+                        nEchoes = nEchoes, p90_us = p90, repetition_us = repetition,
+                        tau_us = tau_us, SW_kHz=SW_kHz, output_name = output_name, 
+                        indirect_dim1 = 'Field', indirect_dim2 = 'carrierFreq',
+                        ret_data = ret_data)
         SpinCore_pp.stopBoard()
 acq_params = {j:eval(j) for j in dir() if j in ['tx_phases', 'carrierFreq_MHz','amplitude','nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust_us','deblank_us','tau_us','nPhaseSteps']}
 sweep_data.set_prop('acq_params',acq_params)
-
+sweep_data.name('Field_sweep')
 #}}}        
 myfilename = date+'_'+output_name+'.h5'
 save_file = True

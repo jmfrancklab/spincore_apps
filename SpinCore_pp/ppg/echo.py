@@ -5,7 +5,8 @@ from pyspecdata import *
 from numpy import *
 import time
 def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz, 
-        nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name,
+        nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name, 
+        indirect_dim1='start_times', indirect_dim2='stop_times', 
         ph1_cyc=r_[0,1,2,3], ph2_cyc=r_[0], ret_data=None):
     """run nScans and slot them into the indirect_idx index of ret_data -- assume
     that the first time this is run, it will be run with ret_data=None and that
@@ -97,7 +98,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
         if ret_data is None:
-            times_dtype = dtype([('start_times',double),('stop_times',double)])
+            times_dtype = dtype([(indirect_dim1,double),(indirect_dim2,double)])
             mytimes = np.zeros(indirect_len,dtype=times_dtype)
             time_axis = r_[0:dataPoints]/(SW_kHz*1e3) 
             ret_data = ndshape([indirect_len,nScans,len(time_axis)],
