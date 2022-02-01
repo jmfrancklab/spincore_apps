@@ -6,42 +6,14 @@ import socket
 import sys
 import time
 from datetime import datetime
+from SpinCore_pp.ppg import run_spin_echo
 fl = figlist_var()
-#{{{ Verify arguments compatible with board
-def verifyParams():
-    if (nPoints > 16*1024 or nPoints < 1):
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED PULSE TIME.")
-    if (tau_us < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
-    return
-#}}}
 #{{{Parameters that change for new samples
 output_name = 'TEMPOL_capillary_probe_nutation_1'
 adcOffset = 39
 carrierFreq_MHz = 14.896010
 nScans = 1
 nEchoes = 1
-phase_cycling = True
 repetition = 12e6
 p90_range = linspace(1.,15.,40,endpoint=False)
 #}}}
@@ -50,15 +22,15 @@ date = datetime.now().strftime('%y%m%d')
 ph1_cyc = r_[0,2]
 ph2_cyc = r_[0,2]
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-SW_kHz = 24.0
-nPoints = 1024
+SW_kHz = 3.9 #24.0 originally
+acq_time = 1024.
+nPoints = int(acq_time*SW_kHz+0.5)
 acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
 tau = 3500
 print("ACQUISITION TIME:",acq_times,"ms")
 print("TAU DELAY:",tau,"us")
 #}}}
-nutation_data = spin_echo(nScans=nScans, indirect_idx = index, 
+nutation_data = run_spin_echo(nScans=nScans, indirect_idx = index, 
             indirect_len = len(p90_range), adcOffset = adcOffset,
             carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
             nEchoes=nEchoes, p90_us = p90_range[0], repetition = repetition,
@@ -79,7 +51,7 @@ for index,val in enumerate(p90_range[1:]):
     p90_coords[index+1]['p90_time'] = p90
 acq_params = {j:eval(j) in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_range', 'deadtime', 'repetition', 'SW_kHz',
-    'nPoints', 'tau_adjust', 'deblank_us', 'tau', 'nPhaseSteps']}
+    'nPoints', 'deblank_us', 'tau', 'nPhaseSteps']}
 acq_params['pulprog'] = 'spincore_nutation_v3'
 nutation_data.set_prop('acq_params',acq_params)
 nutation_data.name('nutation')
