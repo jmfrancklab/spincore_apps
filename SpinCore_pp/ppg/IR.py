@@ -9,17 +9,11 @@ def run_IR(nScans, vd_list_us, adcOffset, carrierFreq_MHz, nPoints, nEchoes,
         ph1_cyc = psp.r_[0,2], ph2_cyc = psp.r_[0,2],ret_data=None):
     """Run an inversion recovery and generate a single nddata with a vd dimension.
     We assume the first time this is run, ret_data=None, after which we will pass in ret_data. 
-    Generates an "indirect" axis.
 
     Parameters
     ==========
     nScans:         int
                     number of repeats of the pulse sequence (for averaging over data)
-    indirect_idx:   int
-                    index along the 'indirect' dimension
-    indirect_len:   int
-                    size of indirect axis.
-                    Used to allocate space for the data once the first scan is run.
     adcOffset:      int 
                     offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
     carrierFreq_MHz:    float
@@ -111,7 +105,7 @@ def run_IR(nScans, vd_list_us, adcOffset, carrierFreq_MHz, nPoints, nEchoes,
                 ret_data.setaxis('vd',vd_list_us*1e-6).set_units('vd','s')
                 ret_data.setaxis('t',time_axis).set_units('t','s')
                 ret_data.setaxis('nScans',r_[0:nScans])
-            ret_data['vd',index]['nScans',x]['indirect',indirect_idx] = data_array
+            ret_data['vd',index]['nScans',x] = data_array
             run_scans_time_list.append(time.time())
             this_array = np.array(run_scans_time_list)
             print("checkpoints:",this_array-this_array[0])
