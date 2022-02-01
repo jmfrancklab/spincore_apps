@@ -35,31 +35,6 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-#{{{ for setting EPR magnet
-def API_sender(value):
-    IP = "jmfrancklab-bruker.syr.edu"
-    if len(sys.argv) > 1:
-        IP = sys.argv[1]
-    PORT = 6001
-    print("target IP:", IP)
-    print("target port:", PORT)
-    MESSAGE = str(value)
-    print("SETTING FIELD TO...", MESSAGE)
-    sock = socket.socket(socket.AF_INET, # Internet
-            socket.SOCK_STREAM) # TCP
-    sock.connect((IP, PORT))
-    sock.send(MESSAGE)
-    sock.close()
-    print("FIELD SET TO...", MESSAGE)
-    time.sleep(5)
-    return
-#}}}
-#{{{ Edit here to set the actual field
-set_field = False
-if set_field:
-    B0 = 3497 # Determine this from Field Sweep
-    API_sender(B0)
-#}}}
 #{{{Parameters that change for new samples
 output_name = 'TEMPOL_capillary_probe_nutation_1'
 adcOffset = 39
@@ -74,11 +49,7 @@ p90_range = linspace(1.,15.,40,endpoint=False)
 date = datetime.now().strftime('%y%m%d')
 ph1_cyc = r_[0,2]
 ph2_cyc = r_[0,2]
-nPhaseSteps = len(ph1_cyc)*len(ph2_cyc)
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-deadtime = 10.0
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
@@ -86,8 +57,6 @@ tau_adjust = 0.0
 tau = deadtime_us + acq_time_ms*1e3*0.5 + tau_adjust_us
 print("ACQUISITION TIME:",acq_times,"ms")
 print("TAU DELAY:",tau,"us")
-data_length = 2*nPoints*nEchoes*nPhaseSteps
-deblank_us = 1.0
 #}}}
 for index,val in enumerate(p90_range):
     p90 = val # us
