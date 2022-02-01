@@ -1,4 +1,4 @@
-from .. import configureTX,configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData, verifyParams
+from .. import configureTX,configureRX, init_ppg, stop_ppg, runBoard, getData, verifyParams
 from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
