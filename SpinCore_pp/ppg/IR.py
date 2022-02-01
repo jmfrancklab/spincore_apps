@@ -1,12 +1,11 @@
 from .. import configureTX, configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
-# remove import *
 import pyspecdata as psp
 import numpy as np
 import time
 #{{{IR ppg
-def run_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
-        p90_us, tau_us, repetition, output_name, SW_kHz,
+def run_IR(nScans, vd_list_us, adcOffset, carrierFreq_MHz, nPoints, nEchoes, 
+        p90_us, repetition, tau_us, SW_kHz, output_name, 
         ph1_cyc = psp.r_[0,2], ph2_cyc = psp.r_[0,2],ret_data=None):
     """Run an inversion recovery and generate a single nddata with a vd dimension.
     We assume the first time this is run, ret_data=None, after which we will pass in ret_data. 
@@ -41,11 +40,6 @@ def run_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
     output_name:    str
                     file name the data will be saved under??
                     (as noted below this might be obsolete/bogus)
-    indirect_dim1:  str
-                    name for the structured array dim1 being stored on indirect dimension
-    indirect_dim2:  str
-                    name for the second dimension in the structured array stored in the
-                    indirect dimension
     ph1_cyc:        array
                     phase steps for the first pulse
     ph2_cyc:        array

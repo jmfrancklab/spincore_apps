@@ -3,6 +3,7 @@ from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
 import time
+#{{{spin echo ppg
 def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz, 
         nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name, 
         indirect_dim1='start_times', indirect_dim2='stop_times', 
@@ -113,7 +114,5 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         ret_data['indirect',indirect_idx]['nScans',x] = data_array
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
-        print("checkpoints:",this_array-this_array[0])
-        print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(np.diff(this_array))])
         print("stored scan",x,"for indirect_idx",indirect_idx)
         return ret_data

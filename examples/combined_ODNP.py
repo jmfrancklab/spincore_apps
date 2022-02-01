@@ -84,11 +84,9 @@ with power_control() as p:
     DNP_thermal_done = time.time()
     time_axis_coords = DNP_data.getaxis('indirect')
     time_axis_coords[0]['start_times'] = DNP_ini_time
-    # w/ struct array, this becomes time_axis_coords[0]['start_time']
     DNP_data.set_prop('Ep_start_time', DNP_ini_time)
     DNP_data.set_prop('Ep_thermal_done_time', DNP_thermal_done)
     time_axis_coords[0]['stop_times'] = DNP_thermal_done
-    # w/ struct array, we can add time_axis_coords[0]['stop_time'], and the above becomes obsolete
     power_settings = np.zeros_like(dB_settings)
     time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
@@ -116,7 +114,6 @@ with power_control() as p:
         time_axis_coords[j+1]['stop_times'] = time.time()
 DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)
-# the following line needs to be done separately for the IR and the E(p)
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
     'nPoints', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}

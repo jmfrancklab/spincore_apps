@@ -20,7 +20,6 @@ from pylab import *
 from SpinCore_pp.ppg import run_spin_echo
 
 fl = psp.figlist_var()
-#logger = init_logging(level='debug')
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
@@ -59,7 +58,6 @@ print("Here is my field axis:",field_axis)
 powers = psp.r_[3.98]
 min_dBm_step = 0.5
 for x in range(len(powers)):
-    print(powers)
     dB_settings = round(10*(np.log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
@@ -101,7 +99,6 @@ assert total_pts < 2**14, "You are trying to acquire %d points (too many points)
 with power_control() as p:
     dip_f=p.dip_lock(9.81,9.83)
     mw_freqs.append(dip_f)
-    print("\n*** *** *** *** ***\n")
     p.set_power(dB_settings)
     this_dB = dB_settings
     for k in range(10):
