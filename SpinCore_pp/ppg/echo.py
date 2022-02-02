@@ -116,4 +116,4 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         print("checkpoints:",this_array-this_array[0])
         print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(np.diff(this_array))])
         print("stored scan",x,"for indirect_idx",indirect_idx)
-        return ret_data
+    return ret_data

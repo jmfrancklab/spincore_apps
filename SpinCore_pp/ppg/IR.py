@@ -16,8 +16,6 @@ def run_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
     ==========
     nScans:         int
                     number of repeats of the pulse sequence (for averaging over data)
-    indirect_idx:   int
-                    index along the 'indirect' dimension
     indirect_len:   int
                     size of indirect axis.
                     Used to allocate space for the data once the first scan is run.
