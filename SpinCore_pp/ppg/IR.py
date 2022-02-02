@@ -1,24 +1,19 @@
 from .. import configureTX, configureRX, configureRX, init_ppg, stop_ppg, runBoard, getData
 from .. import load as spincore_load
-# remove import *
 import pyspecdata as psp
 import numpy as np
 import time
 #{{{IR ppg
-def run_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
-        p90_us, tau_us, repetition, output_name, SW_kHz,
+def run_IR(nScans, vd_list_us, adcOffset, carrierFreq_MHz, nPoints, nEchoes, 
+        p90_us, repetition, tau_us, SW_kHz, output_name, 
         ph1_cyc = psp.r_[0,2], ph2_cyc = psp.r_[0,2],ret_data=None):
     """Run an inversion recovery and generate a single nddata with a vd dimension.
     We assume the first time this is run, ret_data=None, after which we will pass in ret_data. 
-    Generates an "indirect" axis.
 
     Parameters
     ==========
     nScans:         int
                     number of repeats of the pulse sequence (for averaging over data)
-    indirect_len:   int
-                    size of indirect axis.
-                    Used to allocate space for the data once the first scan is run.
     adcOffset:      int 
                     offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
     carrierFreq_MHz:    float
@@ -39,11 +34,6 @@ def run_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
     output_name:    str
                     file name the data will be saved under??
                     (as noted below this might be obsolete/bogus)
-    indirect_dim1:  str
-                    name for the structured array dim1 being stored on indirect dimension
-    indirect_dim2:  str
-                    name for the second dimension in the structured array stored in the
-                    indirect dimension
     ph1_cyc:        array
                     phase steps for the first pulse
     ph2_cyc:        array
@@ -115,7 +105,7 @@ def run_IR(nPoints, nEchoes, vd_list_us, nScans, adcOffset, carrierFreq_MHz,
                 ret_data.setaxis('vd',vd_list_us*1e-6).set_units('vd','s')
                 ret_data.setaxis('t',time_axis).set_units('t','s')
                 ret_data.setaxis('nScans',r_[0:nScans])
-            ret_data['vd',index]['nScans',x]['indirect',indirect_idx] = data_array
+            ret_data['vd',index]['nScans',x] = data_array
             run_scans_time_list.append(time.time())
             this_array = np.array(run_scans_time_list)
             print("checkpoints:",this_array-this_array[0])
