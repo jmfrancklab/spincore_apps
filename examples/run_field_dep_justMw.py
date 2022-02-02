@@ -51,7 +51,7 @@ def verifyParams():
 
 mw_freqs = []
 
-field_axis = psp.r_[3504:3509:.5]
+field_axis = psp.r_[3503:3508:.5]
 print("Here is my field axis:",field_axis)
 
 # Parameters for Bridge12
@@ -65,9 +65,9 @@ input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 #}}}
 
-output_name = '150mM_TEMPOL_field_dep_final'
-adcOffset = 24
-gamma_eff = (14.904151/3507.52)
+output_name = '150mM_TEMPOL_field_dep'
+adcOffset = 25
+gamma_eff = (14.904040/3507.54)
 #{{{ acq params
 tx_phases = psp.r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0

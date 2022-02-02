@@ -14,11 +14,11 @@ import h5py
 # {{{ Combined ODNP
 # {{{ experimental parameters
 # {{{ these need to change for each sample
-output_name = '150mM_TEMPOL_DNP'
+output_name = '150mM_TEMPOL_DNP_final'
 IR_postproc = 'spincore_IR_v1'
 Ep_postproc = 'ODNP_v3'
 adcOffset = 26
-carrierFreq_MHz = 14.902706
+carrierFreq_MHz = 14.895663
 nScans = 1
 nEchoes = 1
 # all times in microseconds
@@ -128,11 +128,23 @@ while save_file:
         DNP_data.hdf5_write(myfilename)        
         print("FILE SAVED")
         print("Name of saved enhancement data", DNP_data.name())
-        print("shape of saved enhancement data", ndshape(DNP_data))
+        print("shape of saved enhancement data", psp.ndshape(DNP_data))
         save_file=False
     except Exception as e:
         print(e)
-        print("EXCEPTION ERROR - FILE MAY ALREADY EXIST. LOOPING TO ALLOW YOU TO CHANGE NAME OF PREEXISTING FILE")
+        print("\nEXCEPTION ERROR.")
+        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
+        print("WILL TRY CURRENT DIRECTORY LOCATION...")
+        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(output_name) is not 0:
+            DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
+            break
+        else:
+            print("\n*** *** ***")
+            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
+            print("*** *** ***\n")
+            break
         save_file = False
         time.sleep(3)
 #}}}
@@ -141,11 +153,13 @@ ini_time = time.time() # needed b/c data object doesn't exist yet
 with power_control() as p:
     retval_IR = p.dip_lock(9.81,9.83)
     p.mw_off()
-    vd_data = run_IR(nPoints, nEchoes, vd_list_us, nScans,adcOffset,
-            carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
+    vd_data = run_IR(nPoints=nPoints, nEchoes=nEchoes, vd_list_us=vd_list_us, 
+            nScans = nScans,adcOffset = adcOffset,
+            carrierFreq_MHz=carrierFreq_MHz, p90_us = p90_us, tau_us = tau_us, 
+            repetition = FIR_rd, output_name = output_name, SW_kHz = SW_kHz,
             ph1_cyc=IR_ph1_cyc,
             ph2_cyc=IR_ph2_cyc,
-            indirect_idx = 0, vd_data=None)
+            ret_data=None)
     vd_data.set_prop('start_time',ini_time)
     vd_data.set_prop('stop_time',ini_time)
     meter_power=0
@@ -176,9 +190,11 @@ with power_control() as p:
         time.sleep(5)
         meter_power = p.get_power_setting()
         ini_time = time.time()
-        run_IR(nPoints, nEchoes, vd_list_us, nScans,adcOffset,
-            carrierFreq_MHz, p90_us, tau_us, FIR_rd, output_name, SW_kHz,
-            vd_data=None)
+        vd_data = run_IR(nPoints=nPoints, nEchoes=nEchoes, vd_list_us = vd_list_us, 
+                nScans=nScans,adcOffset = adcOffset,
+                carrierFreq_MHz=carrierFreq_MHz, p90_us = p90_us, tau_us=tau_us, 
+                repetition=FIR_rd, output_name=output_name, SW_kHz=SW_kHz,
+                ret_data=None)
         vd_data.set_prop('start_time', ini_time)
         vd_data.set_prop('stop_time', time.time())
         acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',

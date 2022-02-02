@@ -10,12 +10,12 @@ from SpinCore_pp.ppg import run_spin_echo
 fl = figlist_var()
 #{{{Parameters that change for new samples
 output_name = 'TEMPOL_capillary_probe_nutation_1'
-adcOffset = 39
-carrierFreq_MHz = 14.896010
+adcOffset = 26
+carrierFreq_MHz = 14.895663
 nScans = 1
 nEchoes = 1
-repetition = 12e6
-p90_range = linspace(1.,15.,40,endpoint=False)
+repetition = 0.5e6
+p90_range = linspace(1.,15.,10,endpoint=False)
 #}}}
 #{{{These should stay the same regardless of sample
 date = datetime.now().strftime('%y%m%d')
@@ -27,10 +27,10 @@ acq_time = 1024.
 nPoints = int(acq_time*SW_kHz+0.5)
 acq_time = nPoints/SW_kHz # ms
 tau = 3500
-print("ACQUISITION TIME:",acq_times,"ms")
+print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 #}}}
-nutation_data = run_spin_echo(nScans=nScans, indirect_idx = index, 
+nutation_data = run_spin_echo(nScans=nScans, indirect_idx = 0, 
             indirect_len = len(p90_range), adcOffset = adcOffset,
             carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
             nEchoes=nEchoes, p90_us = p90_range[0], repetition = repetition,
@@ -41,7 +41,7 @@ p90_coords = nutation_data.getaxis('indirect')
 p90_coords[0]['p90_time'] = p90_range[0]
 for index,val in enumerate(p90_range[1:]):
     p90 = val # us
-    nutation_data = spin_echo(nScans=nScans, indirect_idx = index+1, 
+    run_spin_echo(nScans=nScans, indirect_idx = index+1, 
             indirect_len = len(p90_range), adcOffset = adcOffset,
             carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
             nEchoes=nEchoes, p90_us = p90, repetition = repetition,
@@ -49,7 +49,7 @@ for index,val in enumerate(p90_range[1:]):
             indirect_dim1 = 'p90_time', ph1_cyc = ph1_cyc, ph2_cyc = ph2_cyc,
             ret_data = nutation_data)
     p90_coords[index+1]['p90_time'] = p90
-acq_params = {j:eval(j) in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
+acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_range', 'deadtime', 'repetition', 'SW_kHz',
     'nPoints', 'deblank_us', 'tau', 'nPhaseSteps']}
 acq_params['pulprog'] = 'spincore_nutation_v3'
@@ -60,6 +60,7 @@ nutation_data.chunk('t',
         ['ph2','ph1','t2'],[len(ph1_cyc),len(ph2_cyc),-1]).setaxis(
                 'ph2',ph2_cyc/4).setaxis('ph1',ph1_cyc/4)
 nutation_data.reorder('t2',first=False)
+save_file=True
 while save_file:
     try:
         print("SAVING FILE...")

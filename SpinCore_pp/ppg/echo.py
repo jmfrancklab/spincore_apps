@@ -115,4 +115,4 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
         print("stored scan",x,"for indirect_idx",indirect_idx)
-    return ret_data
+        return ret_data

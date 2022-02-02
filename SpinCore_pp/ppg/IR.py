@@ -100,15 +100,15 @@ def run_IR(nScans, vd_list_us, adcOffset, carrierFreq_MHz, nPoints, nEchoes,
             if ret_data is None:
                 indirect_len = len(vd_list_us)
                 time_axis = psp.r_[0:dataPoints]/(SW_kHz*1e3)
-                ret_data = ndshape([indirect_len,nScans,len(time_axis)],
+                ret_data = psp.ndshape([indirect_len,nScans,len(time_axis)],
                         ['vd','nScans','t']).alloc(dtype=np.complex128)
                 ret_data.setaxis('vd',vd_list_us*1e-6).set_units('vd','s')
                 ret_data.setaxis('t',time_axis).set_units('t','s')
-                ret_data.setaxis('nScans',r_[0:nScans])
+                ret_data.setaxis('nScans',psp.r_[0:nScans])
             ret_data['vd',index]['nScans',x] = data_array
             run_scans_time_list.append(time.time())
             this_array = np.array(run_scans_time_list)
             print("checkpoints:",this_array-this_array[0])
-            print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(diff(this_array))])
+            print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(np.diff(this_array))])
     return ret_data
 #}}}
