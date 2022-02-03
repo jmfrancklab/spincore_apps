@@ -71,6 +71,8 @@ def run_IR(
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
+    if type(vd_list_us) is list:
+        vd_list_us = np.array(vd_list_us)
     for index, vd in enumerate(vd_list_us):
         logging.info("***")
         logging.info("INDEX %d - VARIABLE DELAY %f" % (index, vd))
@@ -106,7 +108,7 @@ def run_IR(
                 ]
             )
             run_scans_time_list.append(time.time())
-            run_scans_names.append("prog")
+        run_scans_names.append("stop ppg")
             stop_ppg()
             run_scans_time_list.append(time.time())
             run_scans_names.append("run")
@@ -145,6 +147,4 @@ def run_IR(
                 )
             )
     return ret_data
-
-
 # }}}

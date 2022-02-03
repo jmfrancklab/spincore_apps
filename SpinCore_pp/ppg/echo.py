@@ -81,7 +81,7 @@ def run_spin_echo(
     ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
     """
-    assert nEchoes==1, "you must only choose nEchoes=1"
+    assert nEchoes == 1, "you must only choose nEchoes=1"
     deadtime_us = 10.0
     deblank_us = 1.0
     amplitude = 1.0
@@ -92,7 +92,9 @@ def run_spin_echo(
         times_dtype = np.double
     else:
         # {{{ dtype for structured array
-        times_dtype = np.dtype([(indirect_fields[0], np.double), (indirect_fields[1], np.double)])
+        times_dtype = np.dtype(
+            [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
+        )
         # }}}
     for x in range(nScans):
         run_scans_time_list = [time.time()]
@@ -123,7 +125,7 @@ def run_spin_echo(
             ]
         )
         run_scans_time_list.append(time.time())
-        run_scans_names.append("prog")
+        run_scans_names.append("stop ppg")
         stop_ppg()
         run_scans_time_list.append(time.time())
         run_scans_names.append("run")
