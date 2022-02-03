@@ -11,6 +11,7 @@ from SpinCore_pp.ppg import run_spin_echo, run_IR
 from SpinCore_pp.power_helper import gen_powerlist
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 import h5py
+logger = psp.init_logging(level='debug')
 # {{{ Combined ODNP
 # {{{ experimental parameters
 # {{{ these need to change for each sample
@@ -35,10 +36,10 @@ threedown = True
 dB_settings = gen_powerlist(max_power,power_steps+1, three_down=threedown)
 T1_powers_dB = gen_powerlist(max_power, 5, three_down=False)
 T1_node_names = ['FIR_%ddBm'%j for j in T1_powers_dB]
-print("dB_settings",dB_settings)
-print("correspond to powers in Watts",10**(dB_settings/10.-3))
-print("T1_powers_dB",T1_powers_dB)
-print("correspond to powers in Watts",10**(T1_powers_dB/10.-3))
+logger.info("dB_settings",dB_settings)
+logger.info("correspond to powers in Watts",10**(dB_settings/10.-3))
+logger.info("T1_powers_dB",T1_powers_dB)
+logger.info("correspond to powers in Watts",10**(T1_powers_dB/10.-3))
 myinput = input("Look ok?")
 if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
@@ -56,6 +57,11 @@ Ep_ph1_cyc = psp.r_[0,1,2,3]
 IR_ph1_cyc = psp.r_[0,2]
 IR_ph2_cyc = psp.r_[0,2]
 date = datetime.now().strftime('%y%m%d')
+# {{{ check for file
+myfilename = date+'_'+output_name+'.h5'
+if os.path.exists(myfilename):
+    raise ValueError("the file %s already exists, so I'm not going to let you proceed!"%myfilename)
+# }}}
 #{{{run enhancement
 DNP_ini_time = time.time()
 with power_control() as p:
@@ -90,12 +96,12 @@ with power_control() as p:
     power_settings = np.zeros_like(dB_settings)
     time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
-        print("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
+        logger.debug("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
         if j == 0:
             retval = p.dip_lock(9.81,9.83)
-        print('done with dip lock 1')
+        logger.debug('done with dip lock 1')
         p.set_power(this_dB)
-        print('power was set')
+        logger.debug('power was set')
         for k in range(10):
             time.sleep(0.5)
             if p.get_power_setting() >= this_dB: break
@@ -103,7 +109,7 @@ with power_control() as p:
         time.sleep(5)
         power_settings[j] = p.get_power_setting()
         time_axis_coords[j+1]['start_times'] = time.time()
-        print('gonna run the Ep for this power')
+        logger.debug('gonna run the Ep for this power')
         run_spin_echo(nScans=nScans,indirect_idx = j+1,
                 indirect_len = len(powers)+1, adcOffset=adcOffset, 
                 carrierFreq_MHz = carrierFreq_MHz, 
@@ -119,34 +125,13 @@ acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 
     'nPoints', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
 DNP_data.set_prop('acq_params',acq_params)
 DNP_data.name('enhancement')
-myfilename = date+'_'+output_name+'.h5'
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
 DNP_data.setaxis('ph1',Ep_ph1_cyc/4)
-while save_file:
-    try:
-        print("SAVING FILE...")
-        DNP_data.hdf5_write(myfilename)        
-        print("FILE SAVED")
-        print("Name of saved enhancement data", DNP_data.name())
-        print("shape of saved enhancement data", psp.ndshape(DNP_data))
-        save_file=False
-    except Exception as e:
-        print(e)
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(output_name) is not 0:
-            DNP_data.hdf5_write(date+'_'+output_name+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
-        else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
-        save_file = False
-        time.sleep(3)
+logger.info("SAVING FILE...")
+DNP_data.hdf5_write(myfilename)        
+logger.info("FILE SAVED")
+logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
+logger.debug("shape of saved enhancement data", psp.ndshape(DNP_data))
 #}}}
 #{{{run IR
 ini_time = time.time() # needed b/c data object doesn't exist yet
@@ -170,14 +155,13 @@ with power_control() as p:
     vd_data.set_prop('acq_params',acq_params)
     vd_data.set_prop('postproc_type',IR_postproc)
     vd_data.name('FIR_noPower')
-    myfilename = date+'_'+output_name+'.h5'
     vd_data.chunk('t',['ph1','ph2','t2'],[len(IR_ph1_cyc),len(IR_ph2_cyc),-1])
     vd_data.setaxis('ph1',IR_ph1_cyc/4)
     vd_data.setaxis('ph2',IR_ph2_cyc/4)
     # Need error handling (JF has posted something on this..)
     vd_data.hdf5_write(myfilename)
-    print("\n*** FILE SAVED ***\n")
-    print(("Name of saved data",vd_data.name()))
+    logger.debug("\n*** FILE SAVED ***\n")
+    logger.debug(strm("Name of saved data",vd_data.name()))
     time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
     for j,this_dB in enumerate(T1_powers_dB):
         if j==0:
@@ -203,7 +187,6 @@ with power_control() as p:
         vd_data.set_prop('acq_params',acq_params)
         vd_data.set_prop('postproc_type',IR_postproc)
         vd_data.name(T1_node_names[j])
-        myfilename = date+'_'+output_name+'.h5'
         vd_data.chunk('t',['ph1','ph2','t2'],[len(IR_ph1_cyc),len(IR_ph2_cyc),-1])
         vd_data.setaxis('ph1',IR_ph1_cyc/4)
         vd_data.setaxis('ph2',IR_ph2_cyc/4)
