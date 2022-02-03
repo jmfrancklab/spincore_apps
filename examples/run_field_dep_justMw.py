@@ -115,7 +115,7 @@ with power_control() as p:
                 carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
                 nEchoes = nEchoes, p90_us = p90, repetition = repetition,
                 tau_us = tau_us, SW_kHz=SW_kHz, output_name = output_name, 
-                indirect_dim1 = 'Field', indirect_dim2 = 'carrierFreq',
+                indirect_fields = ('Field', 'carrierFreq'),
                 ret_data = None)
         myfreqs_fields = sweep_data.getaxis('indirect')
         myfreqs_fields[0]['Field'] = first_B0
@@ -133,7 +133,7 @@ with power_control() as p:
                         carrierFreq_MHz = new_carrierFreq_MHz, nPoints = nPoints,
                         nEchoes = nEchoes, p90_us = p90, repetition = repetition,
                         tau_us = tau_us, SW_kHz=SW_kHz, output_name = output_name, 
-                        indirect_dim1 = 'Field', indirect_dim2 = 'carrierFreq',
+                        indirect_fields = ('Field','carrierFreq'),
                         ret_data = sweep_data)
         SpinCore_pp.stopBoard()
 acq_params = {j:eval(j) for j in dir() if j in ['tx_phases', 'carrierFreq_MHz','amplitude','nScans','nEchoes','p90','deadtime','repetition','SW_kHz','mw_freqs','nPoints','tau_adjust_us','deblank_us','tau_us','nPhaseSteps']}

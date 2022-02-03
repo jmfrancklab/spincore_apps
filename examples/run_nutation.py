@@ -35,7 +35,7 @@ nutation_data = run_spin_echo(nScans=nScans, indirect_idx = 0,
             carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
             nEchoes=nEchoes, p90_us = p90_range[0], repetition = repetition,
             tau_us = tau, SW_kHz = SW_kHz, output_name = output_name,
-            indirect_dim1 = 'p90_time', ph1_cyc = ph1_cyc, ph2_cyc = ph2_cyc,
+            indirect_fields = None, ph1_cyc = ph1_cyc, ph2_cyc = ph2_cyc,
             ret_data = None)
 p90_coords = nutation_data.getaxis('indirect')
 p90_coords[0]['p90_time'] = p90_range[0]
@@ -46,7 +46,7 @@ for index,val in enumerate(p90_range[1:]):
             carrierFreq_MHz = carrierFreq_MHz, nPoints = nPoints,
             nEchoes=nEchoes, p90_us = p90, repetition = repetition,
             tau_us = tau, SW_kHz = SW_kHz, output_name = output_name,
-            indirect_dim1 = 'p90_time', ph1_cyc = ph1_cyc, ph2_cyc = ph2_cyc,
+            indirect_fields = None, ph1_cyc = ph1_cyc, ph2_cyc = ph2_cyc,
             ret_data = nutation_data)
     p90_coords[index+1]['p90_time'] = p90
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',

@@ -73,20 +73,13 @@ with power_control() as p:
             adcOffset=adcOffset, carrierFreq_MHz = carrierFreq_MHz, nPoints=nPoints, 
             nEchoes = nEchoes, p90_us = p90_us,
             repetition=repetition_us, tau_us = tau_us, SW_kHz=SW_kHz, 
-            output_name = output_name,indirect_dim1 = 'start_times',
-            indirect_dim2='stop_times',ret_data = None)# assume that the power
-    #                                                  axis is 1 longer than
-    #                                                  the "powers" array, so
-    #                                                  that we can also store
-    #                                                  the thermally polarized
-    #                                                  signal in this array
-    #                                                  (note that powers and
-    #                                                  other parameters are
-    #                                                  defined globally w/in
-    #                                                  the script, as this
-    #                                                  function is not designed
-    #                                                  to be moved outside the
-    #                                                  module
+            output_name = output_name, indirect_fields = ('start_times','stop_times'),
+            ret_data = None)# assume that the power axis is 1 longer than the
+    #                         "powers" array, so that we can also store the
+    #                         thermally polarized signal in this array (note
+    #                         that powers and other parameters are defined
+    #                         globally w/in the script, as this function is not
+    #                         designed to be moved outside the module
     DNP_thermal_done = time.time()
     time_axis_coords = DNP_data.getaxis('indirect')
     time_axis_coords[0]['start_times'] = DNP_ini_time

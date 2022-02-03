@@ -5,7 +5,6 @@ from .. import (
     stop_ppg,
     runBoard,
     getData,
-    verifyParams,
 )
 from .. import load as spincore_load
 import pyspecdata as psp
@@ -27,10 +26,9 @@ def run_spin_echo(
     tau_us,
     SW_kHz,
     output_name,
-    indirect_dim1="start_times",
-    indirect_dim2="stop_times",
-    ph1_cyc=psp.r_[0, 1, 2, 3],
-    ph2_cyc=psp.r_[0],
+    indirect_fields=None,
+    ph1_cyc=r_[0, 1, 2, 3],
+    ph2_cyc=r_[0],
     ret_data=None,
 ):
     """run nScans and slot them into the indirect_idx index of ret_data -- assume
@@ -53,7 +51,9 @@ def run_spin_echo(
     nPoints:        int
                     number of points for the data
     nEchoes:        int
-                    Number of Echoes to be acquired
+                    Number of Echoes to be acquired.
+                    This should always be 1, since this pulse
+                    program doesn't generate multiple echos.
     p90_us:         float
                     90 time of the probe in us
     repetition:     int
@@ -66,11 +66,14 @@ def run_spin_echo(
     output_name:    str
                     file name the data will be saved under??
                     (as noted below this might be obsolete/bogus)
-    indirect_dim1:  str
-                    name for the structured array dim1 being stored on indirect dimension
-    indirect_dim2:  str
-                    name for the second dimension in the structured array stored in the
-                    indirect dimension
+    indirect_fields: tuple (pair) of str or (default) None
+                    Name for the first field of the structured array
+                    that stores the indirect dimension coordinates.
+                    We use a structured array, e.g., to store both start and
+                    stop times for the experiment.
+
+                    If you want the indirect dimension coordinates
+                    to be a normal array, set this to None
     ph1_cyc:        array
                     phase steps for the first pulse
     ph2_cyc:        array
@@ -78,12 +81,19 @@ def run_spin_echo(
     ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
     """
+    assert nEchoes==1, "you must only choose nEchoes=1"
     deadtime_us = 10.0
     deblank_us = 1.0
     amplitude = 1.0
-    tx_phases = psp.r_[0.0, 90.0, 180.0, 270.0]
+    tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
+    if indirect_fields is None:
+        times_dtype = np.double
+    else:
+        # {{{ dtype for structured array
+        times_dtype = np.dtype([(indirect_fields[0], np.double), (indirect_fields[1], np.double)])
+        # }}}
     for x in range(nScans):
         run_scans_time_list = [time.time()]
         run_scans_names = ["configure"]
@@ -130,19 +140,25 @@ def run_spin_echo(
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
         if ret_data is None:
-            times_dtype = np.dtype(
-                [(indirect_dim1, np.double), (indirect_dim2, np.double)]
-            )
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
-            time_axis = psp.r_[0:dataPoints] / (SW_kHz * 1e3)
+            time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
                 [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
             ).alloc(dtype=np.complex128)
             ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
-            ret_data.setaxis("nScans", psp.r_[0:nScans])
+            ret_data.setaxis("nScans", r_[0:nScans])
         ret_data["indirect", indirect_idx]["nScans", x] = data_array
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
-        logging.debug("stored scan", x, "for indirect_idx", indirect_idx)
+        logging.debug(strm("stored scan", x, "for indirect_idx", indirect_idx))
+        logging.debug(
+            strm(
+                "time for each chunk",
+                [
+                    "%s %0.1f" % (run_scans_names[j], v)
+                    for j, v in enumerate(np.diff(this_array))
+                ],
+            )
+        )
         return ret_data

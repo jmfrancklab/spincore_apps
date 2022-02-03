@@ -1,7 +1,6 @@
 from .. import (
     configureTX,
     configureRX,
-    configureRX,
     init_ppg,
     stop_ppg,
     runBoard,
@@ -10,7 +9,9 @@ from .. import (
 from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
+from numpy import r_
 import time
+import logging
 
 # {{{IR ppg
 def run_IR(
@@ -25,8 +26,8 @@ def run_IR(
     tau_us,
     SW_kHz,
     output_name,
-    ph1_cyc=psp.r_[0, 2],
-    ph2_cyc=psp.r_[0, 2],
+    ph1_cyc=r_[0, 2],
+    ph2_cyc=r_[0, 2],
     ret_data=None,
 ):
     """Run an inversion recovery and generate a single nddata with a vd dimension.
@@ -63,16 +64,16 @@ def run_IR(
     ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
     """
+    assert nEchoes==1, "you must only choose nEchoes=1"
     deadtime_us = 10.0
     deblank_us = 1.0
     amplitude = 1.0
-    tx_phases = psp.r_[0.0, 90.0, 180.0, 270.0]
+    tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
-    for index, val in enumerate(vd_list_us):
-        vd = val
+    for index, vd in enumerate(vd_list_us):
         logging.info("***")
-        logging.info("INDEX %d - VARIABLE DELAY %f" % (index, val))
+        logging.info("INDEX %d - VARIABLE DELAY %f" % (index, vd))
         logging.info("***")
         for x in range(nScans):
             run_scans_time_list = [time.time()]
@@ -123,13 +124,13 @@ def run_IR(
             dataPoints = float(np.shape(data_array)[0])
             if ret_data is None:
                 indirect_len = len(vd_list_us)
-                time_axis = psp.r_[0:dataPoints] / (SW_kHz * 1e3)
+                time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
                 ret_data = psp.ndshape(
                     [indirect_len, nScans, len(time_axis)], ["vd", "nScans", "t"]
                 ).alloc(dtype=np.complex128)
                 ret_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
                 ret_data.setaxis("t", time_axis).set_units("t", "s")
-                ret_data.setaxis("nScans", psp.r_[0:nScans])
+                ret_data.setaxis("nScans", r_[0:nScans])
             ret_data["vd", index]["nScans", x] = data_array
             run_scans_time_list.append(time.time())
             this_array = np.array(run_scans_time_list)
