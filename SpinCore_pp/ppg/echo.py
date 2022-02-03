@@ -74,6 +74,8 @@ def run_spin_echo(
 
                     If you want the indirect dimension coordinates
                     to be a normal array, set this to None
+
+                    This parameter is only used when `ret_data` is set to `None`.
     ph1_cyc:        array
                     phase steps for the first pulse
     ph2_cyc:        array
@@ -88,14 +90,6 @@ def run_spin_echo(
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
-    if indirect_fields is None:
-        times_dtype = np.double
-    else:
-        # {{{ dtype for structured array
-        times_dtype = np.dtype(
-            [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
-        )
-        # }}}
     for x in range(nScans):
         run_scans_time_list = [time.time()]
         run_scans_names = ["configure"]
@@ -142,6 +136,14 @@ def run_spin_echo(
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
         if ret_data is None:
+            if indirect_fields is None:
+                times_dtype = np.double
+            else:
+                # {{{ dtype for structured array
+                times_dtype = np.dtype(
+                    [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
+                )
+                # }}}
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(

@@ -16,8 +16,6 @@ logger = psp.init_logging(level='debug')
 # {{{ experimental parameters
 # {{{ these need to change for each sample
 output_name = '150mM_TEMPOL_DNP_final'
-IR_postproc = 'spincore_IR_v1'
-Ep_postproc = 'ODNP_v3'
 adcOffset = 26
 carrierFreq_MHz = 14.895663
 nScans = 1
@@ -31,6 +29,11 @@ vd_list_us =psp.r_[2.1e3,1.12e4,2.23e4,3.3e4,4.4e4,5.6e4,6.7e4,7.8e4,8.9e4,1e5]
 max_power = 4 #W
 power_steps = 14
 threedown = True
+SW_kHz = 3.9 # AAB and FS have found the min SW without loss to be 1.9 kHz 
+acq_time_ms = 1024. # below 1024 is **strongly discouraged**
+tau_us = 3500 # 3.5 ms is a good number
+uw_dip_center_GHz = 9.82
+uw_dip_width_GHz = 0.02
 # }}}
 #{{{Power settings
 dB_settings = gen_powerlist(max_power,power_steps+1, three_down=threedown)
@@ -44,14 +47,15 @@ myinput = input("Look ok?")
 if myinput.lower().startswith('n'):
     raise ValueError("you said no!!!")
 #}}}
+# {{{ these change if we change the way the data is saved
+IR_postproc = 'spincore_IR_v1'
+Ep_postproc = 'spincore_ODNP_v3'
+# }}}
 powers = 1e-3*10**(dB_settings/10.)
 fl = psp.figlist_var()
 save_file=True
-SW_kHz = 3.9 # AAB and FS have found the min SW without loss to be 1.9 kHz 
-acq_time_ms = 1024. # ms
 nPoints = int(acq_time_ms*SW_kHz+0.5)
 acq_time_ms = nPoints/SW_kHz
-tau_us = 3500
 pad_us = 0
 Ep_ph1_cyc = psp.r_[0,1,2,3]
 IR_ph1_cyc = psp.r_[0,2]
@@ -65,7 +69,10 @@ if os.path.exists(myfilename):
 #{{{run enhancement
 DNP_ini_time = time.time()
 with power_control() as p:
-    retval_thermal = p.dip_lock(9.81,9.83)
+    # JF points out it should be possible to save time by removing this (b/c we
+    # shut off microwave right away), but AG notes that doing so causes an
+    # error.  Therefore, debug the root cause of the error and remove it!
+    retval_thermal = p.dip_lock(uw_dip_center_GHz-uw_dip_width_GHz/2,uw_dip_center_GHz+uw_dip_width_GHz/2)
     p.start_log()
     p.mw_off()
     DNP_data = run_spin_echo(nScans=nScans,indirect_idx = 0,indirect_len = len(powers)+1,
@@ -86,12 +93,12 @@ with power_control() as p:
     DNP_data.set_prop('Ep_start_time', DNP_ini_time)
     DNP_data.set_prop('Ep_thermal_done_time', DNP_thermal_done)
     time_axis_coords[0]['stop_times'] = DNP_thermal_done
-    power_settings = np.zeros_like(dB_settings)
+    power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
         logger.debug("SETTING THIS POWER",this_dB,"(",dB_settings[j-1],powers[j],"W)")
         if j == 0:
-            retval = p.dip_lock(9.81,9.83)
+            retval = p.dip_lock(uw_dip_center_GHz-uw_dip_width_GHz/2,uw_dip_center_GHz+uw_dip_width_GHz/2) 
         logger.debug('done with dip lock 1')
         p.set_power(this_dB)
         logger.debug('power was set')
@@ -100,7 +107,7 @@ with power_control() as p:
             if p.get_power_setting() >= this_dB: break
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")    
         time.sleep(5)
-        power_settings[j] = p.get_power_setting()
+        power_settings_dBm[j] = p.get_power_setting()
         time_axis_coords[j+1]['start_times'] = time.time()
         logger.debug('gonna run the Ep for this power')
         run_spin_echo(nScans=nScans,indirect_idx = j+1,
@@ -115,12 +122,12 @@ DNP_data.set_prop('stop_time', time.time())
 DNP_data.set_prop('postproc_type',Ep_postproc)
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_us', 'deadtime_us', 'repetition_us', 'SW_kHz',
-    'nPoints', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings']}
+    'nPoints', 'deblank_us', 'tau_us', 'nPhaseSteps', 'MWfreq', 'power_settings_dBm']}
 DNP_data.set_prop('acq_params',acq_params)
 DNP_data.name('enhancement')
 DNP_data.chunk('t',['ph1','t2'],[4,-1])
 DNP_data.setaxis('ph1',Ep_ph1_cyc/4)
-logger.info("SAVING FILE...")
+logger.info("SAVING FILE... %s"%myfilename)
 DNP_data.hdf5_write(myfilename)        
 logger.info("FILE SAVED")
 logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
@@ -129,7 +136,7 @@ logger.debug("shape of saved enhancement data", psp.ndshape(DNP_data))
 #{{{run IR
 ini_time = time.time() # needed b/c data object doesn't exist yet
 with power_control() as p:
-    retval_IR = p.dip_lock(9.81,9.83)
+    retval_IR = p.dip_lock(uw_dip_center_GHz-uw_dip_width_GHz/2,uw_dip_center_GHz+uw_dip_width_GHz/2)
     p.mw_off()
     vd_data = run_IR(nPoints=nPoints, nEchoes=nEchoes, vd_list_us=vd_list_us, 
             nScans = nScans,adcOffset = adcOffset,
@@ -139,8 +146,8 @@ with power_control() as p:
             ph2_cyc=IR_ph2_cyc,
             ret_data=None)
     vd_data.set_prop('start_time',ini_time)
-    vd_data.set_prop('stop_time',ini_time)
-    meter_power=0
+    vd_data.set_prop('stop_time',time.time())
+    meter_power=-999
     acq_params = {j:eval(j) for j in dir() if j in ['adcOffset',
         'carrierFreq_MHz', 'amplitude','nScans', 'nEchoes', 'p90_us',
         'deadtime_us', 'repetition_us', 'SW_kHz', 'nPoints', 'deblank_us',
@@ -155,13 +162,18 @@ with power_control() as p:
     vd_data.hdf5_write(myfilename)
     logger.debug("\n*** FILE SAVED ***\n")
     logger.debug(strm("Name of saved data",vd_data.name()))
-    time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
     for j,this_dB in enumerate(T1_powers_dB):
         if j==0:
-            MWfreq = p.dip_lock(9.81,9.83)
+            MWfreq = p.dip_lock(uw_dip_center_GHz-uw_dip_width_GHz/2,uw_dip_center_GHz+uw_dip_width_GHz/2)
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
+            # JF notes that the following works for powers going up, but not
+            # for powers going down -- I don't think this has been a problem to
+            # date, and would rather not potentially break a working
+            # implementation, but we should PR and fix this in the future.
+            # (Just say whether we're closer to the newer setting or the older
+            # setting.)
             if p.get_power_setting()>= this_dB: break
         if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
@@ -184,12 +196,10 @@ with power_control() as p:
         vd_data.setaxis('ph1',IR_ph1_cyc/4)
         vd_data.setaxis('ph2',IR_ph2_cyc/4)
         vd_data.hdf5_write(myfilename)
-    final_frq = p.dip_lock(9.81,9.83)
+    final_frq = p.dip_lock(uw_dip_center_GHz-uw_dip_width_GHz/2,uw_dip_center_GHz+uw_dip_width_GHz/2)
     this_log = p.stop_log()
 SpinCore_pp.stopBoard()    
 #}}}
 with h5py.File(myfilename, 'a') as f:
     log_grp = f.create_group('log')
     hdf_save_dict_to_group(log_grp,this_log.__getstate__())
-
-
