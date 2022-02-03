@@ -3,6 +3,7 @@ from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
 import time
+import logging
 #{{{spin echo ppg
 def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz, 
         nPoints, nEchoes,p90_us, repetition, tau_us, SW_kHz, output_name, 
@@ -62,7 +63,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
     for x in range(nScans):
         run_scans_time_list = [time.time()]
         run_scans_names = ['configure']
-        print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
+        logging.info("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append('configure Rx')
@@ -95,7 +96,7 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         run_scans_names.append('get data')
         # On reviewing the code, and comparing to line 119-120 of
         # SpinCore_pp.i, it looks like this last argument is not used -- could
-        # it just be removed?? 
+        # it just be removed?? (output_name) 
         raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
         run_scans_time_list.append(time.time())
         run_scans_names.append('shape data')
@@ -114,5 +115,5 @@ def run_spin_echo(nScans, indirect_idx, indirect_len,adcOffset, carrierFreq_MHz,
         ret_data['indirect',indirect_idx]['nScans',x] = data_array
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
-        print("stored scan",x,"for indirect_idx",indirect_idx)
+        logging.debug("stored scan",x,"for indirect_idx",indirect_idx)
         return ret_data

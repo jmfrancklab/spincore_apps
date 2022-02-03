@@ -49,9 +49,9 @@ def run_IR(nScans, vd_list_us, adcOffset, carrierFreq_MHz, nPoints, nEchoes,
     data_length = 2*nPoints*nEchoes*nPhaseSteps
     for index,val in enumerate(vd_list_us):
         vd = val
-        print("***")
-        print("INDEX %d - VARIABLE DELAY %f"%(index,val))
-        print("***")
+        logging.info("***")
+        logging.info("INDEX %d - VARIABLE DELAY %f"%(index,val))
+        logging.info("***")
         for x in range(nScans):
             run_scans_time_list = [time.time()]
             run_scans_names = ['configure']
@@ -108,7 +108,7 @@ def run_IR(nScans, vd_list_us, adcOffset, carrierFreq_MHz, nPoints, nEchoes,
             ret_data['vd',index]['nScans',x] = data_array
             run_scans_time_list.append(time.time())
             this_array = np.array(run_scans_time_list)
-            print("checkpoints:",this_array-this_array[0])
-            print("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(np.diff(this_array))])
+            logging.debug(strm("checkpoints:",this_array-this_array[0]))
+            logging.debug(strm("time for each chunk",['%s %0.1f'%(run_scans_names[j],v) for j,v in enumerate(np.diff(this_array))]))
     return ret_data
 #}}}
