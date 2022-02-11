@@ -9,6 +9,7 @@ from .. import (
 from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
+from numpy import r_
 import time
 import logging
 
@@ -155,14 +156,12 @@ def run_spin_echo(
         ret_data["indirect", indirect_idx]["nScans", x] = data_array
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
-        logging.debug(strm("stored scan", x, "for indirect_idx", indirect_idx))
+        logging.debug("stored scan", x, "for indirect_idx", indirect_idx)
         logging.debug(
-            strm(
-                "time for each chunk",
+                            "time for each chunk",
                 [
                     "%s %0.1f" % (run_scans_names[j], v)
                     for j, v in enumerate(np.diff(this_array))
                 ],
-            )
         )
         return ret_data

@@ -108,7 +108,7 @@ def run_IR(
                 ]
             )
             run_scans_time_list.append(time.time())
-        run_scans_names.append("stop ppg")
+            run_scans_names.append("stop ppg")
             stop_ppg()
             run_scans_time_list.append(time.time())
             run_scans_names.append("run")

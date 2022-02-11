@@ -7,11 +7,12 @@ import sys
 import time
 from datetime import datetime
 from SpinCore_pp.ppg import run_spin_echo
+import logging
 fl = figlist_var()
 #{{{Parameters that change for new samples
-output_name = 'TEMPOL_capillary_probe_nutation_1'
+output_name = 'TEMPOL_cap_probe_nutation'
 adcOffset = 26
-carrierFreq_MHz = 14.895663
+carrierFreq_MHz = 14.903907
 nScans = 1
 nEchoes = 1
 repetition = 0.5e6
@@ -27,8 +28,8 @@ date = datetime.now().strftime('%y%m%d')
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 nPoints = int(acq_time*SW_kHz+0.5)
 acq_time = nPoints/SW_kHz # ms
-logger.debug("ACQUISITION TIME:",acq_time,"ms")
-logger.debug("TAU DELAY:",tau,"us")
+logging.debug("ACQUISITION TIME:",acq_time,"ms")
+logging.debug("TAU DELAY:",tau,"us")
 #}}}
 # {{{ check for file
 myfilename = date + "_" + output_name + ".h5"
@@ -85,13 +86,14 @@ nutation_data.chunk('t',
 nutation_data.reorder('t2',first=False)
 nutation_data.hdf5_write(myfilename,
         directory=getDATADIR(exp_type='ODNP_NMR_comp/nutation'))
-logger.info(strm("Name of saved data",nutation_data.name()))
-logger.info(strm("Shape of saved data",ndshape(nutation_data)))
+logging.info("Name of saved data",nutation_data.name())
+logging.info("Shape of saved data",ndshape(nutation_data))
 SpinCore_pp.stopBoard()
+nutation_data.reorder(['ph1','ph2','indirect'])
 fl.next('raw data')
-fl.image(nutation_data)
-nutation_data.ft('t',shift=True)
+fl.image(nutation_data.C.setaxis('indirect','#').set_units('indirect','scan #'))
+nutation_data.ft('t2',shift=True)
 fl.next('FT raw data')
-fl.image(nutation_data)
+fl.image(nutation_data.C.setaxis('indirect','#').set_units('indirect','scan #'))
 fl.show()
 
