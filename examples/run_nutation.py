@@ -56,6 +56,8 @@ nutation_data = run_spin_echo(
         ph1_cyc = ph1_cyc, 
         ph2_cyc = ph2_cyc,
         ret_data = None)
+nutation_times = nutation_data.getaxis('indirect')
+nutation_times[0] = p90_range[0]
 for index,p90 in enumerate(p90_range[1:]):
     run_spin_echo(
             nScans=nScans, 
@@ -73,6 +75,7 @@ for index,p90 in enumerate(p90_range[1:]):
             ph1_cyc = ph1_cyc, 
             ph2_cyc = ph2_cyc,
             ret_data = nutation_data)
+    nutation_times[index + 1] = p90
 acq_params = {j:eval(j) for j in dir() if j in ['adcOffset', 'carrierFreq_MHz', 'amplitude',
     'nScans', 'nEchoes', 'p90_range', 'deadtime', 'repetition', 'SW_kHz',
     'nPoints', 'deblank_us', 'tau', 'nPhaseSteps']}
