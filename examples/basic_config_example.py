@@ -3,7 +3,8 @@
 import configparser
 import os
 
-config = configparser.ConfigParser(allow_no_value=True)
+config = configparser.ConfigParser()
+config.optionxform = True # preserves case?
 config.read('active.ini')
 print(config.items('acq_params'))
 amplitude = config.get('acq_params','amplitude')
