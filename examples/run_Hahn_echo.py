@@ -1,16 +1,20 @@
-#{{{ Notes for use
-# To run this experiment, please open Xepr on the EPR computer, connect to
-# spectrometer, load the experiemnt 'set_field' and enable XEPR API. Then, in a
-# separate terminal, run the program XEPR_API_server.py, and wait for it to
-# tell you 'I am listening' - then, you should be able to run this program from
-# the NMR computer to set the field etc. 
+"""
+Spin Echo
+=========
 
-# Note the booleans user_sets_Freq and
-# user_sets_Field allow you to run experiments as previously run in this lab.
-# If both values are set to True, this is the way we used to run them. If both
-# values are set to False, you specify what field you want, and the computer
-# will do the rest.
-#}}}
+To run this experiment, please open Xepr on the EPR computer, connect to
+spectrometer, load the experiemnt 'set_field' and enable XEPR API. Then, in a
+separate terminal, run the program XEPR_API_server.py, and wait for it to
+tell you 'I am listening' - then, you should be able to run this program from
+the NMR computer to set the field etc. 
+
+Note the booleans user_sets_Freq and
+user_sets_Field allow you to run experiments as previously run in this lab.
+If both values are set to True, this is the way we used to run them. If both
+values are set to False, you specify what field you want, and the computer
+will do the rest.
+"""
+
 import configparser
 from pylab import *
 from pyspecdata import *
@@ -22,7 +26,7 @@ import numpy as np
 from Instruments.XEPR_eth import xepr
 fl = figlist_var()
 config = configparser.ConfigParser()
-config.read('../exp_params_config.ini')
+config.read('active.ini')
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
@@ -52,13 +56,22 @@ def verifyParams():
     return
 #}}}
 #{{{get parameters from config file
-p90 = config.get('acq_params','p90')
-deadtime = config.get('acq_params','deadtime')
+
+## JF 5/6 → 2 problems here:
+## (1) these need to be converted from a string to a number
+## (2) the base pulse sequence used here has problems -- it has a quit
+#      statement, doesn't specify the units of the acq_params, and
+#      doesn't pull the acq_params for the pulse sequence from the dir
+#      function --> need a new pulse request off of master to fix those
+#      things (first?)
+p90 = config.get('acq_params','p90_us')
+deadtime = config.get('acq_params','deadtime_us')
 adcOffset = config.get('acq_params','adc_offset')
-tx_phases = config.get('acq_params','tx_phases')
 amplitude = config.get('acq_params','amplitude')
-deblank = config.get('acq_params','deblank')
-tau = config.get('acq_params','tau')
+deblank = config.get('acq_params','deblank_us')
+tau = config.get('acq_params','tau_us')
+repetition = config.get('acq_params','repetition_us')
+nScans = config.get('acq_params','nScans')
 #}}}
 output_name = 'test'
 node_name = 'echo'
@@ -90,7 +103,7 @@ if not user_sets_Freq:
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
-nScans = 1
+tx_phases = r_[0.0,90.0,180.0,270.0]
 nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
@@ -103,7 +116,6 @@ if not phase_cycling:
 # all times in microseconds
 # acq is in milliseconds
 #}}}
-repetition = 1e6
 
 SW_kHz = 10
 acq_ms = 200.
@@ -267,4 +279,4 @@ if phase_cycling:
     fl.plot(data_slice, alpha=0.5)
     fl.plot(data_slice.imag, alpha=0.5)
     fl.plot(abs(data_slice), color='k', alpha=0.5)
-fl.show();quit()
+fl.show()
