@@ -26,6 +26,7 @@ import numpy as np
 from Instruments.XEPR_eth import xepr
 fl = figlist_var()
 config = configparser.ConfigParser()
+config.optionxform = str
 config.read('active.ini')
 #{{{ Verify arguments compatible with board
 def verifyParams():
