@@ -3,7 +3,7 @@
 import configparser
 import os
 
-config = configparser.ConfigParser()
+config = configparser.ConfigParser(allow_no_value=True)
 config.read('active.ini')
 print(config.items('acq_params'))
 amplitude = config.get('acq_params','amplitude')
@@ -14,3 +14,5 @@ p90_time = 4.464
 config.set('acq_params','p90_us',f'{p90_time:0.4f}')
 new_p90 = config.get('acq_params','p90_us')
 print("90 time is now",new_p90)
+with open('active.ini','w') as fp:
+    config.write(fp)
