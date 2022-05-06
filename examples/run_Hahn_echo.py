@@ -11,7 +11,7 @@
 # values are set to False, you specify what field you want, and the computer
 # will do the rest.
 #}}}
-
+import configparser
 from pylab import *
 from pyspecdata import *
 import os
@@ -21,6 +21,8 @@ from datetime import datetime
 import numpy as np
 from Instruments.XEPR_eth import xepr
 fl = figlist_var()
+config = configparser.ConfigParser()
+config.read('../exp_params_config.ini')
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
@@ -49,10 +51,17 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-
+#{{{get parameters from config file
+p90 = config.get('acq_params','p90')
+deadtime = config.get('acq_params','deadtime')
+adcOffset = config.get('acq_params','adc_offset')
+tx_phases = config.get('acq_params','tx_phases')
+amplitude = config.get('acq_params','amplitude')
+deblank = config.get('acq_params','deblank')
+tau = config.get('acq_params','tau')
+#}}}
 output_name = 'test'
 node_name = 'echo'
-adcOffset = 28
 
 user_sets_Freq = True
 user_sets_Field = True
@@ -81,8 +90,6 @@ if not user_sets_Freq:
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
@@ -96,8 +103,6 @@ if not phase_cycling:
 # all times in microseconds
 # acq is in milliseconds
 #}}}
-p90 = 4.477
-deadtime = 10
 repetition = 1e6
 
 SW_kHz = 10
@@ -106,9 +111,6 @@ nPoints = int(acq_ms*SW_kHz+0.5)
 # rounding may need to be power of 2
 # have to try this out
 tau_adjust = 0
-deblank = 1.0
-#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 3500
 pad = 0
 #{{{ setting acq_params dictionary
 acq_params = {}
