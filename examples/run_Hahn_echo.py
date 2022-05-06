@@ -223,6 +223,7 @@ save_file = True
 while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
+        ## JF 5/6 (PR #11) → rather than using these "date" and "output_name" parameters, use the basename and counter from the config file to determine the file name
         data.hdf5_write(date+'_'+output_name+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
