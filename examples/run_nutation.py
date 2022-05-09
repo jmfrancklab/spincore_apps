@@ -29,24 +29,23 @@ if not phase_cycling:
     ph2_cyc = r_[0]
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-repetition = 12e6
+repetition_us = 12e6
 SW_kHz = 24.0
 nPoints = 1024
-acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
-tau = 3500
+acq_time_ms = nPoints/SW_kHz # ms
+tau_us = 3500
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
-p90_range = linspace(1.,15.,40,endpoint=False)
-for index,val in enumerate(p90_range):
+p90_range_us = linspace(1.,15.,40,endpoint=False)
+for index,val in enumerate(p90_range_us):
     p90_us = val # us
     print("***")
     print("INDEX %d - 90 TIME %f"%(index,val))
     print("***")
     nutation_data = run_spin_echo(
             nScans = nScans,
-            indirect_idx = len(p90_range),
+            indirect_idx = len(p90_range_us),
             adcOffset=adcOffset,
             carrierFreq_MHz = carrierFreq_MHz,
             nPoints = nPoints,

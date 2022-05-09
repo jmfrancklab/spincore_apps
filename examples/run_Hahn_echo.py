@@ -60,10 +60,10 @@ if not user_sets_Freq:
 nScans = 1
 nEchoes = 1
 phase_cycling = True
-coherence_pathway = [('ph1',1),('ph2',-2)]
 if phase_cycling:
     ph1_cyc = r_[0,1,2,3]
     ph2_cyc = r_[0,2]
+    coherence_pathway = [('ph1',1),('ph2',-2)]
     nPhaseSteps = 8
 if not phase_cycling:
     ph1_cyc = r_[0]
@@ -73,7 +73,7 @@ repetition_us = 1e6
 SW_kHz = 3.9
 acq_ms = 1024.
 nPoints = int(acq_ms*SW_kHz+0.5)
-tau = 3500
+tau_us = 3500
 #}}}
 #{{{check for file
 myfilename = date + "_" + ouput_name + ".h5"
@@ -85,8 +85,7 @@ if os.path.exists(myfilename):
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 print(("ACQUISITION TIME:",acq_ms,"ms"))
-print(("TAU DELAY:",tau,"us"))
-print(("PAD DELAY:",pad,"us"))
+print(("TAU DELAY:",tau_us,"us"))
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 echo_data = run_spin_echo(
         nScans=nScans,
@@ -120,7 +119,6 @@ acq_params = {j: eval(j) for j in dir() if j in [
     "deblank_us",
     "tau_us",
     "nPhaseSteps",
-    "MWfreq"
     ]
     }
 echo_data.set_prop("acq_params",acq_params)

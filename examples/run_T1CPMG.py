@@ -41,10 +41,8 @@ import SpinCore_pp
 import time
 from datetime import datetime
 fl = figlist_var()
-
 date = datetime.now().strftime('%y%m%d')
 output_name = 'TEMPOL_cap_probe_T1CPMG_32dBm'
-#clock_correction = 1.0829/998.253
 adcOffset = 42
 carrierFreq_MHz = 14.896494
 tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -54,16 +52,15 @@ deadtime_us = 10.0
 repetition_us = 15e6
 deblank_us = 1.0
 marker = 1.0
-
 SW_kHz = 4.0
 nPoints = 128
 acq_time_ms = nPoints/SW_kHz # ms
 deblank_us = 1.0
 
 tau_extra = 1500.0 # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - deadtime
-pad_end = tau_extra - deblank*2 # marker + deblank
-twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
+pad_start = tau_extra - deadtime_us
+pad_end = tau_extra - deblank_us*2 # marker + deblank
+twice_tau = deblank_us + 2*p90_us + deadtime_us + pad_start + acq_time_ms*1e3 + pad_end + marker
 tau_us = twice_tau/2.0
 
 nScans = 12
@@ -78,12 +75,12 @@ data_length = 2*nPoints*nEchoes*nPhaseSteps
 vd_list = r_[5e1,5.8e5,9e5,1.8e6,2.7e6,
         3.6e6,4.5e6,5.4e6,6.4e6,7.2e6,10e6]
 for index,val in enumerate(vd_list):
-    vd = val
+    vd_us = val
     print("***")
     print("INDEX %d - VARIABLE DELAY %f"%(index,val))
     print("***")
     SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    acq_time_ms = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
     acq_params['acq_time_ms'] = acq_time_ms
     SpinCore_pp.init_ppg();
     if phase_cycling:
@@ -92,7 +89,7 @@ for index,val in enumerate(vd_list):
             ('phase_reset',1),
             ('delay_TTL',deblank_us),
             ('pulse_TTL',2.0*p90_us,0),
-            ('delay',vd),
+            ('delay',vd_us),
             ('delay_TTL',deblank_us),
             ('pulse_TTL',p90_us,'ph1',r_[0,2]),
             ('delay',tau_us),
@@ -119,7 +116,7 @@ for index,val in enumerate(vd_list):
             ('phase_reset',1),
             ('delay_TTL',deblank_us),
             ('pulse_TTL',2.0*p90_us,0.0),
-            ('delay',vd),
+            ('delay',vd_us),
             ('delay_TTL',deblank_us),
             ('pulse_TTL',p90_us,0.0),
             ('delay',tau_us),

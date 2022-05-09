@@ -23,9 +23,9 @@ nPoints = 64
 acq_time_ms = nPoints/SW_kHz # ms
 
 tau_extra = 1000.0 # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - deadtime
-pad_end = tau_extra - deblank*2 # marker + deblank
-twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
+pad_start = tau_extra - deadtime_us
+pad_end = tau_extra - deblank_us*2 # marker + deblank
+twice_tau = deblank_us + 2*p90_us + deadtime_us + pad_start + acq_time_ms*1e3 + pad_end + marker
 tau_us = twice_tau/2.0
 
 nScans = 16
@@ -63,14 +63,14 @@ for x in range(nScans):
                 ('pulse_TTL',2.0*p90_us,0),
                 ('delay',deadtime_us),
                 ('delay',pad_start),
-                ('acquire',acq_time_ms),
+                ('acquire',acq_time),
                 ('delay',pad_end),
                 ('marker','echo_label',(nEchoes-1)), # 1 us delay
                 ('delay_TTL',deblank_us),
                 ('pulse_TTL',2.0*p90_us,0),
                 ('delay',deadtime_us),
                 ('delay',pad_start),
-                ('acquire',acq_time_ms),
+                ('acquire',acq_time),
                 ('delay',pad_end),
                 ('jumpto','echo_label'), # 1 us delay
                 ('delay',repetition_us),
@@ -87,14 +87,14 @@ for x in range(nScans):
                 ('pulse_TTL',2.0*p90_us,0.0),
                 ('delay',deadtime_us),
                 ('delay',pad_start),
-                ('acquire',acq_time_ms),
+                ('acquire',acq_time),
                 ('delay',pad_end),
                 ('marker','echo_label',(nEchoes-1)), # 1 us delay
                 ('delay_TTL',deblank_us),
                 ('pulse_TTL',2.0*p90_us,0.0),
                 ('delay',deadtime_us),
                 ('delay',pad_start),
-                ('acquire',acq_time_ms),
+                ('acquire',acq_time),
                 ('delay',pad_end),
                 ('jumpto','echo_label'), # 1 us delay
                 ('delay',repetition_us),
@@ -119,21 +119,21 @@ for x in range(nScans):
         data.name(node_name)
     data['nScans',x] = data_array
     acq_params = {j: eval(j) for j in dir() if j in [
-    "adcOffset",
-    "carrierFreq_MHz",
-    "amplitude",
-    "nScans",
-    "nEchoes",
-    "p90_us",
-    "deadtime_us",
-    "repetition_us",
-    "SW_kHz",
-    "nPoints",
-    "deblank_us",
-    "tau_us",
-    "nPhaseSteps",
-    ]
-    }
+        "adcOffset",
+        "carrierFreq_MHz",
+        "amplitude",
+        "nScans",
+        "nEchoes",
+        "p90_us",
+        "deadtime_us",
+        "repetition_us",
+        "SW_kHz",
+        "nPoints",
+        "deblank_us",
+        "tau_us",
+        "nPhaseSteps",
+        ]
+        }
     data.set_prop("acq_params",acq_params)
     SpinCore_pp.stopBoard();
 print("EXITING...")

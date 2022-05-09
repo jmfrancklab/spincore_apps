@@ -10,7 +10,6 @@ import socket
 import sys
 import time
 from datetime import datetime
-#init_logging(level='debug')
 fl = figlist_var()
 date = datetime.now().strftime('%y%m%d')
 output_name = 'TEMPOL_289uM_heat_exch_0C'
@@ -48,7 +47,6 @@ if os.path.exists(myfilename):
         "the file %s already exists, so I'm not going to let you proceed!" % myfilename
     )
 # }}}
-
 vd_data = run_IR(
         nPoints = nPoints,
         nEchoes=nEchoes,
@@ -102,4 +100,3 @@ fl.next('FT raw data')
 fl.image(vd_data.setaxis('vd','#'))
 fl.next('FT abs raw data')
 fl.image(abs(vd_data).setaxis('vd','#')['t2':(-1e3,1e3)])
-fl.show();quit()
