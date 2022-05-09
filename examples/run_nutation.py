@@ -7,174 +7,79 @@ import sys
 import time
 from datetime import datetime
 fl = figlist_var()
-#{{{ Verify arguments compatible with board
-def verifyParams():
-    if (nPoints > 16*1024 or nPoints < 1):
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
-    return
-#}}}
-#{{{ for setting EPR magnet
-def API_sender(value):
-    IP = "jmfrancklab-bruker.syr.edu"
-    if len(sys.argv) > 1:
-        IP = sys.argv[1]
-    PORT = 6001
-    print("target IP:", IP)
-    print("target port:", PORT)
-    MESSAGE = str(value)
-    print("SETTING FIELD TO...", MESSAGE)
-    sock = socket.socket(socket.AF_INET, # Internet
-            socket.SOCK_STREAM) # TCP
-    sock.connect((IP, PORT))
-    sock.send(MESSAGE)
-    sock.close()
-    print("FIELD SET TO...", MESSAGE)
-    time.sleep(5)
-    return
-#}}}
 #{{{ Edit here to set the actual field
 set_field = False
 if set_field:
     B0 = 3497 # Determine this from Field Sweep
-    API_sender(B0)
+    thisB0 = xepr().set_field(B0)
 #}}}
 date = datetime.now().strftime('%y%m%d')
 output_name = 'TEMPOL_capProbe'
 adcOffset = 25
 carrierFreq_MHz = 14.896101
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
 nScans = 1
 nEchoes = 1
 phase_cycling = True
 if phase_cycling:
+    ph1_cyc = r_[0,1,2,3]
+    ph2_cyc = r_[0,2]
     nPhaseSteps = 8
 if not phase_cycling:
+    ph1_cyc = r_[0]
+    ph2_cyc = r_[0]
     nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-deadtime = 10.0
 repetition = 12e6
 SW_kHz = 24.0
 nPoints = 1024
 acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
-tau = 1000
+tau = 3500
 print("ACQUISITION TIME:",acq_time,"ms")
 print("TAU DELAY:",tau,"us")
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 p90_range = linspace(1.,15.,40,endpoint=False)
-#{{{ setting acq_params dictionary
-acq_params = {}
-acq_params['adcOffset'] = adcOffset
-acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['amplitude'] = amplitude
-acq_params['nScans'] = nScans
-acq_params['nEchoes'] = nEchoes
-acq_params['p90_us'] = p90_range
-acq_params['deadtime_us'] = deadtime
-acq_params['repetition_us'] = repetition
-acq_params['SW_kHz'] = SW_kHz
-acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
-acq_params['deblank_us'] = 1.0
-acq_params['tau_us'] = tau
-#acq_params['pad_us'] = pad 
-if phase_cycling:
-    acq_params['nPhaseSteps'] = nPhaseSteps
-#}}}
 for index,val in enumerate(p90_range):
-    p90 = val # us
+    p90_us = val # us
     print("***")
     print("INDEX %d - 90 TIME %f"%(index,val))
     print("***")
-    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    acq_params['acq_time_ms'] = acq_time
-    SpinCore_pp.init_ppg();
-    if phase_cycling:
-        SpinCore_pp.load([
-            ('marker','start',1),
-            ('phase_reset',1),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-            ('delay',tau),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-    if not phase_cycling: 
-        SpinCore_pp.load([
-            ('marker','start',nScans),
-            ('phase_reset',1),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',p90,0.0),
-            ('delay',tau),
-            ('delay_TTL',1.0),
-            ('pulse_TTL',2.0*p90,0.0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-    SpinCore_pp.stop_ppg();
-    if phase_cycling:
-        for x in range(nScans):
-            print("SCAN NO. %d"%(x+1))
-            SpinCore_pp.runBoard();
-    if not phase_cycling:
-        SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-    raw_data.astype(float)
-    data = []
-    # according to JF, this commented out line
-    # should work same as line below and be more effic
-    #data = raw_data.view(complex128)
-    data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-    dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-    data = nddata(array(data),'t')
-    data.setaxis('t',time_axis).set_units('t','s')
-    data.name('signal')
-    if index == 0:
-        nutation_data = ndshape([len(p90_range),len(time_axis)],['p_90','t']).alloc(dtype=complex128)
-        nutation_data.setaxis('p_90',p90_range*1e-6).set_units('p_90','s')
-        nutation_data.setaxis('t',time_axis).set_units('t','s')
-    nutation_data['p_90',index] = data
+    nutation_data = run_spin_echo(
+            nScans = nScans,
+            indirect_idx = len(p90_range),
+            adcOffset=adcOffset,
+            carrierFreq_MHz = carrierFreq_MHz,
+            nPoints = nPoints,
+            nEchoes = nEchoes,
+            p90_us = p90_us,
+            repetition = repetition_us,
+            tau_us = tau_us,
+            SW_kHz = SW_kHz,
+            output_name = output_name,
+            ret_data = None)
 SpinCore_pp.stopBoard();
+acq_params = {j:eval(j) for j in dir() if j in [
+    'tx_phases',
+    'carrierFreq_MHz', 
+    'amplitude', 
+    'nScans',
+    'nEchoes',
+    'p90',
+    'deadtime',
+    'repetition',
+    'SW_kHz',
+    'mw_freqs',
+    'nPoints',
+    'tau_adjust_us',
+    'deblank_us',
+    'tau_us',
+    'nPhaseSteps']}
+nutation_data.set_prop('acq_params',acq_params)
 print("EXITING...\n")
 print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print("SAVING FILE...")
-        nutation_data.set_prop('acq_params',acq_params)
         nutation_data.name('nutation')
         nutation_data.hdf5_write(date+'_'+output_name+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/nutation'))

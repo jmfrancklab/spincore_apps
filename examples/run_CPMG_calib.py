@@ -68,26 +68,6 @@ if not phase_cycling:
     nPhaseSteps = 1 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 p90_range = linspace(3.0,4.0,5)#,endpoint=False)
-#{{{ setting acq_params dictionary
-acq_params = {}
-acq_params['adcOffset'] = adcOffset
-acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['amplitude'] = amplitude
-acq_params['nScans'] = nScans
-acq_params['nEchoes'] = nEchoes
-acq_params['p90_us'] = p90_range
-acq_params['deadtime_us'] = deadtime
-acq_params['repetition_us'] = repetition
-acq_params['deblank_us'] = deblank
-acq_params['tau_extra_us'] = tau_extra
-acq_params['pad_start_us'] = pad_start
-acq_params['pad_end_us'] = pad_end
-acq_params['marker_us'] = marker
-acq_params['SW_kHz'] = SW_kHz
-acq_params['nPoints'] = nPoints
-if phase_cycling:
-    acq_params['nPhaseSteps'] = nPhaseSteps
-#}}}
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 for index,val in enumerate(p90_range):
     p90 = val # us
@@ -177,13 +157,31 @@ save_file = True
 while save_file:
     try:
         print("SAVING FILE...")
-        nutation_data.set_prop('acq_params',acq_params)
-        nutation_data.name('nutation')
-        nutation_data.hdf5_write(date+'_'+output_name+'.h5')
-        print("Name of saved data",nutation_data.name())
-        print("Units of saved data",nutation_data.get_units('t'))
-        print("Shape of saved data",ndshape(nutation_data))
-        save_file = False
+        acq_params = {j: eval(j) for j in dir() if j in [
+            "adcOffset",
+            "carrierFreq_MHz",
+            "amplitude",
+            "nScans",
+            "nEchoes",
+            "p90_us",
+            "deadtime_us",
+            "repetition_us",
+            "SW_kHz",
+            "nPoints",
+            "deblank_us",
+            "tau_us",
+            "nPhaseSteps",
+            "MWfreq"
+            ]
+            }
+    nutation_data.set_prop("acq_params",acq_params)
+    nutation_data.set_prop('acq_params',acq_params)
+            nutation_data.name('nutation')
+            nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+            print("Name of saved data",nutation_data.name())
+            print("Units of saved data",nutation_data.get_units('t'))
+            print("Shape of saved data",ndshape(nutation_data))
+            save_file = False
     except Exception as e:
         print(e)
         print("FILE ALREADY EXISTS.")
