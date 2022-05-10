@@ -62,12 +62,9 @@ nEchoes = 1
 phase_cycling = True
 if phase_cycling:
     ph1_cyc = r_[0,1,2,3]
-    ph2_cyc = r_[0,2]
-    coherence_pathway = [('ph1',1),('ph2',-2)]
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     ph1_cyc = r_[0]
-    ph2_cyc = r_[0]
     nPhaseSteps = 1
 repetition_us = 1e6
 SW_kHz = 3.9
@@ -76,7 +73,7 @@ nPoints = int(acq_ms*SW_kHz+0.5)
 tau_us = 3500
 #}}}
 #{{{check for file
-myfilename = date + "_" + ouput_name + ".h5"
+myfilename = date + "_" + output_name + ".h5"
 if os.path.exists(myfilename):
     raise ValueError(
             "the file %s already exists, change your output name!"%myfilename
@@ -92,7 +89,6 @@ echo_data = run_spin_echo(
         indirect_idx = 0,
         indirect_len = 1,
         ph1_cyc = ph1_cyc,
-        ph2_cyc = ph2_cyc,
         adcOffset = adcOffset,
         carrierFreq_MHz = carrierFreq_MHz,
         nPoints = nPoints,
@@ -122,38 +118,36 @@ acq_params = {j: eval(j) for j in dir() if j in [
     ]
     }
 echo_data.set_prop("acq_params",acq_params)
-echo_data.name(nodename)
+echo_data.name(node_name)
 if phase_cycling:
-    echo_data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    echo_data.setaxis('ph2',r_[0.,2.]/4)
+    echo_data.chunk('t',['ph1','t2'],[4,-1])
     echo_data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
     fl.next('image')
-    data.mean('nScans')
-    fl.image(data)
-    data.ft('t2',shift=True)
+    echo_data.mean('nScans')
+    fl.image(echo_data)
+    echo_data.ft('t2',shift=True)
     fl.next('image - ft')
-    fl.image(data)
+    fl.image(echo_data)
     fl.next('image - ft, coherence')
-    data.ft(['ph1','ph2'])
-    fl.image(data)
+    echo_data.ft(['ph1'])
+    fl.image(echo_data)
     fl.next('data plot')
-    data_slice = data['ph1',1]['ph2',-2]
+    data_slice = echo_data['ph1',1]
     fl.plot(data_slice, alpha=0.5)
     fl.plot(data_slice.imag, alpha=0.5)
     fl.plot(abs(data_slice), color='k', alpha=0.5)
 else:
     fl.next('raw data')
-    fl.plot(data)
-    data.ft('t',shift=True)
+    fl.plot(echo_data)
+    echo_data.ft('t',shift=True)
     fl.next('ft')
-    fl.plot(data.real)
-    fl.plot(data.imag)
-    fl.plot(abs(data),color='k',alpha=0.5)
-data.hdf5_write(date+'_'+output_name+'.h5',
+    fl.plot(echo_data.real)
+    fl.plot(echo_data.imag)
+    fl.plot(abs(echo_data),color='k',alpha=0.5)
+echo_data.hdf5_write(date+'_'+output_name+'.h5',
         directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data",data.name()))
-print(("Units of saved data",data.get_units('t')))
-print(("Shape of saved data",ndshape(data)))
+print(("Name of saved data",echo_data.name()))
+print(("Shape of saved data",ndshape(echo_data)))

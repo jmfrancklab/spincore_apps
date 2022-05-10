@@ -20,10 +20,10 @@ from SpinCore_pp.power_helper import gen_powerlist
 fl = figlist_var()
 # {{{ experimental parameters
 #{{{power settings
-max_power = 4 #W
+max_power_W = 4 #W
 power_steps = 18
-dB_settings = gen_powerlist(max_power,power_steps)
-append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
+dB_settings = gen_powerlist(max_power_W,power_steps)
+append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power_W*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
 dB_settings = append(dB_settings,append_dB)
 print("dB_settings",dB_settings)
@@ -42,7 +42,6 @@ phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
     Ep_ph1_cyc = r_[0, 1, 2, 3]
-
 if not phase_cycling:
     nPhaseSteps = 1
     Ep_ph1_cyc = r_[0]
@@ -51,7 +50,7 @@ repetition_us = 10e6
 SW_kHz = 3.9
 acq_ms = 1024.
 nPoints = int(acq_ms*SW_kHz+0.5)
-tau = 3500
+tau_us = 3500
 Ep_postproc = "spincore_ODNP_v3"
 uw_dip_center_GHz = 9.82
 uw_dip_width_GHz = 0.02
@@ -104,7 +103,6 @@ with power_control() as p:
                 uw_dip_center_GHz - uw_dip_width_GHz / 2,
                 uw_dip_center_GHz + uw_dip_width_GHz / 2,
             )
-        logger.debug("done with dip lock 1")
         p.set_power(this_dB)
         logger.debug("power was set")
         for k in range(10):
@@ -115,7 +113,6 @@ with power_control() as p:
             raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
-        logger.debug("gonna run the Ep for this power")
         run_spin_echo(
             nScans=nScans,
             indirect_idx=j + 1,
@@ -176,4 +173,3 @@ fl.next('raw data_array - ft')
 fl.image(DNP_data.C.setaxis('power','#'))
 fl.next('abs raw data_array - ft')
 fl.image(abs(DNP_data.C.setaxis('power','#')))
-fl.show();quit()
