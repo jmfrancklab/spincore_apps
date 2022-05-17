@@ -61,11 +61,8 @@ pad_end = tau_extra - deblank_us*2 # marker + deblank
 nScans = 4
 nEchoes = 64
 
-phase_cycling = True
-if phase_cycling:
-    nPhaseSteps = 2
-if not phase_cycling:
-    nPhaseSteps = 1 
+nPhaseSteps = 2
+ph1_cyc = r_[0,2]
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 p90_range = linspace(3.0,4.0,5)#,endpoint=False)
 # NOTE: Number of segments is nEchoes * nPhaseSteps
@@ -76,114 +73,62 @@ for index,val in enumerate(p90_range):
     print("***")
     print("INDEX %d - 90 TIME %f"%(index,val))
     print("***")
-    for x in range(nScans):
-        SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-        acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-        acq_params['acq_time_ms'] = acq_time
-        SpinCore_pp.init_ppg();
-        print("\nLOADING PULSE PROG...\n")
-        if phase_cycling:
-            SpinCore_pp.load([
-                ('marker','start',1),
-                ('phase_reset',1),
-                    ('delay_TTL',deblank_us),
-                    ('pulse_TTL',p90_us,'ph1',r_[0,2]),
-                    ('delay',tau_us),
-                    ('delay_TTL',deblank_us),
-                    ('pulse_TTL',2.0*p90_us,1),
-                    ('delay',deadtime_us),
-                    ('delay',pad_start),
-                    ('acquire',acq_time),
-                    ('delay',pad_end),
-                    ('marker','echo_label',(nEchoes-1)), # 1 us delay
-                    ('delay_TTL',deblank_us),
-                    ('pulse_TTL',2.0*p90_us,1),
-                    ('delay',deadtime_us),
-                    ('delay',pad_start),
-                    ('acquire',acq_time_ms),
-                    ('delay',pad_end),
-                    ('jumpto','echo_label'), # 1 us delay
-                    ('delay',repetition_us),
-                    ('jumpto','start')
-                    ])
-            if not phase_cycling:
-                SpinCore_pp.load([
-                    ('marker','start',nScans),
-                    ('phase_reset',1),
-                    ('delay_TTL',deblank_us),
-                    ('pulse_TTL',p90_us,0.0),
-                    ('delay',tau_us),
-                    ('delay_TTL',deblank_us),
-                    ('pulse_TTL',2.0*p90_us,0.0),
-                    ('delay',deadtime_us),
-                    ('delay',pad_start),
-                    ('acquire',acq_time),
-                    ('delay',pad_end),
-                    ('marker','echo_label',(nEchoes-1)), # 1 us delay
-                    ('delay_TTL',deblank_us),
-                    ('pulse_TTL',2.0*p90_us,0.0),
-                    ('delay',deadtime_us),
-                    ('delay',pad_start),
-                    ('acquire',acq_time),
-                    ('delay',pad_end),
-                    ('jumpto','echo_label'), # 1 us delay
-                    ('delay',repetition_us),
-                    ('jumpto','start')
-                    ])
-        SpinCore_pp.stop_ppg();
-        SpinCore_pp.runBoard();
-        raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-        raw_data.astype(float)
-        data = []
-        data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-        print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
-        print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-        dataPoints = float(shape(data)[0])
-        if x == 0:
-            if index == 0:
-                print(" *** *** ***")
-                print("INITILIAZING NDDATA...")
-                print(" *** *** ***")
-                time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time_ms*1e-3,dataPoints)
-                nutation_data = ndshape([len(p90_range),len(time_axis),nScans],['p_90','t','nScans']).alloc(dtype=complex128)
-                nutation_data.setaxis('p_90',p90_range*1e-6).set_units('p_90','s')
-                nutation_data.setaxis('t',time_axis).set_units('t','s')
-                nutation_data.setaxis('nScans',r_[0:nScans])
-        nutation_data['p_90',index]['nScans',x] = data
-    SpinCore_pp.stopBoard();
-print("EXITING...")
-print("\n*** *** ***\n")
-save_file = True
-while save_file:
-    try:
-        print("SAVING FILE...")
-        acq_params = {j: eval(j) for j in dir() if j in [
-            "adcOffset",
-            "carrierFreq_MHz",
-            "amplitude",
-            "nScans",
-            "nEchoes",
-            "p90_us",
-            "deadtime_us",
-            "repetition_us",
-            "SW_kHz",
-            "nPoints",
-            "deblank_us",
-            "tau_us",
-            "nPhaseSteps",
-            ]
-            }
-        nutation_data.set_prop("acq_params",acq_params)
-        nutation_data.name('nutation')
-        nutation_data.hdf5_write(date+'_'+output_name+'.h5')
-        print("Name of saved data",nutation_data.name())
-        print("Units of saved data",nutation_data.get_units('t'))
-        print("Shape of saved data",ndshape(nutation_data))
-        save_file = False
-    except Exception as e:
-        print(e)
-        print("FILE ALREADY EXISTS.")
-        save_file = False
+    if index == 0:
+        nutation_data = run_cpmg(
+                nScans=nScans,
+                indirect_idx = 0,
+                indirect_len = len(p90_range)+1,
+                adcOffset = adcOffset,
+                carrierFreq_MHz=carrierFreq_MHz,
+                nPoints=nPoints,
+                nEchoes = nEchoes,
+                p90_us = p90,
+                repetition_us = repetition_us,
+                pad_start_us = pad_start,
+                pad_end_us = pad_end,
+                tau_us = tau_us,
+                SW_kHz=SW_kHz,
+                output_name=output_name,
+                ph1_cyc = ph1_cyc,
+                ret_data = None)
+    else:
+         run_cpmg(
+                nScans=nScans,
+                indirect_idx = index+1,
+                indirect_len = len(p90_range+1),
+                adcOffset = adcOffset,
+                carrierFreq_MHz=carrierFreq_MHz,
+                nPoints=nPoints,
+                nEchoes = nEchoes,
+                p90_us = p90,
+                repetition_us = repetition_us,
+                pad_start_us = pad_start,
+                pad_end_us = pad_end,
+                tau_us = tau_us,
+                SW_kHz=SW_kHz,
+                output_name=output_name,
+                ph1_cyc = ph1_cyc,
+                ret_data = nutation_data)
+acq_params = {j: eval(j) for j in dir() if j in [
+    "adcOffset",
+    "carrierFreq_MHz",
+    "amplitude",
+    "nScans",
+    "nEchoes",
+    "p90_us",
+    "deadtime_us",
+    "repetition_us",
+    "SW_kHz",
+    "nPoints",
+    "deblank_us",
+    "tau_us",
+    "nPhaseSteps",
+    ]
+    }
+nutation_data.set_prop("acq_params",acq_params)
+nutation_data.name('nutation')
+nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+SpinCore_pp.stopBoard();
 fl.next('raw data')
 fl.image(nutation_data)
 nutation_data.ft('t',shift=True)
