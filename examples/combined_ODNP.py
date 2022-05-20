@@ -187,13 +187,13 @@ logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
 logger.debug("shape of saved enhancement data", psp.ndshape(DNP_data))
 # }}}
 # {{{run IR
-ini_time = time.time()  # needed b/c data object doesn't exist yet
 with power_control() as p:
     retval_IR = p.dip_lock(
         uw_dip_center_GHz - uw_dip_width_GHz / 2,
         uw_dip_center_GHz + uw_dip_width_GHz / 2,
     )
     p.mw_off()
+    ini_time = time.time()  # needed b/c data object doesn't exist yet
     vd_data = run_IR(
         nPoints=nPoints,
         nEchoes=nEchoes,
