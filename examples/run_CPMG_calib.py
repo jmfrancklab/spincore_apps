@@ -127,6 +127,8 @@ acq_params = {j: eval(j) for j in dir() if j in [
     }
 nutation_data.set_prop("acq_params",acq_params)
 nutation_data.name('nutation')
+nutation_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
+nutation_data.setaxis('ph1',ph1_cyc/4)
 nutation_data.hdf5_write(date+'_'+output_name+'.h5')
 SpinCore_pp.stopBoard();
 fl.next('raw data')

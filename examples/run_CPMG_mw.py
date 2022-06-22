@@ -232,6 +232,8 @@ acq_params = {j: eval(j) for j in dir() if j in [
     }
 DNP_data.set_prop('acq_params',acq_params)
 DNP_data.name('signal')
+DNP_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
+DNP_data.setaxis('ph1',len(ph1_cyc)/4)
 DNP_data.hdf5_write(date+'_'+output_name+'.h5',
         directory=getDATADIR(exp_type='ODNP_NMR_comp/DNP'))
 fl.next('raw data')

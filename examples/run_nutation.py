@@ -80,6 +80,7 @@ save_file = True
 while save_file:
     try:
         nutation_data.name('nutation')
+        nutation_data.chunk('t',['ph2','ph1','t2'],[len(ph2_cyc),len(ph1_cyc),-1])
         nutation_data.hdf5_write(date+'_'+output_name+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/nutation'))
         print("Name of saved data",nutation_data.name())

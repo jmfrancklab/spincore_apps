@@ -72,10 +72,12 @@ acq_params = {j: eval(j) for j in dir() if j in [
         }
 data.set_prop("acq_params",acq_params)
 data.name(node_name)
+if phase_cycling:
+    data.chunk("t",['ph1','t2'],[len(ph1_cyc),-1])
+    data.setaxis('ph1', ph1_cyc/4)
 data.hdf5_write(date + '_'+output_name+'.h5',
         directory=getDATADIR(exp_type = 'ODNP_NMR_comp/CPMG'))
 SpinCore_pp.stopBoard();
-print(ndshape(data))
 s = data.C
 s.set_units('t','s')
 orig_t = s.getaxis('t')
