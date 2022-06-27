@@ -29,6 +29,9 @@ def run_IR(
     ph1_cyc=r_[0, 2],
     ph2_cyc=r_[0, 2],
     ret_data=None,
+    deadtime_us = 10.0,
+    deblank_us = 1.0,
+    amplitude = 1.0,
 ):
     """Run an inversion recovery and generate a single nddata with a vd dimension.
     We assume the first time this is run, ret_data=None, after which we will pass in ret_data.
@@ -65,9 +68,6 @@ def run_IR(
                     returned data from previous run or `None` for the first run.
     """
     assert nEchoes==1, "you must only choose nEchoes=1"
-    deadtime_us = 10.0
-    deblank_us = 1.0
-    amplitude = 1.0
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
@@ -108,7 +108,7 @@ def run_IR(
                 ]
             )
             run_scans_time_list.append(time.time())
-        run_scans_names.append("stop ppg")
+            run_scans_names.append("stop ppg")
             stop_ppg()
             run_scans_time_list.append(time.time())
             run_scans_names.append("run")
