@@ -12,8 +12,8 @@ import numpy as np
 import time
 import logging
 
-# {{{spin echo ppg
-def run_spin_echo(
+# {{{CPMG ppg
+def run_cpmg(
     nScans,
     indirect_idx,
     indirect_len,
@@ -22,13 +22,14 @@ def run_spin_echo(
     nPoints,
     nEchoes,
     p90_us,
-    repetition,
+    repetition_us,
+    pad_start_us,
+    pad_end_us,
     tau_us,
     SW_kHz,
     output_name,
     indirect_fields=None,
     ph1_cyc=r_[0, 1, 2, 3],
-    ph2_cyc=r_[0],
     ret_data=None,
     deadtime_us = 10.0,
     deblank_us = 1.0,
@@ -44,9 +45,6 @@ def run_spin_echo(
                     number of repeats of the pulse sequence (for averaging over data)
     indirect_idx:   int
                     index along the 'indirect' dimension
-    indirect_len:   int
-                    size of indirect axis.
-                    Used to allocate space for the data once the first scan is run.
     adcOffset:      int
                     offset of ADC acquired with SpinCore_apps/C_examples/adc_offset.exe
     carrierFreq_MHz:    float
@@ -81,14 +79,11 @@ def run_spin_echo(
                     This parameter is only used when `ret_data` is set to `None`.
     ph1_cyc:        array
                     phase steps for the first pulse
-    ph2_cyc:        array
-                    phase steps for the second pulse
     ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
     """
-    assert nEchoes == 1, "you must only choose nEchoes=1"
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-    nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
+    nPhaseSteps = len(ph1_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for x in range(nScans):
         run_scans_time_list = [time.time()]
@@ -105,16 +100,26 @@ def run_spin_echo(
         run_scans_names.append("prog")
         spincore_load(
             [
-                ("marker", "start", 1),
+                ("marker", "start", nScans),
                 ("phase_reset", 1),
                 ("delay_TTL", deblank_us),
                 ("pulse_TTL", p90_us, "ph1", ph1_cyc),
                 ("delay", tau_us),
                 ("delay_TTL", deblank_us),
-                ("pulse_TTL", 2.0 * p90_us, "ph2", ph2_cyc),
+                ("pulse_TTL", 2.0 * p90_us, 0.0),
                 ("delay", deadtime_us),
+                ("delay", pad_start_us),
                 ("acquire", acq_time_ms),
-                ("delay", repetition),
+                ("delay", pad_end_us),
+                ("marker","echo_label",(nEchoes-1)), #1 us delay
+                ("delay_TTL",deblank_us),
+                ("pulse_TTL", 2.0*p90_us,0.0),
+                ("delay", deadtime_us),
+                ("delay", pad_start_us),
+                ("acquire", acq_time_ms),
+                ("delay", pad_end_us),
+                ("jumpto", "echo_label"), #1 us delay
+                ("delay", repetition_us),
                 ("jumpto", "start"),
             ]
         )
@@ -144,15 +149,25 @@ def run_spin_echo(
                     [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
                 )
                 # }}}
-            mytimes = np.zeros(indirect_len, dtype=times_dtype)
+            if indirect_len is not None:
+                mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
-            ret_data = psp.ndshape(
-                [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
-            ).alloc(dtype=np.complex128)
-            ret_data.setaxis("indirect", mytimes)
-            ret_data.setaxis("t", time_axis).set_units("t", "s")
-            ret_data.setaxis("nScans", r_[0:nScans])
-        ret_data["indirect", indirect_idx]["nScans", x] = data_array
+            if indirect_len is not None:
+                ret_data = psp.ndshape(
+                        [indirect_len, nScans, len(time_axis)],['indirect','nScans','t']).alloc(dtype=np.complex128)
+                ret_data.setaxis('indirect',mytimes)
+                ret_data.setaxis('t',time_axis).set_units('t','s')
+                ret_data.setaxis('nScans', r_[0:nScans])
+            else:    
+                ret_data = psp.ndshape(
+                    [len(data_array), nScans], ["t", "nScans"]
+                ).alloc(dtype=np.complex128)
+                ret_data.setaxis("t", time_axis).set_units("t", "s")
+                ret_data.setaxis("nScans", r_[0:nScans])
+        if indirect_len is not None:
+            ret_data['indirect',indirect_idx]['nScans',x] = data_array
+        else:    
+            ret_data["nScans", x] = data_array
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
         logging.debug(strm("stored scan", x, "for indirect_idx", indirect_idx))

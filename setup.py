@@ -32,7 +32,7 @@ exec(compile(open('SpinCore_pp/version.py', "rb").read(), 'SpinCore_pp/version.p
 
 setup(
     name='SpinCore_pp',
-    author='Beaton,Franck',
+    author='Beaton,Franck,Guinness',
     version=__version__,
     packages=setuptools.find_packages(),
     license='LICENSE.md',

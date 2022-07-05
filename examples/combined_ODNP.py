@@ -1,3 +1,10 @@
+'''Automated Combined DNP with Log
+==================================
+This needs to be run in sync with the power control server. To do so:
+    1. open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py. When this is ready to go you will see it say "I am listening".
+    2. Open new terminal on NMR computer, move into git/inst_notebooks/Instruments and run wipty power_control_server.py. When this is ready to go it will read "I am listening"
+Once the power control server is up and ready to go you may run this script to collect the enhancement data as well as a series of IRs at increasing power collected in sync with a time log.
+'''
 import numpy as np
 import pyspecdata as psp
 import os
@@ -187,13 +194,13 @@ logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
 logger.debug("shape of saved enhancement data", psp.ndshape(DNP_data))
 # }}}
 # {{{run IR
-ini_time = time.time()  # needed b/c data object doesn't exist yet
 with power_control() as p:
     retval_IR = p.dip_lock(
         uw_dip_center_GHz - uw_dip_width_GHz / 2,
         uw_dip_center_GHz + uw_dip_width_GHz / 2,
     )
     p.mw_off()
+    ini_time = time.time()  # needed b/c data object doesn't exist yet
     vd_data = run_IR(
         nPoints=nPoints,
         nEchoes=nEchoes,
