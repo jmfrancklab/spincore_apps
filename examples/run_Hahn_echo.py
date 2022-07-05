@@ -1,23 +1,19 @@
-'''Hahn Echo Experiment
-=======================
- To run this experiment, please open Xepr on the EPR computer, connect to
- spectrometer, load the experiemnt 'set_field' and enable XEPR API. Then, in a
- separate terminal, run the program XEPR_API_server.py, and wait for it to
- tell you 'I am listening' - then, you should be able to run this program from
- the NMR computer to set the field etc. 
+"""
+Spin Echo
+=========
+
+To run this experiment, please open Xepr on the EPR computer, connect to
+spectrometer, load the experiemnt 'set_field' and enable XEPR API. Then, in a
+separate terminal, run the program XEPR_API_server.py, and wait for it to
+tell you 'I am listening' - then, you should be able to run this program from
+the NMR computer to set the field etc. 
 
 Note the booleans user_sets_Freq and
 user_sets_Field allow you to run experiments as previously run in this lab.
 If both values are set to True, this is the way we used to run them. If both
 values are set to False, you specify what field you want, and the computer
 will do the rest.
-'''
-# Note the booleans user_sets_Freq and
-# user_sets_Field allow you to run experiments as previously run in this lab.
-# If both values are set to True, this is the way we used to run them. If both
-# values are set to False, you specify what field you want, and the computer
-# will do the rest.
-#}}}
+"""
 
 import configparser
 from pylab import *
@@ -25,12 +21,9 @@ from pyspecdata import *
 import os
 import sys
 import SpinCore_pp
-from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 import numpy as np
-from Instruments import power_control
 from Instruments.XEPR_eth import xepr
-import h5py
 fl = figlist_var()
 config = configparser.ConfigParser()
 config.optionxform = str
@@ -81,11 +74,12 @@ tau = config.get('acq_params','tau_us')
 repetition = config.get('acq_params','repetition_us')
 nScans = config.get('acq_params','nScans')
 #}}}
-
 output_name = 'test'
 node_name = 'echo'
+
 user_sets_Freq = True
 user_sets_Field = True
+
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
@@ -110,24 +104,23 @@ if not user_sets_Freq:
     carrierFreq_MHz = gamma_eff*true_B0
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
-nScans = 1
+tx_phases = r_[0.0,90.0,180.0,270.0]
 nEchoes = 1
 phase_cycling = True
+coherence_pathway = [('ph1',1),('ph2',-2)]
+date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
-    ph1_cyc = r_[0,1,2,3]
-    nPhaseSteps = 4
+    nPhaseSteps = 8
 if not phase_cycling:
-    ph1_cyc = r_[0]
     nPhaseSteps = 1
 #{{{ note on timing
 # all times in microseconds
 # acq is in milliseconds
 #}}}
-repetition_us = 1e6
-SW_kHz = 3.9
-acq_ms = 1024.
+
+SW_kHz = 10
+acq_ms = 200.
 nPoints = int(acq_ms*SW_kHz+0.5)
-<<<<<<< HEAD
 # rounding may need to be power of 2
 # have to try this out
 tau_adjust = 0
@@ -152,17 +145,11 @@ acq_params['pad_us'] = pad
 if phase_cycling:
     acq_params['nPhaseSteps'] = nPhaseSteps
 #}}}
-#{{{check for file
-myfilename = date + "_" + output_name + ".h5"
-if os.path.exists(myfilename):
-    raise ValueError(
-            "the file %s already exists, change your output name!"%myfilename
-            )
-#}}}    
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 print(("ACQUISITION TIME:",acq_ms,"ms"))
-print(("TAU DELAY:",tau_us,"us"))
+print(("TAU DELAY:",tau,"us"))
+print(("PAD DELAY:",pad,"us"))
 data_length = 2*nPoints*nEchoes*nPhaseSteps
 for x in range(nScans):
     print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
@@ -275,23 +262,23 @@ if not phase_cycling:
     fl.plot(data.imag)
     fl.plot(abs(data),color='k',alpha=0.5)
 if phase_cycling:
-    echo_data.chunk('t',['ph1','t2'],[4,-1])
-    echo_data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
+    data.setaxis('ph2',r_[0.,2.]/4)
+    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     if nScans > 1:
         data.setaxis('nScans',r_[0:nScans])
     fl.next('image')
-    echo_data.mean('nScans')
-    fl.image(echo_data)
-    echo_data.ft('t2',shift=True)
+    data.mean('nScans')
+    fl.image(data)
+    data.ft('t2',shift=True)
     fl.next('image - ft')
-    fl.image(echo_data)
+    fl.image(data)
     fl.next('image - ft, coherence')
-    echo_data.ft(['ph1'])
-    fl.image(echo_data)
+    data.ft(['ph1','ph2'])
+    fl.image(data)
     fl.next('data plot')
-    data_slice = echo_data['ph1',1]
+    data_slice = data['ph1',1]['ph2',-2]
     fl.plot(data_slice, alpha=0.5)
     fl.plot(data_slice.imag, alpha=0.5)
     fl.plot(abs(data_slice), color='k', alpha=0.5)
 fl.show()
-
