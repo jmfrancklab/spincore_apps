@@ -25,33 +25,24 @@ from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 import numpy as np
 from Instruments.XEPR_eth import xepr
+from config_parser_fn import parser_function
 fl = figlist_var()
-config = configparser.ConfigParser()
-config.sections()
-config.read('active.ini')
 #{{{importing acquisition parameters
-acq_params = config['acq_params']
-p90_us = float(acq_params['p90_us'])
-deadtime_us = float(acq_params['deadtime_us'])
-adcOffset = float(acq_params['adc_offset'])
-amplitude = float(acq_params['amplitude'])
-deblank_us = float(acq_params['deblank_us'])
-tau_us = float(acq_params['tau_us'])
-repetition_us = float(acq_params['repetition_us'])
-nScans = float(acq_params['nScans'])
-SW_kHz = float(acq_params['sw_khz'])
-acq_ms = float(acq_params['acq_time_ms'])
-nPoints = int(acq_ms*SW_kHz+0.5)
-#{{{create filename and save to config file
-output_name = 'test'
-node_name = 'echo'
-date = datetime.now().strftime('%y%m%d')
+values, config = parser_function('active.ini')
 file_names = config['file_names']
-config.set('file_names','date',f'{date}')
-config.set('file_names','chemical',output_name)
-config.set('file_names','type',node_name)
-filename = file_names['date']+'_'+file_names['chemical']+'_'+file_names['type']
+acq_params = config['acq_params']
+nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
+#{{{create filename and save to config file
+date = datetime.now().strftime('%y%m%d')
+config.set('file_names','type','echo')
+config.set('file_names','date',f'{date}')
+run_number = int(config['file_names']['run_number'])
+run_number += 1
+config.set('file_names','run_number',run_number)
+config.write(open('active.ini')) #write edits to config file
+values, config = parser_function('active.ini') #translate changes in config file to our dict
+filename = values['date']+'_'+values['chemical']+'_'+values['type']
 #}}}
 user_sets_Freq = True
 user_sets_Field = True
@@ -91,7 +82,7 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ check for file
-myfilename = date + "_" + output_name + ".h5"
+myfilename = filename + ".h5"
 if os.path.exists(myfilename):
     raise ValueError(
             "the file %s already exists, change your output name!"%myfilename
@@ -105,15 +96,15 @@ echo_data = run_spin_echo(
         indirect_idx = 0,
         indirect_len = 1,
         ph1_cyc = ph1_cyc,
-        adcOffset = adcOffset,
+        adcOffset = values['adcOffset'],
         carrierFreq_MHz = carrierFreq_MHz,
         nPoints = nPoints,
         nEchoes = nEchoes,
-        p90_us = p90_us,
-        repetition = repetition_us,
-        tau_us = tau_us,
-        SW_kHz = SW_kHz,
-        output_name=output_name,
+        p90_us = values['p90_us'],
+        repetition = values['repetition_us'],
+        tau_us = values['tau_us'],
+        SW_kHz = values['SW_kHz'],
+        output_name = filename,
         ret_data = None)
 SpinCore_pp.stopBoard()
 echo_data.set_prop("postproc_type","proc_Hahn_echoph")
@@ -134,12 +125,12 @@ acq_params = {j: eval(j) for j in dir() if j in [
     ]
     }
 echo_data.set_prop("acq_params",acq_params)
-echo_data.name(node_name)
+echo_data.name(values['type'])
 if phase_cycling:
     echo_data.chunk('t',['ph1','t2'],[4,-1])
     echo_data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     if nScans > 1:
-        echo_data.setaxis('nScans',r_[0:nScans])
+        echo_data.setaxis('nScans',r_[0:values['nScans']])
     fl.next('image')
     echo_data.mean('nScans')
     fl.image(echo_data)

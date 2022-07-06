@@ -2,19 +2,16 @@
 
 import configparser
 import os
-
-config = configparser.ConfigParser()
-config.sections()
-config.read('active.ini')
+from config_parser_fn import parser_function
+retval_dict, config = parser_function('active.ini')
+file_names=config['file_names']
 acq_params = config['acq_params']
-amplitude = float(acq_params['amplitude'])
-print(type(amplitude))
-print("amplitude is set to",amplitude)
-p90_time = float(acq_params['p90_us'])
-print("90 time is set to", p90_time)
-p90_time = 4.464
-config.set('acq_params','p90_us',f'{p90_time:0.4f}')
-new_p90 = float(acq_params['p90_us'])
-print("90 time is now",new_p90)
+print("initially our repetition delay is", retval_dict['repetition_us'])
+repetition_us = 5.3e6
+config.set('acq_params','repetition_us',f'{repetition_us:0.4f}')
 with open('active.ini','w') as fp:
     config.write(fp)
+retval_dict, config = parser_function('active.ini')
+print("but we changed it to", retval_dict['repetition_us'])
+quit()
+
