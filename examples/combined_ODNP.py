@@ -1,7 +1,7 @@
 '''Automated Combined DNP with Log
 ==================================
 This needs to be run in sync with the power control server. To do so:
-    1. open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py. When this is ready to go you will see it say "I am listening".
+    1. Open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py. When this is ready to go you will see it say "I am listening".
     2. Open new terminal on NMR computer, move into git/inst_notebooks/Instruments and run wipty power_control_server.py. When this is ready to go it will read "I am listening"
 Once the power control server is up and ready to go you may run this script to collect the enhancement data as well as a series of IRs at increasing power collected in sync with a time log.
 '''
@@ -18,8 +18,8 @@ from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 import h5py
 from config_parser_fn import parser_function
 logger = psp.init_logging(level="debug")
-# {{{ Combined ODNP
-# {{{ import acquisition parameters and create filename
+fl = psp.figlist_var()
+# {{{ import acquisition parameters
 values, config = parser_function('active.ini')
 file_names=config['file_names']
 acq_params = config['acq_params']
@@ -28,43 +28,19 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config.set('file_names','type','ODNP')
+config.set('file_names','type','enhancement')
 config.set('file_names','date',f'{date}')
-run_number = int(config['file_names']['run_number'])
-run_number += 1
-config.set('file_names','run_number',run_number)
-config.write(open('active.ini')) #write edits to config file
-values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']
-#}}}
-vd_list_us = psp.r_[
-    2.1e3, 1.12e4, 2.23e4, 3.3e4, 4.4e4, 5.6e4, 6.7e4, 7.8e4, 8.9e4, 1e5
-]
-# {{{ experimental parameters
-# {{{ these need to change for each sample
-vd_list_us = np.linspace(5e1,0.5e6,5)
-fl = psp.figlist_var()
-#{{{importing acquisition parameters
-values, config = parser_function('active.ini')
-file_names = config['file_names']
-acq_params = config['acq_params']
-odnp_params = config['odnp_params']
-nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
-#}}}
-#{{{create filename and save to config file
-date = datetime.now().strftime('%y%m%d')
-config.set('file_names','type','ODNP')
-config.set('file_names','date',f'{date}')
-odnp_counter = int(config['file_names']['odnp_counter'])
-odnp_counter += 1
-config.set('file_names','odnp_counter',str(odnp_counter))
+odnp_number = values['odnp_number'])
+odnp_number += 1
+config.set('file_names','odnp_number',str(odnp_number))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
 filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['odnp_counter']
 #}}}
-threedown = True
+vd_list_us = np.linspace(5e1,0.5e6,5)
+nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 # {{{Power settings
-dB_settings = gen_powerlist(values['max_power'], values['power_steps'] + 1, three_down=threedown)
+dB_settings = gen_powerlist(values['max_power'], values['power_steps'] + 1, three_down=True)
 T1_powers_dB = gen_powerlist(values['max_power'], values['num_T1s'], three_down=False)
 T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
 logger.info("dB_settings", dB_settings)
@@ -74,17 +50,14 @@ logger.info("correspond to powers in Watts", 10 ** (T1_powers_dB / 10.0 - 3))
 myinput = input("Look ok?")
 if myinput.lower().startswith("n"):
     raise ValueError("you said no!!!")
-# }}}
-# {{{ these change if we change the way the data is saved
-IR_postproc = "spincore_IR_v1"
-Ep_postproc = "spincore_ODNP_v3"
-# }}}
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
-save_file = True
 nPoints = int(values['acq_time_ms'] * values['SW_kHz'] + 0.5)
+# }}}
+#{{{phase cycling
 Ep_ph1_cyc = psp.r_[0, 1, 2, 3]
 IR_ph1_cyc = psp.r_[0, 2]
 IR_ph2_cyc = psp.r_[0, 2]
+#}}}
 # {{{ check for file
 myfilename = filename + ".h5"
 if os.path.exists(myfilename):
@@ -173,7 +146,7 @@ with power_control() as p:
         )
         time_axis_coords[j + 1]["stop_times"] = time.time()
 DNP_data.set_prop("stop_time", time.time())
-DNP_data.set_prop("postproc_type", Ep_postproc)
+DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
 DNP_data.set_prop("acq_params", values)
 DNP_data.name(values['type'])
 DNP_data.chunk("t", ["ph1", "t2"], [4, -1])
@@ -212,7 +185,7 @@ with power_control() as p:
     vd_data.set_prop("stop_time", time.time())
     meter_power = -999
     vd_data.set_prop("acq_params", values)
-    vd_data.set_prop("postproc_type", IR_postproc)
+    vd_data.set_prop("postproc_type", "spincore_IR_v1")
     vd_data.name("FIR_noPower")
     vd_data.chunk("t", ["ph1", "ph2", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
@@ -260,7 +233,7 @@ with power_control() as p:
         vd_data.set_prop("start_time", ini_time)
         vd_data.set_prop("stop_time", time.time())
         vd_data.set_prop("acq_params", values)
-        vd_data.set_prop("postproc_type", IR_postproc)
+        vd_data.set_prop("postproc_type", "spincore_IR_v1")
         vd_data.name(T1_node_names[j])
         vd_data.chunk("t", ["ph1", "ph2", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
         vd_data.setaxis("ph1", IR_ph1_cyc / 4)

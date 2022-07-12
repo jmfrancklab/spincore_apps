@@ -6,9 +6,6 @@ from pyspecdata import *
 import os
 import SpinCore_pp
 from SpinCore_pp.ppg import run_IR
-import socket
-import sys
-import time
 from datetime import datetime
 from config_parser_fn import parser_function
 fl = figlist_var()
@@ -24,13 +21,14 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','IR')
 config.set('file_names','date',f'{date}')
-IR_counter = int(config['file_names']['IR_counter'])
+IR_counter = values['IR_counter'])
 IR_counter += 1
 config.set('file_names','IR_counter',str(IR_counter))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
 filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
 #}}}
+#{{{phase cycling
 phase_cycling = True
 if phase_cycling:
     ph1 = r_[0,2]
@@ -42,6 +40,7 @@ if not phase_cycling:
     nPhaseSteps = 1 
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
+#}}}
 #{{{ check for file
 myfilename = filename+'.h5'
 if os.path.exists(myfilename):
@@ -49,9 +48,8 @@ if os.path.exists(myfilename):
         "the file %s already exists, so I'm not going to let you proceed!" % myfilename
     )
 # }}}
-    
-data_length = 2*nPoints*values['nEchoes']*nPhaseSteps
 vd_list_us = np.linspace(5e1,0.5e6,5)
+#{{{run IR
 vd_data = run_IR(
         nPoints = nPoints,
         nEchoes=values['nEchoes'],
@@ -79,6 +77,8 @@ else:
 vd_data.hdf5_write(filename+'.h5',
         directory=getDATADIR(exp_type='ODNP_NMR_comp/inv_rec'))
 SpinCore_pp.stopBoard();
+#}}}
+#{{{visualize raw data
 vd_data.reorder(['ph1','ph2','vd','t2'])
 fl.next('raw data')
 fl.image(vd_data.setaxis('vd','#'))
@@ -91,3 +91,4 @@ fl.image(vd_data.setaxis('vd','#'))
 fl.next('FT abs raw data')
 fl.image(abs(vd_data).setaxis('vd','#')['t2':(-1e3,1e3)])
 fl.show()
+#}}}
