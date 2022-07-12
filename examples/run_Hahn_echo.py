@@ -108,22 +108,6 @@ echo_data = run_spin_echo(
 SpinCore_pp.stopBoard()
 echo_data.set_prop("postproc_type","proc_Hahn_echoph")
 #{{{setting acq_params
-#acq_params = {j: eval(j) for j in dir() if j in [
-#    "adcOffset",
-#    "carrierFreq_MHz",
-#    "amplitude",
-#    "nScans",
-#    "nEchoes",
-#    "p90_us",
-#    "deadtime_us",
-#    "repetition_us",
-#    "SW_kHz",
-#    "nPoints",
-#    "deblank_us",
-#    "tau_us",
-#    "nPhaseSteps",
-#    ]
-#    }
 echo_data.set_prop("acq_params",values)
 echo_data.name(values['type'])
 if phase_cycling:
