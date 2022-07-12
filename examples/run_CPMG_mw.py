@@ -38,118 +38,71 @@ from pylab import *
 from pyspecdata import *
 from numpy import *
 import os
-import sys
 import SpinCore_pp
 from Instruments import Bridge12,prologix_connection,gigatronics
-from serial import Serial
 from datetime import datetime
 import time
+import configparser
+from config_parser_fn import parser_function
 
 fl = figlist_var()
-def gen_powerlist(max_power, steps, min_dBm_step=0.5):
-    "generate a list of (roughly) evenly spaced powers up to max_power"
-    lin_steps = steps
-    def det_allowed(lin_steps):
-        powers = r_[0:max_power:1j*lin_steps][1:]
-        vectorize(powers)
-        rdB_settings = ones_like(powers)
-        for x in range(len(powers)):
-            rdB_settings[x] = round(10*(log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
-        return unique(rdB_settings)
-    dB_settings = det_allowed(lin_steps)
-    while len(dB_settings) < steps-1:
-        lin_steps += 1
-        dB_settings = det_allowed(lin_steps)
-        if lin_steps >= 200:
-            raise ValueError("I think I'm in an infinite loop -- maybe you"
-                    "can't request %d steps between 0 and %f W without going"
-                    "below %f a step?")%(steps,max_power,min_dBm_step)
-    return dB_settings
-#{{{ Verify arguments compatible with board
-def verifyParams():
-    if (nPoints > 16*1024 or nPoints < 1):
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
-    return
+#{{{importing acquisition parameters
+values, config = parser_function('active.ini')
+file_names = config['file_names']
+acq_params = config['acq_params']
+nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
-
-# Parameters for Bridge12
-max_power = 2.0
-power_steps = 10
-dB_settings = gen_powerlist(max_power,power_steps)
-append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
+#{{{create filename and save to config file
+date = datetime.now().strftime('%y%m%d')
+config.set('file_names','type','signal')
+config.set('file_names','date',f'{date}')
+echo_counter = values['echo_counter'])
+echo_counter += 1
+config.set('file_names','echo_counter',str(echo_counter))
+config.write(open('active.ini','w')) #write edits to config file
+values, config = parser_function('active.ini') #translate changes in config file to our dict
+filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
+#}}}
+#{{{power settings
+dB_settings = gen_powerlist(values['max_power'],values['power_steps'])
+append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-values['max_power']*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
 dB_settings = append(dB_settings,append_dB)
 print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
-
-date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_CPMG_DNP_1'
-adcOffset = 42
-carrierFreq_MHz = 14.896597
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-p90_us = 4.625765
-deadtime_us = 10.0
-repetition_us = 15e6
-deblank_us = 1.0
+#}}}
+#{{{make better tau
 marker = 1.0
-
-SW_kHz = 4.0
-nPoints = 128
-acq_time_ms = nPoints/SW_kHz # ms
-
 tau_extra = 5000.0 # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - deadtime_us
-pad_end = tau_extra - deblank_us*2 # marker + deblank
-twice_tau = deblank_us + 2*p90_us + deadtime_us + pad_start + acq_time_ms*1e3 + pad_end + marker
+pad_start = tau_extra - values['deadtime_us']
+pad_end = tau_extra - values['deblank_us']*2 # marker + deblank
+twice_tau = values['deblank_us'] + 2*values['p90_us'] + values['deadtime_us'] + pad_start + values['acq_time_ms']*1e3 + pad_end + marker
 tau_us = twice_tau/2.0
-
-nScans = 16
-nEchoes = 64
+#}}}
+#{{{phase cycling
 nPhaseSteps = 2
 ph1_cyc = r_[0,2]
-data_length = 2*nPoints*nEchoes*nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
+#}}}
+#{{{run CPMG
 cpmg_data = run_cpmg(
-        nScans = nScans,
+        nScans = values['nScans'],
         indirect_idx = 0,
         indirect_len = len(powers) +1,
         ph1_cyc = ph1_cyc,
-        adcOffset=adcOffset,
-        carrierFreq_MHz = carrierFreq_MHz,
+        adcOffset = values['adc_offset'],
+        carrierFreq_MHz = values['carrierFreq_MHz'],
         nPoints=nPoints,
-        nEchoes = nEchoes,
-        p90_us = p90_us,
-        repetition_us = repetition_us,
+        nEchoes = values['nEchoes'],
+        p90_us = values['p90_us'],
+        repetition_us = values['repetition_us'],
         pad_start_us = pad_start,
         pad_end_us = pad_end,
         tau_us = tau_us,
-        SW_kHz=SW_kHz,
-        output_name=output_name,
+        SW_kHz = values['SW_kHz'],
+        output_name = filename,
         ret_data = None)
 #raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
@@ -194,47 +147,31 @@ with Bridge12() as b:
                 meter_powers[j] = g.read_power()
                 print("POWER READING",meter_powers[j])
         run_cpmg(
-                nScans = nScans,
+                nScans = values['nScans'],
                 indirect_idx = j+1,
                 indirect_len = len(powers) +1,
                 ph1_cyc = ph1_cyc,
-                adcOffset=adcOffset,
-                carrierFreq_MHz = carrierFreq_MHz,
-                nPoints=nPoints,
-                nEchoes = nEchoes,
-                p90_us = p90_us,
-                repetition_us = repetition_us,
+                adcOffset = values['adc_offset'],
+                carrierFreq_MHz = values['carrierFreq_MHz'],
+                nPoints = nPoints,
+                nEchoes = values['nEchoes'],
+                p90_us = values['p90_us'],
+                repetition_us = values['repetition_us'],
                 pad_start_us = pad_start,
                 pad_end_us = pad_end,
                 tau_us = tau_us,
-                SW_kHz=SW_kHz,
-                output_name=output_name,
+                SW_kHz = values['SW_kHz'],
+                output_name = filename,
                 ret_data = cpmg_data)
-
-
         last_power = this_power
 SpinCore_pp.stopBoard();
-acq_params = {j: eval(j) for j in dir() if j in [
-    "adcOffset",
-    "carrierFreq_MHz",
-    "amplitude",
-    "nScans",
-    "nEchoes",
-    "p90_us",
-    "deadtime_us",
-    "repetition_us",
-    "SW_kHz",
-    "nPoints",
-    "deblank_us",
-    "tau_us",
-    "nPhaseSteps",
-    ]
-    }
-DNP_data.set_prop('acq_params',acq_params)
-DNP_data.name('signal')
+#}}}
+#{{{save and show data
+DNP_data.set_prop('acq_params',values)
+DNP_data.name(values['type'])
 DNP_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
 DNP_data.setaxis('ph1',len(ph1_cyc)/4)
-DNP_data.hdf5_write(date+'_'+output_name+'.h5',
+DNP_data.hdf5_write(myfilename,
         directory=getDATADIR(exp_type='ODNP_NMR_comp/DNP'))
 fl.next('raw data')
 fl.image(DNP_data)
@@ -246,3 +183,4 @@ fl.image(DNP_data)
 fl.next('abs raw data - ft')
 fl.image(abs(DNP_data))
 fl.show()
+#}}}

@@ -1,83 +1,75 @@
+import configparser
 from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
+from config_parser_fn import parser_function
 from datetime import datetime
 fl = figlist_var()
 
+#{{{importing acquisition parameters
+values, config = parser_function('active.ini')
+file_names = config['file_names']
+acq_params = config['acq_params']
+nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
+#}}}
+#{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_capProbe'
-node_name = 'CPMG_4step_6'
-adcOffset = 25
-carrierFreq_MHz = 14.895548
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-p90_us = 4.477
-deadtime_us = 10.0
-repetition_us = 12e6
-deblank_us = 1.0
+config.set('file_names','type','signal')
+config.set('file_names','date',f'{date}')
+echo_counter = values['echo_counter'])
+echo_counter += 1
+config.set('file_names','echo_counter',str(echo_counter))
+config.write(open('active.ini','w')) #write edits to config file
+values, config = parser_function('active.ini') #translate changes in config file to our dict
+filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
+#}}}
+#{{{better tau
 marker = 1.0
-
-SW_kHz = 2.0
-nPoints = 64
-acq_time_ms = nPoints/SW_kHz # ms
-
 tau_extra = 1000.0 # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - deadtime_us
-pad_end = tau_extra - deblank_us*2 # marker + deblank
-twice_tau = deblank_us + 2*p90_us + deadtime_us + pad_start + acq_time_ms*1e3 + pad_end + marker
+pad_start = tau_extra - values['deadtime_us']
+pad_end = tau_extra - values['deblank_us']*2 # marker + deblank
+twice_tau = values['deblank_us'] + 2*p90_us + values['deadtime_us'] + pad_start + values['acq_time_ms']*1e3 + pad_end + marker
 tau_us = twice_tau/2.0
-
-nScans = 16
-nEchoes = 64
+#}}}
+#{{{phase cycling
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
     ph1_cyc = r_[0, 1, 2, 3]
 if not phase_cycling:
-    nPhaseSteps = 1 
-data_length = 2*nPoints*nEchoes*nPhaseSteps
+    nPhaseSteps = 1
+#}}}   
+#{{{run cpmg
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 data = run_cpmg(
-        nScans=nScans,
+        nScans = values['nScans'],
         indirect_idx = 0,
         ph1_cyc = ph1_cyc,
-        adcOffset = adcOffset,
-        carrierFreq_MHz = carrierFreq_MHz,
+        adcOffset = values['adc_offset'],
+        carrierFreq_MHz = values['carrierFreq_MHz'],
         nPoints = nPoints,
-        nEchoes = nEchoes,
-        p90_us = p90_us,
-        repetition = repetition_us,
+        nEchoes = values['nEchoes'],
+        p90_us = values['p90_us'],
+        repetition = values['repetition_us'],
         tau_us = tau_us,
-        SW_kHz = SW_kHz,
+        SW_kHz = values['SW_kHz'],
         pad_start_us = pad_start,
         pad_end_us = pad_end,
-        output_name = output_name,
+        output_name = filename,
         ret_data = None)
-acq_params = {j: eval(j) for j in dir() if j in [
-        "adcOffset",
-        "carrierFreq_MHz",
-        "amplitude",
-        "nScans",
-        "nEchoes",
-        "p90_us",
-        "deadtime_us",
-        "repetition_us",
-        "SW_kHz",
-        "nPoints",
-        "deblank_us",
-        "tau_us",
-        "nPhaseSteps",
-        ]
-        }
-data.set_prop("acq_params",acq_params)
-data.name(node_name)
+#}}}
+#{{{saving with acq params
+data.set_prop("acq_params",values)
+data.name(values['type'])
 if phase_cycling:
     data.chunk("t",['ph1','t2'],[len(ph1_cyc),-1])
     data.setaxis('ph1', ph1_cyc/4)
-data.hdf5_write(date + '_'+output_name+'.h5',
+data.hdf5_write(myfilename,
         directory=getDATADIR(exp_type = 'ODNP_NMR_comp/CPMG'))
 SpinCore_pp.stopBoard();
+#}}}
+#{{{visualize raw data
 s = data.C
 s.set_units('t','s')
 orig_t = s.getaxis('t')
@@ -91,5 +83,5 @@ fl.next('freq')
 fl.plot(abs(s))
 fl.plot(s.real,alpha=0.4)
 fl.plot(s.imag,alpha=0.4)
-fl.show();quit()
-
+fl.show()
+#}}}

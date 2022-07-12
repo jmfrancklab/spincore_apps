@@ -36,100 +36,86 @@ in the second case.
 #}}}
 from pyspecdata import *
 from numpy import *
+from datetime import datetime
 from . import SpinCore_pp 
+from config_parser_fn import parser_function
 fl = figlist_var()
+#{{{importing acquisition parameters
+values, config = parser_function('active.ini')
+file_names = config['file_names']
+acq_params = config['acq_params']
+nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
+#}}}
+#{{{create filename and save to config file
+date = datetime.now().strftime('%y%m%d')
+config.set('file_names','type','CPMG_calib')
+config.set('file_names','date',f'{date}')
+echo_counter = values['echo_counter'])
+echo_counter += 1
+config.set('file_names','echo_counter',str(echo_counter))
+config.write(open('active.ini','w')) #write edits to config file
+values, config = parser_function('active.ini') #translate changes in config file to our dict
+filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
+#}}}
 
-date = '200115'
-output_name = 'CPMG_calib_3'
-adcOffset = 45
-carrierFreq_MHz = 14.898122
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-deadtime_us = 100.0
-repetition_us = 15e6
-deblank_us = 1.0
 marker = 1.0
 
-SW_kHz = 4.0
-nPoints = 128
-acq_time_ms = nPoints/SW_kHz # ms
-
 tau_extra = 200.0 # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - deadtime_us
-pad_end = tau_extra - deblank_us*2 # marker + deblank
-
-nScans = 4
-nEchoes = 64
+pad_start = tau_extra - values['deadtime_us']
+pad_end = tau_extra - values['deblank_us']*2 
 
 nPhaseSteps = 2
 ph1_cyc = r_[0,2]
-data_length = 2*nPoints*nEchoes*nPhaseSteps
 p90_range = linspace(3.0,4.0,5)#,endpoint=False)
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 for index,val in enumerate(p90_range):
     p90 = val # us
-    twice_tau = deblank_us + 2*p90_us + deadtime_us + pad_start + acq_time_ms*1e3 + pad_end + marker
+    twice_tau = values['deblank_us'] + 2*values['p90_us'] + values['deadtime_us'] + pad_start + values['acq_time_ms']*1e3 + pad_end + marker
     tau_us = twice_tau/2.0
     print("***")
     print("INDEX %d - 90 TIME %f"%(index,val))
     print("***")
     if index == 0:
         nutation_data = run_cpmg(
-                nScans=nScans,
+                nScans=values['nScans'],
                 indirect_idx = 0,
                 indirect_len = len(p90_range)+1,
-                adcOffset = adcOffset,
-                carrierFreq_MHz=carrierFreq_MHz,
+                adcOffset = values['adc_offset'],
+                carrierFreq_MHz=values['carrierFreq_MHz'],
                 nPoints=nPoints,
-                nEchoes = nEchoes,
-                p90_us = p90,
-                repetition_us = repetition_us,
+                nEchoes = values['nEchoes'],
+                p90_us = values['p90_us'],
+                repetition_us = values['repetition_us'],
                 pad_start_us = pad_start,
                 pad_end_us = pad_end,
-                tau_us = tau_us,
-                SW_kHz=SW_kHz,
-                output_name=output_name,
+                tau_us = values['tau_us'],
+                SW_kHz=values['SW_kHz'],
+                output_name=filename,
                 ph1_cyc = ph1_cyc,
                 ret_data = None)
     else:
          run_cpmg(
-                nScans=nScans,
+                nScans=values['nScans'],
                 indirect_idx = index+1,
                 indirect_len = len(p90_range+1),
-                adcOffset = adcOffset,
-                carrierFreq_MHz=carrierFreq_MHz,
+                adcOffset = values['adc_offset'],
+                carrierFreq_MHz = values['carrierFreq_MHz'],
                 nPoints=nPoints,
-                nEchoes = nEchoes,
-                p90_us = p90,
-                repetition_us = repetition_us,
+                nEchoes = values['nEchoes'],
+                p90_us = vlaues['p90_us'],
+                repetition_us = values['repetition_us'],
                 pad_start_us = pad_start,
                 pad_end_us = pad_end,
-                tau_us = tau_us,
-                SW_kHz=SW_kHz,
-                output_name=output_name,
+                tau_us = values['tau_us'],
+                SW_kHz=values['SW_kHz'],
+                output_name=filename,
                 ph1_cyc = ph1_cyc,
                 ret_data = nutation_data)
-acq_params = {j: eval(j) for j in dir() if j in [
-    "adcOffset",
-    "carrierFreq_MHz",
-    "amplitude",
-    "nScans",
-    "nEchoes",
-    "p90_us",
-    "deadtime_us",
-    "repetition_us",
-    "SW_kHz",
-    "nPoints",
-    "deblank_us",
-    "tau_us",
-    "nPhaseSteps",
-    ]
-    }
-nutation_data.set_prop("acq_params",acq_params)
-nutation_data.name('nutation')
+nutation_data.set_prop("acq_params",values)
+nutation_data.name(values['type'])
 nutation_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
 nutation_data.setaxis('ph1',ph1_cyc/4)
-nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+nutation_data.hdf5_write(myfilename)
 SpinCore_pp.stopBoard();
 fl.next('raw data')
 fl.image(nutation_data)
