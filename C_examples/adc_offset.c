@@ -17,7 +17,7 @@ double get_dc_value(int adc_offset);
 int configureBoard(int adc_offset);
 int programBoard( );
 int runScan( );
-int readData(int adc_offset, double* peak);
+int readData(int adc_offset, double* peak);,
 
 DWORD error_catch(int error, int line_number)
 {
@@ -166,7 +166,7 @@ int programBoard( )
 	return 0;
 }
 
-int runScan( )
+int runBoard()
 {
 	ERROR_CATCH(spmri_start());
 	
@@ -174,7 +174,8 @@ int runScan( )
 	int status;
 	
 	// wait for scan to finish
-	while( done == 0 ) {
+	while( done == 0 )
+    {
 		ERROR_CATCH(spmri_get_status(&status));
 		if( status == 0x01 ) {
 			done = 1;
