@@ -1,10 +1,3 @@
-'''Automated Combined DNP with Log
-==================================
-This needs to be run in sync with the power control server. To do so:
-    1. open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py. When this is ready to go you will see it say "I am listening".
-    2. Open new terminal on NMR computer, move into git/inst_notebooks/Instruments and run wipty power_control_server.py. When this is ready to go it will read "I am listening"
-Once the power control server is up and ready to go you may run this script to collect the enhancement data as well as a series of IRs at increasing power collected in sync with a time log.
-'''
 import numpy as np
 import pyspecdata as psp
 import os, sys, time
@@ -18,6 +11,7 @@ import h5py
 from config_parser_fn import parser_function
 logger = psp.init_logging(level="debug")
 # {{{ Combined ODNP
+<<<<<<< HEAD
 # {{{ import acquisition parameters and create filename
 values, config = parser_function('active.ini')
 file_names=config['file_names']
@@ -69,10 +63,14 @@ if os.path.exists(myfilename):
         "the file %s already exists, so I'm not going to let you proceed!" % myfilename
     )
 # }}}
+nPhaseSteps = 4
+total_pts = nPoints*nPhaseSteps
+assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
+
+
 # {{{run enhancement
-DNP_ini_time = time.time()
 with power_control() as p:
-    # JF points out it should be possible to save time by removing this (b/c we
+   # JF points out it should be possible to save time by removing this (b/c we
     # shut off microwave right away), but AG notes that doing so causes an
     # error.  Therefore, debug the root cause of the error and remove it!
     retval_thermal = p.dip_lock(
@@ -81,6 +79,7 @@ with power_control() as p:
     )
     p.start_log()
     p.mw_off()
+    DNP_ini_time = time.time()
     DNP_data = run_spin_echo(
         nScans=values['nScans'],
         indirect_idx=0,
@@ -120,9 +119,7 @@ with power_control() as p:
                 values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,
                 values['uw_dip_center_GHz'] + values['uw_dip_width_GHz'] / 2,
             )
-        logger.debug("done with dip lock 1")
         p.set_power(this_dB)
-        logger.debug("power was set")
         for k in range(10):
             time.sleep(0.5)
             if p.get_power_setting() >= this_dB:
@@ -132,7 +129,6 @@ with power_control() as p:
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
         time_axis_coords[j + 1]["start_times"] = time.time()
-        logger.debug("gonna run the Ep for this power")
         run_spin_echo(
             nScans=values['nScans'],
             indirect_idx=j + 1,
@@ -180,7 +176,7 @@ DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
 logger.info("SAVING FILE... %s" % myfilename)
 DNP_data.hdf5_write(myfilename)
 logger.info("FILE SAVED")
-logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
+logger.debug("Name of saved enhancement data", DNP_data.name())
 logger.debug("shape of saved enhancement data", psp.ndshape(DNP_data))
 # }}}
 # {{{run IR
@@ -189,8 +185,9 @@ with power_control() as p:
         values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,
         values['uw_dip_center_GHz'] + values['uw_dip_width_GHz'] / 2,
     )
-    p.mw_off()
     ini_time = time.time()  # needed b/c data object doesn't exist yet
+    p.mw_off()
+    time.sleep(5)
     vd_data = run_IR(
         nPoints=nPoints,
         nEchoes=values['nEchoes'],
@@ -222,7 +219,7 @@ with power_control() as p:
             "nEchoes",
             "p90_us",
             "deadtime_us",
-            "repetition_us",
+            "FIR_rd",
             "SW_kHz",
             "nPoints",
             "deblank_us",
@@ -235,13 +232,10 @@ with power_control() as p:
     vd_data.set_prop("acq_params", acq_params)
     vd_data.set_prop("postproc_type", IR_postproc)
     vd_data.name("FIR_noPower")
-    vd_data.chunk("t", ["ph1", "ph2", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
-    vd_data.setaxis("ph1", IR_ph1_cyc / 4)
-    vd_data.setaxis("ph2", IR_ph2_cyc / 4)
     # Need error handling (JF has posted something on this..)
     vd_data.hdf5_write(myfilename)
     logger.debug("\n*** FILE SAVED ***\n")
-    logger.debug(strm("Name of saved data", vd_data.name()))
+    logger.debug("Name of saved data", vd_data.name())
     for j, this_dB in enumerate(T1_powers_dB):
         if j == 0:
             MWfreq = p.dip_lock(
@@ -292,7 +286,7 @@ with power_control() as p:
                 "nEchoes",
                 "p90_us",
                 "deadtime_us",
-                "repetition_us",
+                "FIR_rd",
                 "SW_kHz",
                 "nPoints",
                 "deblank_us",
@@ -305,9 +299,9 @@ with power_control() as p:
         vd_data.set_prop("acq_params", acq_params)
         vd_data.set_prop("postproc_type", IR_postproc)
         vd_data.name(T1_node_names[j])
-        vd_data.chunk("t", ["ph1", "ph2", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
-        vd_data.setaxis("ph1", IR_ph1_cyc / 4)
-        vd_data.setaxis("ph2", IR_ph2_cyc / 4)
+        #vd_data.chunk("t", ["ph1", "ph2", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
+        #vd_data.setaxis("ph1", IR_ph1_cyc / 4)
+        #vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.hdf5_write(myfilename)
     final_frq = p.dip_lock(
         values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,

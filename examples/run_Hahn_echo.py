@@ -37,43 +37,41 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','echo')
 config.set('file_names','date',f'{date}')
-echo_counter = values['echo_counter'])
+echo_counter = int(config['file_names']['echo_counter'])
 echo_counter += 1
-config.set('file_names','echo_counter',echo_counter)
-config.write(open('active.ini')) #write edits to config file
+config.set('file_names','echo_counter',str(echo_counter))
+config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+echo_counter
+filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
 #}}}
 user_sets_Freq = True
 user_sets_Field = True
 #{{{ set field here
 if user_sets_Field:
     # You must enter field set on XEPR here
-    true_B0 = 3424.42
+    true_B0 = values['Field']
     print("My field in G should be %f"%true_B0)
 #}}}
 #{{{let computer set field
 if not user_sets_Field:
-    desired_B0 = 3506.50
+    desired_B0 = values['Field']
     with xepr() as x:
         true_B0 = x.set_field(desired_B0)
     print("My field in G is %f"%true_B0)
 #}}}
 #{{{ set frequency here
 if user_sets_Freq:
-    carrierFreq_MHz = 14.8978438
-    config.set('acq_params','carrierFreq_MHz',carrierFreq_MHz)
-    print("My frequency in MHz is",carrierFreq_MHz)
+    carrierFreq_MHz = values['carrierFreq_MHz']
+    print('setting frequency to:',carrierFreq_MHz)
 #}}}
 #{{{ let computer set frequency
 if not user_sets_Freq:
-    gamma_eff = (14.897706/3506.5)
+    gamma_eff = values['carrierFreq_Mhz']/values['Field']
     carrierFreq_MHz = gamma_eff*true_B0
     config.set('acq_params','carrierFreq_MHz',carrierFreq_MHz)
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 tx_phases = r_[0.0,90.0,180.0,270.0]
-nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1)]
 if phase_cycling:
@@ -82,6 +80,7 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 #{{{ check for file
+print(filename)
 myfilename = filename + ".h5"
 if os.path.exists(myfilename):
     raise ValueError(
@@ -96,7 +95,7 @@ echo_data = run_spin_echo(
         indirect_idx = 0,
         indirect_len = 1,
         ph1_cyc = ph1_cyc,
-        adcOffset = values['adcOffset'],
+        adcOffset = values['adc_offset'],
         carrierFreq_MHz = carrierFreq_MHz,
         nPoints = nPoints,
         nEchoes = values['nEchoes'],
@@ -108,23 +107,24 @@ echo_data = run_spin_echo(
         ret_data = None)
 SpinCore_pp.stopBoard()
 echo_data.set_prop("postproc_type","proc_Hahn_echoph")
-acq_params = {j: eval(j) for j in dir() if j in [
-    "adcOffset",
-    "carrierFreq_MHz",
-    "amplitude",
-    "nScans",
-    "nEchoes",
-    "p90_us",
-    "deadtime_us",
-    "repetition_us",
-    "SW_kHz",
-    "nPoints",
-    "deblank_us",
-    "tau_us",
-    "nPhaseSteps",
-    ]
-    }
-echo_data.set_prop("acq_params",acq_params)
+#{{{setting acq_params
+#acq_params = {j: eval(j) for j in dir() if j in [
+#    "adcOffset",
+#    "carrierFreq_MHz",
+#    "amplitude",
+#    "nScans",
+#    "nEchoes",
+#    "p90_us",
+#    "deadtime_us",
+#    "repetition_us",
+#    "SW_kHz",
+#    "nPoints",
+#    "deblank_us",
+#    "tau_us",
+#    "nPhaseSteps",
+#    ]
+#    }
+echo_data.set_prop("acq_params",values)
 echo_data.name(values['type'])
 if phase_cycling:
     echo_data.chunk('t',['ph1','t2'],[4,-1])
