@@ -37,12 +37,12 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','echo')
 config.set('file_names','date',f'{date}')
-run_number = int(config['file_names']['run_number'])
-run_number += 1
-config.set('file_names','run_number',run_number)
+echo_counter = values['echo_counter'])
+echo_counter += 1
+config.set('file_names','echo_counter',echo_counter)
 config.write(open('active.ini')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']
+filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+echo_counter
 #}}}
 user_sets_Freq = True
 user_sets_Field = True
@@ -90,16 +90,16 @@ if os.path.exists(myfilename):
 #}}}
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
-data_length = 2*nPoints*nEchoes*nPhaseSteps
+data_length = 2*nPoints*values['nEchoes']*nPhaseSteps
 echo_data = run_spin_echo(
-        nScans=nScans,
+        nScans=values['nScans'],
         indirect_idx = 0,
         indirect_len = 1,
         ph1_cyc = ph1_cyc,
         adcOffset = values['adcOffset'],
         carrierFreq_MHz = carrierFreq_MHz,
         nPoints = nPoints,
-        nEchoes = nEchoes,
+        nEchoes = values['nEchoes'],
         p90_us = values['p90_us'],
         repetition = values['repetition_us'],
         tau_us = values['tau_us'],
@@ -129,7 +129,7 @@ echo_data.name(values['type'])
 if phase_cycling:
     echo_data.chunk('t',['ph1','t2'],[4,-1])
     echo_data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    if nScans > 1:
+    if values['nScans'] > 1:
         echo_data.setaxis('nScans',r_[0:values['nScans']])
     fl.next('image')
     echo_data.mean('nScans')
