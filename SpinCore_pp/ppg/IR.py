@@ -136,15 +136,13 @@ def run_IR(
             ret_data["vd", index]["nScans", x] = data_array
             run_scans_time_list.append(time.time())
             this_array = np.array(run_scans_time_list)
-            logging.debug(strm("checkpoints:", this_array - this_array[0]))
+            logging.debug("checkpoints:", this_array - this_array[0])
             logging.debug(
-                strm(
                     "time for each chunk",
                     [
                         "%s %0.1f" % (run_scans_names[j], v)
                         for j, v in enumerate(np.diff(this_array))
                     ],
-                )
             )
     return ret_data
 # }}}
