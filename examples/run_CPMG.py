@@ -15,14 +15,13 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config.set('file_names','type','signal')
+config.set('file_names','type','CPMG')
 config.set('file_names','date',f'{date}')
-echo_counter = values['echo_counter'])
-echo_counter += 1
-config.set('file_names','echo_counter',str(echo_counter))
+values['echo_counter'] += 1
+config.set('file_names','echo_counter',str(values['echo_counter']))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
+filename = f"{values['date']}_{values['chemical']}_{values['type']}_{values['echo_counter']}"
 #}}}
 #{{{better tau
 marker = 1.0
