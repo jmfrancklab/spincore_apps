@@ -3,19 +3,21 @@
 Here we will perform a series of echoes at a range of designated field values. This is normally run at a power of 3-4 W. To run this experiment, please open Xepr on the EPR computer, connect to spectrometer, enable XEPR_API. Then, in a separate terminal, run the program XEPR_API_server.py, wait for it to tell you 'I am listening' - then, you should be able to run this program in sync with the power_control_server.
 To run this in sync with the power_control_server, open a separate terminal on the NMR computer and move into git/inst_notebooks/Instruments and run winpty power_control_server(). This will print out "I am listening" when it is ready to go. You can then proceed to run this script to collect your field sweep data
 '''
-
+import configparser
 from pylab import *
 from pyspecdata import *
 import os
 import SpinCore_pp
-from SpinCore_pp/ppg import run_spin_echo
+from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 import numpy as np
+from Instruments import power_control,Bridge12,prologix_connection,gigatronics
 from Instruments.XEPR_eth import xepr
+from config_parser_fn import parser_function
 import h5py
 fl = figlist_var()
 mw_freqs = []
-field_axis = r_[3422:3426:.5]
+field_axis = r_[3502:3505:1.0]
 #{{{importing acquisition parameters
 values, config = parser_function('active.ini')
 #}}}
@@ -23,12 +25,12 @@ values, config = parser_function('active.ini')
 date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','echo')
 config.set('file_names','date',f'{date}')
-echo_counter = values['echo_counter'])
+echo_counter = values['echo_counter']
 echo_counter += 1
 config.set('file_names','echo_counter',str(echo_counter))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
+filename = str(values['date'])+'_'+values['chemical']+'_'+values['type']+'_'+str(values['echo_counter'])
 gamma_eff = (values['carrierFreq_MHz']/values['Field'])
 #}}}
 #{{{phase cycling
@@ -41,12 +43,13 @@ if not phase_cycling:
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 #{{{check for file
+myfilename = filename + ".h5"
 if os.path.exists(myfilename):
     raise ValueError(
             "the file %s already exists, change your output name!"%myfilename)
 #}}}    
 #{{{ Parameters for Bridge12
-powers = values['max_power']
+powers = r_[values['max_power']]
 min_dBm_step = 0.5
 for x in range(len(powers)):
     dB_settings = round(10*(log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
@@ -126,5 +129,5 @@ sweep_data.reorder('t2',first=False)
 sweep_data.ft('t2',shift=True)
 sweep_data.ft('ph1',unitary=True)
 sweep_data.name('Field_sweep')
-sweep_data.hdf5_write(myfilename, directory = psp.getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
+sweep_data.hdf5_write(myfilename, directory = getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
 

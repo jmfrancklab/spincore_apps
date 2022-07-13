@@ -2,6 +2,7 @@ from pylab import *
 from pyspecdata import *
 import os
 import SpinCore_pp
+from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 import configparser
 from config_parser_fn import parser_function
@@ -14,12 +15,12 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','nutation')
 config.set('file_names','date',f'{date}')
-echo_counter = values['echo_counter'])
+echo_counter = values['echo_counter']
 echo_counter += 1
 config.set('file_names','echo_counter',str(echo_counter))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
+filename = str(values['date'])+'_'+values['chemical']+'_'+values['type']+'_'+str(values['echo_counter'])
 #}}}
 
 #{{{ Edit here to set the actual field
@@ -40,7 +41,7 @@ if not phase_cycling:
     nPhaseSteps = 1
 #}}}    
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90_range_us = linspace(1.,15.,40,endpoint=False)
+p90_range_us = linspace(1.,15.,5,endpoint=False)
 for index,val in enumerate(p90_range_us):
     p90_us = val # us
     print("***")
@@ -48,7 +49,8 @@ for index,val in enumerate(p90_range_us):
     print("***")
     nutation_data = run_spin_echo(
             nScans = values['nScans'],
-            indirect_idx = len(p90_range_us),
+            indirect_idx=0,
+            indirect_len = len(p90_range_us),
             adcOffset=values['adc_offset'],
             carrierFreq_MHz = values['carrierFreq_MHz'],
             nPoints = nPoints,

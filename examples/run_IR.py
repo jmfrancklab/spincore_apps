@@ -19,12 +19,12 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','IR')
 config.set('file_names','date',f'{date}')
-IR_counter = values['IR_counter'])
+IR_counter = values['IR_counter']
 IR_counter += 1
 config.set('file_names','IR_counter',str(IR_counter))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
+filename = str(values['date'])+'_'+values['chemical']+'_'+values['type']+'_'+str(values['echo_counter'])
 #}}}
 #{{{phase cycling
 phase_cycling = True

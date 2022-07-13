@@ -29,6 +29,7 @@ def parser_function(parser_filename):
         "uw_dip_center_GHz",
         "uw_dip_width_GHz",
         "FIR_rep",
+        "max_power"
     ]:
         retval[thisname] = float(odnp_params[thisname.lower()])
     # }}}
@@ -40,7 +41,6 @@ def parser_function(parser_filename):
     ]:
         retval[thisname] = int(acq_params[thisname.lower()])
     for thisname in [
-        "max_power",
         "power_steps",
         "num_T1s",
     ]:
@@ -50,14 +50,17 @@ def parser_function(parser_filename):
         "echo_counter",
         "IR_counter",
     ]:
-        retval[thisname] = int(odnp_params[thisname.lower()])
+        retval[thisname] = int(file_names[thisname.lower()])
     # }}}
     # {{{ all the rest of the file name parameters are just strings
     for thisname in [
-        "date",
         "chemical",
         "type",
     ]:
-        retval[thisname] = int(file_names[thisname.lower()])
+        retval[thisname] = file_names[thisname.lower()]
     # }}}
+    for thisname in [
+        "date"
+    ]:
+        retval[thisname] = int(file_names[thisname.lower()])
     return retval, config  # return dictionary and also the config file itself

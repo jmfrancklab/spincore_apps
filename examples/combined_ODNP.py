@@ -28,12 +28,12 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','enhancement')
 config.set('file_names','date',f'{date}')
-odnp_number = values['odnp_number'])
+odnp_number = values['odnp_counter']
 odnp_number += 1
-config.set('file_names','odnp_number',str(odnp_number))
+config.set('file_names','odnp_counter',str(odnp_number))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['odnp_counter']
+filename = str(values['date']) + '_' + values['chemical'] + '_' + values['type'] + '_' + str(values['odnp_counter'])
 #}}}
 vd_list_us = np.linspace(5e1,0.5e6,5)
 # {{{Power settings
