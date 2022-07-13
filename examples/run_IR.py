@@ -12,8 +12,6 @@ fl = figlist_var()
 date = datetime.now().strftime('%y%m%d')
 #{{{importing acquisition parameters
 values, config = parser_function('active.ini')
-file_names = config['file_names']
-acq_params = config['acq_params']
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 # NOTE: Number of segments is nEchoes * nPhaseSteps

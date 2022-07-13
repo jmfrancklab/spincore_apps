@@ -42,8 +42,6 @@ from config_parser_fn import parser_function
 fl = figlist_var()
 #{{{importing acquisition parameters
 values, config = parser_function('active.ini')
-file_names = config['file_names']
-acq_params = config['acq_params']
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file

@@ -9,6 +9,7 @@ import numpy as np
 import pyspecdata as psp
 import os, sys, time
 import SpinCore_pp
+from numpy import r_
 from Instruments import power_control
 from datetime import datetime
 from SpinCore_pp.ppg import run_spin_echo, run_IR
@@ -21,9 +22,6 @@ logger = psp.init_logging(level="debug")
 fl = psp.figlist_var()
 # {{{ import acquisition parameters
 values, config = parser_function('active.ini')
-file_names=config['file_names']
-acq_params = config['acq_params']
-DNP_params = config['DNP_params']
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
@@ -38,7 +36,6 @@ values, config = parser_function('active.ini') #translate changes in config file
 filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['odnp_counter']
 #}}}
 vd_list_us = np.linspace(5e1,0.5e6,5)
-nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 # {{{Power settings
 dB_settings = gen_powerlist(values['max_power'], values['power_steps'] + 1, three_down=True)
 T1_powers_dB = gen_powerlist(values['max_power'], values['num_T1s'], three_down=False)
@@ -51,12 +48,15 @@ myinput = input("Look ok?")
 if myinput.lower().startswith("n"):
     raise ValueError("you said no!!!")
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
-nPoints = int(values['acq_time_ms'] * values['SW_kHz'] + 0.5)
 # }}}
 #{{{phase cycling
-Ep_ph1_cyc = psp.r_[0, 1, 2, 3]
-IR_ph1_cyc = psp.r_[0, 2]
-IR_ph2_cyc = psp.r_[0, 2]
+Ep_ph1_cyc = r_[0, 1, 2, 3]
+total_points = len(Ep_ph1_cyc)*nPoints
+assert total_points < 2**14, "For Ep: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
+IR_ph1_cyc = r_[0, 2]
+IR_ph2_cyc = r_[0, 2]
+total_pts = len(IR_ph2_cyc)*len(IR_ph1_cyc)*nPoints
+assert total_pts < 2**14, "For IR: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 #}}}
 # {{{ check for file
 myfilename = filename + ".h5"

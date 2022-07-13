@@ -18,8 +18,6 @@ mw_freqs = []
 field_axis = r_[3422:3426:.5]
 #{{{importing acquisition parameters
 values, config = parser_function('active.ini')
-file_names = config['file_names']
-acq_params = config['acq_params']
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
