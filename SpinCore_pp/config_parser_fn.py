@@ -31,7 +31,10 @@ def parser_function(parser_filename):
         "FIR_rep",
         "max_power"
     ]:
-        retval[thisname] = float(odnp_params[thisname.lower()])
+        if thisname in odnp_params:
+            retval[thisname] = float(odnp_params[thisname.lower()])
+        else:
+            print("You need to add this parameter to the active.ini file then try again")
         # here, we want errors
     # }}}
     # {{{ int, by section
@@ -53,7 +56,11 @@ def parser_function(parser_filename):
         "cpmg_counter",
         "IR_counter",
     ]:
-        retval[thisname] = int(file_names[thisname.lower()])
+        if thisname in file_names:
+            retval[thisname] = int(file_names[thisname.lower()])
+        else:
+            print(thisname, "doesn't exist yet so we are setting it to 0")
+            retval[thisname] = 0
         # what happens if thisname is not already in the ini file?
         # does it return none? or does it fail with a key error?
         # in either case, we should add code here, so that if it doesn't
