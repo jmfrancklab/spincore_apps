@@ -23,10 +23,9 @@ import SpinCore_pp
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
-from config_parser_fn import parser_function
 fl = figlist_var()
 #{{{importing acquisition parameters
-values, config = parser_function('active.ini')
+values, config = SpinCore_pp.parser_function('active.ini')
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
@@ -37,7 +36,7 @@ echo_counter = values['echo_counter']
 echo_counter += 1
 config.set('file_names','echo_counter',str(echo_counter))
 config.write(open('active.ini','w')) #write edits to config file
-values, config = parser_function('active.ini') #translate changes in config file to our dict
+values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
 filename = str(values['date'])+'_'+values['chemical']+'_'+values['type']+'_'+str(values['echo_counter'])
 #}}}
 user_sets_Freq = True
@@ -64,7 +63,7 @@ if not user_sets_Freq:
     carrierFreq_MHz = gamma_eff*true_B0
     config.set('acq_params','carrierFreq_MHz',carrierFreq_MHz)
     config.write(open('active.ini','w')) #write edits to config file
-    values, config = parser_function('active.ini') #translate changes in config file to our dict
+    values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
     print("My frequency in MHz is",carrierFreq_MHz)
 #}}}
 #{{{set phase cycling

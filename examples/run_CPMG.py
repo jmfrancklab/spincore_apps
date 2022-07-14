@@ -3,12 +3,11 @@ from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp 
-from config_parser_fn import parser_function
 from datetime import datetime
 fl = figlist_var()
 
 #{{{importing acquisition parameters
-values, config = parser_function('active.ini')
+values, config = SpinCore_pp.parser_function('active.ini')
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
@@ -18,7 +17,7 @@ config.set('file_names','date',f'{date}')
 values['echo_counter'] += 1
 config.set('file_names','echo_counter',str(values['echo_counter']))
 config.write(open('active.ini','w')) #write edits to config file
-values, config = parser_function('active.ini') #translate changes in config file to our dict
+values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
 filename = f"{values['date']}_{values['chemical']}_{values['type']}_{values['echo_counter']}"
 #}}}
 #{{{better tau

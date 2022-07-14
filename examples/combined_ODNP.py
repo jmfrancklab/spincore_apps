@@ -12,7 +12,6 @@ from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from pyspecdata import strm
 import os, sys, time
 import h5py
-from config_parser_fn import parser_function
 import SpinCore_pp
 from SpinCore_pp.power_helper import gen_powerlist
 from SpinCore_pp.ppg import run_spin_echo, run_IR
@@ -22,7 +21,7 @@ from datetime import datetime
 logger = init_logging(level="debug")
 fl = figlist_var()
 # {{{ import acquisition parameters
-values, config = parser_function('active.ini')
+values, config = SpinCore_pp.parser_function('active.ini')
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
@@ -33,7 +32,7 @@ odnp_number = values['odnp_counter']
 odnp_number += 1
 config.set('file_names','odnp_counter',str(odnp_number))
 config.write(open('active.ini','w')) #write edits to config file
-values, config = parser_function('active.ini') #translate changes in config file to our dict
+values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
 filename = str(values['date']) + '_' + values['chemical'] + '_' + values['type'] + '_' + str(values['odnp_counter'])
 #}}}
 vd_list_us = np.linspace(5e1,0.5e6,5)

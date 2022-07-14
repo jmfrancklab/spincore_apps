@@ -13,13 +13,12 @@ from datetime import datetime
 import numpy as np
 from Instruments import power_control,Bridge12,prologix_connection,gigatronics
 from Instruments.XEPR_eth import xepr
-from config_parser_fn import parser_function
 import h5py
 fl = figlist_var()
 mw_freqs = []
 field_axis = r_[3502:3505:1.0]
 #{{{importing acquisition parameters
-values, config = parser_function('active.ini')
+values, config = SpinCore_pp.parser_function('active.ini')
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
@@ -29,7 +28,7 @@ echo_counter = values['echo_counter']
 echo_counter += 1
 config.set('file_names','echo_counter',str(echo_counter))
 config.write(open('active.ini','w')) #write edits to config file
-values, config = parser_function('active.ini') #translate changes in config file to our dict
+values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
 filename = str(values['date'])+'_'+values['chemical']+'_'+values['type']+'_'+str(values['echo_counter'])
 gamma_eff = (values['carrierFreq_MHz']/values['Field'])
 #}}}

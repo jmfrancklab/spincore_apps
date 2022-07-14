@@ -43,11 +43,10 @@ from Instruments import Bridge12,prologix_connection,gigatronics
 from datetime import datetime
 import time
 import configparser
-from config_parser_fn import parser_function
 
 fl = figlist_var()
 #{{{importing acquisition parameters
-values, config = parser_function('active.ini')
+values, config = SpinCore_pp.parser_function('active.ini')
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -87,7 +86,7 @@ echo_counter = values['echo_counter'])
 echo_counter += 1
 config.set('file_names','echo_counter',str(echo_counter))
 config.write(open('active.ini','w')) #write edits to config file
-values, config = parser_function('active.ini') #translate changes in config file to our dict
+values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
 filename = str(values['date']) + '_' + values['chemical'] + '_' + values['type'] + '_' + str(values['echo_counter'])
 #}}}
 #{{{power settings
