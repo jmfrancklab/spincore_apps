@@ -14,3 +14,6 @@ with open("active.ini","w") as fp:
 retval_dict, config = SpinCore_pp.parser_function("active.ini")
 print(retval_dict)
 print(retval_dict["cpmg_counter"])
+config.set("acq_params","something",f"{repetition_us:0.4f}")
+with open("active.ini","w") as fp:
+    config.write(fp)

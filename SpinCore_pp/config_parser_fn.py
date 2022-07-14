@@ -7,9 +7,21 @@ def parser_function(parser_filename):
     config = configparser.ConfigParser()
     config.sections()
     config.read("active.ini")
-    acq_params = config["acq_params"]
-    file_names = config["file_names"]
-    odnp_params = config["odnp_params"]
+    try:
+        acq_params = config["acq_params"]
+    except KeyError:
+        config.add_section("acq_params")
+        acq_params = config["acq_params"]
+    try:    
+        file_names = config["file_names"]
+    except KeyError:
+        config.add_section("file_names")
+        file_names = config["file_names"]
+    try:    
+        odnp_params = config["odnp_params"]
+    except KeyError:
+        config.add_section("odnp_params")
+        odnp_params = config["odnp_params"]
     retval = {}
     # {{{ floats, by section
     for thisname in [
@@ -56,9 +68,9 @@ def parser_function(parser_filename):
         "cpmg_counter",
         "IR_counter",
     ]:
-        if thisname in file_names:
+        try:
             retval[thisname] = int(file_names[thisname.lower()])
-        else:
+        except KeyError:
             print(thisname, "doesn't exist yet so we are setting it to 0")
             retval[thisname] = 0
         # what happens if thisname is not already in the ini file?

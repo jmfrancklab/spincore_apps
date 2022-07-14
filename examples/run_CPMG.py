@@ -15,7 +15,7 @@ date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','CPMG')
 config.set('file_names','date',f'{date}')
 values['cpmg_counter'] += 1
-config.set('file_names','echo_counter',str(values['echo_counter']))
+config.set('file_names','cpmg_counter',str(values['cpmg_counter']))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
 filename = f"{values['date']}_{values['chemical']}_{values['type']}{values['cpmg_counter']}"
