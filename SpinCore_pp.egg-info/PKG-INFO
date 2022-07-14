@@ -3,7 +3,7 @@ Name: SpinCore-pp
 Version: 0.1
 Summary: custom pulse programming language
 Home-page: http://github.com/jmfrancklab/spincore_apps
-Author: Beaton,Franck
+Author: Beaton,Franck,Guinness
 Author-email: jmfranck@notgiven.com
 License: LICENSE.md
 Description: Pulse programming language for SpinCore RadioProcessor G
