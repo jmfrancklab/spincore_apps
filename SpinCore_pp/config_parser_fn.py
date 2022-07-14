@@ -35,7 +35,10 @@ def parser_function(parser_filename):
         "acq_time_ms",
         "carrierFreq_MHz",
     ]:
-        retval[thisname] = float(acq_params[thisname.lower()])
+        try:
+            retval[thisname] = float(file_names[thisname.lower()])
+        except KeyError:
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
     for thisname in [
         "Field",
         "uw_dip_center_GHz",
@@ -43,11 +46,10 @@ def parser_function(parser_filename):
         "FIR_rep",
         "max_power"
     ]:
-        if thisname in odnp_params:
-            retval[thisname] = float(odnp_params[thisname.lower()])
-        else:
-            print("You need to add this parameter to the active.ini file then try again")
-        # here, we want errors
+        try:
+            retval[thisname] = float(file_names[thisname.lower()])
+        except KeyError:
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
     # }}}
     # {{{ int, by section
     for thisname in [
@@ -56,12 +58,20 @@ def parser_function(parser_filename):
         "nEchoes",
     ]:
         retval[thisname] = int(acq_params[thisname.lower()])
+        try:
+            retval[thisname] = int(file_names[thisname.lower()])
+        except KeyError:
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
     for thisname in [
         "power_steps",
         "num_T1s",
     ]:
         retval[thisname] = int(odnp_params[thisname.lower()])
         # if these are not set, we actually want an error!
+        try:
+            retval[thisname] = int(file_names[thisname.lower()])
+        except KeyError:
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
     for thisname in [
         "odnp_counter",
         "echo_counter",
@@ -85,12 +95,16 @@ def parser_function(parser_filename):
         "chemical",
         "type",
     ]:
-        retval[thisname] = file_names[thisname.lower()]
-        # do the same thing here -- use "unknown"
+        try:
+            retval[thisname] = file_names[thisname.lower()]
+        except KeyError:
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
     # }}}
     for thisname in [
         "date"
     ]:
-        retval[thisname] = int(file_names[thisname.lower()])
-        # make sure this doesn't error out
+        try:
+            retval[thisname] = int(file_names[thisname.lower()])
+        except KeyError:
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
     return retval, config  # return dictionary and also the config file itself
