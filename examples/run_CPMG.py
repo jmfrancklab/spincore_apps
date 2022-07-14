@@ -14,11 +14,11 @@ nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
 date = datetime.now().strftime('%y%m%d')
 config.set('file_names','type','CPMG')
 config.set('file_names','date',f'{date}')
-values['echo_counter'] += 1
+values['cpmg_counter'] += 1
 config.set('file_names','echo_counter',str(values['echo_counter']))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
-filename = f"{values['date']}_{values['chemical']}_{values['type']}_{values['echo_counter']}"
+filename = f"{values['date']}_{values['chemical']}_{values['type']}{values['cpmg_counter']}"
 #}}}
 #{{{better tau
 marker = 1.0

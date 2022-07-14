@@ -32,6 +32,7 @@ def parser_function(parser_filename):
         "max_power"
     ]:
         retval[thisname] = float(odnp_params[thisname.lower()])
+        # here, we want errors
     # }}}
     # {{{ int, by section
     for thisname in [
@@ -45,12 +46,20 @@ def parser_function(parser_filename):
         "num_T1s",
     ]:
         retval[thisname] = int(odnp_params[thisname.lower()])
+        # if these are not set, we actually want an error!
     for thisname in [
         "odnp_counter",
         "echo_counter",
+        "cpmg_counter",
         "IR_counter",
     ]:
         retval[thisname] = int(file_names[thisname.lower()])
+        # what happens if thisname is not already in the ini file?
+        # does it return none? or does it fail with a key error?
+        # in either case, we should add code here, so that if it doesn't
+        # exist, just go ahead and set it to 0
+        # this can be accomplished by either testing for None or with a
+        # try/except
     # }}}
     # {{{ all the rest of the file name parameters are just strings
     for thisname in [
@@ -58,9 +67,11 @@ def parser_function(parser_filename):
         "type",
     ]:
         retval[thisname] = file_names[thisname.lower()]
+        # do the same thing here -- use "unknown"
     # }}}
     for thisname in [
         "date"
     ]:
         retval[thisname] = int(file_names[thisname.lower()])
+        # make sure this doesn't error out
     return retval, config  # return dictionary and also the config file itself
