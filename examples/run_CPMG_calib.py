@@ -53,7 +53,7 @@ echo_counter += 1
 config.set('file_names','echo_counter',str(echo_counter))
 config.write(open('active.ini','w')) #write edits to config file
 values, config = parser_function('active.ini') #translate changes in config file to our dict
-filename = values['date']+'_'+values['chemical']+'_'+values['type']+'_'+values['echo_counter']
+filename = str(values['date']) + '_' + values['chemical'] + '_' + values['type'] + '_' + str(values['echo_counter'])
 #}}}
 
 marker = 1.0

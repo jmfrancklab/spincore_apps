@@ -6,20 +6,21 @@ This needs to be run in sync with the power control server. To do so:
 Once the power control server is up and ready to go you may run this script to collect the enhancement data as well as a series of IRs at increasing power collected in sync with a time log.
 '''
 import numpy as np
-import pyspecdata as psp
-import os, sys, time
-import SpinCore_pp
 from numpy import r_
-from Instruments import power_control
-from datetime import datetime
-from SpinCore_pp.ppg import run_spin_echo, run_IR
-# do the same with the inversion recovery
-from SpinCore_pp.power_helper import gen_powerlist
+from pyspecdata import *
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
+from pyspecdata import strm
+import os, sys, time
 import h5py
 from config_parser_fn import parser_function
-logger = psp.init_logging(level="debug")
-fl = psp.figlist_var()
+import SpinCore_pp
+from SpinCore_pp.power_helper import gen_powerlist
+from SpinCore_pp.ppg import run_spin_echo, run_IR
+from Instruments import power_control
+from datetime import datetime
+# do the same with the inversion recovery
+logger = init_logging(level="debug")
+fl = figlist_var()
 # {{{ import acquisition parameters
 values, config = parser_function('active.ini')
 nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
@@ -116,9 +117,7 @@ with power_control() as p:
                 values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,
                 values['uw_dip_center_GHz'] + values['uw_dip_width_GHz'] / 2,
             )
-        logger.debug("done with dip lock 1")
         p.set_power(this_dB)
-        logger.debug("power was set")
         for k in range(10):
             time.sleep(0.5)
             if p.get_power_setting() >= this_dB:
@@ -128,7 +127,6 @@ with power_control() as p:
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
         time_axis_coords[j + 1]["start_times"] = time.time()
-        logger.debug("gonna run the Ep for this power")
         run_spin_echo(
             nScans=values['nScans'],
             indirect_idx=j + 1,
@@ -149,13 +147,13 @@ DNP_data.set_prop("stop_time", time.time())
 DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
 DNP_data.set_prop("acq_params", values)
 DNP_data.name(values['type'])
-DNP_data.chunk("t", ["ph1", "t2"], [4, -1])
+DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
 DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
 logger.info("SAVING FILE... %s" % myfilename)
 DNP_data.hdf5_write(myfilename)
 logger.info("FILE SAVED")
-logger.debug("Name of saved enhancement data", DNP_data.name())
-logger.debug("shape of saved enhancement data", psp.ndshape(DNP_data))
+logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
+logger.debug("shape of saved enhancement data", ndshape(DNP_data))
 # }}}
 # {{{run IR
 with power_control() as p:
@@ -183,7 +181,6 @@ with power_control() as p:
     )
     vd_data.set_prop("start_time", ini_time)
     vd_data.set_prop("stop_time", time.time())
-    meter_power = -999
     vd_data.set_prop("acq_params", values)
     vd_data.set_prop("postproc_type", "spincore_IR_v1")
     vd_data.name("FIR_noPower")
@@ -193,7 +190,7 @@ with power_control() as p:
     # Need error handling (JF has posted something on this..)
     vd_data.hdf5_write(myfilename)
     logger.debug("\n*** FILE SAVED ***\n")
-    logger.debug("Name of saved data", vd_data.name())
+    logger.debug(strm("Name of saved data", vd_data.name()))
     for j, this_dB in enumerate(T1_powers_dB):
         if j == 0:
             MWfreq = p.dip_lock(
