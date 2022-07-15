@@ -11,7 +11,7 @@
 #    stopBoard,
 #)
 #from .SpinCore_pp import tune
-from .config_parser_fn import parser_function
+from .config_parser_fn import configuration
 #from .process_first_arg import process_args
 
 __all__ = [
@@ -27,6 +27,6 @@ __all__ = [
 #    "runBoard",
 #    "stopBoard",
 #    "stop_ppg",
-    "parser_function",
+    "configuration",
     #    "tune",
 ]

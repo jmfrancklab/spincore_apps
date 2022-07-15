@@ -1,101 +1,76 @@
 from pyspecdata import *
 import configparser
 
+class configuration(object):
+    # this registers the type, the pretty case we want, the section, and
+    # whether or not we can assume a default value
+    registered_params = {
+        "p90_us":(float, "acq_params", None),
+        "deadtime_us":(float, "acq_params", None),
+        "amplitude":(float, "acq_params", None),
+        "deblank_us":(float, "acq_params", None),
+        "tau_us":(float, "acq_params", None),
+        "repetition_us":(float, "acq_params", None),
+        "SW_kHz":(float, "acq_params", None),
+        "acq_time_ms":(float, "acq_params", None),
+        "carrierFreq_MHz":(float, "acq_params", None),
+        "Field":(float, "odnp_params", None),
+        "uw_dip_center_GHz":(float, "odnp_params", None),
+        "uw_dip_width_GHz":(float, "odnp_params", None),
+        "FIR_rep":(float, "odnp_params", None),
+        "max_power":(float, "odnp_params", None),
+        "nScans":(int, "acq_params", 1),
+        "adc_offset":(int, "acq_params", None),
+        "nEchoes":(int, "acq_params", None),
+        "power_steps":(int, "odnp_params", None ),
+        "num_T1s":(int, "odnp_params", None),
+        "odnp_counter":(int, "file_names", 0),
+        "echo_counter":(int, "file_names", 0),
+        "cpmg_counter":(int, "file_names", 0),
+        "IR_counter":(int, "file_names", 0),
+        "chemical":(str, "file_names", None),
+        "type":(str, "file_names", None),
+        "date":(int, "file_names", None),
+        }
+    def __init__(self,filename):
+        self.filename = filename
+        self.configobj = configparser.ConfigParser()
+        self.configobj.read(self.filename)
+        self._params = {}
+        for j in ["acq_params", "odnp_params", "file_names"]:
+            if j not in self.configobj.sections():
+                self.configobj.add_section(j)
+        for paramname, (
+                converter, section, default) in self.registered_params.items():
+            try:
+                temp = self.configobj.get(section,paramname.lower())
+            except:
+                continue
+            self._params[paramname] = converter(temp)
+            self._case_insensitive_keys = {j.lower():j
+                    for j in self.registered_params.keys()}
+    def __getitem__(self,key):
+        key = self._case_insensitive_keys[key.lower()]
+        if key not in self._params.keys():
+            converter, section, default = self.registered_params[key]
+            if default is None:
+                    raise ValueError(f"You're asking for the '{key}' parameter, and it's not set in the .ini file!\nFirst, ask yourself if you should have run some type of set-up program (tuning, adc offset, resonance finder, etc.) that would set this parameter.\nThen, try setting the parameter in the appropriate section of your .ini file by editing the file with gvim or notepad++!")
 
-def parser_function(parser_filename):
-    # open parser
-    config = configparser.ConfigParser()
-    config.sections()
-    config.read("active.ini")
-    try:
-        acq_params = config["acq_params"]
-    except KeyError:
-        config.add_section("acq_params")
-        acq_params = config["acq_params"]
-    try:    
-        file_names = config["file_names"]
-    except KeyError:
-        config.add_section("file_names")
-        file_names = config["file_names"]
-    try:    
-        odnp_params = config["odnp_params"]
-    except KeyError:
-        config.add_section("odnp_params")
-        odnp_params = config["odnp_params"]
-    retval = {}
-    # {{{ floats, by section
-    for thisname in [
-        "p90_us",
-        "deadtime_us",
-        "amplitude",
-        "deblank_us",
-        "tau_us",
-        "repetition_us",
-        "SW_kHz",
-        "acq_time_ms",
-        "carrierFreq_MHz",
-    ]:
-        try:
-            retval[thisname] = float(acq_params[thisname.lower()])
-        except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set! Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
-    for thisname in [
-        "Field",
-        "uw_dip_center_GHz",
-        "uw_dip_width_GHz",
-        "FIR_rep",
-        "max_power"
-    ]:
-        try:
-            retval[thisname] = float(odnp_params[thisname.lower()])
-        except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
-    # }}}
-    # {{{ int, by section
-    for thisname in [
-        "nScans",
-        "adc_offset",
-        "nEchoes",
-    ]:
-        try:
-            retval[thisname] = int(acq_params[thisname.lower()])
-        except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
-    for thisname in [
-        "power_steps",
-        "num_T1s",
-    ]:
-        try:
-            retval[thisname] = int(odnp_params[thisname.lower()])
-        except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
-    for thisname in [
-        "odnp_counter",
-        "echo_counter",
-        "cpmg_counter",
-        "IR_counter",
-    ]:
-        try:
-            retval[thisname] = int(file_names[thisname.lower()])
-        except KeyError:
-            print(thisname, "doesn't exist yet so we are setting it to 0")
-            retval[thisname] = 0
-    # }}}
-    # {{{ all the rest of the file name parameters are just strings
-    for thisname in [
-        "chemical",
-        "type",
-    ]:
-        try:
-            retval[thisname] = file_names[thisname.lower()]
-        except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
-    # }}}
-    for thisname in [
-        "date"
-    ]:
-        try:
-            retval[thisname] = int(file_names[thisname.lower()])
-        except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
-    return retval, config  # return dictionary and also the config file itself
+        return self._params[key]
+    def __setitem__(self,key,value):
+        if key.lower() not in self._case_insensitive_keys.keys():
+            raise ValueError(f"I don't know what section to put the {key} setting in, or what type it's supposed to be!!  You should register it's existence in the config_parser_fn subpackage before trying to use it!! (Also -- do you really need another setting??)")
+        else:
+            key = self._case_insensitive_keys[key.lower()]
+            converter, section, default = self.registered_params[key]
+            self._params[key] = converter(value) # check that it's the right type
+            self.configobj.set(section,key.lower(),
+                    str(self._params[key]))
+    def write(self):
+        for paramname,(converter, section, default) in self.registered_params.items():
+            if paramname in self._params.keys():
+                self.configobj.set(section,paramname.lower(),
+                        str(self._params[paramname]))
+        self.configobj.write(open('active.ini','w'))
+    def asdict(self):
+        return self._params

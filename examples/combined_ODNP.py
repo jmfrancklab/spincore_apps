@@ -21,22 +21,21 @@ from datetime import datetime
 logger = init_logging(level="debug")
 fl = figlist_var()
 # {{{ import acquisition parameters
-values, config = SpinCore_pp.parser_function('active.ini')
-nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
+parser_dict = SpinCore_pp.configuration('active.ini')
+nPoints = int(parser_dict['acq_time_ms']*parser_dict['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config.set('file_names','type','ODNP')
-config.set('file_names','date',f'{date}')
-config.set('file_names','odnp_counter',str(values['odnp_counter']+1))
-config.write(open('active.ini','w')) #write edits to config file
-values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
-filename = f"{values['date']}_{values['chemical']}_{values['type']}{values['odnp_counter']}"
+parser_dict['type'] = 'ODNP'
+parser_dict['date'] = date
+parser_dict['odnp_counter'] += 1
+parser_dict.write()
+filename = f"{parser_dict['date']}_{parser_dict['chemical']}_{parser_dict['type']}{parser_dict['odnp_counter']}"
 #}}}
 vd_list_us = np.linspace(5e1,0.5e6,5)
 # {{{Power settings
-dB_settings = gen_powerlist(values['max_power'], values['power_steps'] + 1, three_down=True)
-T1_powers_dB = gen_powerlist(values['max_power'], values['num_T1s'], three_down=False)
+dB_settings = gen_powerlist(parser_dict['max_power'], parser_dict['power_steps'] + 1, three_down=True)
+T1_powers_dB = gen_powerlist(parser_dict['max_power'], parser_dict['num_T1s'], three_down=False)
 T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
 logger.info("dB_settings", dB_settings)
 logger.info("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
@@ -70,24 +69,24 @@ with power_control() as p:
     # shut off microwave right away), but AG notes that doing so causes an
     # error.  Therefore, debug the root cause of the error and remove it!
     retval_thermal = p.dip_lock(
-        values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,
-        values['uw_dip_center_GHz'] + values['uw_dip_width_GHz'] / 2,
+        parser_dict['uw_dip_center_GHz'] - parser_dict['uw_dip_width_GHz'] / 2,
+        parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
     )
     p.start_log()
     p.mw_off()
     DNP_data = run_spin_echo(
-        nScans=values['nScans'],
+        nScans=parser_dict['nScans'],
         indirect_idx=0,
         indirect_len=len(powers) + 1,
         ph1_cyc=Ep_ph1_cyc,
-        adcOffset=values['adc_offset'],
-        carrierFreq_MHz=values['carrierFreq_MHz'],
+        adcOffset=parser_dict['adc_offset'],
+        carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
         nPoints=nPoints,
-        nEchoes=values['nEchoes'],
-        p90_us=values['p90_us'],
-        repetition=values['repetition_us'],
-        tau_us=values['tau_us'],
-        SW_kHz=values['SW_kHz'],
+        nEchoes=parser_dict['nEchoes'],
+        p90_us=parser_dict['p90_us'],
+        repetition=parser_dict['repetition_us'],
+        tau_us=parser_dict['tau_us'],
+        SW_kHz=parser_dict['SW_kHz'],
         output_name=filename,
         indirect_fields=("start_times", "stop_times"),
         ret_data=None,
@@ -111,8 +110,8 @@ with power_control() as p:
         )
         if j == 0:
             retval = p.dip_lock(
-                values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,
-                values['uw_dip_center_GHz'] + values['uw_dip_width_GHz'] / 2,
+                parser_dict['uw_dip_center_GHz'] - parser_dict['uw_dip_width_GHz'] / 2,
+                parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
             )
         p.set_power(this_dB)
         for k in range(10):
@@ -125,25 +124,25 @@ with power_control() as p:
         power_settings_dBm[j] = p.get_power_setting()
         time_axis_coords[j + 1]["start_times"] = time.time()
         run_spin_echo(
-            nScans=values['nScans'],
+            nScans=parser_dict['nScans'],
             indirect_idx=j + 1,
             indirect_len=len(powers) + 1,
-            adcOffset=values['adc_offset'],
-            carrierFreq_MHz=values['carrierFreq_MHz'],
+            adcOffset=parser_dict['adc_offset'],
+            carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
             nPoints=nPoints,
-            nEchoes=values['nEchoes'],
-            p90_us=values['p90_us'],
-            repetition=values['repetition_us'],
-            tau_us=values['tau_us'],
-            SW_kHz=values['SW_kHz'],
+            nEchoes=parser_dict['nEchoes'],
+            p90_us=parser_dict['p90_us'],
+            repetition=parser_dict['repetition_us'],
+            tau_us=parser_dict['tau_us'],
+            SW_kHz=parser_dict['SW_kHz'],
             output_name=filename,
             ret_data=DNP_data,
         )
         time_axis_coords[j + 1]["stop_times"] = time.time()
 DNP_data.set_prop("stop_time", time.time())
 DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
-DNP_data.set_prop("acq_params", values)
-DNP_data.name(values['type'])
+DNP_data.set_prop("acq_params", parser_dict.asdict())
+DNP_data.name(parser_dict['type'])
 DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
 DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
 logger.info("SAVING FILE... %s" % myfilename)
@@ -155,23 +154,23 @@ logger.debug("shape of saved enhancement data", ndshape(DNP_data))
 # {{{run IR
 with power_control() as p:
     retval_IR = p.dip_lock(
-        values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,
-        values['uw_dip_center_GHz'] + values['uw_dip_width_GHz'] / 2,
+        parser_dict['uw_dip_center_GHz'] - parser_dict['uw_dip_width_GHz'] / 2,
+        parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
     )
     p.mw_off()
     ini_time = time.time()  # needed b/c data object doesn't exist yet
     vd_data = run_IR(
         nPoints=nPoints,
-        nEchoes=values['nEchoes'],
+        nEchoes=parser_dict['nEchoes'],
         vd_list_us=vd_list_us,
-        nScans=values['nScans'],
-        adcOffset=values['adc_offset'],
-        carrierFreq_MHz=values['carrierFreq_MHz'],
-        p90_us=values['p90_us'],
-        tau_us=values['tau_us'],
-        repetition=values['FIR_rep'],
+        nScans=parser_dict['nScans'],
+        adcOffset=parser_dict['adc_offset'],
+        carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
+        p90_us=parser_dict['p90_us'],
+        tau_us=parser_dict['tau_us'],
+        repetition=parser_dict['FIR_rep'],
         output_name=filename,
-        SW_kHz=values['SW_kHz'],
+        SW_kHz=parser_dict['SW_kHz'],
         ph1_cyc=IR_ph1_cyc,
         ph2_cyc=IR_ph2_cyc,
         ret_data=None,
@@ -191,8 +190,8 @@ with power_control() as p:
     for j, this_dB in enumerate(T1_powers_dB):
         if j == 0:
             MWfreq = p.dip_lock(
-                values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,
-                values['uw_dip_center_GHz'] + values['uw_dip_width_GHz'] / 2,
+                parser_dict['uw_dip_center_GHz'] - parser_dict['uw_dip_width_GHz'] / 2,
+                parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
             )
         p.set_power(this_dB)
         for k in range(10):
@@ -212,16 +211,16 @@ with power_control() as p:
         ini_time = time.time()
         vd_data = run_IR(
             nPoints=nPoints,
-            nEchoes=values['nEchoes'],
+            nEchoes=parser_dict['nEchoes'],
             vd_list_us=vd_list_us,
-            nScans=values['nScans'],
-            adcOffset=values['adc_offset'],
-            carrierFreq_MHz=values['carrierFreq_MHz'],
-            p90_us=values['p90_us'],
-            tau_us=values['tau_us'],
-            repetition=values['FIR_rep'],
+            nScans=parser_dict['nScans'],
+            adcOffset=parser_dict['adc_offset'],
+            carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
+            p90_us=parser_dict['p90_us'],
+            tau_us=parser_dict['tau_us'],
+            repetition=parser_dict['FIR_rep'],
             output_name= filename,
-            SW_kHz=values['SW_kHz'],
+            SW_kHz=parser_dict['SW_kHz'],
             ret_data=None,
         )
         vd_data.set_prop("start_time", ini_time)
@@ -234,8 +233,8 @@ with power_control() as p:
         vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.hdf5_write(myfilename)
     final_frq = p.dip_lock(
-        values['uw_dip_center_GHz'] - values['uw_dip_width_GHz'] / 2,
-        values['uw_dip_center_GHz'] + values['uw_dip_width_GHz'] / 2,
+        parser_dict['uw_dip_center_GHz'] - parser_dict['uw_dip_width_GHz'] / 2,
+        parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
     )
     this_log = p.stop_log()
 SpinCore_pp.stopBoard()
