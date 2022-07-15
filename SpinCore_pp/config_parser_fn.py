@@ -36,9 +36,9 @@ def parser_function(parser_filename):
         "carrierFreq_MHz",
     ]:
         try:
-            retval[thisname] = float(file_names[thisname.lower()])
+            retval[thisname] = float(acq_params[thisname.lower()])
         except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set! Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
     for thisname in [
         "Field",
         "uw_dip_center_GHz",
@@ -47,9 +47,9 @@ def parser_function(parser_filename):
         "max_power"
     ]:
         try:
-            retval[thisname] = float(file_names[thisname.lower()])
+            retval[thisname] = float(odnp_params[thisname.lower()])
         except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
     # }}}
     # {{{ int, by section
     for thisname in [
@@ -57,21 +57,18 @@ def parser_function(parser_filename):
         "adc_offset",
         "nEchoes",
     ]:
-        retval[thisname] = int(acq_params[thisname.lower()])
         try:
-            retval[thisname] = int(file_names[thisname.lower()])
+            retval[thisname] = int(acq_params[thisname.lower()])
         except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
     for thisname in [
         "power_steps",
         "num_T1s",
     ]:
-        retval[thisname] = int(odnp_params[thisname.lower()])
-        # if these are not set, we actually want an error!
         try:
-            retval[thisname] = int(file_names[thisname.lower()])
+            retval[thisname] = int(odnp_params[thisname.lower()])
         except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
     for thisname in [
         "odnp_counter",
         "echo_counter",
@@ -83,12 +80,6 @@ def parser_function(parser_filename):
         except KeyError:
             print(thisname, "doesn't exist yet so we are setting it to 0")
             retval[thisname] = 0
-        # what happens if thisname is not already in the ini file?
-        # does it return none? or does it fail with a key error?
-        # in either case, we should add code here, so that if it doesn't
-        # exist, just go ahead and set it to 0
-        # this can be accomplished by either testing for None or with a
-        # try/except
     # }}}
     # {{{ all the rest of the file name parameters are just strings
     for thisname in [
@@ -98,7 +89,7 @@ def parser_function(parser_filename):
         try:
             retval[thisname] = file_names[thisname.lower()]
         except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
     # }}}
     for thisname in [
         "date"
@@ -106,5 +97,5 @@ def parser_function(parser_filename):
         try:
             retval[thisname] = int(file_names[thisname.lower()])
         except KeyError:
-            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!")
+            print(thisname, f"it doesn't make sense for you to have a .ini file where the {thisname} parameter is not set!Try setting the parameter in the appropriate section in the .ini file using confi.set(appropriate section,{thisname},value) followed by writing it to the .ini file like this: config.write(open(name of ini file,w))")
     return retval, config  # return dictionary and also the config file itself
