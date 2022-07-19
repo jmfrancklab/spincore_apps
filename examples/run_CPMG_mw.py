@@ -46,8 +46,8 @@ import configparser
 
 fl = figlist_var()
 #{{{importing acquisition parameters
-values, config = SpinCore_pp.parser_function('active.ini')
-nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
+config_dict = SpinCore_pp.configuration('active.ini')
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
@@ -80,18 +80,16 @@ def verifyParams():
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config.set('file_names','type','signal')
-config.set('file_names','date',f'{date}')
-echo_counter = values['echo_counter'])
-echo_counter += 1
-config.set('file_names','echo_counter',str(echo_counter))
-config.write(open('active.ini','w')) #write edits to config file
-values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
-filename = str(values['date']) + '_' + values['chemical'] + '_' + values['type'] + '_' + str(values['echo_counter'])
+config_dict['type'] = 'signal'
+config_dict['date'] = date
+config_dict['echo_counter'] += 1
+config_dict['echo_counter'] = echo_counter
+config_dict.write()
+filename = str(config_dict['date']) + '_' + config_dict['chemical'] + '_' + config_dict['type'] + '_' + str(config_dict['echo_counter'])
 #}}}
 #{{{power settings
-dB_settings = gen_powerlist(values['max_power'],values['power_steps'])
-append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-values['max_power']*frac).argmin()]
+dB_settings = gen_powerlist(config_dict['max_power'],config_dict['power_steps'])
+append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-config_dict['max_power']*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
 dB_settings = append(dB_settings,append_dB)
 print("dB_settings",dB_settings)
@@ -102,9 +100,9 @@ powers = 1e-3*10**(dB_settings/10.)
 #{{{make better tau
 marker = 1.0
 tau_extra = 5000.0 # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - values['deadtime_us']
-pad_end = tau_extra - values['deblank_us']*2 # marker + deblank
-twice_tau = values['deblank_us'] + 2*values['p90_us'] + values['deadtime_us'] + pad_start + values['acq_time_ms']*1e3 + pad_end + marker
+pad_start = tau_extra - config_dict['deadtime_us']
+pad_end = tau_extra - config_dict['deblank_us']*2 # marker + deblank
+twice_tau = config_dict['deblank_us'] + 2*config_dict['p90_us'] + config_dict['deadtime_us'] + pad_start + config_dict['acq_time_ms']*1e3 + pad_end + marker
 tau_us = twice_tau/2.0
 #}}}
 #{{{phase cycling
@@ -114,20 +112,20 @@ ph1_cyc = r_[0,2]
 #}}}
 #{{{run CPMG
 cpmg_data = run_cpmg(
-        nScans = values['nScans'],
+        nScans = config_dict['nScans'],
         indirect_idx = 0,
         indirect_len = len(powers) +1,
         ph1_cyc = ph1_cyc,
-        adcOffset = values['adc_offset'],
-        carrierFreq_MHz = values['carrierFreq_MHz'],
+        adcOffset = config_dict['adc_offset'],
+        carrierFreq_MHz = config_dict['carrierFreq_MHz'],
         nPoints=nPoints,
-        nEchoes = values['nEchoes'],
-        p90_us = values['p90_us'],
-        repetition_us = values['repetition_us'],
+        nEchoes = config_dict['nEchoes'],
+        p90_us = config_dict['p90_us'],
+        repetition_us = config_dict['repetition_us'],
         pad_start_us = pad_start,
         pad_end_us = pad_end,
         tau_us = tau_us,
-        SW_kHz = values['SW_kHz'],
+        SW_kHz = config_dict['SW_kHz'],
         output_name = filename,
         ret_data = None)
 #raw_input("CONNECT AND TURN ON BRIDGE12...")
@@ -173,28 +171,28 @@ with Bridge12() as b:
                 meter_powers[j] = g.read_power()
                 print("POWER READING",meter_powers[j])
         run_cpmg(
-                nScans = values['nScans'],
+                nScans = config_dict['nScans'],
                 indirect_idx = j+1,
                 indirect_len = len(powers) +1,
                 ph1_cyc = ph1_cyc,
-                adcOffset = values['adc_offset'],
-                carrierFreq_MHz = values['carrierFreq_MHz'],
+                adcOffset = config_dict['adc_offset'],
+                carrierFreq_MHz = config_dict['carrierFreq_MHz'],
                 nPoints = nPoints,
-                nEchoes = values['nEchoes'],
-                p90_us = values['p90_us'],
-                repetition_us = values['repetition_us'],
+                nEchoes = config_dict['nEchoes'],
+                p90_us = config_dict['p90_us'],
+                repetition_us = config_dict['repetition_us'],
                 pad_start_us = pad_start,
                 pad_end_us = pad_end,
                 tau_us = tau_us,
-                SW_kHz = values['SW_kHz'],
+                SW_kHz = config_dict['SW_kHz'],
                 output_name = filename,
                 ret_data = cpmg_data)
         last_power = this_power
 SpinCore_pp.stopBoard();
 #}}}
 #{{{save and show data
-DNP_data.set_prop('acq_params',values)
-DNP_data.name(values['type'])
+DNP_data.set_prop('acq_params',config_dict.asdict())
+DNP_data.name(config_dict['type'])
 DNP_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
 DNP_data.setaxis('ph1',len(ph1_cyc)/4)
 DNP_data.hdf5_write(myfilename,

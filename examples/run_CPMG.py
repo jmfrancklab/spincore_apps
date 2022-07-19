@@ -1,4 +1,3 @@
-import configparser
 from pylab import *
 from pyspecdata import *
 from numpy import *
@@ -7,25 +6,23 @@ from datetime import datetime
 fl = figlist_var()
 
 #{{{importing acquisition parameters
-values, config = SpinCore_pp.parser_function('active.ini')
-nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
+config_dict = SpinCore_pp.configuration('active.ini')
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config.set('file_names','type','CPMG')
-config.set('file_names','date',f'{date}')
-values['cpmg_counter'] += 1
-config.set('file_names','cpmg_counter',str(values['cpmg_counter']))
-config.write(open('active.ini','w')) #write edits to config file
-values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
-filename = f"{values['date']}_{values['chemical']}_{values['type']}{values['cpmg_counter']}"
+config_dict['type'] = 'CPMG'
+config_dict['date'] = f'{date}'
+config_dict['cpmg_counter'] += 1
+config_dict.write()
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}{config_dict['cpmg_counter']}"
 #}}}
 #{{{better tau
 marker = 1.0
 tau_extra = 1000.0 # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - values['deadtime_us']
-pad_end = tau_extra - values['deblank_us']*2 # marker + deblank
-twice_tau = values['deblank_us'] + 2*p90_us + values['deadtime_us'] + pad_start + values['acq_time_ms']*1e3 + pad_end + marker
+pad_start = tau_extra - config_dict['deadtime_us']
+pad_end = tau_extra - config_dict['deblank_us']*2 # marker + deblank
+twice_tau = config_dict['deblank_us'] + 2*p90_us + config_dict['deadtime_us'] + pad_start + config_dict['acq_time_ms']*1e3 + pad_end + marker
 tau_us = twice_tau/2.0
 #}}}
 #{{{phase cycling
@@ -39,25 +36,25 @@ if not phase_cycling:
 #{{{run cpmg
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 data = run_cpmg(
-        nScans = values['nScans'],
+        nScans = config_dict['nScans'],
         indirect_idx = 0,
         ph1_cyc = ph1_cyc,
-        adcOffset = values['adc_offset'],
-        carrierFreq_MHz = values['carrierFreq_MHz'],
+        adcOffset = config_dict['adc_offset'],
+        carrierFreq_MHz = config_dict['carrierFreq_MHz'],
         nPoints = nPoints,
-        nEchoes = values['nEchoes'],
-        p90_us = values['p90_us'],
-        repetition = values['repetition_us'],
+        nEchoes = config_dict['nEchoes'],
+        p90_us = config_dict['p90_us'],
+        repetition = config_dict['repetition_us'],
         tau_us = tau_us,
-        SW_kHz = values['SW_kHz'],
+        SW_kHz = config_dict['SW_kHz'],
         pad_start_us = pad_start,
         pad_end_us = pad_end,
         output_name = filename,
         ret_data = None)
 #}}}
 #{{{saving with acq params
-data.set_prop("acq_params",values)
-data.name(values['type'])
+data.set_prop("acq_params",config_dict.asdict())
+data.name(config_dict['type'])
 if phase_cycling:
     data.chunk("t",['ph1','t2'],[len(ph1_cyc),-1])
     data.setaxis('ph1', ph1_cyc/4)

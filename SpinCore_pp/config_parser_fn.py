@@ -14,6 +14,7 @@ class configuration(object):
         "SW_kHz":(float, "acq_params", None),
         "acq_time_ms":(float, "acq_params", None),
         "carrierFreq_MHz":(float, "acq_params", None),
+        "gamma_eff_MHz_G":(float, "acq_params", 0.00425),
         "Field":(float, "odnp_params", None),
         "uw_dip_center_GHz":(float, "odnp_params", None),
         "uw_dip_width_GHz":(float, "odnp_params", None),

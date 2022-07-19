@@ -10,20 +10,18 @@ from datetime import datetime
 fl = figlist_var()
 date = datetime.now().strftime('%y%m%d')
 #{{{importing acquisition parameters
-values, config = SpinCore_pp.parser_function('active.ini')
-nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
+config_dict = SpinCore_pp.configuration('active.ini')
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
 #}}}
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config.set('file_names','type','IR')
-config.set('file_names','date',f'{date}')
-IR_counter = values['IR_counter']
-IR_counter += 1
-config.set('file_names','IR_counter',str(IR_counter))
-config.write(open('active.ini','w')) #write edits to config file
-values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
-filename = str(values['date'])+'_'+values['chemical']+'_'+values['type']+'_'+str(values['echo_counter'])
+config_dict['type'] = 'IR'
+config_dict['date'] = date
+config_dict['IR_counter'] += 1
+config_dict['IR_counter'] = IR_counter
+config_dict.write()
+filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type']+'_'+str(config_dict['echo_counter'])
 #}}}
 #{{{phase cycling
 phase_cycling = True
@@ -49,22 +47,22 @@ vd_list_us = np.linspace(5e1,0.5e6,5)
 #{{{run IR
 vd_data = run_IR(
         nPoints = nPoints,
-        nEchoes=values['nEchoes'],
+        nEchoes=config_dict['nEchoes'],
         vd_list_us = vd_list_us,
-        nScans=values['nScans'],
-        adcOffset = values['adc_offset'],
-        carrierFreq_MHz=values['carrierFreq_MHz'],
-        p90_us=values['p90_us'],
-        tau_us = values['tau_us'],
-        repetition=values['repetition_us'],
+        nScans=config_dict['nScans'],
+        adcOffset = config_dict['adc_offset'],
+        carrierFreq_MHz=config_dict['carrierFreq_MHz'],
+        p90_us=config_dict['p90_us'],
+        tau_us = config_dict['tau_us'],
+        repetition=config_dict['repetition_us'],
         ph1_cyc = ph1,
         ph2_cyc = ph2,
         output_name= filename,
-        SW_kHz=values['SW_kHz'],
+        SW_kHz=config_dict['SW_kHz'],
         ret_data = None)
-vd_data.set_prop('acq_params',values)
+vd_data.set_prop('acq_params',config_dict.asdict())
 vd_data.set_prop("postproc", "spincore_IR_v1")
-vd_data.name(values['type'])
+vd_data.name(config_dict['type'])
 if phase_cycling:
     vd_data.chunk("t",['ph1','ph2','t2'],[len(ph1),len(ph2),-1])
     vd_data.setaxis("ph1", ph1 / 4)

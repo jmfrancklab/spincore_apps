@@ -7,25 +7,23 @@ from datetime import datetime
 import configparser
 fl = figlist_var()
 #{{{importing acquisition parameters
-values, config = SpinCore_pp.parser_function('active.ini')
-nPoints = int(values['acq_time_ms']*values['SW_kHz']+0.5)
+config_dict = SpinCore_pp.configuration('active.ini')
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config.set('file_names','type','nutation')
-config.set('file_names','date',f'{date}')
-echo_counter = values['echo_counter']
-echo_counter += 1
-config.set('file_names','echo_counter',str(echo_counter))
-config.write(open('active.ini','w')) #write edits to config file
-values, config = SpinCore_pp.parser_function('active.ini') #translate changes in config file to our dict
-filename = str(values['date'])+'_'+values['chemical']+'_'+values['type']+'_'+str(values['echo_counter'])
+config_dict['type'] = 'nutation'
+config_dict['date'] = f'{date}'
+config_dict['echo_counter'] += 1
+config_dict['echo_counter'] = echo_counter
+config_dict.write()
+filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type']+'_'+str(config_dict['echo_counter'])
 #}}}
 
 #{{{ Edit here to set the actual field
 set_field = False
 if set_field:
-    B0 = values['Field'] # Determine this from Field Sweep
+    B0 = config_dict['Field'] # Determine this from Field Sweep
     thisB0 = xepr().set_field(B0)
 #}}}
 #{{{phase cycling
@@ -47,27 +45,27 @@ for index,val in enumerate(p90_range_us):
     print("INDEX %d - 90 TIME %f"%(index,val))
     print("***")
     nutation_data = run_spin_echo(
-            nScans = values['nScans'],
+            nScans = config_dict['nScans'],
             indirect_idx=0,
             indirect_len = len(p90_range_us),
-            adcOffset=values['adc_offset'],
-            carrierFreq_MHz = values['carrierFreq_MHz'],
+            adcOffset=config_dict['adc_offset'],
+            carrierFreq_MHz = config_dict['carrierFreq_MHz'],
             nPoints = nPoints,
-            nEchoes = values['nEchoes'],
-            p90_us = values['p90_us'],
-            repetition = values['repetition_us'],
-            tau_us = values['tau_us'],
-            SW_kHz = values['SW_kHz'],
+            nEchoes = config_dict['nEchoes'],
+            p90_us = config_dict['p90_us'],
+            repetition = config_dict['repetition_us'],
+            tau_us = config_dict['tau_us'],
+            SW_kHz = config_dict['SW_kHz'],
             output_name = filename,
             ret_data = None)
 SpinCore_pp.stopBoard();
-nutation_data.set_prop('acq_params',values)
+nutation_data.set_prop('acq_params',config_dict.asdict())
 print("EXITING...\n")
 print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        nutation_data.name(values['type'])
+        nutation_data.name(config_dict['type'])
         nutation_data.chunk('t',['ph2','ph1','t2'],[len(ph2_cyc),len(ph1_cyc),-1])
         nutation_data.hdf5_write(myfilename,
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/nutation'))
