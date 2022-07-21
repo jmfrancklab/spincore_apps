@@ -32,7 +32,14 @@ parser_dict['odnp_counter'] += 1
 parser_dict.write()
 filename = f"{parser_dict['date']}_{parser_dict['chemical']}_{parser_dict['type']}{parser_dict['odnp_counter']}"
 #}}}
-vd_list_us = np.linspace(5e1,0.5e6,5)
+#{{{Make VD list based on concentration
+vd_kwargs = {
+        j:parser_dict[j]
+        for j in ['krho_cold','krho_hot','T1water_cold','T1water_hot']
+        if j in parser_dict.keys()
+        }
+vd_list_us = SpinCore_pp.vdlist_from_relaxivities(parser_dict['concentration'],**vd_kwargs)
+#}}}
 # {{{Power settings
 dB_settings = gen_powerlist(parser_dict['max_power'], parser_dict['power_steps'] + 1, three_down=True)
 T1_powers_dB = gen_powerlist(parser_dict['max_power'], parser_dict['num_T1s'], three_down=False)
@@ -74,6 +81,24 @@ with power_control() as p:
     )
     p.start_log()
     p.mw_off()
+    #{{{dummy scan for b12 to settle otherwise uw bleed through
+    dummy_Ep = run_spin_echo(
+            nScans = 3,
+            indirect=0,
+            indirect_len=4,
+            ph1_cyc=Ep_ph1_cyc,
+            adcOffset=parser_dict['adc_offset'],
+            carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
+            nPoints=nPoints,
+            nEchoes=parser_dict['nEchoes'],
+            p90_us=parser_dict['p90_us'],
+            repetition=parser_dict['repetition_us'],
+            tau_us=parser_dict['tau_us'],
+            SW_kHz=parser_dict['SW_kHz'],
+            output_name=filename,
+            indirect_fields=None,
+            ret_data=None)
+    #}}}
     DNP_data = run_spin_echo(
         nScans=parser_dict['nScans'],
         indirect_idx=0,
@@ -158,6 +183,24 @@ with power_control() as p:
         parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
     )
     p.mw_off()
+    #{{{dummy scan for IR to let b12 settle otherwise uw bleed through
+    dummy_IR = run_spin_echo(
+            nScans = 3,
+            indirect=0,
+            indirect_len=4,
+            ph1_cyc=Ep_ph1_cyc,
+            adcOffset=parser_dict['adc_offset'],
+            carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
+            nPoints=nPoints,
+            nEchoes=parser_dict['nEchoes'],
+            p90_us=parser_dict['p90_us'],
+            repetition=parser_dict['repetition_us'],
+            tau_us=parser_dict['tau_us'],
+            SW_kHz=parser_dict['SW_kHz'],
+            output_name=filename,
+            indirect_fields=None,
+            ret_data=None)
+    #}}}
     ini_time = time.time()  # needed b/c data object doesn't exist yet
     vd_data = run_IR(
         nPoints=nPoints,
