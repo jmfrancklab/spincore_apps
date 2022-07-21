@@ -43,7 +43,14 @@ if os.path.exists(myfilename):
         "the file %s already exists, so I'm not going to let you proceed!" % myfilename
     )
 # }}}
-vd_list_us = np.linspace(5e1,0.5e6,5)
+#{{{make vd list
+vd_kwargs = {
+        j:parser_dict[j]
+        for j in ['krho_cold','krho_hot','T1water_cold','T1water_hot']
+        if j in parser_dict.keys()
+        }
+vd_list_us = SpinCore_pp.vdlist_from_relaxivities(parser_dict['concentration'],**vd_kwargs)
+#}}}
 #{{{run IR
 vd_data = run_IR(
         nPoints = nPoints,
