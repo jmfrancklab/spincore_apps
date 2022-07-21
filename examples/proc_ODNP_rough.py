@@ -35,7 +35,7 @@ with figlist_var() as fl:
     data.reorder(['power','t2'],first=False)
     fl.next('raw data')
     fl.image(data)
-    fl.show();quit()
+    fl.show();raise RuntimeError("Someone included a quit statement here.  This is evil!! FIX!!!")
     data.ft(['ph1'])
     fl.image(data.C.setaxis('power','#'))
     fl.next('FT and slice')

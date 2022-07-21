@@ -264,5 +264,5 @@ for filename,nodename in [
     fl.plot(np.real(s_int['power',:-3]),'ko',capsize=6,alpha=0.3)
     fl.plot(np.real(s_int['power',-3:]),'ro',capsize=6,alpha=0.3)
     #}}}
-fl.show();quit()
+fl.show();raise RuntimeError("Someone included a quit statement here.  This is evil!! FIX!!!")
 
