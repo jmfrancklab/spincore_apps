@@ -46,4 +46,6 @@ setup(
         "pyserial>=3.0",
         ],
 #    ext_modules = ext_modules,
+    entry_points=dict(console_scripts=
+            ['calc_tempol_vd=SpinCore_pp.calc_vdlist:print_tempo_vdlist'],)
 )
