@@ -4,7 +4,7 @@ from numpy import r_, double, linspace
 def return_vdlist(
         T1_min, # Ta in Weiss
         T1_max, # Tb in Weiss
-        tau_steps = 8,
+        IR_steps = 8, # not distinguising "IR" vs "FIR" here
         startconstant=0.15, # from Weiss via jf_dnpconf au program,
         stopconstant=2.0, # see below
         ):
@@ -48,19 +48,19 @@ def return_vdlist(
     # taustop = stopconstant*alpha*T1_min
     taustop = stopconstant*T1_max
     # again, jf_dnp does this, equiv to following
-    # tau = r_[0:tau_steps]
-    # tau = taustart + (taustop-taustart)*tau/(tau_steps-1.0);
-    return linspace(taustart,taustop,tau_steps)
-def vdlist_for_tempol(conc,
+    # tau = r_[0:IR_steps]
+    # tau = taustart + (taustop-taustart)*tau/(IR_steps-1.0);
+    return linspace(taustart,taustop,IR_steps)
+def vdlist_from_relaxivities(conc,
         krho_cold=380., # err towards higher, since this goes towards estimating the min T1
         krho_hot=260., # err towards lower, since this goes towards estimating the max T1
-        T1water=2.17,
+        T1water_cold=2.17,
         T1water_hot=2.98):
-    T1_min = 1.0/(conc*krho_cold+1.0/T1water)
+    T1_min = 1.0/(conc*krho_cold+1.0/T1water_cold)
     T1_max = 1.0/(conc*krho_hot+1.0/T1water_hot)
-    print(f"for this concentration of small spin label I calculate a T1_min={T1_min} and T1_max={T1_max}")
+    print(f"for {conc} M of spin label, I calculate a T1_min={T1_min} and T1_max={T1_max}")
     return return_vdlist(T1_min,T1_max)
 def print_tempo_vdlist():
     assert len(sys.argv) == 2
     conc = float(sys.argv[1]) 
-    print(vdlist_for_tempol(conc))
+    print(vdlist_from_relaxivities(conc))

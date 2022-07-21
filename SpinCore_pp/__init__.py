@@ -12,6 +12,7 @@
 #)
 #from .SpinCore_pp import tune
 from .config_parser_fn import configuration
+from .calc_vdlist import vdlist_from_relaxivities, return_vdlist
 #from .process_first_arg import process_args
 
 __all__ = [
@@ -28,5 +29,7 @@ __all__ = [
 #    "stopBoard",
 #    "stop_ppg",
     "configuration",
+    "return_vdlist",
+    "vdlist_from_relaxivities",
     #    "tune",
 ]

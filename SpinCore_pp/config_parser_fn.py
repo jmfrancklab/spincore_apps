@@ -32,6 +32,14 @@ class configuration(object):
         "chemical":(str, "file_names", None),
         "type":(str, "file_names", None),
         "date":(int, "file_names", None),
+        "IR_steps":(int, "acq_params", None),
+        "startconstant":(float, "acq_params", None),
+        "stopconstant":(float, "acq_params", None),
+        "krho_cold":(float, "sample_params", None),
+        "krho_hot":(float, "sample_params", None),
+        "T1water_cold":(float, "sample_params", None),
+        "T1water_hot":(float, "sample_params", None),
+        "concentration":(float, "sample_params", None),
         }
     def __init__(self,filename):
         self.filename = filename
@@ -67,6 +75,8 @@ class configuration(object):
             self._params[key] = converter(value) # check that it's the right type
             self.configobj.set(section,key.lower(),
                     str(self._params[key]))
+    def keys(self):
+        return self._params.keys()
     def write(self):
         for paramname,(converter, section, default) in self.registered_params.items():
             if paramname in self._params.keys():

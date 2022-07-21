@@ -41,3 +41,20 @@ print(
 print("echo counter was", myconfig["echo_counter"], "and I'm going to increment it")
 myconfig["echo_counter"] += 1
 myconfig.write()  # this should write the field and whatever else we've changed
+
+# {{{ pull only the subset of info we want to actually pass to our
+#     function
+relevant_kwargs = {
+    j: myconfig[j]
+    for j in ["krho_cold", "krho_hot", "T1water_cold", "T1water_hot"]
+    if j in myconfig.keys()
+}
+print(
+    "for calculating a IR or FIR vdlist, the relevant parameters that I find in your ini file are",
+    relevant_kwargs,
+)
+print(
+    "this gives me the vdlist:",
+    SpinCore_pp.vdlist_from_relaxivities(myconfig["concentration"], **relevant_kwargs),
+)
+# }}}
