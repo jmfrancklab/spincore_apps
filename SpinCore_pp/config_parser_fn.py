@@ -16,6 +16,7 @@ class configuration(object):
         "stopconstant":(float, "acq_params", None),
         "p90_us":(float, "acq_params", None),
         "gamma_eff_MHz_G":(float, "acq_params", 0.00425),
+        "mw_freqs":(float,"acq_params",9.821e9),
         "concentration":(float, "sample_params", None),
         "krho_cold":(float, "sample_params", None),
         "krho_hot":(float, "sample_params", None),
@@ -37,6 +38,7 @@ class configuration(object):
         "echo_counter":(int, "file_names", 0),
         "cpmg_counter":(int, "file_names", 0),
         "IR_counter":(int, "file_names", 0),
+        "field_counter":(int,"file_names",0),
         "date":(int, "file_names", None),
         "chemical":(str, "file_names", None),
         "type":(str, "file_names", None),
@@ -82,6 +84,6 @@ class configuration(object):
             if paramname in self._params.keys():
                 self.configobj.set(section,paramname.lower(),
                         str(self._params[paramname]))
-        self.configobj.write(open('active.ini','w'))
+            self.configobj.write(open(self.filename,'w'))
     def asdict(self):
         return self._params
