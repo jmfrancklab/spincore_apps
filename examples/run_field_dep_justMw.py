@@ -21,12 +21,11 @@ config_dict = SpinCore_pp.configuration('active.ini')
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config_dict['type'] = 'echo'
+config_dict['type'] = 'field'
 config_dict['date'] = date
-config_dict['echo_counter'] += 1
-config_dict['echo_counter'] = echo_counter
-config_dict.write()
-filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type']+'_'+str(config_dict['echo_counter'])
+config_dict['field_counter'] += 1
+config_dict['field_counter'] = field_counter
+filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type'])
 gamma_eff = (config_dict['carrierFreq_MHz']/config_dict['Field'])
 #}}}
 #{{{phase cycling
@@ -119,11 +118,33 @@ sweep_data.set_prop('acq_params',config_dict.asdict())
 if phase_cycling:
     sweep_data.chunk("t",['ph1','t2'],[4,-1])
     sweep_data.setaxis("ph1",r_[0.0,1.0,2.0,3.0]/4)
+    if config_dict['nScans'] > 1:
+        sweep_data.setaxis('nScans',r_[0:config_dict['nScans']])
+    fl.next('Raw - time')
+    fl.image(sweep_data.C.mean('nScans'))
+    sweep_data.reorder('t2',first=False)
+    sweep_data.ft('t2',shift=True)
+    sweep_data.ft('ph1',unitary=True)
+    fl.next('Raw - frequency')
+    fl.image(sweep_data.C.mean('nScans'))
 else:
-    pass
-sweep_data.reorder('t2',first=False)
-sweep_data.ft('t2',shift=True)
-sweep_data.ft('ph1',unitary=True)
-sweep_data.name('Field_sweep')
-sweep_data.hdf5_write(myfilename, directory = getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
-
+    if config_dict['nScans'] > 1:
+        sweep_data.setaxis('nScans',r_[0:config_dict['nScans']])
+    fl.next('Raw - time')
+    fl.image(sweep_data.C.mean('nScans'))
+    sweep_data.reorder('t',first=False)
+    sweep_data.ft('t',shift=True)
+    fl.next('Raw - frequency')
+    fl.image(sweep_data.C.mean('nScans'))
+sweep_data.name(config_dict['type']+'_'+config_dict['field_counter'])
+sweep_data.set_prop('postproc_type','field_sweep_v1')
+try:
+    sweep_data.hdf5_write(myfilename, directory = getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
+except:
+    print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory")
+    if os.path.exists("temp.h5"):
+        print("there is a temp.h5 -- I'm removing it")
+        os.remove('temp.h5')
+    echo_data.hdf5_write('temp.h5')
+    print("if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!")
+config_dict.write()

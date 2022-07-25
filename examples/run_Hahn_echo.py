@@ -26,15 +26,13 @@ date = datetime.now().strftime('%y%m%d')
 config_dict['type'] = 'echo'
 config_dict['date'] = date
 config_dict['echo_counter'] += 1
-config_dict['echo_counter'] = echo_counter
-filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type']+'_'+str(config_dict['echo_counter'])
+filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type'])
 #}}}
 #{{{let computer set field
 print("I'm assuming that you've tuned your probe to",
         config_dict['carrierFreq_MHz'],
         "since that's what's in your .ini file")
-config_dict["Field"] = config_dict['carrierFreq_MHz']/config_dict['gamma_eff_MHz_G']
-print("Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"%config_dict['Field'])
+print("Based on your .ini file, I'm setting the field to %f"%config_dict['Field'])
 with xepr() as x:
     field = config_dict["Field"]
     assert field < 3700, "are you crazy??? field is too high!"
@@ -84,7 +82,7 @@ SpinCore_pp.stopBoard()
 #{{{setting acq_params
 echo_data.set_prop("postproc_type","proc_Hahn_echoph")
 echo_data.set_prop("acq_params",config_dict.asdict())
-echo_data.name(config_dict['type'])
+echo_data.name(config_dict['type']+'_'+config_dict['echo_counter'])
 #}}}
 #{{{Look at raw data
 if phase_cycling:
