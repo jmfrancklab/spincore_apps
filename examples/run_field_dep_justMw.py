@@ -24,7 +24,6 @@ date = datetime.now().strftime('%y%m%d')
 config_dict['type'] = 'field'
 config_dict['date'] = date
 config_dict['field_counter'] += 1
-config_dict['field_counter'] = field_counter
 filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type'])
 gamma_eff = (config_dict['carrierFreq_MHz']/config_dict['Field'])
 #}}}
@@ -37,12 +36,6 @@ if not phase_cycling:
     nPhaseSteps = 1
 nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
 #}}}
-#{{{check for file
-myfilename = filename + ".h5"
-if os.path.exists(myfilename):
-    raise ValueError(
-            "the file %s already exists, change your output name!"%myfilename)
-#}}}    
 #{{{ Parameters for Bridge12
 powers = r_[config_dict['max_power']]
 min_dBm_step = 0.5
@@ -59,7 +52,7 @@ assert total_pts < 2**14, "You are trying to acquire %d points (too many points)
 with power_control() as p:
     dip_f = p.dip_lock(config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz']/2,
             config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz']/2)
-    mw_freqs.append(dip_f)
+    config_dict['mw_freqs'] = '%.9f'%dip_f
     p.set_power(dB_settings)
     this_dB = dB_settings
     for k in range(10):
@@ -102,7 +95,7 @@ with power_control() as p:
                     indirect_idx = B0_index+1,
                     indirect_len = len(field_axis),
                     adcOffset = config_dict['adc_offset'],
-                    carrierFreq_MHz=config_dict['carrierFreq_MHz'],
+                    carrierFreq_MHz= new_carrierFreq_MHz,
                     nPoints=nPoints,
                     nEchoes = config_dict['nEchoes'],
                     p90_us = config_dict['p90_us'],
@@ -138,13 +131,30 @@ else:
     fl.image(sweep_data.C.mean('nScans'))
 sweep_data.name(config_dict['type']+'_'+config_dict['field_counter'])
 sweep_data.set_prop('postproc_type','field_sweep_v1')
-try:
-    sweep_data.hdf5_write(myfilename, directory = getDATADIR(exp_type='ODNP_NMR_comp/field_dependent'))
-except:
-    print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory")
-    if os.path.exists("temp.h5"):
-        print("there is a temp.h5 -- I'm removing it")
-        os.remove('temp.h5')
-    echo_data.hdf5_write('temp.h5')
-    print("if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!")
+target_directory = getDATADIR(exp_type='ODNP_NMR_comp/field_dependent')
+filename_out = filename + '.h5'
+nodename = sweep_data.name()
+if os.path.exists(filename+'.h5'):
+    print('this file already exists so we will add a node to it!')
+    with h5py.File(os.path.normpath(os.path.join(target_directory,
+        f"{filename_out}"))) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, lets delete it to overwrite")
+            del fp[nodename]
+    sweep_data.hdf5_write(f'{filename_out}/{nodename}', directory = target_directory)
+else:
+    try:
+        sweep_data.hdf5_write(filename+'.h5',
+                directory=target_directory)
+    except:
+        print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory")
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 -- I'm removing it")
+            os.remove('temp.h5')
+        echo_data.hdf5_write('temp.h5')
+        print("if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!")
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data",sweep_data.name()))
+print(("Shape of saved data",ndshape(sweep_data)))
 config_dict.write()
+fl.show()
