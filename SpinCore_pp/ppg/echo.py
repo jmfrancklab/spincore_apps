@@ -147,23 +147,24 @@ def run_spin_echo(
                 )
                 # }}}
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
-            if x == 0:
-                time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
-                ret_data = psp.ndshape([len(time_axis), nScans, indirect_len], ["t", "nScans", "indirect"]).alloc(dtype=np.complex128)
-                ret_data.setaxis("indirect", mytimes)
-                ret_data.setaxis("t", time_axis).set_units("t", "s")
-                ret_data.setaxis("nScans", r_[0:nScans])
-            ret_data["indirect", indirect_idx]["nScans", x] = data_array
+            time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
+            ret_data = psp.ndshape(
+                [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
+            ).alloc(dtype=np.complex128)
+            ret_data.setaxis("indirect", mytimes)
+            ret_data.setaxis("t", time_axis).set_units("t", "s")
+            ret_data.setaxis("nScans", r_[0:nScans])
+        ret_data["indirect", indirect_idx]["nScans", x] = data_array
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
         logging.debug(strm("stored scan", x, "for indirect_idx", indirect_idx))
-    logging.debug(
-        strm(
-            "time for each chunk",
-            [
-                "%s %0.1f" % (run_scans_names[j], v)
-                for j, v in enumerate(np.diff(this_array))
-            ],
+        logging.debug(
+            strm(
+                "time for each chunk",
+                [
+                    "%s %0.1f" % (run_scans_names[j], v)
+                    for j, v in enumerate(np.diff(this_array))
+                ],
+            )
         )
-    )
     return ret_data
