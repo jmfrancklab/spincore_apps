@@ -133,7 +133,7 @@ print(("Shape of saved data",ndshape(echo_data)))
 config_dict.write()
 print("Your *current* γ_eff (MHz/G) should be ",
         config_dict['carrierFreq_MHz']/config_dict['Field'],
-        ' - (Δν/',config_dict['Field'],
+        ' - (Δν*1e-6/',config_dict['Field'],
         '), where Δν is your resonance offset')
 print("So, look at the resonance offset where your signal shows up, and enter the new value for gamma_eff_MHz_G into your .ini file, and run me again!")
 fl.show()
