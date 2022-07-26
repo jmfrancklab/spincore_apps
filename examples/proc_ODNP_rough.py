@@ -35,7 +35,6 @@ with figlist_var() as fl:
     data.reorder(['power','t2'],first=False)
     fl.next('raw data')
     fl.image(data)
-    fl.show();raise RuntimeError("Someone included a quit statement here.  This is evil!! FIX!!!")
     data.ft(['ph1'])
     fl.image(data.C.setaxis('power','#'))
     fl.next('FT and slice')
@@ -68,3 +67,4 @@ with figlist_var() as fl:
     #ax.legend(**dict(bbox_to_anchor=(1.05,1), loc=2, borderaxespad=0.))
     plt.tight_layout()
     # }}}
+fl.show()    

@@ -32,7 +32,8 @@ filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict[
 print("I'm assuming that you've tuned your probe to",
         config_dict['carrierFreq_MHz'],
         "since that's what's in your .ini file")
-print("Based on your .ini file, I'm setting the field to %f"%config_dict['Field'])
+config_dict["Field"] = config_dict['carrierFreq_MHz']/config_dict['gamma_eff_MHz_G']
+print("Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"%config_dict['Field'])
 with xepr() as x:
     field = config_dict["Field"]
     assert field < 3700, "are you crazy??? field is too high!"
