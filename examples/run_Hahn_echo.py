@@ -40,8 +40,6 @@ with xepr() as x:
     assert field > 3300, "are you crazy?? field is too low!"
     field = x.set_field(field)
     print("field set to ",field)
-print("I set the field to %f"%true_B0)
-config_dict["Field"] = true_B0
 #}}}
 #{{{set phase cycling
 phase_cycling = True
@@ -51,13 +49,6 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 #}}}    
-#{{{ check for file
-myfilename = filename + ".h5"
-if os.path.exists(myfilename):
-    raise ValueError(
-            "the file %s already exists, change your output name!"%myfilename
-            )
-#}}}
 #{{{check total points
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
