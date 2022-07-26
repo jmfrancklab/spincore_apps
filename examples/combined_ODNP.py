@@ -17,7 +17,6 @@ from SpinCore_pp.power_helper import gen_powerlist
 from SpinCore_pp.ppg import run_spin_echo, run_IR
 from Instruments import power_control
 from datetime import datetime
-# do the same with the inversion recovery
 logger = init_logging(level="debug")
 fl = figlist_var()
 # {{{ import acquisition parameters
@@ -69,7 +68,6 @@ if os.path.exists(myfilename):
     )
 # }}}
 # {{{run enhancement
-DNP_ini_time = time.time()
 with power_control() as p:
     # JF points out it should be possible to save time by removing this (b/c we
     # shut off microwave right away), but AG notes that doing so causes an
@@ -80,6 +78,7 @@ with power_control() as p:
     )
     p.start_log()
     p.mw_off()
+    DNP_ini_time = time.time()
     DNP_data = run_spin_echo(
         nScans=parser_dict['nScans'],
         indirect_idx=0,
@@ -105,8 +104,6 @@ with power_control() as p:
     DNP_thermal_done = time.time()
     time_axis_coords = DNP_data.getaxis("indirect")
     time_axis_coords[0]["start_times"] = DNP_ini_time
-    DNP_data.set_prop("Ep_start_time", DNP_ini_time)
-    DNP_data.set_prop("Ep_thermal_done_time", DNP_thermal_done)
     time_axis_coords[0]["stop_times"] = DNP_thermal_done
     power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
@@ -164,24 +161,6 @@ with power_control() as p:
         parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
     )
     p.mw_off()
-    #{{{dummy scan for IR to let b12 settle otherwise uw bleed through
-    dummy_IR = run_spin_echo(
-            nScans = 3,
-            indirect=0,
-            indirect_len=4,
-            ph1_cyc=Ep_ph1_cyc,
-            adcOffset=parser_dict['adc_offset'],
-            carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
-            nPoints=nPoints,
-            nEchoes=parser_dict['nEchoes'],
-            p90_us=parser_dict['p90_us'],
-            repetition=parser_dict['repetition_us'],
-            tau_us=parser_dict['tau_us'],
-            SW_kHz=parser_dict['SW_kHz'],
-            output_name=filename,
-            indirect_fields=None,
-            ret_data=None)
-    #}}}
     ini_time = time.time()  # needed b/c data object doesn't exist yet
     vd_data = run_IR(
         nPoints=nPoints,
@@ -201,7 +180,7 @@ with power_control() as p:
     )
     vd_data.set_prop("start_time", ini_time)
     vd_data.set_prop("stop_time", time.time())
-    vd_data.set_prop("acq_params", values)
+    vd_data.set_prop("acq_params", parser_dict.asdict())
     vd_data.set_prop("postproc_type", "spincore_IR_v1")
     vd_data.name("FIR_noPower")
     vd_data.chunk("t", ["ph1", "ph2", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])

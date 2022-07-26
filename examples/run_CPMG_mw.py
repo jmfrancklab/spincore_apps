@@ -43,7 +43,6 @@ from Instruments import Bridge12,prologix_connection,gigatronics
 from datetime import datetime
 import time
 import configparser
-
 fl = figlist_var()
 #{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration('active.ini')
@@ -76,16 +75,13 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-
 #}}}
 #{{{create filename and save to config file
 date = datetime.now().strftime('%y%m%d')
-config_dict['type'] = 'signal'
+config_dict['type'] = 'cpmg_mw'
 config_dict['date'] = date
 config_dict['echo_counter'] += 1
-config_dict['echo_counter'] = echo_counter
-config_dict.write()
-filename = str(config_dict['date']) + '_' + config_dict['chemical'] + '_' + config_dict['type'] + '_' + str(config_dict['echo_counter'])
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
 #{{{power settings
 dB_settings = gen_powerlist(config_dict['max_power'],config_dict['power_steps'])
@@ -104,12 +100,20 @@ pad_start = tau_extra - config_dict['deadtime_us']
 pad_end = tau_extra - config_dict['deblank_us']*2 # marker + deblank
 twice_tau = config_dict['deblank_us'] + 2*config_dict['p90_us'] + config_dict['deadtime_us'] + pad_start + config_dict['acq_time_ms']*1e3 + pad_end + marker
 tau_us = twice_tau/2.0
+config_dict['tau_us'] = tau_us
 #}}}
 #{{{phase cycling
 nPhaseSteps = 2
 ph1_cyc = r_[0,2]
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 #}}}
+# {{{ check for file
+myfilename = filename + ".h5"
+if os.path.exists(myfilename):
+    raise ValueError(
+        "the file %s already exists, so I'm not going to let you proceed!" % myfilename
+    )
+# }}}
 #{{{run CPMG
 cpmg_data = run_cpmg(
         nScans = config_dict['nScans'],
@@ -124,7 +128,7 @@ cpmg_data = run_cpmg(
         repetition_us = config_dict['repetition_us'],
         pad_start_us = pad_start,
         pad_end_us = pad_end,
-        tau_us = tau_us,
+        tau_us = config_dict['tau_us'],
         SW_kHz = config_dict['SW_kHz'],
         output_name = filename,
         ret_data = None)
@@ -183,7 +187,7 @@ with Bridge12() as b:
                 repetition_us = config_dict['repetition_us'],
                 pad_start_us = pad_start,
                 pad_end_us = pad_end,
-                tau_us = tau_us,
+                tau_us = config_dict['tau_us'],
                 SW_kHz = config_dict['SW_kHz'],
                 output_name = filename,
                 ret_data = cpmg_data)
@@ -192,11 +196,11 @@ SpinCore_pp.stopBoard();
 #}}}
 #{{{save and show data
 DNP_data.set_prop('acq_params',config_dict.asdict())
-DNP_data.name(config_dict['type'])
+DNP_data.name(config_dict['type']+'_'+config_dict['cpmg_counter'])
 DNP_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
 DNP_data.setaxis('ph1',len(ph1_cyc)/4)
 DNP_data.hdf5_write(myfilename,
-        directory=getDATADIR(exp_type='ODNP_NMR_comp/DNP'))
+        directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
 fl.next('raw data')
 fl.image(DNP_data)
 fl.next('abs raw data')

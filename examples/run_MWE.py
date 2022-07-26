@@ -10,25 +10,21 @@ def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
         print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
         print("EXITING.")
-        raise RuntimeError("Someone included a quit statement here.  This is evil!! FIX!!!")
     else:
         print("VERIFIED NUMBER OF POINTS.")
     if (nScans < 1):
         print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
         print("EXITING.")
-        raise RuntimeError("Someone included a quit statement here.  This is evil!! FIX!!!")
     else:
         print("VERIFIED NUMBER OF SCANS.")
     if (p90 < 0.065):
         print("ERROR: PULSE TIME TOO SMALL.")
         print("EXITING.")
-        raise RuntimeError("Someone included a quit statement here.  This is evil!! FIX!!!")
     else:
         print("VERIFIED PULSE TIME.")
     if (tau < 0.065):
         print("ERROR: DELAY TIME TOO SMALL.")
         print("EXITING.")
-        raise RuntimeError("Someone included a quit statement here.  This is evil!! FIX!!!")
     else:
         print("VERIFIED DELAY TIME.")
     return

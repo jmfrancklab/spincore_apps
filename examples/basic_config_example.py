@@ -34,13 +34,13 @@ try:
 except Exception as e:
     print("looking for p90_us failed with:\n\n", e)
 # set a parameter that is registered, and see that it will change
-myconfig["field"] = 3600.99
+myconfig["adc_offset"] = 30
 print(
     myconfig.asdict()
 )  # so we can, e.g. put in an HDF5 file -- this should have the nice case that was registered
 print("echo counter was", myconfig["echo_counter"], "and I'm going to increment it")
 myconfig["echo_counter"] += 1
-myconfig.write()  # this should write the field and whatever else we've changed
+myconfig.write()  # this should write the adc offset and whatever else we've changed
 
 # {{{ pull only the subset of info we want to actually pass to our
 #     function

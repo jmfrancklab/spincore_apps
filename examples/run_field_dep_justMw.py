@@ -24,8 +24,7 @@ date = datetime.now().strftime('%y%m%d')
 config_dict['type'] = 'field'
 config_dict['date'] = date
 config_dict['field_counter'] += 1
-filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type'])
-gamma_eff = (config_dict['carrierFreq_MHz']/config_dict['Field'])
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
 #{{{phase cycling
 print("Here is my field axis:",field_axis)
@@ -57,19 +56,19 @@ with power_control() as p:
     this_dB = dB_settings
     for k in range(10):
         time.sleep(0.5)
-        if p.get_power_setting()>= this_dB: break
+        if p.get_po-wer_setting()>= this_dB: break
     if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, this power has still not settled")
     meter_powers = np.zeros_like(dB_settings)
     with xepr() as x_server:
         first_B0 = x_server.set_field(field_axis[0])
         time.sleep(3.0)
-        carrierFreq_MHz = gamma_eff * first_B0
+        carrierFreq_MHz = config_dict['gamma_eff_MHz_G'] * first_B0
         sweep_data = run_spin_echo(
                 nScans = config_dict['nScans'],
                 indirect_idx = 0,
                 indirect_len = len(field_axis),
                 adcOffset = config_dict['adc_offset'],
-                carrierFreq_MHz = config_dict['carrierFreq_MHz'],
+                carrierFreq_MHz = carrierFreq_MHz,
                 nPoints=nPoints,
                 nEchoes = config_dict['nEchoes'],
                 p90_us = config_dict['p90_us'],
@@ -86,7 +85,7 @@ with power_control() as p:
             true_B0 = x_server.set_field(desired_B0)
             logging.info("My field in G is %f"%true_B0)
             time.sleep(3.0)
-            new_carrierFreq_MHz = gamma_eff*true_B0
+            new_carrierFreq_MHz = config_dict['gamma_eff_MHz_G']*true_B0
             myfreqs_fields[B0_index+1]['Field'] = true_B0
             myfreqs_fields[B0_index+1]['carrierFreq'] = new_carrierFreq_MHz
             logging.info("My frequency in MHz is", new_carrierFreq_MHz)

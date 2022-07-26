@@ -27,7 +27,6 @@ class configuration(object):
         "uw_dip_center_GHz":(float, "odnp_params", None),
         "uw_dip_width_GHz":(float, "odnp_params", None),
         "FIR_rep":(float, "odnp_params", None),
-        "Field":(float, "odnp_params", None),
         "adc_offset":(int, "acq_params", None),
         "nScans":(int, "acq_params", 1),
         "nEchoes":(int, "acq_params", None),

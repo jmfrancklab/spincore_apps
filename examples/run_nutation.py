@@ -15,15 +15,13 @@ date = datetime.now().strftime('%y%m%d')
 config_dict['type'] = 'nutation'
 config_dict['date'] = f'{date}'
 config_dict['echo_counter'] += 1
-config_dict['echo_counter'] = echo_counter
-config_dict.write()
-filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type']+'_'+str(config_dict['echo_counter'])
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
 
 #{{{ Edit here to set the actual field
 set_field = False
 if set_field:
-    B0 = config_dict['Field'] # Determine this from Field Sweep
+    B0 = config_dict['carrierFreq_MHz'] / config_dict['gamma_eff_MHz_G'] # Determine this from Field Sweep
     thisB0 = xepr().set_field(B0)
 #}}}
 #{{{phase cycling
@@ -52,7 +50,7 @@ for index,val in enumerate(p90_range_us):
             carrierFreq_MHz = config_dict['carrierFreq_MHz'],
             nPoints = nPoints,
             nEchoes = config_dict['nEchoes'],
-            p90_us = config_dict['p90_us'],
+            p90_us = p90_us,
             repetition = config_dict['repetition_us'],
             tau_us = config_dict['tau_us'],
             SW_kHz = config_dict['SW_kHz'],

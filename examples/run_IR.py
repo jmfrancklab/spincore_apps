@@ -18,7 +18,7 @@ date = datetime.now().strftime('%y%m%d')
 config_dict['type'] = 'IR'
 config_dict['date'] = date
 config_dict['IR_counter'] += 1
-filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type']
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
 #{{{phase cycling
 phase_cycling = True

@@ -50,22 +50,26 @@ config_dict['date'] = date
 config_dict['echo_counter'] += 1
 config_dict['echo_counter'] = echo_counter
 config_dict.write()
-filename = str(config_dict['date']) + '_' + config_dict['chemical'] + '_' + config_dict['type'] + '_' + str(config_dict['echo_counter'])
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
-
 marker = 1.0
-
 tau_extra = 200.0 # us, must be more than deadtime and more than deblank
 pad_start = tau_extra - config_dict['deadtime_us']
 pad_end = tau_extra - config_dict['deblank_us']*2 
-
 nPhaseSteps = 2
 ph1_cyc = r_[0,2]
 p90_range = linspace(3.0,4.0,5)#,endpoint=False)
+# {{{ check for file
+myfilename = filename + ".h5"
+if os.path.exists(myfilename):
+    raise ValueError(
+        "the file %s already exists, so I'm not going to let you proceed!" % myfilename
+    )
+# }}}
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 for index,val in enumerate(p90_range):
     p90 = val # us
-    twice_tau = config_dict['deblank_us'] + 2*config_dict['p90_us'] + config_dict['deadtime_us'] + pad_start + config_dict['acq_time_ms']*1e3 + pad_end + marker
+    twice_tau = config_dict['deblank_us'] + 2*p90 + config_dict['deadtime_us'] + pad_start + config_dict['acq_time_ms']*1e3 + pad_end + marker
     tau_us = twice_tau/2.0
     print("***")
     print("INDEX %d - 90 TIME %f"%(index,val))
@@ -79,11 +83,11 @@ for index,val in enumerate(p90_range):
                 carrierFreq_MHz=config_dict['carrierFreq_MHz'],
                 nPoints=nPoints,
                 nEchoes = config_dict['nEchoes'],
-                p90_us = config_dict['p90_us'],
+                p90_us = p90_us,
                 repetition_us = config_dict['repetition_us'],
                 pad_start_us = pad_start,
                 pad_end_us = pad_end,
-                tau_us = config_dict['tau_us'],
+                tau_us = tau_us,
                 SW_kHz=config_dict['SW_kHz'],
                 output_name=filename,
                 ph1_cyc = ph1_cyc,
@@ -97,21 +101,21 @@ for index,val in enumerate(p90_range):
                 carrierFreq_MHz = config_dict['carrierFreq_MHz'],
                 nPoints=nPoints,
                 nEchoes = config_dict['nEchoes'],
-                p90_us = vlaues['p90_us'],
+                p90_us = p90,
                 repetition_us = config_dict['repetition_us'],
                 pad_start_us = pad_start,
                 pad_end_us = pad_end,
-                tau_us = config_dict['tau_us'],
+                tau_us = tau_us,
                 SW_kHz=config_dict['SW_kHz'],
                 output_name=filename,
                 ph1_cyc = ph1_cyc,
                 ret_data = nutation_data)
+SpinCore_pp.stopBoard();         
 nutation_data.set_prop("acq_params",config_dict.asdict())
-nutation_data.name(config_dict['type'])
+nutation_data.name(config_dict['type']+'_'+config_dict['cpmg_counter'])
 nutation_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
 nutation_data.setaxis('ph1',ph1_cyc/4)
 nutation_data.hdf5_write(myfilename)
-SpinCore_pp.stopBoard();
 fl.next('raw data')
 fl.image(nutation_data)
 nutation_data.ft('t',shift=True)

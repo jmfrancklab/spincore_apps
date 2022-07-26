@@ -26,20 +26,19 @@ date = datetime.now().strftime('%y%m%d')
 config_dict['type'] = 'echo'
 config_dict['date'] = date
 config_dict['echo_counter'] += 1
-filename = str(config_dict['date'])+'_'+config_dict['chemical']+'_'+config_dict['type'])
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
 #{{{let computer set field
 print("I'm assuming that you've tuned your probe to",
         config_dict['carrierFreq_MHz'],
         "since that's what's in your .ini file")
-config_dict["Field"] = config_dict['carrierFreq_MHz']/config_dict['gamma_eff_MHz_G']
-print("Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"%config_dict['Field'])
+field = config_dict['carrierFreq_MHz']/config_dict['gamma_eff_MHz_G']
+print("Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"%Field)
 with xepr() as x:
-    field = config_dict["Field"]
-    assert field < 3700, "are you crazy??? field is too high!"
-    assert field > 3300, "are you crazy?? field is too low!"
-    field = x.set_field(field)
-    print("field set to ",field)
+    assert Field < 3700, "are you crazy??? field is too high!"
+    assert Field > 3300, "are you crazy?? field is too low!"
+    Field = x.set_field(Field)
+    print("field set to ",Field)
 #}}}
 #{{{set phase cycling
 phase_cycling = True
@@ -132,8 +131,8 @@ print(("Name of saved data",echo_data.name()))
 print(("Shape of saved data",ndshape(echo_data)))
 config_dict.write()
 print("Your *current* γ_eff (MHz/G) should be ",
-        config_dict['carrierFreq_MHz']/config_dict['Field'],
-        ' - (Δν*1e-6/',config_dict['Field'],
+        config_dict['gamma_eff_MHz_G'],
+        ' - (Δν*1e-6/',Field,
         '), where Δν is your resonance offset')
 print("So, look at the resonance offset where your signal shows up, and enter the new value for gamma_eff_MHz_G into your .ini file, and run me again!")
 fl.show()
