@@ -15,7 +15,7 @@ from Instruments.XEPR_eth import xepr
 import h5py
 fl = figlist_var()
 mw_freqs = []
-field_axis = r_[3502:3505:1.0]
+field_axis = r_[3512:3518:2.0]
 #{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration('active.ini')
 #}}}
@@ -56,7 +56,7 @@ with power_control() as p:
     this_dB = dB_settings
     for k in range(10):
         time.sleep(0.5)
-        if p.get_po-wer_setting()>= this_dB: break
+        if p.get_power_setting()>= this_dB: break
     if p.get_power_setting() < this_dB: raise ValueError("After 10 tries, this power has still not settled")
     meter_powers = np.zeros_like(dB_settings)
     with xepr() as x_server:
@@ -112,23 +112,24 @@ if phase_cycling:
     sweep_data.setaxis("ph1",r_[0.0,1.0,2.0,3.0]/4)
     if config_dict['nScans'] > 1:
         sweep_data.setaxis('nScans',r_[0:config_dict['nScans']])
+    sweep_data.reorder(['ph1','nScans','t2'])
     fl.next('Raw - time')
-    fl.image(sweep_data.C.mean('nScans'))
+    fl.image(sweep_data.C.mean('nScans').setaxis('indirect','#').set_units('indirect','scan #'))
     sweep_data.reorder('t2',first=False)
     sweep_data.ft('t2',shift=True)
     sweep_data.ft('ph1',unitary=True)
     fl.next('Raw - frequency')
-    fl.image(sweep_data.C.mean('nScans'))
+    fl.image(sweep_data.C.mean('nScans').setaxis('indirect','#').set_units('indirect','scan #'))
 else:
     if config_dict['nScans'] > 1:
         sweep_data.setaxis('nScans',r_[0:config_dict['nScans']])
     fl.next('Raw - time')
-    fl.image(sweep_data.C.mean('nScans'))
+    fl.image(sweep_data.C.mean('nScans').setaxis('indirect','#').set_units('indirect','scan #'))
     sweep_data.reorder('t',first=False)
     sweep_data.ft('t',shift=True)
     fl.next('Raw - frequency')
-    fl.image(sweep_data.C.mean('nScans'))
-sweep_data.name(config_dict['type']+'_'+config_dict['field_counter'])
+    fl.image(sweep_data.C.mean('nScans').setaxis('indirect','#').set_units('indirect','scan #'))
+sweep_data.name(config_dict['type']+'_'+str(config_dict['field_counter']))
 sweep_data.set_prop('postproc_type','field_sweep_v1')
 target_directory = getDATADIR(exp_type='ODNP_NMR_comp/field_dependent')
 filename_out = filename + '.h5'

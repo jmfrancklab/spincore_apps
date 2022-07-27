@@ -35,11 +35,11 @@ assert total_pts < 2**14, "You are trying to acquire %d points (too many points)
 #}}}
 #{{{make vd list
 vd_kwargs = {
-        j:parser_dict[j]
+        j:config_dict[j]
         for j in ['krho_cold','krho_hot','T1water_cold','T1water_hot']
-        if j in parser_dict.keys()
+        if j in config_dict.keys()
         }
-vd_list_us = SpinCore_pp.vdlist_from_relaxivities(parser_dict['concentration'],**vd_kwargs) * 1e6 #put vd list into microseconds
+vd_list_us = SpinCore_pp.vdlist_from_relaxivities(config_dict['concentration'],**vd_kwargs) * 1e6 #put vd list into microseconds
 #}}}
 #{{{run IR
 vd_data = run_IR(
@@ -82,17 +82,17 @@ if os.path.exists(filename+'.h5'):
         if nodename in fp.keys():
             print("this nodename already exists, lets delete it to overwrite")
             del fp[nodename]
-    echo_data.hdf5_write(f'{filename_out}/{nodename}', directory = target_directory)
+    vd_data.hdf5_write(f'{filename_out}/{nodename}', directory = target_directory)
 else:
     try:
-        echo_data.hdf5_write(filename+'.h5',
+        vd_data.hdf5_write(filename+'.h5',
                 directory=target_directory)
     except:
         print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory")
         if os.path.exists("temp.h5"):
             print("there is a temp.h5 -- I'm removing it")
             os.remove('temp.h5')
-        echo_data.hdf5_write('temp.h5')
+        vd_data.hdf5_write('temp.h5')
         print("if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!")
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data",vd_data.name()))

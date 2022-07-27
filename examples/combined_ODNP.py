@@ -228,7 +228,7 @@ with power_control() as p:
         )
         vd_data.set_prop("start_time", ini_time)
         vd_data.set_prop("stop_time", time.time())
-        vd_data.set_prop("acq_params", values)
+        vd_data.set_prop("acq_params", parser_dict.asdict())
         vd_data.set_prop("postproc_type", "spincore_IR_v1")
         vd_data.name(T1_node_names[j])
         vd_data.chunk("t", ["ph1", "ph2", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
