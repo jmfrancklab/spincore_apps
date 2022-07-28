@@ -137,6 +137,7 @@ cpmg_data = run_cpmg(
     output_name=filename,
     ret_data=None,
 )
+SpinCore_pp.stopBoard()
 # raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
     b.set_wg(True)
