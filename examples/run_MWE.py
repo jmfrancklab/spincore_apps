@@ -73,7 +73,7 @@ nPhaseSteps = 1
 RX_delay = 120.0
 nPoints = 64
 tau_adjust = 0.0
-tau = RX_delay + acq_time * 1e3 * 0.5 + tau_adjust
+tau = RX_delay + config_dict["acq_time_ms"] * 1e3 * 0.5 + tau_adjust
 print("TAU DELAY:", tau, "us")
 data_length = 2 * nPoints * config_dict["nEchoes"] * nPhaseSteps
 num_transients = 100
