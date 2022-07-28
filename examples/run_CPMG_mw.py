@@ -103,13 +103,6 @@ nPhaseSteps = 2
 ph1_cyc = r_[0,2]
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 #}}}
-# {{{ check for file
-myfilename = filename + ".h5"
-if os.path.exists(myfilename):
-    raise ValueError(
-        "the file %s already exists, so I'm not going to let you proceed!" % myfilename
-    )
-# }}}
 #{{{run CPMG
 cpmg_data = run_cpmg(
         nScans = config_dict['nScans'],
