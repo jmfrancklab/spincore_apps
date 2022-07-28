@@ -195,8 +195,23 @@ DNP_data.set_prop('acq_params',config_dict.asdict())
 DNP_data.name(config_dict['type']+'_'+config_dict['cpmg_counter'])
 DNP_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
 DNP_data.setaxis('ph1',len(ph1_cyc)/4)
-DNP_data.hdf5_write(myfilename,
-        directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
+if config_dict['nScans'] > 1:
+    DNP_data.setaxis('nScans',r_[0:config_dict['nScans']])
+target_directory = getDATADIR(exp_type='ODNP_NMR_comp/CPMG')
+filename_out = filename + '.h5'
+nodename = DNP_data.name()
+if os.path.exists(filename+'.h5'):
+    print('this file already exists so we will add a node to it!')
+    with h5py.File(os.path.normpath(os.path.join(target_directory,
+        f"{filename_out}"))) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp")
+            DNP_data.name('temp')
+            nodename = 'temp'
+    DNP_data.hdf5_write(f'{filename_out}/{nodename}', directory = target_directory)
+else:
+    DNP_data.hdf5_write(filename+'.h5',
+            directory=target_directory)
 fl.next('raw data')
 fl.image(DNP_data)
 fl.next('abs raw data')

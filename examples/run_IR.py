@@ -65,6 +65,8 @@ if phase_cycling:
     vd_data.chunk("t",['ph2','ph1','t2'],[len(ph1),len(ph2),-1])
     vd_data.setaxis("ph1", ph1 / 4)
     vd_data.setaxis("ph2", ph2 / 4)
+    if config_dict['nScans'] > 1:
+        vd_data.setaxis('nScans',r_[0:config_dict['nScans']])
 else:
     vd_data.rename('t','t2')
 vd_data.reorder(['ph1','ph2','vd','t2'])
@@ -80,20 +82,13 @@ if os.path.exists(filename+'.h5'):
     with h5py.File(os.path.normpath(os.path.join(target_directory,
         f"{filename_out}"))) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, lets delete it to overwrite")
-            del fp[nodename]
-    vd_data.hdf5_write(f'{filename_out}/{nodename}', directory = target_directory)
+            print("this nodename already exists, so I will call it temp")
+            vd_data.name('temp')
+            nodename = 'temp'
+    echo_data.hdf5_write(f'{filename_out}/{nodename}', directory = target_directory)
 else:
-    try:
-        vd_data.hdf5_write(filename+'.h5',
-                directory=target_directory)
-    except:
-        print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory")
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 -- I'm removing it")
-            os.remove('temp.h5')
-        vd_data.hdf5_write('temp.h5')
-        print("if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!")
+    vd_data.hdf5_write(filename+'.h5',
+            directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data",vd_data.name()))
 print(("Shape of saved data",ndshape(vd_data)))

@@ -57,13 +57,6 @@ pad_end = tau_extra - config_dict['deblank_us']*2
 nPhaseSteps = 2
 ph1_cyc = r_[0,2]
 p90_range = linspace(3.0,4.0,5)#,endpoint=False)
-# {{{ check for file
-myfilename = filename + ".h5"
-if os.path.exists(myfilename):
-    raise ValueError(
-        "the file %s already exists, so I'm not going to let you proceed!" % myfilename
-    )
-# }}}
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 for index,val in enumerate(p90_range):
     p90 = val # us
@@ -113,7 +106,23 @@ nutation_data.set_prop("acq_params",config_dict.asdict())
 nutation_data.name(config_dict['type']+'_'+config_dict['cpmg_counter'])
 nutation_data.chunk('t',['ph1','t2'],[len(ph1_cyc),-1])
 nutation_data.setaxis('ph1',ph1_cyc/4)
-nutation_data.hdf5_write(myfilename)
+if config_dict['nScans'] > 1:
+    nutation_data.setaxis('nScans',r_[0:config_dict['nScans']])
+target_directory = getDATADIR(exp_type='ODNP_NMR_comp/CPMG')
+filename_out = filename + '.h5'
+nodename = nutation_data.name()
+if os.path.exists(filename+'.h5'):
+    print('this file already exists so we will add a node to it!')
+    with h5py.File(os.path.normpath(os.path.join(target_directory,
+        f"{filename_out}"))) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp")
+            nutation_data.name('temp')
+            nodename = 'temp'
+    nutation_data.hdf5_write(f'{filename_out}/{nodename}', directory = target_directory)
+else:
+    nutation_data.hdf5_write(filename+'.h5',
+            directory=target_directory)
 fl.next('raw data')
 fl.image(nutation_data)
 nutation_data.ft('t',shift=True)

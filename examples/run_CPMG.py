@@ -62,11 +62,26 @@ data = run_cpmg(
 SpinCore_pp.stopBoard();
 data.set_prop("acq_params",config_dict.asdict())
 data.name(config_dict['type']+'_'+config_dict['cpmg_counter'])
+target_directory = getDATADIR(exp_type='ODNP_NMR_comp/CPMG')
+filename_out = filename + '.h5'
+nodename = data.name()
 if phase_cycling:
     data.chunk("t",['ph1','t2'],[len(ph1_cyc),-1])
     data.setaxis('ph1', ph1_cyc/4)
-data.hdf5_write(myfilename,
-        directory=getDATADIR(exp_type = 'ODNP_NMR_comp/CPMG'))
+    if config_dict['nScans'] > 1:
+        data.setaxis('nScans',r_[0:config_dict['nScans']])
+if os.path.exists(filename+'.h5'):
+    print('this file already exists so we will add a node to it!')
+    with h5py.File(os.path.normpath(os.path.join(target_directory,
+        f"{filename_out}"))) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp")
+            data.name('temp')
+            nodename = 'temp'
+    data.hdf5_write(f'{filename_out}/{nodename}', directory = target_directory)
+else:
+    data.hdf5_write(filename+'.h5',
+            directory=target_directory)
 #}}}
 #{{{visualize raw data
 s = data.C
