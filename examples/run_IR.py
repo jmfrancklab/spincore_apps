@@ -94,7 +94,7 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             vd_data.name("temp")
             nodename = "temp"
-    echo_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    vd_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
     vd_data.hdf5_write(filename + ".h5", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
