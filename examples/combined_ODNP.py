@@ -116,6 +116,7 @@ with power_control() as p:
     #                         that powers and other parameters are defined
     #                         globally w/in the script, as this function is not
     #                         designed to be moved outside the module
+    SpinCore_pp.stopBoard()
     DNP_thermal_done = time.time()
     time_axis_coords = DNP_data.getaxis("indirect")
     time_axis_coords[0]["start_times"] = DNP_ini_time
@@ -156,6 +157,7 @@ with power_control() as p:
             output_name=filename,
             ret_data=DNP_data,
         )
+        SpinCore_pp.stopBoard()
         time_axis_coords[j + 1]["stop_times"] = time.time()
 DNP_data.set_prop("stop_time", time.time())
 DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
@@ -195,6 +197,7 @@ with power_control() as p:
         ph2_cyc=IR_ph2_cyc,
         ret_data=None,
     )
+    SpinCore_pp.stopBoard()
     vd_data.set_prop("start_time", ini_time)
     vd_data.set_prop("stop_time", time.time())
     vd_data.set_prop("acq_params", parser_dict.asdict())
@@ -243,6 +246,7 @@ with power_control() as p:
             SW_kHz=parser_dict["SW_kHz"],
             ret_data=None,
         )
+        SpinCore_pp.stopBoard()
         vd_data.set_prop("start_time", ini_time)
         vd_data.set_prop("stop_time", time.time())
         vd_data.set_prop("acq_params", parser_dict.asdict())
