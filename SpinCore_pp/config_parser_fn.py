@@ -29,6 +29,7 @@ class configuration(object):
         "FIR_rep":(float, "odnp_params", None),
         "adc_offset":(int, "acq_params", None),
         "nScans":(int, "acq_params", 1),
+        "thermal_scans":(int,"odnp_params",1),
         "nEchoes":(int, "acq_params", None),
         "IR_steps":(int, "acq_params", None),
         "power_steps":(int, "odnp_params", None ),
