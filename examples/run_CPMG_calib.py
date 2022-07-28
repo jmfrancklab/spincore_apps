@@ -48,8 +48,6 @@ date = datetime.now().strftime('%y%m%d')
 config_dict['type'] = 'CPMG_calib'
 config_dict['date'] = date
 config_dict['echo_counter'] += 1
-config_dict['echo_counter'] = echo_counter
-config_dict.write()
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
 marker = 1.0
