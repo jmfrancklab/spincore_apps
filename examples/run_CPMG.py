@@ -32,13 +32,6 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 #}}}   
-# {{{ check for file
-myfilename = filename + ".h5"
-if os.path.exists(myfilename):
-    raise ValueError(
-        "the file %s already exists, so I'm not going to let you proceed!" % myfilename
-    )
-# }}}
 #{{{run cpmg
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 data = run_cpmg(
