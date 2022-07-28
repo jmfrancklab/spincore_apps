@@ -78,6 +78,7 @@ with power_control() as p:
     )
     p.start_log()
     p.mw_off()
+    time.sleep(16)
     DNP_ini_time = time.time()
     DNP_data = run_spin_echo(
         nScans=parser_dict['nScans'],
@@ -148,6 +149,7 @@ DNP_data.set_prop("acq_params", parser_dict.asdict())
 DNP_data.name(parser_dict['type'])
 DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
 DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
+DNP_data.setaxis('nScans',r_[0:parser_dict['nScans']])
 logger.info("SAVING FILE... %s" % myfilename)
 DNP_data.hdf5_write(myfilename)
 logger.info("FILE SAVED")
