@@ -16,13 +16,14 @@ class configuration(object):
         "stopconstant":(float, "acq_params", None),
         "p90_us":(float, "acq_params", None),
         "gamma_eff_MHz_G":(float, "acq_params", 0.00425),
-        "mw_freqs":(float,"acq_params",9.821e9),
+        "mw_freqs":(float,"acq_params",9.821e9), # JF asks -- what is this in contrast to the uw_...?
         "concentration":(float, "sample_params", None),
         "krho_cold":(float, "sample_params", None),
         "krho_hot":(float, "sample_params", None),
         "T1water_hot":(float, "sample_params", None),
         "T1water_cold":(float, "sample_params", None),
         "repetition_us":(float, "sample_params", None),
+        "guessed_MHz_to_GHz":(float,"sample_params", 1.51671), # the ppt value we use to determine our rf carrier frequency based on our microwave
         "max_power":(float, "odnp_params", None),
         "uw_dip_center_GHz":(float, "odnp_params", None),
         "uw_dip_width_GHz":(float, "odnp_params", None),
@@ -57,15 +58,16 @@ class configuration(object):
             except:
                 continue
             self._params[paramname] = converter(temp)
-            self._case_insensitive_keys = {j.lower():j
-                    for j in self.registered_params.keys()}
+        self._case_insensitive_keys = {j.lower():j
+                for j in self.registered_params.keys()}
     def __getitem__(self,key):
         key = self._case_insensitive_keys[key.lower()]
         if key not in self._params.keys():
             converter, section, default = self.registered_params[key]
             if default is None:
-                    raise ValueError(f"You're asking for the '{key}' parameter, and it's not set in the .ini file!\nFirst, ask yourself if you should have run some type of set-up program (tuning, adc offset, resonance finder, etc.) that would set this parameter.\nThen, try setting the parameter in the appropriate section of your .ini file by editing the file with gvim or notepad++!")
-
+                raise KeyError(f"You're asking for the '{key}' parameter, and it's not set in the .ini file!\nFirst, ask yourself if you should have run some type of set-up program (tuning, adc offset, resonance finder, etc.) that would set this parameter.\nThen, try setting the parameter in the appropriate section of your .ini file by editing the file with gvim or notepad++!")
+            else:
+                return default
         return self._params[key]
     def __setitem__(self,key,value):
         if key.lower() not in self._case_insensitive_keys.keys():
