@@ -18,6 +18,7 @@ int configureBoard(int adc_offset);
 int programBoard( );
 int runScan( );
 int readData(int adc_offset, double* peak);,
+int ppg_element(char *str_label, double firstarg, int secondarg); // this comes from SpinCore_pp/SpinCore_pp.c
 
 DWORD error_catch(int error, int line_number)
 {
@@ -87,83 +88,14 @@ int configureBoard(int adc_offset)
 
 int programBoard( )
 {
-	ERROR_CATCH(spmri_start_programming());
-	
-	// Start
-	ERROR_CATCH(spmri_mri_inst(
-	  // DAC Information
-		0.0, // Amplitude
-		ALL_DACS, // DAC Select
-		DO_WRITE, // Write
-		DO_UPDATE, // Update
-		DONT_CLEAR, // Clear
-	  // RF Information
-		0, // freq register
-		0, // phase register
-		0, // tx enable
-		0, // phase reset
-		0, // rx enable
-		7, // envelope frequency register (7 = no shape)
-		0, // amp register
-		0, // cyclops phase
-	  // Pulse Blaster Information
-		0x00, // flags
-		0, // data
-		CONTINUE, // opcode
-		1.0 * us // delay
-	));
-	
-	double acq_time_us = NUM_POINTS / (SW_MHZ);
-	
-	// Acquire Data
-	ERROR_CATCH(spmri_mri_inst(
-	  // DAC Information
-		0.0, // Amplitude
-		ALL_DACS, // DAC Select
-		DO_WRITE, // Write
-		DO_UPDATE, // Update
-		DONT_CLEAR, // Clear
-	  // RF Information
-		0, // freq register
-		0, // phase register
-		0, // tx enable
-		0, // phase reset
-		1, // rx enable
-		7, // envelope frequency register (7 = no shape)
-		0, // amp register
-		0, // cyclops phase
-	  // Pulse Blaster Information
-		0x00, // flags
-		0, // data
-		CONTINUE, // opcode
-		acq_time_us * us // delay
-	));
-	
-	// Stop
-	ERROR_CATCH(spmri_mri_inst(
-	  // DAC Information
-		0.0, // Amplitude
-		ALL_DACS, // DAC Select
-		DO_WRITE, // Write
-		DO_UPDATE, // Update
-		DONT_CLEAR, // Clear
-	  // RF Information
-		0, // freq register
-		0, // phase register
-		0, // tx enable
-		0, // phase reset
-		0, // rx enable
-		7, // envelope frequency register (7 = no shape)
-		0, // amp register
-		0, // cyclops phase
-	  // Pulse Blaster Information
-		0x00, // flags
-		0, // data
-		STOP, // opcode
-		1.0 * us // delay
-	));
-	
-	return 0;
+    ERROR_CATCH(spmri_start_programming());
+    ppg_element("delay", 1.0, 0);
+    ERROR_CATCH;
+    double acq_time_us = NUM_POINTS / (SW_MHZ);
+    ppg_element("acquire", acq_time_us*us/ms, 0);
+    /*here*/
+    stop_ppg();
+    return 0;
 }
 
 int runBoard()
