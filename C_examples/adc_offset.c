@@ -16,8 +16,8 @@
 double get_dc_value(int adc_offset);
 int configureBoard(int adc_offset);
 int programBoard( );
-int runScan( );
-int readData(int adc_offset, double* peak);,
+int runBoard( );
+int readData(int adc_offset, double* peak);
 int ppg_element(char *str_label, double firstarg, int secondarg); // this comes from SpinCore_pp/SpinCore_pp.c
 
 DWORD error_catch(int error, int line_number)
@@ -54,7 +54,7 @@ double get_dc_value(int adc_offset)
 	double peak;
 	ERROR_CATCH( configureBoard( adc_offset ) );
 	ERROR_CATCH( programBoard( ) );
-	ERROR_CATCH( runScan( ) );
+	ERROR_CATCH( runBoard( ) );
 	ERROR_CATCH( readData( adc_offset, &peak ) );
 	return peak;
 }
