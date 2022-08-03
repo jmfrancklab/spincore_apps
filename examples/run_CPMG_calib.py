@@ -134,6 +134,7 @@ if os.path.exists(filename + ".h5"):
     nutation_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
     nutation_data.hdf5_write(filename + ".h5", directory=target_directory)
+config_dict.write()
 fl.next("raw data")
 fl.image(nutation_data)
 nutation_data.ft("t", shift=True)
