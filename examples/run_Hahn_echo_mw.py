@@ -1,17 +1,17 @@
-'''Run an Enhancement Experiment
+"""Run an Enhancement Experiment
 ================================
 Uses power control server so this will need to be running in sync. To do so:
     1. Open Xepr on the EPR computer, connect to spectrometer, and enable XEPR_API.
     2. In a separate terminal on the EPR computer, run the program XEPR_API_server.py and wait for it to tell you 'I am listening'.
     3. On the NMR computer, open a separate terminal in git/inst_notebooks/Instruments and run winpty power_control_server(). When ready to go it will say 'I am listening'.
     4. run this program to collect data
-'''    
+"""
 from pyspecdata import *
 from numpy import *
 import os
 import sys
 import SpinCore_pp
-from Instruments import Bridge12,prologix_connection,gigatronics
+from Instruments import Bridge12, prologix_connection, gigatronics
 from serial import Serial
 import time
 from datetime import datetime
@@ -19,21 +19,23 @@ from SpinCore_pp.power_helper import gen_powerlist
 
 fl = figlist_var()
 # {{{ experimental parameters
-#{{{power settings
-max_power_W = 4 #W
+# {{{power settings
+max_power_W = 4  # W
 power_steps = 18
-dB_settings = gen_powerlist(max_power_W,power_steps)
-append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power_W*frac).argmin()]
-        for frac in [0.75,0.5,0.25]]
-dB_settings = append(dB_settings,append_dB)
-print("dB_settings",dB_settings)
-print("correspond to powers in Watts",10**(dB_settings/10.-3))
+dB_settings = gen_powerlist(max_power_W, power_steps)
+append_dB = [
+    dB_settings[abs(10 ** (dB_settings / 10.0 - 3) - max_power_W * frac).argmin()]
+    for frac in [0.75, 0.5, 0.25]
+]
+dB_settings = append(dB_settings, append_dB)
+print("dB_settings", dB_settings)
+print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 input("Look ok?")
-powers = 1e-3*10**(dB_settings/10.)
-#}}}
-date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_289uM_heat_exch_0C'
-node_name = 'enhancement'
+powers = 1e-3 * 10 ** (dB_settings / 10.0)
+# }}}
+date = datetime.now().strftime("%y%m%d")
+output_name = "TEMPOL_289uM_heat_exch_0C"
+node_name = "enhancement"
 adcOffset = 28
 carrierFreq_MHz = 14.549013
 nScans = 1
@@ -48,23 +50,30 @@ if not phase_cycling:
 p90_us = 1.781
 repetition_us = 10e6
 SW_kHz = 3.9
-acq_ms = 1024.
-nPoints = int(acq_ms*SW_kHz+0.5)
+acq_ms = 1024.0
+nPoints = int(acq_ms * SW_kHz + 0.5)
 tau_us = 3500
 Ep_postproc = "spincore_ODNP_v3"
 uw_dip_center_GHz = 9.82
 uw_dip_width_GHz = 0.02
-total_pts = nPoints*nPhaseSteps
-assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
-#}}}
-#{{{check for file
-myfilename = date + '_'+output_name+'.h5'
+total_pts = nPoints * nPhaseSteps
+assert total_pts < 2 ** 14, (
+    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
+    % total_pts
+)
+# }}}
+# {{{check for file
+myfilename = date + "_" + output_name + ".h5"
 if os.path.exists(myfilename):
     raise ValueError(
-            "the file %s already exists, change your output name!"%myfilename)
-#}}}    
-total_pts = nPoints*nPhaseSteps
-assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
+        "the file %s already exists, change your output name!" % myfilename
+    )
+# }}}
+total_pts = nPoints * nPhaseSteps
+assert total_pts < 2 ** 14, (
+    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
+    % total_pts
+)
 with power_control() as p:
     retval_thermal = p.dip_lock(
         uw_dip_center_GHz - uw_dip_width_GHz / 2,
@@ -161,15 +170,13 @@ logger.info("FILE SAVED")
 logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
 logger.debug("shape of saved enhancement data", psp.ndshape(DNP_data))
 # }}}
-fl.next('raw data_array')
-fl.image(DNP_data.C.setaxis('power',
-    '#').set_units('power','scan #'))
-fl.next('abs raw data_array')
-fl.image(abs(DNP_data).C.setaxis('power',
-    '#').set_units('power','scan #'))
-DNP_data.ft('t',shift=True)
-DNP_data.ft(['ph1'])
-fl.next('raw data_array - ft')
-fl.image(DNP_data.C.setaxis('power','#'))
-fl.next('abs raw data_array - ft')
-fl.image(abs(DNP_data.C.setaxis('power','#')))
+fl.next("raw data_array")
+fl.image(DNP_data.C.setaxis("power", "#").set_units("power", "scan #"))
+fl.next("abs raw data_array")
+fl.image(abs(DNP_data).C.setaxis("power", "#").set_units("power", "scan #"))
+DNP_data.ft("t", shift=True)
+DNP_data.ft(["ph1"])
+fl.next("raw data_array - ft")
+fl.image(DNP_data.C.setaxis("power", "#"))
+fl.next("abs raw data_array - ft")
+fl.image(abs(DNP_data.C.setaxis("power", "#")))
