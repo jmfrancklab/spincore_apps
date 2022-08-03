@@ -75,14 +75,13 @@ assert total_pts < 2 ** 14, (
 )
 # }}}
 # {{{ check for file
-myfilename = filename + ".h5"
-if os.path.exists(myfilename):
+filename_out = filename + ".h5"
+if os.path.exists(filename_out):
     raise ValueError(
-        "the file %s already exists, so I'm not going to let you proceed!" % myfilename
+        "the file %s already exists, so I'm not going to let you proceed!" % filename_out
     )
 # }}}
 # {{{run enhancement
-filename_out = filename+".h5"
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
 with power_control() as p:
     # JF points out it should be possible to save time by removing this (b/c we
