@@ -218,6 +218,7 @@ with power_control() as p:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
     vd_data.setaxis("ph2", IR_ph2_cyc / 4)
+    vd_data.setaxis("nScans",r_[0:parser_dict['thermal_nScans']])
     # Need error handling (JF has posted something on this..)
     nodename = vd_data.name()
     if os.path.exists(filename + ".h5"):
@@ -279,6 +280,7 @@ with power_control() as p:
         vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
         vd_data.setaxis("ph1", IR_ph1_cyc / 4)
         vd_data.setaxis("ph2", IR_ph2_cyc / 4)
+        vd_data.setaxis("nScans",r_[0:parser_dict['nScans']])
         nodename = vd_data.name()
         if os.path.exists(filename + ".h5"):
             print("this file already exists so we will add a node to it!")
