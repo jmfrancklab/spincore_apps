@@ -199,6 +199,7 @@ if os.path.exists(filename + ".h5"):
     DNP_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
     DNP_data.hdf5_write(filename + ".h5", directory=target_directory)
+config_dict.write()
 fl.next("raw data")
 fl.image(DNP_data)
 fl.next("abs raw data")
