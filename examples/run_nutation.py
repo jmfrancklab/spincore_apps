@@ -66,6 +66,8 @@ print("EXITING...\n")
 print("\n*** *** ***\n")
 nutation_data.name(config_dict["type"])
 nutation_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph2_cyc), len(ph1_cyc), -1])
+nutation_data.setaxis("ph2",ph2_cyc)
+nutation_data.setaxis("ph1",ph1_cyc)
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
 filename_out = filename + ".h5"
 nodename = nutation_data.name()
