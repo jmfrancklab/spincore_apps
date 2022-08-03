@@ -78,7 +78,8 @@ assert total_pts < 2 ** 14, (
 filename_out = filename + ".h5"
 if os.path.exists(filename_out):
     raise ValueError(
-        "the file %s already exists, so I'm not going to let you proceed!" % filename_out
+        "the file %s already exists, so I'm not going to let you proceed!"
+        % filename_out
     )
 # }}}
 # {{{run enhancement
@@ -165,9 +166,9 @@ DNP_data.set_prop("acq_params", parser_dict.asdict())
 DNP_data.name(parser_dict["type"])
 DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
 DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
-DNP_data['indirect',0].setaxis(r_[0:parser_dict['thermal_nScans']])
-for j in range(len(powers)+1):
-    DNP_data['indirect',j+1].setaxis("nScans", r_[0 : parser_dict["nScans"]])
+DNP_data["indirect", 0].setaxis(r_[0 : parser_dict["thermal_nScans"]])
+for j in range(len(powers) + 1):
+    DNP_data["indirect", j + 1].setaxis("nScans", r_[0 : parser_dict["nScans"]])
 nodename = DNP_data.name()
 if os.path.exists(filename + ".h5"):
     print("this file already exists so we will add a node to it!")
@@ -218,7 +219,7 @@ with power_control() as p:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
     vd_data.setaxis("ph2", IR_ph2_cyc / 4)
-    vd_data.setaxis("nScans",r_[0:parser_dict['thermal_nScans']])
+    vd_data.setaxis("nScans", r_[0 : parser_dict["thermal_nScans"]])
     # Need error handling (JF has posted something on this..)
     nodename = vd_data.name()
     if os.path.exists(filename + ".h5"):
@@ -280,7 +281,7 @@ with power_control() as p:
         vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
         vd_data.setaxis("ph1", IR_ph1_cyc / 4)
         vd_data.setaxis("ph2", IR_ph2_cyc / 4)
-        vd_data.setaxis("nScans",r_[0:parser_dict['nScans']])
+        vd_data.setaxis("nScans", r_[0 : parser_dict["nScans"]])
         nodename = vd_data.name()
         if os.path.exists(filename + ".h5"):
             print("this file already exists so we will add a node to it!")
@@ -298,12 +299,14 @@ with power_control() as p:
         print(("Name of saved data", echo_data.name()))
         print(("Shape of saved data", ndshape(echo_data)))
         final_frq = p.dip_lock(
-        parser_dict["uw_dip_center_GHz"] - parser_dict["uw_dip_width_GHz"] / 2,
-        parser_dict["uw_dip_center_GHz"] + parser_dict["uw_dip_width_GHz"] / 2,
-    )
+            parser_dict["uw_dip_center_GHz"] - parser_dict["uw_dip_width_GHz"] / 2,
+            parser_dict["uw_dip_center_GHz"] + parser_dict["uw_dip_width_GHz"] / 2,
+        )
     this_log = p.stop_log()
 SpinCore_pp.stopBoard()
 # }}}
-with h5py.File(os.path.normpath(os.path.join(target_directory,f"{filename_out}")), "a") as f:
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory, f"{filename_out}")), "a"
+) as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
