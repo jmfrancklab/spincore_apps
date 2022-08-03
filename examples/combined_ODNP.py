@@ -93,7 +93,6 @@ with power_control() as p:
     )
     p.start_log()
     p.mw_off()
-    time.sleep(16)
     DNP_ini_time = time.time()
     DNP_data = run_spin_echo(
         nScans=parser_dict["thermal_nScans"],
@@ -193,7 +192,6 @@ with power_control() as p:
         parser_dict["uw_dip_center_GHz"] + parser_dict["uw_dip_width_GHz"] / 2,
     )
     p.mw_off()
-    time.sleep(16)
     ini_time = time.time()  # needed b/c data object doesn't exist yet
     vd_data = run_IR(
         nPoints=nPoints,
