@@ -304,6 +304,7 @@ with power_control() as p:
         )
     this_log = p.stop_log()
 SpinCore_pp.stopBoard()
+parser_dict.write()
 # }}}
 with h5py.File(
     os.path.normpath(os.path.join(target_directory, f"{filename_out}")), "a"
