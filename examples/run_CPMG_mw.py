@@ -48,32 +48,6 @@ fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
-# {{{ Verify arguments compatible with board
-def verifyParams():
-    if nPoints > 16 * 1024 or nPoints < 1:
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if nScans < 1:
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if p90 < 0.065:
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-    else:
-        print("VERIFIED PULSE TIME.")
-    if tau < 0.065:
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-    else:
-        print("VERIFIED DELAY TIME.")
-    return
-
-
-# }}}
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")

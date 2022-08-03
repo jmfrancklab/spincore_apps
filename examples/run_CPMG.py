@@ -85,6 +85,7 @@ if os.path.exists(filename + ".h5"):
     data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
     data.hdf5_write(filename + ".h5", directory=target_directory)
+config_data.write()
 # }}}
 # {{{visualize raw data
 s = data.C
