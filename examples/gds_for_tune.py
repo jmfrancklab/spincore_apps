@@ -26,16 +26,9 @@ import threading
 from pyspecdata import *
 import numpy as np
 
-if len(sys.argv) == 1:
-    default_field = 3487.6 #3506.40 # G -- give this to 2 s.f.!!
-    print("Assuming a default field value of %f!! Probably not very wise!!"%default_field)
-    process_args(default_field)
-elif len(sys.argv) == 2:
-    carrier_frequency = process_args(sys.argv[1])
-elif len(sys.argv) == 3:
-    carrier_frequency = process_args(sys.argv[1], secondarg=sys.argv[2])
-else:
-    raise ValueError("I don't know what you're doing with that many arguments!!!")
+parser_dict = SpinCore_pp.configuration("active.ini")
+carrier_frequency = parser_dict["carrierFreq_MHz"]
+print("I'm using the carrier frequency of %f entered into your active.ini"%carrier_frequency)
 
 print("")
 input("Please note I'm going to assume the control is hooked up to CH1 of the GDS and the reflection is hooked up to CH2 of the GDS... (press enter to continue)")
@@ -130,6 +123,5 @@ if tuning_dB < -25:
     print("congratulations! you have achieved a reflection ratio of %0.1f dB"%tuning_dB)
 else:
     print("Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!"%tuning_dB)
-parser_dict = SpinCore_pp.configuration("active.ini"):
 parser_dict["carrierFreq_MHz"] = carrier_frequency
 parser_dict.write()
