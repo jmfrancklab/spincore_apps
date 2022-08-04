@@ -18,28 +18,26 @@ from datetime import datetime
 from SpinCore_pp.power_helper import gen_powerlist
 
 fl = figlist_var()
-# {{{ experimental parameters
+# {{{importing acquisition parameters
+config_dict = SpinCore_pp.configuration("active.ini")
+nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+# }}}
+# {{{create filename and save to config file
+date = datetime.now().strftime("%y%m%d")
+config_dict["type"] = "enhancement"
+config_dict["date"] = date
+config_dict["odnp_counter"] += 1
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}"
+# }}}
 # {{{power settings
-max_power_W = 4  # W
-power_steps = 18
-dB_settings = gen_powerlist(max_power_W, power_steps)
-append_dB = [
-    dB_settings[abs(10 ** (dB_settings / 10.0 - 3) - max_power_W * frac).argmin()]
-    for frac in [0.75, 0.5, 0.25]
-]
-dB_settings = append(dB_settings, append_dB)
+dB_settings = gen_powerlist(
+    config_dict["max_power"], config_dict["power_steps"] + 1, three_down=True
+)
 print("dB_settings", dB_settings)
 print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 input("Look ok?")
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
-date = datetime.now().strftime("%y%m%d")
-output_name = "TEMPOL_289uM_heat_exch_0C"
-node_name = "enhancement"
-adcOffset = 28
-carrierFreq_MHz = 14.549013
-nScans = 1
-nEchoes = 1
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
@@ -47,15 +45,6 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
     Ep_ph1_cyc = r_[0]
-p90_us = 1.781
-repetition_us = 10e6
-SW_kHz = 3.9
-acq_ms = 1024.0
-nPoints = int(acq_ms * SW_kHz + 0.5)
-tau_us = 3500
-Ep_postproc = "spincore_ODNP_v3"
-uw_dip_center_GHz = 9.82
-uw_dip_width_GHz = 0.02
 total_pts = nPoints * nPhaseSteps
 assert total_pts < 2 ** 14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
@@ -63,37 +52,36 @@ assert total_pts < 2 ** 14, (
 )
 # }}}
 # {{{check for file
-myfilename = date + "_" + output_name + ".h5"
-if os.path.exists(myfilename):
+filename_out = filename + ".h5"
+if os.path.exists(filename_out):
     raise ValueError(
-        "the file %s already exists, change your output name!" % myfilename
+        "the file %s already exists, change your output name!" % filename_out
     )
 # }}}
-total_pts = nPoints * nPhaseSteps
-assert total_pts < 2 ** 14, (
-    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
-    % total_pts
-)
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
 with power_control() as p:
+    # JF points out it should be possible to save time by removing this (b/c we
+    # shut off microwave right away), but AG notes that doing so causes an
+    # error.  Therefore, debug the root cause of the error and remove it!
     retval_thermal = p.dip_lock(
-        uw_dip_center_GHz - uw_dip_width_GHz / 2,
-        uw_dip_center_GHz + uw_dip_width_GHz / 2,
+        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
     p.mw_off()
     DNP_data = run_spin_echo(
-        nScans=nScans,
+        nScans=config_dict["nScans"],
         indirect_idx=0,
         indirect_len=len(powers) + 1,
         ph1_cyc=Ep_ph1_cyc,
-        adcOffset=adcOffset,
-        carrierFreq_MHz=carrierFreq_MHz,
+        adcOffset=config_dict["adc_offset"],
+        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
         nPoints=nPoints,
-        nEchoes=nEchoes,
-        p90_us=p90_us,
-        repetition=repetition_us,
-        tau_us=tau_us,
-        SW_kHz=SW_kHz,
-        output_name=output_name,
+        nEchoes=config_dict["nEchoes"],
+        p90_us=config_dict["p90_us"],
+        repetition=config_dict["repetition_us"],
+        tau_us=config_dict["tau_us"],
+        SW_kHz=config_dict["SW_kHz"],
+        output_name=filename,
         ret_data=None,
     )  # assume that the power axis is 1 longer than the
     #                         "powers" array, so that we can also store the
@@ -101,6 +89,7 @@ with power_control() as p:
     #                         that powers and other parameters are defined
     #                         globally w/in the script, as this function is not
     #                         designed to be moved outside the module
+    SpinCore_pp.stopBoard()
     power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
@@ -109,11 +98,10 @@ with power_control() as p:
         )
         if j == 0:
             retval = p.dip_lock(
-                uw_dip_center_GHz - uw_dip_width_GHz / 2,
-                uw_dip_center_GHz + uw_dip_width_GHz / 2,
+                config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+                config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
             )
         p.set_power(this_dB)
-        logger.debug("power was set")
         for k in range(10):
             time.sleep(0.5)
             if p.get_power_setting() >= this_dB:
@@ -123,60 +111,54 @@ with power_control() as p:
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
         run_spin_echo(
-            nScans=nScans,
+            nScans=config_dict["nScans"],
             indirect_idx=j + 1,
             indirect_len=len(powers) + 1,
-            adcOffset=adcOffset,
-            carrierFreq_MHz=carrierFreq_MHz,
+            adcOffset=config_dict["adc_offset"],
+            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
-            nEchoes=nEchoes,
-            p90_us=p90_us,
-            repetition=repetition_us,
-            tau_us=tau_us,
-            SW_kHz=SW_kHz,
-            output_name=output_name,
+            nEchoes=config_dict["nEchoes"],
+            p90_us=config_dict["p90_us"],
+            repetition=config_dict["repetition_us"],
+            tau_us=config_dict["tau_us"],
+            SW_kHz=config_dict["SW_kHz"],
+            output_name=filename,
             ret_data=DNP_data,
         )
-DNP_data.set_prop("postproc_type", Ep_postproc)
-acq_params = {
-    j: eval(j)
-    for j in dir()
-    if j
-    in [
-        "adcOffset",
-        "carrierFreq_MHz",
-        "amplitude",
-        "nScans",
-        "nEchoes",
-        "p90_us",
-        "deadtime_us",
-        "repetition_us",
-        "SW_kHz",
-        "nPoints",
-        "deblank_us",
-        "tau_us",
-        "nPhaseSteps",
-        "MWfreq",
-        "power_settings_dBm",
-    ]
-}
-DNP_data.set_prop("acq_params", acq_params)
-DNP_data.name("enhancement")
-DNP_data.chunk("t", ["ph1", "t2"], [4, -1])
+        SpinCore_pp.stopBoard()
+    config_dict["power_settings_dBm"] = power_settings_dBm
+DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
+DNP_data.set_prop("acq_params", config_dict.asdict())
+DNP_data.name(config_dict["type"])
+DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
 DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
-logger.info("SAVING FILE... %s" % myfilename)
-DNP_data.hdf5_write(myfilename)
-logger.info("FILE SAVED")
-logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
-logger.debug("shape of saved enhancement data", psp.ndshape(DNP_data))
+DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+# }}}
 # }}}
 fl.next("raw data_array")
-fl.image(DNP_data.C.setaxis("power", "#").set_units("power", "scan #"))
+fl.image(DNP_data.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
 fl.next("abs raw data_array")
-fl.image(abs(DNP_data).C.setaxis("power", "#").set_units("power", "scan #"))
-DNP_data.ft("t", shift=True)
+fl.image(abs(DNP_data).C.setaxis("indirect", "#").set_units("indirect", "scan #"))
+DNP_data.ft("t2", shift=True)
 DNP_data.ft(["ph1"])
 fl.next("raw data_array - ft")
-fl.image(DNP_data.C.setaxis("power", "#"))
+fl.image(DNP_data.C.setaxis("indirect", "#"))
 fl.next("abs raw data_array - ft")
-fl.image(abs(DNP_data.C.setaxis("power", "#")))
+fl.image(abs(DNP_data.C.setaxis("indirect", "#")))
+nodename = DNP_data.name()
+if os.path.exists(filename + ".h5"):
+    print("this file already exists so we will add a node to it!")
+    with h5py.File(
+        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+    ) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp")
+            DNP_data.name("temp")
+            nodename = "temp"
+    DNP_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+else:
+    DNP_data.hdf5_write(filename + ".h5", directory=target_directory)
+logger.info("FILE SAVED")
+logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
+logger.debug("shape of saved enhancement data", ndshape(DNP_data))
+fl.show()
