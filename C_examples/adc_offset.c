@@ -13,21 +13,13 @@
 
 #define ERROR_CATCH(arg) error_catch(arg, __LINE__)
 
+
 double get_dc_value(int adc_offset);
 int configureBoard(int adc_offset);
 int programBoard( );
 int runBoard( );
 int readData(int adc_offset, double* peak);
 int ppg_element(char *str_label, double firstarg, int secondarg); // this comes from SpinCore_pp/SpinCore_pp.c
-
-DWORD error_catch(int error, int line_number)
-{
-	if( error != 0 ) {
-		printf("ERROR CODE 0x%X AT LINE NUMBER %d\n", error, line_number);
-		exit(1);
-	}
-	return error;
-}
 
 
 int main(int argc, char *argv[])
@@ -90,31 +82,11 @@ int programBoard( )
 {
     ERROR_CATCH(spmri_start_programming());
     ppg_element("delay", 1.0, 0);
-    ERROR_CATCH;
     double acq_time_us = NUM_POINTS / (SW_MHZ);
     ppg_element("acquire", acq_time_us*us/ms, 0);
     /*here*/
     stop_ppg();
     return 0;
-}
-
-int runBoard()
-{
-	ERROR_CATCH(spmri_start());
-	
-	int done = 0;
-	int status;
-	
-	// wait for scan to finish
-	while( done == 0 )
-    {
-		ERROR_CATCH(spmri_get_status(&status));
-		if( status == 0x01 ) {
-			done = 1;
-		}
-	}
-	
-	return 0;
 }
 
 int readData(int adc_offset, double* peak)

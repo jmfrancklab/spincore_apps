@@ -5,6 +5,13 @@
 
 #include "mrispinapi.h"
 
+#define ADC_OFFSET_MIN -256
+#define ADC_OFFSET_MAX 256
+
+#define ADC_OFFSET_NUM_POINTS (16*1024)
+#define ADC_OFFSET_SW_MHZ (75.0/1.0)
+#define ADC_OFFSET_SF_MHZ (0.0)
+
 #define ERROR_CATCH(arg) error_catch(arg,__LINE__)
 
 char *get_time()
@@ -431,4 +438,100 @@ void tune(double carrier_freq)
 
    // Stops the board by resetting it
    ERROR_CATCH(spmri_stop());
+}
+
+double adc_offset_get_dc_value(int adc_offset)
+{
+	double peak;
+	ERROR_CATCH( adc_offset_configureBoard( adc_offset ) );
+	ERROR_CATCH( adc_offset_programBoard( ) );
+	ERROR_CATCH( runBoard( ) );
+	ERROR_CATCH( adc_offset_readData( adc_offset, &peak ) );
+	return peak;
+}
+
+int adc_offset_readData(int adc_offset, double* peak)
+{
+	int i;
+	int real[ADC_OFFSET_NUM_POINTS];
+	int imag[ADC_OFFSET_NUM_POINTS];
+	double mag_out[ADC_OFFSET_NUM_POINTS];
+	double mag_out_max;
+	int mag_out_max_index;
+	double dc_value;
+	
+	ERROR_CATCH(spmri_read_memory(real, imag, ADC_OFFSET_NUM_POINTS));
+	
+	dc_value = 0;
+	for( i = 0 ; i < ADC_OFFSET_NUM_POINTS ; i++ ) {
+        //printf("for adc offset %d, point %d, I get %d\n",adc_offset,i,real[i]);
+		dc_value += real[i];
+	}
+	
+	// Felix output file
+	char filename[128];
+	snprintf(filename, 128, "adc_offest_%d.fid", adc_offset);
+	ERROR_CATCH(spmri_write_felix(filename, "titleblock", ADC_OFFSET_NUM_POINTS,
+		ADC_OFFSET_SW_MHZ * 1e6, ADC_OFFSET_SF_MHZ * 1e6 + 1e-6, real, imag));
+	
+	// DC frequency
+	*peak = dc_value;
+	
+	return 0;
+}
+
+int adc_offset(int argc, char *argv[])
+{
+	double max_offset_result = adc_offset_get_dc_value(ADC_OFFSET_MAX);
+	double min_offset_result = adc_offset_get_dc_value(ADC_OFFSET_MIN);
+
+
+    if(max_offset_result==0 && min_offset_result==0){
+        printf("both max and min offset results are 0 -- try using an adc offset of 0\n");
+        return 0;
+    }
+	
+	double theoretical_adc_offset = (0 - min_offset_result) / (max_offset_result - min_offset_result) * (ADC_OFFSET_MAX - ADC_OFFSET_MIN) + ADC_OFFSET_MIN;
+	int test_offset = round( theoretical_adc_offset );
+	
+	printf("Correct ADC offset = %d\n", test_offset);
+	
+	return test_offset;
+}
+
+int adc_offset_configureBoard(int adc_offset)
+{
+	int dec_amount;
+	
+	ERROR_CATCH( spmri_init() );
+	ERROR_CATCH( spmri_set_defaults() );
+	ERROR_CATCH( spmri_stop() );
+	
+	// ADC offset
+	ERROR_CATCH( spmri_set_adc_offset( adc_offset ) );
+	
+	ERROR_CATCH( spmri_set_num_samples( ADC_OFFSET_NUM_POINTS ) );
+	
+	ERROR_CATCH(spmri_setup_filters(
+		ADC_OFFSET_SW_MHZ, // Spectral Width in MHz
+		1, // Number of Scans
+		0, // Not Used
+		&dec_amount
+	));
+	
+	// Carrier Frequency Registers
+	double freqs[1] = {ADC_OFFSET_SF_MHZ}; // MHz
+	ERROR_CATCH(spmri_set_frequency_registers( freqs, 1 ));
+	
+	return 0;
+}
+int adc_offset_programBoard( )
+{
+    ERROR_CATCH(spmri_start_programming());
+    ppg_element("delay", 1.0, 0);
+    double acq_time_us = ADC_OFFSET_NUM_POINTS / (ADC_OFFSET_SW_MHZ);
+    ppg_element("acquire", acq_time_us*us/ms, 0);
+    /*here*/
+    stop_ppg();
+    return 0;
 }
