@@ -23,6 +23,7 @@ class configuration(object):
         "T1water_hot":(float, "sample_params", None),
         "T1water_cold":(float, "sample_params", None),
         "repetition_us":(float, "sample_params", None),
+        "guessed_MHz_to_GHz":(float,"sample_params", 1.51671), # the ppt value we use to determine our rf carrier frequency based on our microwave
         "max_power":(float, "odnp_params", None),
         "uw_dip_center_GHz":(float, "odnp_params", None),
         "uw_dip_width_GHz":(float, "odnp_params", None),
