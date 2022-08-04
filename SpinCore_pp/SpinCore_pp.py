@@ -217,6 +217,10 @@ def stopBoard():
     return _SpinCore_pp.stopBoard()
 stopBoard = _SpinCore_pp.stopBoard
 
+def adc_offset():
+    return _SpinCore_pp.adc_offset()
+adc_offset = _SpinCore_pp.adc_offset
+
 def tune(carrier_freq):
     return _SpinCore_pp.tune(carrier_freq)
 tune = _SpinCore_pp.tune
