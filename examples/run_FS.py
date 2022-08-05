@@ -35,155 +35,159 @@ in the second case.
 """
 # }}}
 from pyspecdata import *
-from numpy import *
-from . import SpinCore_pp
-import socket
-import sys
-import time
+from pylab import *
+import os
+import SpinCore_pp
+from SpinCore_pp.ppg import run_spin_echo
+from datetime import datetime
+from Instruments.XEPR_eth import xepr
+import numpy as np
+import h5py
 
-# {{{ for setting EPR magnet
-def API_sender(value):
-    IP = "jmfrancklab-bruker.syr.edu"
-    if len(sys.argv) > 1:
-        IP = sys.argv[1]
-    PORT = 6001
-    print("target IP:", IP)
-    print("target port:", PORT)
-    MESSAGE = str(value)
-    print("SETTING FIELD TO...", MESSAGE)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Internet  # TCP
-    sock.connect((IP, PORT))
-    sock.send(MESSAGE)
-    sock.close()
-    print("FIELD SET TO...", MESSAGE)
-    time.sleep(3)
-    return
-
-
-# }}}
-
-field_axis = linspace(3490.0, 3510.0, 5, endpoint=False)
+field_axis = r_[3490.0:3510.0:1.0]
 fl = figlist_var()
-date = "190614"
-output_name = "FS_1"
-adcOffset = 34
-carrierFreq_MHz = 14.894439
-tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-amplitude = 1.0
-nScans = 1
-nEchoes = 1
+# {{{importing acquisition parameters
+config_dict = SpinCore_pp.configuration("active.ini")
+# }}}
+# {{{create filename and save to config file
+date = datetime.now().strftime("%y%m%d")
+config_dict["type"] = "field"
+config_dict["date"] = date
+config_dict["field_counter"] += 1
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+# }}}
+print("Here is my field axis:",field_axis)
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 8
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
-# NOTE: Number of segments is nEchoes * nPhaseSteps
-p90 = 4.0
-deadtime = 200.0
-repetition = 4e6
-SW_kHz = 500.0
-nPoints = 2048
-acq_time = nPoints / SW_kHz  # ms
-tau_adjust = 0.0
-tau = deadtime + acq_time * 1e3 * 0.5 + tau_adjust
-print("ACQUISITION TIME:", acq_time, "ms")
-print("TAU DELAY:", tau, "us")
-data_length = 2 * nPoints * nEchoes * nPhaseSteps
-for index, val in enumerate(field_axis):
-    print("***")
-    print("INDEX NO.", index)
-    print("***")
-    API_sender(val)
-    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    acq_time = SpinCore_pp.configureRX(
-        SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps
-    )  # ms
-    print("ACQUISITION TIME IS", acq_time, "ms")
-    SpinCore_pp.init_ppg()
-    if phase_cycling:
-        SpinCore_pp.load(
-            [
-                ("marker", "start", 1),
-                ("phase_reset", 1),
-                ("delay_TTL", 1.0),
-                ("pulse_TTL", p90, "ph1", r_[0, 1, 2, 3]),
-                ("delay", tau),
-                ("delay_TTL", 1.0),
-                ("pulse_TTL", 2.0 * p90, "ph2", r_[0, 2]),
-                ("delay", deadtime),
-                ("acquire", acq_time),
-                ("delay", repetition),
-                ("jumpto", "start"),
-            ]
+nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+#}}}
+total_pts = nPoints * nPhaseSteps
+assert total_pts < 2 ** 14, (
+    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
+    % total_pts
+)
+with xepr() as x_server:
+        first_B0 = x_server.set_field(field_axis[0])
+        time.sleep(3.0)
+        carrierFreq_MHz = config_dict["gamma_eff_MHz_G"] * first_B0
+        sweep_data = run_spin_echo(
+            nScans=config_dict["nScans"],
+            indirect_idx=0,
+            indirect_len=len(field_axis),
+            adcOffset=config_dict["adc_offset"],
+            carrierFreq_MHz=carrierFreq_MHz,
+            nPoints=nPoints,
+            nEchoes=config_dict["nEchoes"],
+            p90_us=config_dict["p90_us"],
+            repetition=config_dict["repetition_us"],
+            tau_us=config_dict["tau_us"],
+            SW_kHz=config_dict["SW_kHz"],
+            output_name=filename,
+            indirect_fields=("Field", "carrierFreq"),
+            ret_data=None,
         )
-    if not phase_cycling:
-        SpinCore_pp.load(
-            [
-                ("marker", "start", nScans),
-                ("phase_reset", 1),
-                ("delay_TTL", 1.0),
-                ("pulse_TTL", p90, 0.0),
-                ("delay", tau),
-                ("delay_TTL", 1.0),
-                ("pulse_TTL", 2.0 * p90, 0.0),
-                ("delay", deadtime),
-                ("acquire", acq_time),
-                ("delay", repetition),
-                ("jumpto", "start"),
-            ]
-        )
-    SpinCore_pp.stop_ppg()
-    if phase_cycling:
-        for x in range(nScans):
-            print("SCAN NO. %d" % (x + 1))
-            SpinCore_pp.runBoard()
-    if not phase_cycling:
-        SpinCore_pp.runBoard()
-    raw_data = SpinCore_pp.getData(
-        data_length, nPoints, nEchoes, nPhaseSteps, output_name
+        myfreqs_fields = sweep_data.getaxis("indirect")
+        myfreqs_fields[0]["Field"] = first_B0
+        myfreqs_fields[0]["carrierFreq"] = config_dict["carrierFreq_MHz"]
+        for B0_index, desired_B0 in enumerate(field_axis[1:]):
+            true_B0 = x_server.set_field(desired_B0)
+            logging.info("My field in G is %f" % true_B0)
+            time.sleep(3.0)
+            new_carrierFreq_MHz = config_dict["gamma_eff_MHz_G"] * true_B0
+            myfreqs_fields[B0_index + 1]["Field"] = true_B0
+            myfreqs_fields[B0_index + 1]["carrierFreq"] = new_carrierFreq_MHz
+            logging.info("My frequency in MHz is", new_carrierFreq_MHz)
+            run_spin_echo(
+                nScans=config_dict["nScans"],
+                indirect_idx=B0_index + 1,
+                indirect_len=len(field_axis),
+                adcOffset=config_dict["adc_offset"],
+                carrierFreq_MHz=new_carrierFreq_MHz,
+                nPoints=nPoints,
+                nEchoes=config_dict["nEchoes"],
+                p90_us=config_dict["p90_us"],
+                repetition=config_dict["repetition_us"],
+                tau_us=config_dict["tau_us"],
+                SW_kHz=config_dict["SW_kHz"],
+                output_name=filename,
+                ret_data=sweep_data,
+            )
+        SpinCore_pp.stopBoard()
+sweep_data.set_prop("acq_params", config_dict.asdict())
+#}}}
+# {{{chunk and save data
+if phase_cycling:
+    sweep_data.chunk("t", ["ph1", "t2"], [4, -1])
+    sweep_data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
+    if config_dict["nScans"] > 1:
+        sweep_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    sweep_data.reorder(["ph1", "nScans", "t2"])
+    fl.next("Raw - time")
+    fl.image(
+        sweep_data.C.mean("nScans")
+        .setaxis("indirect", "#")
+        .set_units("indirect", "scan #")
     )
-    raw_data.astype(float)
-    data = []
-    # according to JF, this commented out line
-    # should work same as line below and be more effic
-    # data = raw_data.view(complex128)
-    data[::] = complex128(raw_data[0::2] + 1j * raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:", shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:", shape(raw_data)[0])
-    dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0, nEchoes * nPhaseSteps * acq_time * 1e-3, dataPoints)
-    data = nddata(array(data), "t")
-    data.setaxis("t", time_axis).set_units("t", "s")
-    data.name("signal")
-    if index == 0:
-        field_sweep = ndshape([len(field_axis), len(time_axis)], ["field", "t"]).alloc(
-            dtype=complex128
-        )
-        field_sweep.setaxis("field", field_axis).set_units("field", "G")
-        field_sweep.setaxis("t", time_axis).set_units("t", "s")
-    field_sweep["field", index] = data
-SpinCore_pp.stopBoard()
-print("EXITING...")
-print("\n*** *** ***\n")
-save_file = True
-while save_file:
+    sweep_data.reorder("t2", first=False)
+    sweep_data.ft("t2", shift=True)
+    sweep_data.ft("ph1", unitary=True)
+    fl.next("Raw - frequency")
+    fl.image(
+        sweep_data.C.mean("nScans")
+        .setaxis("indirect", "#")
+        .set_units("indirect", "scan #")
+    )
+else:
+    if config_dict["nScans"] > 1:
+        sweep_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    fl.next("Raw - time")
+    fl.image(
+        sweep_data.C.mean("nScans")
+        .setaxis("indirect", "#")
+        .set_units("indirect", "scan #")
+    )
+    sweep_data.reorder("t", first=False)
+    sweep_data.ft("t", shift=True)
+    fl.next("Raw - frequency")
+    fl.image(
+        sweep_data.C.mean("nScans")
+        .setaxis("indirect", "#")
+        .set_units("indirect", "scan #")
+    )
+sweep_data.name(config_dict["type"] + "_" + str(config_dict["field_counter"]))
+sweep_data.set_prop("postproc_type", "field_sweep_v1")
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/field_dependent")
+filename_out = filename + ".h5"
+nodename = sweep_data.name()
+if os.path.exists(filename + ".h5"):
+    print("this file already exists so we will add a node to it!")
+    with h5py.File(
+        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+    ) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp")
+            sweep_data.name("temp")
+            nodename = "temp"
+    sweep_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+else:
     try:
-        print("SAVING FILE...")
-        field_sweep.name("field_sweep")
-        field_sweep.hdf5_write(date + "_" + output_name + ".h5")
-        print("Name of saved data", field_sweep.name())
-        print("Units of saved data", field_sweep.get_units("t"))
-        print("Shape of saved data", ndshape(field_sweep))
-        save_file = False
-    except Exception as e:
-        print(e)
-        print("FILE ALREADY EXISTS.")
-        save_file = False
-fl.next("raw data")
-# manual_taxis_zero = acq_time*1e-3/2.0
-# field_sweep.setaxis('t',lambda x: x-manual_taxis_zero)
-fl.image(field_sweep)
-field_sweep.ft("t", shift=True)
-fl.next("FT raw field_sweep")
-fl.image(field_sweep)
+        sweep_data.hdf5_write(filename + ".h5", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 -- I'm removing it")
+            os.remove("temp.h5")
+        echo_data.hdf5_write("temp.h5")
+        print(
+            "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+        )
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", sweep_data.name()))
+print(("Shape of saved data", ndshape(sweep_data)))
+config_dict.write()
 fl.show()

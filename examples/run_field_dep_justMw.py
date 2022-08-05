@@ -168,8 +168,9 @@ if os.path.exists(filename + ".h5"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, lets delete it to overwrite")
-            del fp[nodename]
+            print("this nodename already exists, so I will call it temp")
+            sweep_data.name("temp")
+            nodename = "temp"
     sweep_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
     try:
