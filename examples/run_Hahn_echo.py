@@ -125,9 +125,7 @@ if os.path.exists(f"{filename_out}"):
                 print("this nodename already exists, so I will call it temp")
                 echo_data.name("temp")
                 nodename = "temp"
-                echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
-            else:
-                echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
+            echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
