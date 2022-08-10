@@ -195,7 +195,7 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             cpmg_data.name("temp")
             nodename = "temp"
-    cpmg_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+        cpmg_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
     try:
         cpmg_data.hdf5_write(f"{filename_out}", directory=target_directory)

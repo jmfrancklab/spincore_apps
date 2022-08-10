@@ -180,7 +180,6 @@ for index, val in enumerate(vd_list):
     )
     data = nddata(array(data), "t")
     data.setaxis("t", time_axis).set_units("t", "s")
-    data.name("signal")
     if index == 0:
         data_2d = ndshape([len(vd_list), len(time_axis)], ["vd", "t"]).alloc(
             dtype=complex128
@@ -191,9 +190,10 @@ for index, val in enumerate(vd_list):
 SpinCore_pp.stopBoard()
 print("EXITING...")
 print("\n*** *** ***\n")
+data_2d.name("signal")
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
-nodename = data.name()
+nodename = 2d_data.name()
 if os.path.exists(filename + ".h5"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
@@ -201,12 +201,12 @@ if os.path.exists(filename + ".h5"):
     ) as fp:
         if nodename in fp.keys():
             print("this nodename already exists, so I will call it temp")
-            data.name("temp")
+            data_2d.name("temp")
             nodename = "temp"
-    data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+        data_2d.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
     try:
-        data.hdf5_write(f"{filename_out}", directory=target_directory)
+        data_2d.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
             f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
@@ -214,13 +214,13 @@ else:
         if os.path.exists("temp.h5"):
             print("there is a temp.h5 already! -- I'm removing it")
             os.remove("temp.h5")
-            data.hdf5_write("temp.h5")
+            data_2d.hdf5_write("temp.h5")
             print(
                 "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
             )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data", data.name()))
-print(("Shape of saved data", ndshape(data)))
+print(("Name of saved data", data_2d.name()))
+print(("Shape of saved data", ndshape(data_2d)))
 fl.next("raw data")
 data_2d *= exp(-1j * data_2d.fromaxis("vd") * clock_correction)
 manual_taxis_zero = acq_time * 1e-3 / 2.0  # 2.29e-3

@@ -5,6 +5,7 @@ import SpinCore_pp
 from datetime import datetime
 
 fl = figlist_var()
+tau_adjust_range = r_[1e3:30e3:1000]
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
@@ -19,22 +20,24 @@ filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type'
 phase_cycling = True
 coherence_pathway = [("ph1", 1), ("ph2", -2)]
 if phase_cycling:
+    ph1 = r_[0,1,2,3]
+    ph2 = r_[0,2]
     nPhaseSteps = 8
+    config_dict['nPhaseSteps'] = nPhaseSteps
 if not phase_cycling:
     nPhaseSteps = 1
+    config_dict['nPhaseSteps'] = nPhaseSteps
 # {{{ note on timing
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 # }}}
-tau_adjust_range = r_[1e3:30e3:1000]
+tau = config_dict['deadtime'] + config_dict['acq_time_ms']*1e3*(1./8.) +tau_adjust_range
 tau_axis = tau
-if phase_cycling:
-    config_dict["nPhaseSteps"] = nPhaseSteps
 # }}}
 tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-print(("ACQUISITION TIME:", acq_time, "ms"))
-data_length = 2 * nPoints * config_dict["nEchoes"] * nPhaseSteps
+print(("ACQUISITION TIME:", config_dict['acq_time_ms'], "ms"))
+data_length = 2 * nPoints * config_dict["nEchoes"] * config_dict['nPhaseSteps']
 for index, val in enumerate(tau_adjust_range):
     tau_adjust = val  # us
     # calculate tau each time through
@@ -58,7 +61,7 @@ for index, val in enumerate(tau_adjust_range):
         nPoints,
         config_dict["nScans"],
         config_dict["nEchoes"],
-        nPhaseSteps,
+        config_dict['nPhaseSteps'],
     )  # ms
     SpinCore_pp.init_ppg()
     if phase_cycling:
@@ -67,10 +70,10 @@ for index, val in enumerate(tau_adjust_range):
                 ("marker", "start", 1),
                 ("phase_reset", 1),
                 ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", config_dict["p90_us"], "ph1", r_[0, 1, 2, 3]),
+                ("pulse_TTL", config_dict["p90_us"], "ph1", ph1),
                 ("delay", tau),
                 ("delay_TTL", config_dict["deblank"]),
-                ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph2", r_[0, 2]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph2", ph2),
                 ("delay", config_dict["deadtime"]),
                 ("acquire", acq_time),
                 ("delay", config_dict["repetition_us"]),
@@ -132,6 +135,7 @@ for index, val in enumerate(tau_adjust_range):
         var_tau_data.setaxis("t", time_axis).set_units("t", "s")
     var_tau_data["tau", index] = data
 SpinCore_pp.stopBoard()
+var_tau_data.name('var_tau'+config_dict['echo_counter'])
 print("EXITING...\n")
 print("\n*** *** ***\n")
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/var_tau")
@@ -146,7 +150,7 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             var_tau_data.name("temp")
             nodename = "temp"
-    var_tau_data.hdf5_write(f"{filename_out}", directory=target_directory)
+        var_tau_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         var_tau_data.hdf5_write(f"{filename_out}", directory=target_directory)

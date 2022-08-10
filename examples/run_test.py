@@ -2,31 +2,28 @@ from pyspecdata import *
 import os
 import sys
 from . import SpinCore_pp
-
+from datetime import datetime
 fl = figlist_var()
-date = "190404"
-output_name = "test"
-adcOffset = 48
-carrierFreq_MHz = 14.86
+config_dict = SpinCore_pp.configuration("active.ini")
+date = datetime.now().strftime("%y%m%d")
+config_dict['type'] = 'test'
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 tx_phases = r_[0.0, 90.0, 180.0, 270.0]
 amplitude = 1.0
-tau = 10.0
-nScans = 1
-nEchoes = 1
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 1
+    nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
-p90 = 5.0
 RX_delay = 100.0
-repetition = 1e6
-SW_kHz = 80.0
-nPoints = 128
-acq_time = nPoints / SW_kHz
-data_length = 2 * nPoints * nEchoes * nPhaseSteps
-SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
+nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+acq_time = nPoints / config_dict['SW_kHz']
+config_dict['acq_time'] = acq_time
+data_length = 2 * nPoints * config_dict['nEchoes'] * nPhaseSteps
+SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
+        tx_phases, amplitude, nPoints)
+acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, config_dict['nScans'], 
+        config_dict['nEchoes'], nPhaseSteps)
 verifyParams()
 SpinCore_pp.init_ppg()
 if phase_cycling:
@@ -35,7 +32,7 @@ if phase_cycling:
             ("marker", "start", 1),
             ("phase_reset", 1),
             ("delay_TTL", 1.0),
-            ("pulse_TTL", p90, "ph1", r_[0, 1, 2, 3]),
+            ("pulse_TTL", config_dict['p90'], "ph1", r_[0, 1, 2, 3]),
             ("delay", 3e6),
             ("jumpto", "start"),
         ]
@@ -46,14 +43,14 @@ if not phase_cycling:
             ("marker", "start", 1),
             ("phase_reset", 1),
             ("delay_TTL", 1.0),
-            ("pulse_TTL", p90, 0.0),
+            ("pulse_TTL", config_dict['p90'], 0.0),
             ("delay", 3e6),
             ("jumpto", "start"),
         ]
     )
 SpinCore_pp.stop_ppg()
 if phase_cycling:
-    for x in range(nScans):
+    for x in range(config_dict['nScans']):
         print("SCAN NO. %d" % (x + 1))
         SpinCore_pp.runBoard()
 if not phase_cycling:

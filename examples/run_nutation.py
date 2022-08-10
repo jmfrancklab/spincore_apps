@@ -48,6 +48,8 @@ nutation_data = run_spin_echo(
     nPoints=nPoints,
     nEchoes=config_dict["nEchoes"],
     p90_us=p90_us[0],
+    ph1_cyc = ph1_cyc,
+    ph2_cyc = ph2_cyc,
     repetition=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
@@ -71,6 +73,8 @@ for index, val in enumerate(p90_range_us[1:]):
         repetition=config_dict["repetition_us"],
         tau_us=config_dict["tau_us"],
         SW_kHz=config_dict["SW_kHz"],
+        ph1_cyc = ph1_cyc,
+        ph2_cyc = ph2_cyc,
         output_name=filename,
         ret_data=nutation_data,
     )
@@ -83,7 +87,7 @@ nutation_data.setaxis("ph1", ph1_cyc)
 nutation_data.setaxis('nScans',config_dict['nScans'])
 fl.next("raw data")
 fl.image(nutation_data)
-nutation_data.ft("t", shift=True)
+nutation_data.ft("t2", shift=True)
 fl.next("FT raw data")
 fl.image(nutation_data)
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
@@ -98,7 +102,7 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             nutation_data.name("temp")
             nodename = "temp"
-    nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
+        nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)

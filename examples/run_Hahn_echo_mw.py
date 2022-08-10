@@ -148,11 +148,18 @@ fl.next("abs raw data_array - ft")
 fl.image(abs(echo_data.C.setaxis("indirect", "#")))
 nodename = echo_data.name()
 try:
-    DNP_data.hdf5_write(f"{filename_out}",directory = target_directory)
+    echo_data.hdf5_write(f"{filename_out}",directory = target_directory)
 except:
-    logger.debug("I had issues saving this data, I am going to name it temp for now"
-    DNP_data.hdf5_write("temp.h5",directory=target_directory)
-    input("Don't forget to rename this temp.h5 to the appropriate name!")
+    print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            echo_data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 logger.info("FILE SAVED")
 logger.debug(strm("Name of saved enhancement data", echo_data.name()))
 logger.debug("shape of saved enhancement data", ndshape(echo_data))
