@@ -57,6 +57,7 @@ config_dict["field_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 print("Here is my field axis:",field_axis)
+#{{{ phase cycling
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
@@ -115,10 +116,10 @@ with xepr() as x_server:
                 output_name=filename,
                 ret_data=sweep_data,
             )
-        SpinCore_pp.stopBoard()
-sweep_data.set_prop("acq_params", config_dict.asdict())
+        SpinCore_pp.stopBoard();
 #}}}
 # {{{chunk and save data
+sweep_data.set_prop("acq_params", config_dict.asdict())
 if phase_cycling:
     sweep_data.chunk("t", ["ph1", "t2"], [4, -1])
     sweep_data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
@@ -171,10 +172,10 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             sweep_data.name("temp")
             nodename = "temp"
-    sweep_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
-        sweep_data.hdf5_write(filename + ".h5", directory=target_directory)
+        sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
             f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
@@ -182,7 +183,7 @@ else:
         if os.path.exists("temp.h5"):
             print("there is a temp.h5 -- I'm removing it")
             os.remove("temp.h5")
-        echo_data.hdf5_write("temp.h5")
+        sweep_data.hdf5_write("temp.h5")
         print(
             "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
         )

@@ -62,7 +62,7 @@ data = run_cpmg(
 )
 # }}}
 # {{{saving with acq params
-SpinCore_pp.stopBoard()
+SpinCore_pp.stopBoard();
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
@@ -82,10 +82,22 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             data.name("temp")
             nodename = "temp"
-    data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
-    data.hdf5_write(filename + ".h5", directory=target_directory)
-config_data.write()
+    try:
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
+config_dict.write()
 # }}}
 # {{{visualize raw data
 s = data.C

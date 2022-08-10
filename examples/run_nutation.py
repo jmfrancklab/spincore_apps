@@ -2,11 +2,13 @@ from pylab import *
 from pyspecdata import *
 import os
 import SpinCore_pp
+import h5py
+from Instruments.XEPR_eth import xepr
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
-import configparser
 
 fl = figlist_var()
+p90_range_us = linspace(1.0, 15.0, 5, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
@@ -20,12 +22,10 @@ filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type'
 # }}}
 
 # {{{ Edit here to set the actual field
-set_field = False
-if set_field:
-    B0 = (
-        config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
-    )  # Determine this from Field Sweep
-    thisB0 = xepr().set_field(B0)
+B0 = (
+    config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+)  # Determine this from Field Sweep
+thisB0 = xepr().set_field(B0)
 # }}}
 # {{{phase cycling
 phase_cycling = True
@@ -39,8 +39,22 @@ if not phase_cycling:
     nPhaseSteps = 1
 # }}}
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-p90_range_us = linspace(1.0, 15.0, 5, endpoint=False)
-for index, val in enumerate(p90_range_us):
+nutation_data = run_spin_echo(
+    nScans=config_dict["nScans"],
+    indirect_idx=0,
+    indirect_len=len(p90_range_us),
+    adcOffset=config_dict["adc_offset"],
+    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+    nPoints=nPoints,
+    nEchoes=config_dict["nEchoes"],
+    p90_us=p90_us[0],
+    repetition=config_dict["repetition_us"],
+    tau_us=config_dict["tau_us"],
+    SW_kHz=config_dict["SW_kHz"],
+    output_name=filename,
+    ret_data=None,
+)
+for index, val in enumerate(p90_range_us[1:]):
     p90_us = val  # us
     print("***")
     print("INDEX %d - 90 TIME %f" % (index, val))
@@ -58,16 +72,20 @@ for index, val in enumerate(p90_range_us):
         tau_us=config_dict["tau_us"],
         SW_kHz=config_dict["SW_kHz"],
         output_name=filename,
-        ret_data=None,
+        ret_data=nutation_data,
     )
-SpinCore_pp.stopBoard()
+SpinCore_pp.stopBoard();
 nutation_data.set_prop("acq_params", config_dict.asdict())
-print("EXITING...\n")
-print("\n*** *** ***\n")
-nutation_data.name(config_dict["type"])
+nutation_data.name(config_dict["type"]+'_'+config_dict['echo_counter'])
 nutation_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph2_cyc), len(ph1_cyc), -1])
 nutation_data.setaxis("ph2", ph2_cyc)
 nutation_data.setaxis("ph1", ph1_cyc)
+nutation_data.setaxis('nScans',config_dict['nScans'])
+fl.next("raw data")
+fl.image(nutation_data)
+nutation_data.ft("t", shift=True)
+fl.next("FT raw data")
+fl.image(nutation_data)
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
 filename_out = filename + ".h5"
 nodename = nutation_data.name()
@@ -80,16 +98,23 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             nutation_data.name("temp")
             nodename = "temp"
-    nutation_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
-    nutation_data.hdf5_write(filename + ".h5", directory=target_directory)
+    try:
+        nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            nutation_data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", nutation_data.name()))
 print(("Shape of saved data", ndshape(nutation_data)))
 config_dict.write()
-fl.next("raw data")
-fl.image(nutation_data)
-nutation_data.ft("t", shift=True)
-fl.next("FT raw data")
-fl.image(nutation_data)
 fl.show()

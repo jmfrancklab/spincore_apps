@@ -61,12 +61,11 @@ with power_control() as p:
     )
     config_dict["mw_freqs"] = "%.9f" % dip_f
     p.set_power(dB_settings)
-    this_dB = dB_settings
     for k in range(10):
         time.sleep(0.5)
-        if p.get_power_setting() >= this_dB:
+        if p.get_power_setting() >= dB_settings:
             break
-    if p.get_power_setting() < this_dB:
+    if p.get_power_setting() < dB_settings:
         raise ValueError("After 10 tries, this power has still not settled")
     meter_powers = np.zeros_like(dB_settings)
     with xepr() as x_server:
@@ -115,8 +114,7 @@ with power_control() as p:
                 output_name=filename,
                 ret_data=sweep_data,
             )
-        SpinCore_pp.stopBoard()
-sweep_data.set_prop("acq_params", config_dict.asdict())
+        SpinCore_pp.stopBoard();
 # }}}
 # {{{chunk and save data
 if phase_cycling:
@@ -131,7 +129,7 @@ if phase_cycling:
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )
-    sweep_data.reorder("t2", first=False)
+    sweep_data.set_prop("acq_params", config_dict.asdict())
     sweep_data.ft("t2", shift=True)
     sweep_data.ft("ph1", unitary=True)
     fl.next("Raw - frequency")
@@ -171,21 +169,21 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             sweep_data.name("temp")
             nodename = "temp"
-    sweep_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
-        sweep_data.hdf5_write(filename + ".h5", directory=target_directory)
+        sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
             f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
         )
         if os.path.exists("temp.h5"):
-            print("there is a temp.h5 -- I'm removing it")
+            print("there is a temp.h5 already! -- I'm removing it")
             os.remove("temp.h5")
-        echo_data.hdf5_write("temp.h5")
-        print(
-            "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-        )
+            echo_data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", sweep_data.name()))
 print(("Shape of saved data", ndshape(sweep_data)))

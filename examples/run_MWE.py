@@ -4,6 +4,7 @@ from . import SpinCore_pp
 import socket
 import sys
 import time
+from Instruments.XEPR_eth import xepr
 
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -17,30 +18,8 @@ config_dict["date"] = date
 config_dict["echo_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
-# {{{ for setting EPR magnet
-def API_sender(value):
-    IP = "jmfrancklab-bruker.syr.edu"
-    if len(sys.argv) > 1:
-        IP = sys.argv[1]
-    PORT = 6001
-    print("target IP:", IP)
-    print("target port:", PORT)
-    MESSAGE = str(value)
-    print("SETTING FIELD TO...", MESSAGE)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Internet  # TCP
-    sock.connect((IP, PORT))
-    sock.send(MESSAGE)
-    sock.close()
-    print("FIELD SET TO...", MESSAGE)
-    time.sleep(5)
-    return
-
-
-# }}}
-set_field = False
-if set_field:
-    B0 = 3409.3  # Determine this from Field Sweep
-    API_sender(B0)
+B0 = (config_dict['carrierFreq_MHz'] / config_dict['gamma_eff_MHz_G'])  # Determine this from Field Sweep
+xepr().set_field(B0)
 tx_phases = r_[0.0, 90.0, 180.0, 270.0]
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps
@@ -128,7 +107,19 @@ if os.path.exists(filename + ".h5"):
             nodename = "temp"
     transient_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
-    transient_data.hdf5_write(filename + ".h5", directory=target_directory)
+    try:
+        nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            echo_data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", transient_data.name()))
 print(("Shape of saved data", ndshape(transient_data)))

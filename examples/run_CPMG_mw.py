@@ -42,7 +42,6 @@ import SpinCore_pp
 from Instruments import Bridge12, prologix_connection, gigatronics
 from datetime import datetime
 import time
-import configparser
 
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -53,7 +52,7 @@ nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "cpmg_mw"
 config_dict["date"] = date
-config_dict["echo_counter"] += 1
+config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 # {{{power settings
@@ -111,7 +110,7 @@ cpmg_data = run_cpmg(
     output_name=filename,
     ret_data=None,
 )
-SpinCore_pp.stopBoard()
+SpinCore_pp.stopBoard();
 # raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
     b.set_wg(True)
@@ -175,18 +174,18 @@ with Bridge12() as b:
             ret_data=cpmg_data,
         )
         last_power = this_power
-SpinCore_pp.stopBoard()
+SpinCore_pp.stopBoard();
 # }}}
 # {{{save and show data
-DNP_data.set_prop("acq_params", config_dict.asdict())
-DNP_data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
-DNP_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
-DNP_data.setaxis("ph1", len(ph1_cyc) / 4)
+cpmg_data.set_prop("acq_params", config_dict.asdict()
+cpmg_data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
+cpmg_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
+cpmg_data.setaxis("ph1", len(ph1_cyc) / 4)
 if config_dict["nScans"] > 1:
-    DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
-nodename = DNP_data.name()
+nodename = cpmg_data.name()
 if os.path.exists(filename + ".h5"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
@@ -194,20 +193,32 @@ if os.path.exists(filename + ".h5"):
     ) as fp:
         if nodename in fp.keys():
             print("this nodename already exists, so I will call it temp")
-            DNP_data.name("temp")
+            cpmg_data.name("temp")
             nodename = "temp"
-    DNP_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    cpmg_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
-    DNP_data.hdf5_write(filename + ".h5", directory=target_directory)
+    try:
+        cpmg_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            cpmg_data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 config_dict.write()
 fl.next("raw data")
-fl.image(DNP_data)
+fl.image(cpmg_data)
 fl.next("abs raw data")
-fl.image(abs(DNP_data))
-data.ft("t", shift=True)
+fl.image(abs(cpmg_data))
+cpmg_data.ft("t", shift=True)
 fl.next("raw data - ft")
-fl.image(DNP_data)
+fl.image(cpmg_data)
 fl.next("abs raw data - ft")
-fl.image(abs(DNP_data))
+fl.image(abs(cpmg_data))
 fl.show()
 # }}}

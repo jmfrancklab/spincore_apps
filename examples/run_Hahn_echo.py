@@ -78,7 +78,7 @@ echo_data = run_spin_echo(
     output_name=filename,
     ret_data=None,
 )
-SpinCore_pp.stopBoard()
+SpinCore_pp.stopBoard();
 # }}}
 # {{{setting acq_params
 echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
@@ -117,18 +117,31 @@ else:
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
 nodename = echo_data.name()
-if os.path.exists(filename + ".h5"):
+if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
-    with h5py.File(
-        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
-    ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp")
-            echo_data.name("temp")
-            nodename = "temp"
-    echo_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    with h5py.File(os.path.normpath(os.path.join(target_directory, 
+            f"{filename_out}"))) as fp:
+            if nodename in fp.keys():
+                print("this nodename already exists, so I will call it temp")
+                echo_data.name("temp")
+                nodename = "temp"
+                echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
+            else:
+                echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
-    echo_data.hdf5_write(filename + ".h5", directory=target_directory)
+    try:
+        sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            echo_data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", echo_data.name()))
 print(("Shape of saved data", ndshape(echo_data)))

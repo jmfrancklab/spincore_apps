@@ -38,6 +38,7 @@ print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 input("Look ok?")
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
+#{{{phase cycling and checking nPoints
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
@@ -68,8 +69,8 @@ with power_control() as p:
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
     p.mw_off()
-    DNP_data = run_spin_echo(
-        nScans=config_dict["nScans"],
+    echo_data = run_spin_echo(
+        nScans=config_dict["thermal_nScans"],
         indirect_idx=0,
         indirect_len=len(powers) + 1,
         ph1_cyc=Ep_ph1_cyc,
@@ -89,7 +90,7 @@ with power_control() as p:
     #                         that powers and other parameters are defined
     #                         globally w/in the script, as this function is not
     #                         designed to be moved outside the module
-    SpinCore_pp.stopBoard()
+    echo_data = echo_data['nScans',-1:]
     power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
@@ -123,42 +124,36 @@ with power_control() as p:
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
             output_name=filename,
-            ret_data=DNP_data,
+            ret_data=echo_data,
         )
-        SpinCore_pp.stopBoard()
-    config_dict["power_settings_dBm"] = power_settings_dBm
-DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
-DNP_data.set_prop("acq_params", config_dict.asdict())
-DNP_data.name(config_dict["type"])
-DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
-DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
-DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    SpinCore_pp.stopBoard();
+config_dict["power_settings_dBm"] = power_settings_dBm
+echo_data.set_prop("postproc_type", "spincore_ODNP_v3")
+echo_data.set_prop("acq_params", config_dict.asdict())
+echo_data.name(config_dict["type"])
+echo_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
+echo_data.setaxis("ph1", Ep_ph1_cyc / 4)
+echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 # }}}
 # }}}
 fl.next("raw data_array")
-fl.image(DNP_data.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
+fl.image(echo_data.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
 fl.next("abs raw data_array")
-fl.image(abs(DNP_data).C.setaxis("indirect", "#").set_units("indirect", "scan #"))
-DNP_data.ft("t2", shift=True)
-DNP_data.ft(["ph1"])
+fl.image(abs(echo_data).C.setaxis("indirect", "#").set_units("indirect", "scan #"))
+echo_data.ft("t2", shift=True)
+echo_data.ft(["ph1"])
 fl.next("raw data_array - ft")
-fl.image(DNP_data.C.setaxis("indirect", "#"))
+fl.image(echo_data.C.setaxis("indirect", "#"))
 fl.next("abs raw data_array - ft")
-fl.image(abs(DNP_data.C.setaxis("indirect", "#")))
-nodename = DNP_data.name()
-if os.path.exists(filename + ".h5"):
-    print("this file already exists so we will add a node to it!")
-    with h5py.File(
-        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
-    ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp")
-            DNP_data.name("temp")
-            nodename = "temp"
-    DNP_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
-else:
-    DNP_data.hdf5_write(filename + ".h5", directory=target_directory)
+fl.image(abs(echo_data.C.setaxis("indirect", "#")))
+nodename = echo_data.name()
+try:
+    DNP_data.hdf5_write(f"{filename_out}",directory = target_directory)
+except:
+    logger.debug("I had issues saving this data, I am going to name it temp for now"
+    DNP_data.hdf5_write("temp.h5",directory=target_directory)
+    input("Don't forget to rename this temp.h5 to the appropriate name!")
 logger.info("FILE SAVED")
-logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
-logger.debug("shape of saved enhancement data", ndshape(DNP_data))
+logger.debug(strm("Name of saved enhancement data", echo_data.name()))
+logger.debug("shape of saved enhancement data", ndshape(echo_data))
 fl.show()

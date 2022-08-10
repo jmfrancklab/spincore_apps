@@ -65,7 +65,7 @@ vd_data = run_IR(
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
-SpinCore_pp.stopBoard()
+SpinCore_pp.stopBoard();
 vd_data.set_prop("acq_params", config_dict.asdict())
 vd_data.set_prop("postproc", "spincore_IR_v1")
 vd_data.name(config_dict["type"] + "_" + str(config_dict["ir_counter"]))
@@ -94,9 +94,21 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             vd_data.name("temp")
             nodename = "temp"
-    vd_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
-    vd_data.hdf5_write(filename + ".h5", directory=target_directory)
+    try:
+        vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            vd_data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", vd_data.name()))
 print(("Shape of saved data", ndshape(vd_data)))

@@ -205,7 +205,19 @@ if os.path.exists(filename + ".h5"):
             nodename = "temp"
     data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
-    data.hdf5_write(filename + ".h5", directory=target_directory)
+    try:
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 print(("Shape of saved data", ndshape(data)))

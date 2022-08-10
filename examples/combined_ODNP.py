@@ -102,7 +102,6 @@ with power_control() as p:
     #                         that powers and other parameters are defined
     #                         globally w/in the script, as this function is not
     #                         designed to be moved outside the module
-    SpinCore_pp.stopBoard()
     DNP_thermal_done = time.time()
     time_axis_coords = DNP_data.getaxis("indirect")
     time_axis_coords[0]["start_times"] = DNP_ini_time
@@ -144,39 +143,30 @@ with power_control() as p:
             output_name=filename,
             ret_data=DNP_data,
         )
-        SpinCore_pp.stopBoard()
         time_axis_coords[j + 1]["stop_times"] = time.time()
+SpinCore_pp.stopBoard();
 DNP_data.set_prop("stop_time", time.time())
 DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
 DNP_data.set_prop("acq_params", parser_dict.asdict())
-DNP_data.name(parser_dict['type'])
 DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
 DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
 DNP_data.setaxis('nScans',r_[0:parser_dict['nScans']])
 DNP_data.reorder(['ph1','nScans','t2'])
 DNP_data.ft('t2',shift=True)
-DNP_data.ft(['ph1'])
+DNP_data.ft(['ph1'], unitary = True)
+DNP_data.name(parser_dict['type'])
 nodename = DNP_data.name()
-if os.path.exists(filename + ".h5"):
-    print("this file already exists so we will add a node to it!")
-    with h5py.File(
-        os.path.normpath(os.path.join(target_directory, f"{filename_out}")
-    ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp")
-            echo_data.name("temp")
-            nodename = "temp"
-    DNP_data.hdf5_write(f"{filename_out}/{nodename}",directory = target_directory)
-else:
-    try:
-        DNP_data.hdf5_write(filename + ".h5",directory=target_directory)
-    except:
-        print(f"I had problems writing to the correct file {filename_out}.h5, so I'm going to try to save your file to temp.h5 in the current directory")
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 -- I'm removing it")
-            os.remove("temp.h5")
-        DNP_data.hdf5_write("temp.h5")
-        input("if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!! Hit enter to continue experiment")
+try:
+    DNP_data.hdf5_write(f"{filename_out}",directory = target_directory)
+except:
+    print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+    if os.path.exists("temp.h5"):
+        print("There is already a temp.h5 -- I'm removing it")
+        os.remove("temp.h5")
+        DNP_data.hdf5_write("temp.h5", directory=target_directory)
+        filename_out = "temp.h5"
+        input("change the name accordingly once this is done running!")
 logger.info("FILE SAVED")
 logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
 logger.debug("shape of saved enhancement data", ndshape(DNP_data))
@@ -205,7 +195,6 @@ with power_control() as p:
         ph2_cyc=IR_ph2_cyc,
         ret_data=None,
     )
-    SpinCore_pp.stopBoard()
     vd_data.set_prop("start_time", ini_time)
     vd_data.set_prop("stop_time", time.time())
     vd_data.set_prop("acq_params", parser_dict.asdict())
@@ -217,30 +206,17 @@ with power_control() as p:
     vd_data = vd_data['nScans',-1:]
     vd_data.setaxis('nScans',r_[0:parser_dict['nScans']])
     nodename = vd_data.name()
-    if os.path.exists(filename + ".h5"):
-        print("this file already exists so we will add a node to it!")
-        with h5py.File(
-            os.path.normpath(os.path.join(target_directory, f"{filename_out}")
-        ) as fp:
-            if nodename in fp.keys():
-                print("this nodename already exists, so I will call it temp")
-                vd_data.name("temp")
-                nodename = "temp"
-        vd_data.hdf5_write(f"{filename_out}/{nodename}",directoyr=target_directory)
-    else:
-        try:
-            vd_data.hdf5_write(filename + ".h5",directory=target_directory)
-        except:    
-            print(f"I had problems writing to the correct file {filename_out}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
-        )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 -- I'm removing it")
-            os.remove("temp.h5")
-        vd_data.hdf5_write("temp.h5")
-        print(
-            "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-        )
-
+    with h5py.File(
+        os.path.normpath(os.path.join(target_directory, f"{filename_out}")
+    ) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp")
+            vd_data.name("temp_noPower")
+            nodename = "temp_noPower"
+            vd_data.hdf5_write(f"{filename_out}",directoyr=target_directory)
+            input(f"I had problems writing to the correct file {filename_out} so I'm going to try to save this node as temp_noPower")
+        else:
+            vd_data.hdf5_write(f"{filename_out}",directory = target_directory)    
     logger.debug("\n*** FILE SAVED ***\n")
     logger.debug(strm("Name of saved data", vd_data.name()))
     for j, this_dB in enumerate(T1_powers_dB):
@@ -279,41 +255,26 @@ with power_control() as p:
             SW_kHz=parser_dict['SW_kHz'],
             ret_data=None,
         )
-        SpinCore_pp.stopBoard()
         vd_data.set_prop("start_time", ini_time)
         vd_data.set_prop("stop_time", time.time())
         vd_data.set_prop("acq_params", parser_dict.asdict())
         vd_data.set_prop("postproc_type", "spincore_IR_v1")
         vd_data.name(T1_node_names[j])
-        vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
+        vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
         vd_data.setaxis("ph1", IR_ph1_cyc / 4)
         vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.setaxis('nScans',r_[0:parser_dict['nScans']])
         nodename = vd_data.name()
-        if os.path.exists(filename + ".h5"):
-            print("this file already exists so we will add a node to it!")
-            with h5py.File(
-                os.path.normpath(os.path.join(target_directory,f"{filename_out}")
-            ) as fp:
-                if nodename in fp.keys():
-                    print("this nodename already exists, so I will call it temp")
-                    vd_data.name("temp")
-                    nodename = "temp"
-            vd_data.hdf5_write(f"{filename_out}/{nodename}",directory = target_directory)
-        else:
-            try:
-                vd_data.hdf5_write(filename + ".h5", directory=target_directory)
-            except:
-                print(
-                    f"I had problems writing to the correct file {filename_out}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
-                )
-                if os.path.exists("temp.h5"):
-                    print("there is a temp.h5 -- I'm removing it")
-                    os.remove("temp.h5")
-                vd_data.hdf5_write("temp.h5")
-                print(
-                    "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-                )
+        with h5py.File(
+            os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+        ) as fp:
+            if nodename in fp.keys():
+                print("this nodename already exists, so I will call it temp_%d"%j)
+                vd_data.name("temp_%d"%j)
+                nodename = "temp_%d"%j
+                vd_data.hdf5_write(f"{filename_out}",directory = target_directory)
+            else:
+                vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
         print(("Shape of saved data", ndshape(vd_data)))
@@ -322,8 +283,9 @@ with power_control() as p:
             parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
         )
     this_log = p.stop_log()
+    SpinCore.stopBoard();
 # }}}
+parser_dict.write()
 with h5py.File(os.path.join(target_directory, f'{filename_out'}, "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
-parser_dict.write()

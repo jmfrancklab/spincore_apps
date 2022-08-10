@@ -75,7 +75,7 @@ for index, val in enumerate(p90_range):
     print("INDEX %d - 90 TIME %f" % (index, val))
     print("***")
     if index == 0:
-        nutation_data = run_cpmg(
+        data = run_cpmg(
             nScans=config_dict["nScans"],
             indirect_idx=0,
             indirect_len=len(p90_range) + 1,
@@ -110,18 +110,18 @@ for index, val in enumerate(p90_range):
             SW_kHz=config_dict["SW_kHz"],
             output_name=filename,
             ph1_cyc=ph1_cyc,
-            ret_data=nutation_data,
+            ret_data=data,
         )
-SpinCore_pp.stopBoard()
-nutation_data.set_prop("acq_params", config_dict.asdict())
-nutation_data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
-nutation_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
-nutation_data.setaxis("ph1", ph1_cyc / 4)
+SpinCore_pp.stopBoard();
+data.set_prop("acq_params", config_dict.asdict())
+data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
+data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
+data.setaxis("ph1", ph1_cyc / 4)
 if config_dict["nScans"] > 1:
-    nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
-nodename = nutation_data.name()
+nodename = data.name()
 if os.path.exists(filename + ".h5"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
@@ -129,15 +129,27 @@ if os.path.exists(filename + ".h5"):
     ) as fp:
         if nodename in fp.keys():
             print("this nodename already exists, so I will call it temp")
-            nutation_data.name("temp")
+            data.name("temp")
             nodename = "temp"
-    nutation_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+    data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
 else:
-    nutation_data.hdf5_write(filename + ".h5", directory=target_directory)
+    try:
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+        )
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            data.hdf5_write("temp.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+            )
 config_dict.write()
 fl.next("raw data")
-fl.image(nutation_data)
-nutation_data.ft("t", shift=True)
+fl.image(data)
+data.ft("t", shift=True)
 fl.next("FT raw data")
-fl.image(nutation_data)
+fl.image(data)
 fl.show()
