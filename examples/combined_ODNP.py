@@ -200,10 +200,10 @@ with power_control() as p:
     vd_data.set_prop("acq_params", parser_dict.asdict())
     vd_data.set_prop("postproc_type", "spincore_IR_v1")
     vd_data.name("FIR_noPower")
+    vd_data = vd_data['nScans',-1:]
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
     vd_data.setaxis("ph2", IR_ph2_cyc / 4)
-    vd_data = vd_data['nScans',-1:]
     vd_data.setaxis('nScans',r_[0:parser_dict['nScans']])
     nodename = vd_data.name()
     with h5py.File(
