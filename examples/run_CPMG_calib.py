@@ -40,6 +40,7 @@ from datetime import datetime
 from . import SpinCore_pp
 
 fl = figlist_var()
+p90_range = linspace(3.0, 4.0, 5)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
@@ -57,7 +58,6 @@ pad_start = tau_extra - config_dict["deadtime_us"]
 pad_end = tau_extra - config_dict["deblank_us"] * 2
 nPhaseSteps = 2
 ph1_cyc = r_[0, 2]
-p90_range = linspace(3.0, 4.0, 5)  # ,endpoint=False)
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 for index, val in enumerate(p90_range):
     p90 = val  # us
