@@ -44,11 +44,15 @@ from Instruments.XEPR_eth import xepr
 import numpy as np
 import h5py
 
-field_axis = r_[3490.0:3510.0:1.0]
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 # }}}
+#{{{ make field axis
+left = ((config_dict['ppt']*config_dict['guessed_MHz_to_GHz'])/config_dict['gamma_eff_MHz_G']) - (config_dict['field_width']/2)
+right = ((config_dict['ppt']*config_dict['guessed_MHz_to_GHz'])/config_dict['gamma_eff_MHz_G']) + (config_dict['field_width']/2)
+field_axis = r_[left:right:1.0]
+#}}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "field"
