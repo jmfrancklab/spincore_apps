@@ -102,7 +102,7 @@ control_thermal.reorder(['ph1','nScans','t2'])
 control_thermal.ft('t2',shift=True)
 control_thermal.ft(['ph1'], unitary = True)
 control_thermal.name('control_thermal')
-nodename = DNP_data.name()
+nodename = control_data.name()
 try:
     control_thermal.hdf5_write(f"{filename_out}",directory = target_directory)
 except:
