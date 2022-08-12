@@ -194,39 +194,34 @@ with power_control() as p:
             ret_data=DNP_data,
         )
         time_axis_coords[j + 1]["stop_times"] = time.time()
-SpinCore_pp.stopBoard();
-DNP_data.set_prop("stop_time", time.time())
-DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
-DNP_data.set_prop("acq_params", parser_dict.asdict())
-DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
-DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
-DNP_data.setaxis('nScans',r_[0:parser_dict['nScans']])
-DNP_data.reorder(['ph1','nScans','t2'])
-DNP_data.ft('t2',shift=True)
-DNP_data.ft(['ph1'], unitary = True)
-DNP_data.name(parser_dict['type'])
-nodename = DNP_data.name()
-try:
-    DNP_data.hdf5_write(f"{filename_out}",directory = target_directory)
-except:
-    print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
-        )
-    if os.path.exists("temp.h5"):
-        print("There is already a temp.h5 -- I'm removing it")
-        os.remove("temp.h5")
-        DNP_data.hdf5_write("temp.h5", directory=target_directory)
-        filename_out = "temp.h5"
-        input("change the name accordingly once this is done running!")
-logger.info("FILE SAVED")
-logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
-logger.debug("shape of saved enhancement data", ndshape(DNP_data))
-# }}}
+    SpinCore_pp.stopBoard();
+    DNP_data.set_prop("stop_time", time.time())
+    DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
+    DNP_data.set_prop("acq_params", parser_dict.asdict())
+    DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
+    DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
+    DNP_data.setaxis('nScans',r_[0:parser_dict['nScans']])
+    DNP_data.reorder(['ph1','nScans','t2'])
+    DNP_data.ft('t2',shift=True)
+    DNP_data.ft(['ph1'], unitary = True)
+    DNP_data.name(parser_dict['type'])
+    nodename = DNP_data.name()
+    try:
+        DNP_data.hdf5_write(f"{filename_out}",directory = target_directory)
+    except:
+        print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+            )
+        if os.path.exists("temp.h5"):
+            print("There is already a temp.h5 -- I'm removing it")
+            os.remove("temp.h5")
+            DNP_data.hdf5_write("temp.h5", directory=target_directory)
+            filename_out = "temp.h5"
+            input("change the name accordingly once this is done running!")
+    logger.info("FILE SAVED")
+    logger.debug(strm("Name of saved enhancement data", DNP_data.name()))
+    logger.debug("shape of saved enhancement data", ndshape(DNP_data))
+    # }}}
 # {{{run IR
-with power_control() as p:
-    retval_IR = p.dip_lock(
-        parser_dict['uw_dip_center_GHz'] - parser_dict['uw_dip_width_GHz'] / 2,
-        parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
-    )
     p.mw_off()
     ini_time = time.time()  # needed b/c data object doesn't exist yet
     vd_data = run_IR(
