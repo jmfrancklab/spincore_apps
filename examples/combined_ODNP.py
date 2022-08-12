@@ -68,6 +68,56 @@ if os.path.exists(filename_out):
         "the file %s already exists, so I'm not going to let you proceed!" % filename_out
     )
 # }}}
+# {{{Collect Thermals
+control_thermal = run_spin_echo(
+    nScans=parser_dict['thermal_nScans'],
+    indirect_idx=0,
+    indirect_len=len(powers) + 1,
+    ph1_cyc=Ep_ph1_cyc,
+    adcOffset=parser_dict['adc_offset'],
+    carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
+    nPoints=nPoints,
+    nEchoes=parser_dict['nEchoes'],
+    p90_us=parser_dict['p90_us'],
+    repetition=parser_dict['repetition_us'],
+    tau_us=parser_dict['tau_us'],
+    SW_kHz=parser_dict['SW_kHz'],
+    output_name=filename,
+    indirect_fields=("start_times", "stop_times"),
+    ret_data=None,
+)  # assume that the power axis is 1 longer than the
+#                         "powers" array, so that we can also store the
+#                         thermally polarized signal in this array (note
+#                         that powers and other parameters are defined
+#                         globally w/in the script, as this function is not
+#                         designed to be moved outside the module
+SpinCore_pp.stopBoard();
+control_thermal = control_thermal['nScans',-1:]
+control_thermal.set_prop("postproc_type", "spincore_ODNP_v3")
+control_thermal.set_prop("acq_params", parser_dict.asdict())
+control_thermal.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
+control_thermal.setaxis("ph1", Ep_ph1_cyc / 4)
+control_thermal.setaxis('nScans',r_[0:parser_dict['nScans']])
+control_thermal.reorder(['ph1','nScans','t2'])
+control_thermal.ft('t2',shift=True)
+control_thermal.ft(['ph1'], unitary = True)
+control_thermal.name('control_thermal')
+nodename = DNP_data.name()
+try:
+    control_thermal.hdf5_write(f"{filename_out}",directory = target_directory)
+except:
+    print(f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_ctrl.h5 in the current directory"
+        )
+    if os.path.exists("temp_ctrl.h5"):
+        print("There is already a temp_ctrl.h5 -- I'm removing it")
+        os.remove("temp_ctrl.h5")
+        DNP_data.hdf5_write("temp_ctrl.h5", directory=target_directory)
+        filename_out = "temp_ctrl.h5"
+        input("change the name accordingly once this is done running!")
+logger.info("FILE SAVED")
+logger.debug(strm("Name of saved controlled thermal", control_thermal.name()))
+logger.debug("shape of saved controlled thermal", ndshape(control_thermal))
+# }}}
 # {{{run enhancement
 with power_control() as p:
     # JF points out it should be possible to save time by removing this (b/c we
