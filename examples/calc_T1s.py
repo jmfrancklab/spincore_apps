@@ -10,4 +10,3 @@ print((
     SpinCore_pp.vdlist_from_relaxivities(config_dict["concentration"], **vd_kwargs)
     * 1e6
 ))
-quit()
