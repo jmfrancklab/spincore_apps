@@ -20,8 +20,10 @@ mw_freqs = []
 config_dict = SpinCore_pp.configuration("active.ini")
 # }}}
 #{{{make field axis
-left = ((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']) - (config_dict['field_width']/2)
-right = ((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']) + (config_dict['field_width']/2)
+left = (((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']))/1e9
+left = left - (config_dict['field_width']/2)
+right = (((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']))/1e9
+right = right + (config_dict['field_width']/2)
 field_axis = r_[left:right:1.0]
 #}}}
 # {{{create filename and save to config file
@@ -119,6 +121,7 @@ with power_control() as p:
                 ret_data=sweep_data,
             )
         SpinCore_pp.stopBoard();
+sweep_data.set_prop('acq_params',config_dict.asdict())
 # }}}
 # {{{chunk and save data
 if phase_cycling:
@@ -133,7 +136,7 @@ if phase_cycling:
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )
-    sweep_data.set_prop("acq_params", config_dict.asdict())
+    sweep_data.reorder('t2',first=False)
     sweep_data.ft("t2", shift=True)
     sweep_data.ft("ph1", unitary=True)
     fl.next("Raw - frequency")
@@ -173,7 +176,7 @@ if os.path.exists(filename + ".h5"):
             print("this nodename already exists, so I will call it temp")
             sweep_data.name("temp")
             nodename = "temp"
-        sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)

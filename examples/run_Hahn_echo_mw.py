@@ -11,7 +11,8 @@ from numpy import *
 import os
 import sys
 import SpinCore_pp
-from Instruments import Bridge12, prologix_connection, gigatronics
+from SpinCore_pp.ppg import run_spin_echo
+from Instruments import Bridge12, prologix_connection, gigatronics,power_control
 from serial import Serial
 import time
 from datetime import datetime
@@ -127,13 +128,13 @@ with power_control() as p:
             ret_data=echo_data,
         )
     SpinCore_pp.stopBoard();
-config_dict["power_settings_dBm"] = power_settings_dBm
 echo_data.set_prop("postproc_type", "spincore_ODNP_v3")
 echo_data.set_prop("acq_params", config_dict.asdict())
 echo_data.name(config_dict["type"])
 echo_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
 echo_data.setaxis("ph1", Ep_ph1_cyc / 4)
 echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+echo_data.reorder(['ph1','indirect','t2'])
 # }}}
 # }}}
 fl.next("raw data_array")
@@ -153,14 +154,15 @@ except:
     print(
             f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
         )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 already! -- I'm removing it")
-            os.remove("temp.h5")
-            echo_data.hdf5_write("temp.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-            )
+    if os.path.exists("temp.h5"):
+        print("there is a temp.h5 already! -- I'm removing it")
+        os.remove("temp.h5")
+        echo_data.hdf5_write("temp.h5")
+        print(
+            "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+        )
 logger.info("FILE SAVED")
 logger.debug(strm("Name of saved enhancement data", echo_data.name()))
 logger.debug("shape of saved enhancement data", ndshape(echo_data))
+config_dict.write()
 fl.show()

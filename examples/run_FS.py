@@ -49,9 +49,12 @@ fl = figlist_var()
 config_dict = SpinCore_pp.configuration("active.ini")
 # }}}
 #{{{ make field axis
-left = ((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']) - (config_dict['field_width']/2)
-right = ((config_dict['mw_freqs']*config_dict['guessed_MHz_to_GHz'])/config_dict['gamma_eff_MHz_G']) + (config_dict['field_width']/2)
+left = (((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']))/1e9
+left = left - (config_dict['field_width']/2)
+right = (((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']))/1e9
+right = right + (config_dict['field_width']/2)
 field_axis = r_[left:right:1.0]
+input("Does this look okay? Hit enter if so")
 #}}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
