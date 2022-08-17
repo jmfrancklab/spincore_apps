@@ -78,7 +78,6 @@ echo_data = run_spin_echo(
     output_name=filename,
     ret_data=None,
 )
-SpinCore_pp.stopBoard();
 # }}}
 # {{{setting acq_params
 echo_data.set_prop("postproc_type", "proc_Hahn_echoph")

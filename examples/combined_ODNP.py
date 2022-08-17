@@ -92,7 +92,6 @@ control_thermal = run_spin_echo(
 #                         that powers and other parameters are defined
 #                         globally w/in the script, as this function is not
 #                         designed to be moved outside the module
-SpinCore_pp.stopBoard();
 control_thermal = control_thermal['nScans',-1:]
 control_thermal.set_prop("postproc_type", "spincore_ODNP_v3")
 control_thermal.set_prop("acq_params", parser_dict.asdict())
@@ -236,7 +235,6 @@ with power_control() as p:
             ret_data=DNP_data,
         )
         time_axis_coords[j + 1]["stop_times"] = time.time()
-    SpinCore_pp.stopBoard();
     DNP_data.set_prop("stop_time", time.time())
     DNP_data.set_prop("postproc_type", "spincore_ODNP_v3")
     DNP_data.set_prop("acq_params", parser_dict.asdict())
@@ -329,7 +327,6 @@ with power_control() as p:
             parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
         )
     this_log = p.stop_log()
-    SpinCore_pp.stopBoard();
 # }}}
 parser_dict.write()
 with h5py.File(os.path.join(target_directory, f'{filename_out}'), "a") as f:

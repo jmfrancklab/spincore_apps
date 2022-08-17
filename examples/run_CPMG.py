@@ -62,7 +62,6 @@ data = run_cpmg(
 )
 # }}}
 # {{{saving with acq params
-SpinCore_pp.stopBoard();
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
