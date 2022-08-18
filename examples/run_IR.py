@@ -10,7 +10,7 @@ from Instruments import power_control
 import SpinCore_pp
 from SpinCore_pp.ppg import run_IR
 from datetime import datetime
-
+import time
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -32,6 +32,7 @@ elif IR_input.lower().startwith("y"):
     config_dict['type'] = 'IR'
     config_dict["IR_counter"] += 1
     target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
+filename_out = filename + ".h5"
 # }}}
 # {{{phase cycling
 phase_cycling = True
@@ -82,26 +83,24 @@ vd_data = run_IR(
     repetition=config_dict['FIR_rep'],
     output_name=filename,
     SW_kHz=config_dict['SW_kHz'],
-    ph1_cyc=IR_ph1_cyc,
-    ph2_cyc=IR_ph2_cyc,
     ret_data=None,
 )
 vd_data.set_prop("acq_params", config_dict.asdict())
 vd_data.set_prop("postproc_type", "spincore_IR_v1")
 vd_data.name("FIR_noPower")
-vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
-vd_data.setaxis("ph1", IR_ph1_cyc / 4)
-vd_data.setaxis("ph2", IR_ph2_cyc / 4)
+vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph1), len(ph2), -1])
+vd_data.setaxis("ph1", ph1 / 4)
+vd_data.setaxis("ph2", ph2 / 4)
 vd_data.setaxis('nScans',r_[0:config_dict['thermal_nScans']])
 nodename = vd_data.name()
 with h5py.File(
     os.path.normpath(os.path.join(target_directory, f"{filename_out}")
-) as fp:
+)) as fp:
     if nodename in fp.keys():
         print("this nodename already exists, so I will call it temp")
         vd_data.name("temp_noPower")
         nodename = "temp_noPower"
-        vd_data.hdf5_write(f"{filename_out}",directoyr=target_directory)
+        vd_data.hdf5_write(f"{filename_out}",directory=target_directory)
         input(f"I had problems writing to the correct file {filename_out} so I'm going to try to save this node as temp_noPower")
     else:
         vd_data.hdf5_write(f"{filename_out}",directory = target_directory)    
@@ -146,21 +145,33 @@ with power_control() as p:
         vd_data.set_prop("acq_params", config_dict.asdict())
         vd_data.set_prop("postproc_type", "spincore_IR_v1")
         vd_data.name(T1_node_names[j])
-        vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
-        vd_data.setaxis("ph1", IR_ph1_cyc / 4)
-        vd_data.setaxis("ph2", IR_ph2_cyc / 4)
+        vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph2), len(ph1), -1])
+        vd_data.setaxis("ph1", ph1 / 4)
+        vd_data.setaxis("ph2", ph2 / 4)
         vd_data.setaxis('nScans',r_[0:config_dict['nScans']])
         nodename = vd_data.name()
         with h5py.File(
             os.path.normpath(os.path.join(target_directory,f"{filename_out}")
-        ) as fp:
+        )) as fp:
             if nodename in fp.keys():
                 print("this nodename already exists, so I will call it temp_%d"%j)
                 vd_data.name("temp_%d"%j)
                 nodename = "temp_%d"%j
                 vd_data.hdf5_write(f"{filename_out}",directory = target_directory)
             else:
-                vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+                try:
+                    vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+                except:
+                    print(
+                        f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_IR_%d.h5 in the current directory"%config_dict['ir_counter'])
+                    )
+                    if os.path.exists("temp_IR_%d.h5"%config_dict['ir_counter']):
+                        print("there is a temp_IR_%d.h5 already! -- I'm removing it"%config_dict['ir_counter'])
+                        os.remove("temp_IR_%d.h5"%config_dict['ir_counter'])
+                        vd_data.hdf5_write("temp_IR_%d.h5"%config_dict['ir_counter'])
+                        print(
+                            "if I got this far, that probably worked -- be sure to move/rename temp_IR_%d.h5 to the correct name!!"%config_dict['ir_counter']
+                        )
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
         print(("Shape of saved data", ndshape(vd_data)))
@@ -168,7 +179,7 @@ with power_control() as p:
         config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
         config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
     )
-    SpinCore.stopBoard();
+    SpinCore_pp.stopBoard();
 # }}}
 config_dict.write()
 # }}}

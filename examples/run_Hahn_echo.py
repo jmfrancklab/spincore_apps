@@ -78,7 +78,6 @@ echo_data = run_spin_echo(
     output_name=filename,
     ret_data=None,
 )
-SpinCore_pp.stopBoard();
 # }}}
 # {{{setting acq_params
 echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
@@ -101,7 +100,7 @@ if phase_cycling:
     echo_data.ft(["ph1"])
     fl.image(echo_data)
     fl.next("data plot")
-    data_slice = echo_data["ph1", 1].C
+    data_slice = echo_data["ph1", 1].C.mean('nScans')
     fl.plot(data_slice, alpha=0.5)
     fl.plot(data_slice.imag, alpha=0.5)
     fl.plot(abs(data_slice), color="k", alpha=0.5)
