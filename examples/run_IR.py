@@ -160,19 +160,7 @@ with power_control() as p:
                 nodename = "temp_%d"%j
                 vd_data.hdf5_write(f"{filename_out}",directory = target_directory)
             else:
-                try:
-                    vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
-                except:
-                    print(
-                        f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_IR_%d.h5 in the current directory"%config_dict['ir_counter'])
-                    )
-                    if os.path.exists("temp_IR_%d.h5"%config_dict['ir_counter']):
-                        print("there is a temp_IR_%d.h5 already! -- I'm removing it"%config_dict['ir_counter'])
-                        os.remove("temp_IR_%d.h5"%config_dict['ir_counter'])
-                        vd_data.hdf5_write("temp_IR_%d.h5"%config_dict['ir_counter'])
-                        print(
-                            "if I got this far, that probably worked -- be sure to move/rename temp_IR_%d.h5 to the correct name!!"%config_dict['ir_counter']
-                        )
+                vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
         print(("Shape of saved data", ndshape(vd_data)))
