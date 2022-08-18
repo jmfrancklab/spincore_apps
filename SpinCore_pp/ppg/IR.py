@@ -5,6 +5,7 @@ from .. import (
     stop_ppg,
     runBoard,
     getData,
+    stopBoard
 )
 from .. import load as spincore_load
 import pyspecdata as psp
