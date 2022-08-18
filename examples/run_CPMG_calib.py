@@ -112,7 +112,6 @@ for index, val in enumerate(p90_range):
             ph1_cyc=ph1_cyc,
             ret_data=data,
         )
-SpinCore_pp.stopBoard();
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])

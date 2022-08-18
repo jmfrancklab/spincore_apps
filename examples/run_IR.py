@@ -179,7 +179,6 @@ with power_control() as p:
         config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
         config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
     )
-    SpinCore_pp.stopBoard();
 # }}}
 config_dict.write()
 # }}}

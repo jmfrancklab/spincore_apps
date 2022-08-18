@@ -127,7 +127,6 @@ with power_control() as p:
             output_name=filename,
             ret_data=echo_data,
         )
-    SpinCore_pp.stopBoard();
 echo_data.set_prop("postproc_type", "spincore_ODNP_v3")
 echo_data.set_prop("acq_params", config_dict.asdict())
 echo_data.name(config_dict["type"])

@@ -134,7 +134,6 @@ for index, val in enumerate(tau_adjust_range):
         var_tau_data.setaxis("tau", tau_axis * 1e-6).set_units("tau", "s")
         var_tau_data.setaxis("t", time_axis).set_units("t", "s")
     var_tau_data["tau", index] = data
-SpinCore_pp.stopBoard()
 var_tau_data.name('var_tau'+config_dict['echo_counter'])
 print("EXITING...\n")
 print("\n*** *** ***\n")

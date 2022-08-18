@@ -78,7 +78,6 @@ for index, val in enumerate(p90_range_us[1:]):
         output_name=filename,
         ret_data=nutation_data,
     )
-SpinCore_pp.stopBoard();
 nutation_data.set_prop("acq_params", config_dict.asdict())
 nutation_data.name(config_dict["type"]+'_'+config_dict['echo_counter'])
 nutation_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph2_cyc), len(ph1_cyc), -1])

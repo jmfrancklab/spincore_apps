@@ -123,7 +123,6 @@ with xepr() as x_server:
                 output_name=filename,
                 ret_data=sweep_data,
             )
-        SpinCore_pp.stopBoard();
 #}}}
 # {{{chunk and save data
 sweep_data.set_prop("acq_params", config_dict.asdict())

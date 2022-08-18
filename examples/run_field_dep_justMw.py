@@ -120,7 +120,6 @@ with power_control() as p:
                 output_name=filename,
                 ret_data=sweep_data,
             )
-        SpinCore_pp.stopBoard();
 sweep_data.set_prop('acq_params',config_dict.asdict())
 # }}}
 # {{{chunk and save data
