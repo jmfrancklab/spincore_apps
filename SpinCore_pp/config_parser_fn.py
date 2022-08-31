@@ -16,7 +16,6 @@ class configuration(object):
         "stopconstant":(float, "acq_params", None),
         "p90_us":(float, "acq_params", None),
         "gamma_eff_MHz_G":(float, "acq_params", 0.00425),
-        "mw_freqs":(float,"acq_params",9.821e9), # JF asks -- what is this in contrast to the uw_...?
         "field_width":(float,"acq_params",6),
         "concentration":(float, "sample_params", None),
         "krho_cold":(float, "sample_params", None),
