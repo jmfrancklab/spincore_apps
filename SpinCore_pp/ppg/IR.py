@@ -136,7 +136,7 @@ def run_IR(
                 ret_data.setaxis("t", time_axis).set_units("t", "s")
                 ret_data.setaxis("nScans", r_[0:nScans])
             ret_data["vd", index]["nScans", x] = data_array
-            SpinCore_pp.stopBoard()
+            stopBoard()
             run_scans_time_list.append(time.time())
             this_array = np.array(run_scans_time_list)
             logging.debug(strm("checkpoints:", this_array - this_array[0]))

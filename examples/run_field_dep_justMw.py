@@ -20,9 +20,9 @@ mw_freqs = []
 config_dict = SpinCore_pp.configuration("active.ini")
 # }}}
 #{{{make field axis
-left = (((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']))/1e9
+left = (((config_dict['guessed_mhz_to_ghz']*config_dict['uw_dip_center_GHz'])/config_dict['gamma_eff_MHz_G']))
 left = left - (config_dict['field_width']/2)
-right = (((config_dict['guessed_mhz_to_ghz']*config_dict['mw_freqs'])/config_dict['gamma_eff_MHz_G']))/1e9
+right = (((config_dict['guessed_mhz_to_ghz']*config_dict['uw_dip_center_GHz'])/config_dict['gamma_eff_MHz_G']))
 right = right + (config_dict['field_width']/2)
 field_axis = r_[left:right:1.0]
 #}}}
@@ -65,7 +65,7 @@ with power_control() as p:
         config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
-    config_dict["mw_freqs"] = "%.9f" % dip_f
+    dip_f /= 1e9
     p.set_power(dB_settings)
     for k in range(10):
         time.sleep(0.5)
