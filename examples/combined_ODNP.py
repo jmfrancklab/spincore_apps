@@ -69,7 +69,7 @@ if os.path.exists(filename_out):
     )
 input("B12 needs to be unplugged and turned off for the thermal! Don't have the power server running just yet")
 # }}}
-# {{{Collect Thermals
+# {{{Collect Thermals - serves as a control to compare the thermal of Ep to ensure no microwaves were leaking
 control_thermal = run_spin_echo(
     nScans=parser_dict['thermal_nScans'],
     indirect_idx=0,
@@ -164,11 +164,6 @@ with power_control() as p:
         logger.debug(
             "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], powers[j], "W)"
         )
-        if j == 0:
-            retval = p.dip_lock(
-                parser_dict['uw_dip_center_GHz'] - parser_dict['uw_dip_width_GHz'] / 2,
-                parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
-            )
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
@@ -310,8 +305,8 @@ with power_control() as p:
         )) as fp:
             if nodename in fp.keys():
                 print("this nodename already exists, so I will call it temp_%d"%j)
-                vd_data.name("temp_%d"%j)
-                nodename = "temp_%d"%j
+                vd_data.name("temp_%d"%this_dB)
+                nodename = "temp_%d"%this_dB
                 vd_data.hdf5_write(f"{filename_out}",directory = target_directory)
             else:
                 vd_data.hdf5_write(f"{filename_out}", directory=target_directory)

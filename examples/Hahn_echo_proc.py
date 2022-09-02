@@ -13,7 +13,6 @@ with figlist_var() as fl:
     if d.get_units('t2') is None:
         d.set_units('t2','s')
     d.ft('ph1', unitary=True)
-    print(ndshape(d))
     if 'nScans' in d.dimlabels:
         d.mean('nScans')
     d.ft('t2', shift=True)

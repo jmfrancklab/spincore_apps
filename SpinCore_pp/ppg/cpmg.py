@@ -169,7 +169,7 @@ def run_cpmg(
             ret_data['indirect',indirect_idx]['nScans',x] = data_array
         else:    
             ret_data["nScans", x] = data_array
-        SpinCore_pp.stopBoard()
+        stopBoard()
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
         logging.debug(strm("stored scan", x, "for indirect_idx", indirect_idx))
