@@ -64,10 +64,10 @@ if phase_cycling:
     vd_data.chunk("t",['ph2','ph1','t2'],[len(ph1),len(ph2),-1])
     vd_data.setaxis("ph1", ph1 / 4)
     vd_data.setaxis("ph2", ph2 / 4)
+    vd_data.ft(['ph1','ph2'],unitary = True)
+    vd_data.reorder(['ph1','ph2','vd','t2'])
 else:
     vd_data.rename('t','t2')
-vd_data.reorder(['ph1','ph2','vd','t2'])
-vd_data.ft(['ph1','ph2'],unitary = True)
 vd_data.ft('t2',shift=True)
 #}}}
 #{{{Save Data

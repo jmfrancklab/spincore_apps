@@ -57,7 +57,7 @@ assert total_pts < 2 ** 14, (
 filename_out = filename + ".h5"
 if os.path.exists(filename_out):
     raise ValueError(
-        "the file %s already exists, change your output name!" % filename_out
+        "the file %s already exists, either change the chemical name or try incrementing your counter +1" % filename_out
     )
 # }}}
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
@@ -130,18 +130,22 @@ with power_control() as p:
 echo_data.set_prop("postproc_type", "spincore_ODNP_v3")
 echo_data.set_prop("acq_params", config_dict.asdict())
 echo_data.name(config_dict["type"])
-echo_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
-echo_data.setaxis("ph1", Ep_ph1_cyc / 4)
+if phase_cycling:
+    echo_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
+    echo_data.setaxis("ph1", Ep_ph1_cyc / 4)
+    echo_data.reorder(['ph1','indirect','t2'])
 echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-echo_data.reorder(['ph1','indirect','t2'])
 # }}}
 # }}}
 fl.next("raw data_array")
 fl.image(echo_data.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
 fl.next("abs raw data_array")
 fl.image(abs(echo_data).C.setaxis("indirect", "#").set_units("indirect", "scan #"))
-echo_data.ft("t2", shift=True)
-echo_data.ft(["ph1"])
+if phase_cycling:
+    echo_data.ft("t2", shift=True)
+    echo_data.ft(["ph1"])
+else:
+    echo_data.ft("t")
 fl.next("raw data_array - ft")
 fl.image(echo_data.C.setaxis("indirect", "#"))
 fl.next("abs raw data_array - ft")

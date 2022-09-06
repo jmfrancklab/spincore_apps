@@ -87,14 +87,17 @@ echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 if phase_cycling:
     echo_data.chunk("t", ["ph1", "t2"], [4, -1])
     echo_data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
-    if config_dict["nScans"] > 1:
-        echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    fl.next("image")
-    echo_data.C.mean("nScans")
-    fl.image(echo_data)
-    echo_data.ft("t2", shift=True)
-    fl.next("image - ft")
-    fl.image(echo_data)
+else:
+    echo_data.rename("t","t2")
+if config_dict["nScans"] > 1:
+    echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+fl.next("image")
+echo_data.C.mean("nScans")
+fl.image(echo_data)
+echo_data.ft("t2", shift=True)
+fl.next("image - ft")
+fl.image(echo_data)
+if phase_cycling:    
     fl.next("image - ft, coherence")
     echo_data.ft(["ph1"])
     fl.image(echo_data)
@@ -104,10 +107,7 @@ if phase_cycling:
     fl.plot(data_slice.imag, alpha=0.5)
     fl.plot(abs(data_slice), color="k", alpha=0.5)
 else:
-    fl.next("raw data")
-    fl.plot(echo_data)
-    echo_data.ft("t", shift=True)
-    fl.next("ft")
+    fl.next("data plot")
     fl.plot(echo_data.real)
     fl.plot(echo_data.imag)
     fl.plot(abs(echo_data), color="k", alpha=0.5)
