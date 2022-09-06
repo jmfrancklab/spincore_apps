@@ -43,7 +43,7 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 import numpy as np
 import h5py
-
+logger = init_logging(level='debug')
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -53,9 +53,13 @@ left = (((config_dict['guessed_mhz_to_ghz']*config_dict['uw_dip_center_GHz'])/co
 left = left - (config_dict['field_width']/2)
 right = (((config_dict['guessed_mhz_to_ghz']*config_dict['uw_dip_center_GHz'])/config_dict['gamma_eff_MHz_G']))
 right = right + (config_dict['field_width']/2)
+assert right <3700, "Are you crazy??? Field is too high!!!"
+assert left > 3300, "Are you crazy??? Field is too low!!!"
 field_axis = r_[left:right:1.0]
-print(field_axis)
-input("Does this look okay? Hit enter if so")
+logger.info("Your field axis is:",field_axis)
+myinput = input("Does this look okay?")
+if myinput.lower().startswith("n"):
+    raise ValueError("you said no!!")
 #}}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -64,7 +68,6 @@ config_dict["date"] = date
 config_dict["field_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
-print("Here is my field axis:",field_axis)
 #{{{ phase cycling
 phase_cycling = True
 if phase_cycling:
@@ -100,7 +103,7 @@ with xepr() as x_server:
         )
         myfreqs_fields = sweep_data.getaxis("indirect")
         myfreqs_fields[0]["Field"] = first_B0
-        myfreqs_fields[0]["carrierFreq"] = config_dict["carrierFreq_MHz"]
+        myfreqs_fields[0]["carrierFreq"] = carrierFreq_MHz
         for B0_index, desired_B0 in enumerate(field_axis[1:]):
             true_B0 = x_server.set_field(desired_B0)
             logging.info("My field in G is %f" % true_B0)

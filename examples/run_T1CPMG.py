@@ -75,7 +75,12 @@ if not phase_cycling:
     nPhaseSteps = 1
 data_length = 2 * nPoints * nEchoes * nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-vd_list = r_[5e1, 5.8e5, 9e5, 1.8e6, 2.7e6, 3.6e6, 4.5e6, 5.4e6, 6.4e6, 7.2e6, 10e6]
+vd_kwargs = {
+        j:parser_dict[j]
+        for j in ['krho_cold','krho_hot','T1water_cold','T1water_hot']
+        if j in parser_dict.keys()
+        }
+vd_list = SpinCore_pp.vdlist_from_relaxivities(parser_dict['concentration'],**vd_kwargs) * 1e6 #convert to microseconds
 for index, val in enumerate(vd_list):
     vd_us = val
     print("***")

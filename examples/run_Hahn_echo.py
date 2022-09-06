@@ -99,11 +99,10 @@ else:
         print("if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!")
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data",echo_data.name()))
-print(("Shape of saved data",ndshape(echo_data)))
 config_dict.write()
 print("Your *current* γ_eff (MHz/G) should be ",
         config_dict['gamma_eff_MHz_G'],
         ' - (Δν*1e-6/',Field,
         '), where Δν is your resonance offset')
-print("So, look at the resonance offset where your signal shows up, and enter the new value for gamma_eff_MHz_G into your .ini file, and run me again!")
+print("Now run Hahn_echo_proc.py to see your spectra and offset, that script will correct your gamma effective for you!")
 fl.show()

@@ -115,7 +115,9 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=(9.815e9, 9.83e9))
+    this_return = b.lock_on_dip(ini_range=
+            (config_dict['uw_dip_center_GHz']-config_dict['uw_dip_width_GHz']/2,
+                config_dict['uw_dip_center_GHz']+config_dict['uw_dip_width']/2))
     dip_f = this_return[2]
     print("Frequency", dip_f)
     b.set_freq(dip_f)
