@@ -126,7 +126,7 @@ def run_IR(
             data_array = []
             data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
             dataPoints = float(np.shape(data_array)[0])
-            if ret_data is None:
+            if (ret_data is None) or (index==0 and x==0):
                 indirect_len = len(vd_list_us)
                 time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
                 ret_data = psp.ndshape(
@@ -134,7 +134,7 @@ def run_IR(
                 ).alloc(dtype=np.complex128)
                 ret_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
                 ret_data.setaxis("t", time_axis).set_units("t", "s")
-                ret_data.setaxis("nScans", r_[0:nScans])
+                ret_data.setaxis('nScans',r_[0:nScans])
             ret_data["vd", index]["nScans", x] = data_array
             stopBoard()
             run_scans_time_list.append(time.time())

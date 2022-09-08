@@ -138,7 +138,7 @@ def run_spin_echo(
         data_array = []
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
-        if ret_data is None:
+        if (ret_data is None) or (x==0):
             if indirect_fields is None:
                 times_dtype = np.double
             else:
