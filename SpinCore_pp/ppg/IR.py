@@ -75,11 +75,11 @@ def run_IR(
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     if type(vd_list_us) is list:
         vd_list_us = np.array(vd_list_us)
-    for index, vd in enumerate(vd_list_us):
+    for vd_idx, vd in enumerate(vd_list_us):
         logging.info("***")
-        logging.info("INDEX %d - VARIABLE DELAY %f" % (index, vd))
+        logging.info("INDEX %d - VARIABLE DELAY %f" % (vd_idx, vd))
         logging.info("***")
-        for x in range(nScans):
+        for nScans_idx in range(nScans):
             run_scans_time_list = [time.time()]
             run_scans_names = ["configure"]
             configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
@@ -126,7 +126,7 @@ def run_IR(
             data_array = []
             data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
             dataPoints = float(np.shape(data_array)[0])
-            if (ret_data is None) or (index==0 and x==0):
+            if ret_data is None:
                 indirect_len = len(vd_list_us)
                 time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
                 ret_data = psp.ndshape(
@@ -135,7 +135,9 @@ def run_IR(
                 ret_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
                 ret_data.setaxis("t", time_axis).set_units("t", "s")
                 ret_data.setaxis('nScans',r_[0:nScans])
-            ret_data["vd", index]["nScans", x] = data_array
+            elif (vd_idx==0 and nScans_idx==0):
+                raise ValueError("you seem to be on the first scan, but ret_data is not None -- it is "+str(ret_data)+" and we're not currently running ppgs where this makes sense")
+            ret_data["vd", vd_idx]["nScans", nScans_idx] = data_array
             stopBoard()
             run_scans_time_list.append(time.time())
             this_array = np.array(run_scans_time_list)

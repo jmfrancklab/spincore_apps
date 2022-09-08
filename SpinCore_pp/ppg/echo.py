@@ -93,10 +93,10 @@ def run_spin_echo(
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
-    for x in range(nScans):
+    for nScans_idx in range(nScans):
         run_scans_time_list = [time.time()]
         run_scans_names = ["configure"]
-        logging.info("*** *** *** SCAN NO. %d *** *** ***" % (x + 1))
+        logging.info("*** *** *** SCAN NO. %d *** *** ***" % (nScans_idx + 1))
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
@@ -138,7 +138,7 @@ def run_spin_echo(
         data_array = []
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
-        if (ret_data is None) or (x==0):
+        if ret_data is None:
             if indirect_fields is None:
                 times_dtype = np.double
             else:
@@ -155,11 +155,11 @@ def run_spin_echo(
             ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
             ret_data.setaxis("nScans", r_[0:nScans])
-        ret_data["indirect", indirect_idx]["nScans", x] = data_array
+        ret_data["indirect", indirect_idx]["nScans", nScans_idx] = data_array
         stopBoard()
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
-        logging.debug(strm("stored scan", x, "for indirect_idx", indirect_idx))
+        logging.debug(strm("stored scan", nScans_idx, "for indirect_idx", indirect_idx))
         logging.debug(
             strm(
                 "time for each chunk",
