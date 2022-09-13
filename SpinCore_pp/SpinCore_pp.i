@@ -36,6 +36,7 @@ extern int stop_ppg();
 %varargs(int secondarg=0) ppg_element;
 extern int ppg_element(char *str_label, double firstarg, ...);
 %pythoncode %{
+import logging
 def strm(*args):
     return ' '.join([j for j in args])
 marker_names = {}
@@ -76,11 +77,11 @@ def apply_cycles(ppg_in,list_of_cycles_found):
             found_cycle = True
             break
     if found_cycle:
-        logger.debug(strm("found phase cycle named",cycle_name))
+        logging.debug(strm("found phase cycle named",cycle_name))
         all_cycles = [ppg_element[3] for ppg_element in ppg_in if (((ppg_element[0] == 'pulse' or ppg_element[0] == 'pulse_TTL') and ppg_element[2] == cycle_name) if len(ppg_element)>3 else False )]
         maxlen = max(map(len,all_cycles))
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
-        logger.debug("LIST OF CYCLES FOUND NOW")
+        logging.debug("LIST OF CYCLES FOUND NOW")
         ppg_out = []
         for j in range(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
@@ -92,12 +93,12 @@ def apply_cycles(ppg_in,list_of_cycles_found):
                 else:
                     ppg_out.append(ppg_elem)
         del ppg_in
-        logger.debug("***")
-        logger.debug(strm("AFTER CYCLING:\n",'\n'.join(map(str,ppg_out))))
+        logging.debug("***")
+        logging.debug(strm("AFTER CYCLING:\n",'\n'.join(map(str,ppg_out))))
         return apply_cycles(ppg_out,list_of_cycles_found)
     else:
-        logger.debug("***")
-        logger.debug("FOUND NO CYCLING ELEMENTS")
+        logging.debug("***")
+        logging.debug("FOUND NO CYCLING ELEMENTS")
         return ppg_in,list_of_cycles_found
 def load(args):
     ppg_list = []
