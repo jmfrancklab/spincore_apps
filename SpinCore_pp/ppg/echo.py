@@ -96,7 +96,7 @@ def run_spin_echo(
     for nScans_idx in range(nScans):
         run_scans_time_list = [time.time()]
         run_scans_names = ["configure"]
-        logging.info("*** *** *** SCAN NO. %d *** *** ***" % (nScans_idx + 1))
+        logging.debug("*** *** *** SCAN NO. %d *** *** ***" % (nScans_idx + 1))
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
