@@ -59,7 +59,7 @@ vd_data = run_IR(
         ret_data = None)
 vd_data.set_prop('acq_params',config_dict.asdict())
 vd_data.set_prop("postproc", "spincore_IR_v1")
-vd_data.name(config_dict['type']+'_'+str(config_dict['ir_counter']))
+vd_data.name(config_dict['type']+'_'+str(config_dict['IR_counter']))
 if phase_cycling:
     vd_data.chunk("t",['ph2','ph1','t2'],[len(ph1),len(ph2),-1])
     vd_data.setaxis("ph1", ph1 / 4)
@@ -74,7 +74,7 @@ vd_data.ft('t2',shift=True)
 target_directory = getDATADIR(exp_type='ODNP_NMR_comp/inv_rec')
 filename_out = filename + '.h5'
 nodename = vd_data.name()
-if os.path.exists(filename+'.h5'):
+if os.path.exists(filename_out):
     print('this file already exists so we will add a node to it!')
     with h5py.File(os.path.normpath(os.path.join(target_directory,
         f"{filename_out}"))) as fp:

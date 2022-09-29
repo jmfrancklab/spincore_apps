@@ -30,6 +30,7 @@ parser_dict['type'] = 'ODNP'
 parser_dict['date'] = date
 parser_dict['odnp_counter'] += 1
 filename = f"{parser_dict['date']}_{parser_dict['chemical']}_{parser_dict['type']}_{parser_dict['odnp_counter']}"
+filename_out = filename + ".h5"
 #}}}
 #{{{Make VD list based on concentration
 vd_kwargs = {
@@ -62,7 +63,6 @@ total_pts = len(IR_ph2_cyc)*len(IR_ph1_cyc)*nPoints
 assert total_pts < 2**14, "For IR: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 #}}}
 # {{{ check for file
-filename_out = filename + ".h5"
 if os.path.exists(filename_out):
     raise ValueError(
         "the file %s already exists, so I'm not going to let you proceed!" % filename_out
@@ -129,10 +129,11 @@ with power_control() as p:
         parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
     )
     p.mw_off()
+    time.sleep(16.0)
     p.start_log()
     DNP_ini_time = time.time()
     DNP_data = run_spin_echo(
-        nScans=parser_dict['thermal_nScans'],
+        nScans=parser_dict['nScans'],
         indirect_idx=0,
         indirect_len=len(powers) + 1,
         ph1_cyc=Ep_ph1_cyc,
@@ -157,7 +158,6 @@ with power_control() as p:
     time_axis_coords = DNP_data.getaxis("indirect")
     time_axis_coords[0]["start_times"] = DNP_ini_time
     time_axis_coords[0]["stop_times"] = DNP_thermal_done
-    DNP_data = DNP_data['nScans',-1:]
     power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
@@ -218,12 +218,14 @@ with power_control() as p:
     # }}}
 # {{{run IR
     #{{{IR at no power
+    p.mw_off()
+    time.sleep(16.0)
     ini_time = time.time()
     vd_data = run_IR(
         nPoints=nPoints,
         nEchoes=parser_dict['nEchoes'],
         vd_list_us=vd_list_us,
-        nScans=parser_dict['thermal_nScans'],
+        nScans=parser_dict['nScans'],
         adcOffset=parser_dict['adc_offset'],
         carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
         p90_us=parser_dict['p90_us'],
@@ -244,6 +246,8 @@ with power_control() as p:
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
     vd_data.setaxis("ph2", IR_ph2_cyc / 4)
     vd_data.setaxis('nScans',r_[0:parser_dict['thermal_nScans']])
+    vd_data.ft('t2',shift=True)
+    vd_data.ft(['ph1','ph2'],unitary=True)
     nodename = vd_data.name()
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}")
@@ -299,6 +303,8 @@ with power_control() as p:
         vd_data.setaxis("ph1", IR_ph1_cyc / 4)
         vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.setaxis('nScans',r_[0:parser_dict['nScans']])
+        vd_data.ft('t2',shift=True)
+        vd_data.ft(['ph1','ph2'],unitary=True)
         nodename = vd_data.name()
         with h5py.File(
             os.path.normpath(os.path.join(target_directory,f"{filename_out}")
