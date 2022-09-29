@@ -119,6 +119,9 @@ logger.debug(strm("Name of saved controlled thermal", control_thermal.name()))
 logger.debug("shape of saved controlled thermal", ndshape(control_thermal))
 # }}}
 #{{{IR at no power
+#   this is outside the log, so to deal with this during processing, just check
+#   if the start and stop time are outside the log (greater than last time of
+#   the time axis, or smaller than the first)
 ini_time = time.time()
 vd_data = run_IR(
     nPoints=nPoints,
