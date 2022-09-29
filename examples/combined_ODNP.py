@@ -118,6 +118,48 @@ logger.info("FILE SAVED")
 logger.debug(strm("Name of saved controlled thermal", control_thermal.name()))
 logger.debug("shape of saved controlled thermal", ndshape(control_thermal))
 # }}}
+#{{{IR at no power
+ini_time = time.time()
+vd_data = run_IR(
+    nPoints=nPoints,
+    nEchoes=parser_dict['nEchoes'],
+    vd_list_us=vd_list_us,
+    nScans=parser_dict['thermal_nScans'],
+    adcOffset=parser_dict['adc_offset'],
+    carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
+    p90_us=parser_dict['p90_us'],
+    tau_us=parser_dict['tau_us'],
+    repetition=parser_dict['FIR_rep'],
+    output_name=filename,
+    SW_kHz=parser_dict['SW_kHz'],
+    ph1_cyc=IR_ph1_cyc,
+    ph2_cyc=IR_ph2_cyc,
+    ret_data=None,
+)
+vd_data.set_prop('stop_time',time.time())
+vd_data.set_prop('start_time',ini_time)
+vd_data.set_prop("acq_params", parser_dict.asdict())
+vd_data.set_prop("postproc_type", "spincore_IR_v1")
+vd_data.name("FIR_noPower")
+vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
+vd_data.setaxis("ph1", IR_ph1_cyc / 4)
+vd_data.setaxis("ph2", IR_ph2_cyc / 4)
+vd_data.setaxis('nScans',r_[0:parser_dict['thermal_nScans']])
+nodename = vd_data.name()
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory, f"{filename_out}")
+)) as fp:
+    if nodename in fp.keys():
+        print("this nodename already exists, so I will call it temp")
+        vd_data.name("temp_noPower")
+        nodename = "temp_noPower"
+        vd_data.hdf5_write(f"{filename_out}",directory=target_directory)
+        input(f"I had problems writing to the correct file {filename_out} so I'm going to try to save this node as temp_noPower")
+    else:
+        vd_data.hdf5_write(f"{filename_out}",directory = target_directory)    
+logger.debug("\n*** FILE SAVED ***\n")
+logger.debug(strm("Name of saved data", vd_data.name()))
+#}}}
 # {{{run enhancement
 input("Now plug the B12 back in and start up the power_server so we can continue!")
 with power_control() as p:
@@ -217,52 +259,6 @@ with power_control() as p:
     logger.debug("shape of saved enhancement data", ndshape(DNP_data))
     # }}}
 # {{{run IR
-    #{{{IR at no power
-    p.mw_off()
-    time.sleep(16.0)
-    ini_time = time.time()
-    vd_data = run_IR(
-        nPoints=nPoints,
-        nEchoes=parser_dict['nEchoes'],
-        vd_list_us=vd_list_us,
-        nScans=3,#parser_dict['nScans'],
-        adcOffset=parser_dict['adc_offset'],
-        carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
-        p90_us=parser_dict['p90_us'],
-        tau_us=parser_dict['tau_us'],
-        repetition=parser_dict['FIR_rep'],
-        output_name=filename,
-        SW_kHz=parser_dict['SW_kHz'],
-        ph1_cyc=IR_ph1_cyc,
-        ph2_cyc=IR_ph2_cyc,
-        ret_data=None,
-    )
-    vd_data.set_prop('stop_time',time.time())
-    vd_data.set_prop('start_time',ini_time)
-    vd_data.set_prop("acq_params", parser_dict.asdict())
-    vd_data.set_prop("postproc_type", "spincore_IR_v1")
-    vd_data.name("FIR_noPower")
-    vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
-    vd_data.setaxis("ph1", IR_ph1_cyc / 4)
-    vd_data.setaxis("ph2", IR_ph2_cyc / 4)
-    vd_data.setaxis('nScans',r_[0:parser_dict['thermal_nScans']])
-    vd_data.ft('t2',shift=True)
-    vd_data.ft(['ph1','ph2'],unitary=True)
-    nodename = vd_data.name()
-    with h5py.File(
-        os.path.normpath(os.path.join(target_directory, f"{filename_out}")
-    )) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp")
-            vd_data.name("temp_noPower")
-            nodename = "temp_noPower"
-            vd_data.hdf5_write(f"{filename_out}",directory=target_directory)
-            input(f"I had problems writing to the correct file {filename_out} so I'm going to try to save this node as temp_noPower")
-        else:
-            vd_data.hdf5_write(f"{filename_out}",directory = target_directory)    
-    logger.debug("\n*** FILE SAVED ***\n")
-    logger.debug(strm("Name of saved data", vd_data.name()))
-    #}}}
     for j, this_dB in enumerate(T1_powers_dB):
         p.set_power(this_dB)
         for k in range(10):
