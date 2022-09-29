@@ -225,7 +225,7 @@ with power_control() as p:
         nPoints=nPoints,
         nEchoes=parser_dict['nEchoes'],
         vd_list_us=vd_list_us,
-        nScans=parser_dict['nScans'],
+        nScans=3,#parser_dict['nScans'],
         adcOffset=parser_dict['adc_offset'],
         carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
         p90_us=parser_dict['p90_us'],
