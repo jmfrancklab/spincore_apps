@@ -242,8 +242,6 @@ with power_control() as p:
     DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
     DNP_data.setaxis('nScans',r_[0:parser_dict['nScans']])
     DNP_data.reorder(['ph1','nScans','t2'])
-    DNP_data.ft('t2',shift=True)
-    DNP_data.ft(['ph1'], unitary = True)
     DNP_data.name(parser_dict['type'])
     nodename = DNP_data.name()
     try:
@@ -302,8 +300,6 @@ with power_control() as p:
         vd_data.setaxis("ph1", IR_ph1_cyc / 4)
         vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.setaxis('nScans',r_[0:parser_dict['nScans']])
-        vd_data.ft('t2',shift=True)
-        vd_data.ft(['ph1','ph2'],unitary=True)
         nodename = vd_data.name()
         with h5py.File(
             os.path.normpath(os.path.join(target_directory,f"{filename_out}")
