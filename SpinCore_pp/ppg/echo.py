@@ -146,11 +146,18 @@ def run_spin_echo(
             ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
             ret_data.setaxis("nScans", r_[0:nScans])
+        elif indirect_idx == 0 and nScans_idx == 0:
+            raise ValueError(
+                "you seem to be on the first scan, but ret_data is not None -- it is "
+                + str(ret_data)
+                + " and we're not currently running ppgs where this makes sense"
+            )
         ret_data["indirect", indirect_idx]["nScans", nScans_idx] = data_array
         stopBoard()
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
         logging.debug(strm("stored scan", nScans_idx, "for indirect_idx", indirect_idx))
+        logging.debug(strm("checkpoints:", this_array - this_array[0]))
         logging.debug(
             strm(
                 "time for each chunk",

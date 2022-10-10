@@ -123,22 +123,28 @@ logger.debug("shape of saved controlled thermal", ndshape(control_thermal))
 #   if the start and stop time are outside the log (greater than last time of
 #   the time axis, or smaller than the first)
 ini_time = time.time()
-vd_data = run_IR(
-    nPoints=nPoints,
-    nEchoes=parser_dict['nEchoes'],
-    vd_list_us=vd_list_us,
-    nScans=parser_dict['thermal_nScans'],
-    adcOffset=parser_dict['adc_offset'],
-    carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
-    p90_us=parser_dict['p90_us'],
-    tau_us=parser_dict['tau_us'],
-    repetition=parser_dict['FIR_rep'],
-    output_name=filename,
-    SW_kHz=parser_dict['SW_kHz'],
-    ph1_cyc=IR_ph1_cyc,
-    ph2_cyc=IR_ph2_cyc,
-    ret_data=None,
-)
+vd_data = None
+for vd_idx, vd in enumerate(vd_list_us):
+    vd_data = run_IR(
+        nPoints=nPoints,
+        nEchoes=config_dict["nEchoes"],
+        indirect_idx=vd_idx,
+        indirect_len=len(vd_list_us),
+        vd=vd,
+        nScans=config_dict["nScans"],
+        adcOffset=config_dict["adc_offset"],
+        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+        p90_us=config_dict["p90_us"],
+        tau_us=config_dict["tau_us"],
+        repetition=config_dict["repetition_us"],
+        ph1_cyc=ph1,
+        ph2_cyc=ph2,
+        output_name=filename,
+        SW_kHz=config_dict["SW_kHz"],
+        ret_data=vd_data,
+    )
+vd_data.rename("indirect","vd")
+vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
 vd_data.set_prop('stop_time',time.time())
 vd_data.set_prop('start_time',ini_time)
 vd_data.set_prop("acq_params", parser_dict.asdict())
@@ -277,20 +283,28 @@ with power_control() as p:
         time.sleep(5)
         meter_power = p.get_power_setting()
         ini_time = time.time()
-        vd_data = run_IR(
-            nPoints=nPoints,
-            nEchoes=parser_dict['nEchoes'],
-            vd_list_us=vd_list_us,
-            nScans=parser_dict['nScans'],
-            adcOffset=parser_dict['adc_offset'],
-            carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
-            p90_us=parser_dict['p90_us'],
-            tau_us=parser_dict['tau_us'],
-            repetition=parser_dict['FIR_rep'],
-            output_name= filename,
-            SW_kHz=parser_dict['SW_kHz'],
-            ret_data=None,
-        )
+        vd_data = None
+        for vd_idx, vd in enumerate(vd_list_us):
+            vd_data = run_IR(
+                nPoints=nPoints,
+                nEchoes=config_dict["nEchoes"],
+                indirect_idx=vd_idx,
+                indirect_len=len(vd_list_us),
+                vd=vd,
+                nScans=config_dict["nScans"],
+                adcOffset=config_dict["adc_offset"],
+                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+                p90_us=config_dict["p90_us"],
+                tau_us=config_dict["tau_us"],
+                repetition=config_dict["repetition_us"],
+                ph1_cyc=ph1,
+                ph2_cyc=ph2,
+                output_name=filename,
+                SW_kHz=config_dict["SW_kHz"],
+                ret_data=vd_data,
+            )
+        vd_data.rename("indirect","vd")
+        vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
         vd_data.set_prop("start_time", ini_time)
         vd_data.set_prop("stop_time", time.time())
         vd_data.set_prop("acq_params", parser_dict.asdict())
