@@ -13,7 +13,7 @@ extern int runBoard();
 extern void tune(double carrier_freq);
 extern void stopBoard();
 extern int adc_offset();
-extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name);
+extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps);
 %}
 %include "numpy.i"
 extern char *get_time();

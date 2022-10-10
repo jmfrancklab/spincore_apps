@@ -9,7 +9,7 @@ fl = figlist_var()
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 # }}}
-# {{{create filename and save to config file
+# {{{generate filename info for config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
 config_dict["date"] = f"{date}"

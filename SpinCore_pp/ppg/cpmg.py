@@ -135,7 +135,7 @@ def run_cpmg(
         # On reviewing the code, and comparing to line 119-120 of
         # SpinCore_pp.i, it looks like this last argument is not used -- could
         # it just be removed?? (output_name)
-        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps)
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
         data_array = []

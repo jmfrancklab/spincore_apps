@@ -267,7 +267,7 @@ int runBoard()
     return 0;
 }
 
-void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name){
+void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps){
     int* real = malloc(nPoints * nEchoes * nPhaseSteps * sizeof(int));
     int* imag = malloc(nPoints * nEchoes * nPhaseSteps * sizeof(int));
     int j;

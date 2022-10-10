@@ -99,7 +99,7 @@ for index,val in enumerate(p90_range):
         ])
     SpinCore_pp.stop_ppg();
     SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
     raw_data.astype(float)
     data = []
     # according to JF, this commented out line

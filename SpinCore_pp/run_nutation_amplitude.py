@@ -152,7 +152,7 @@ for index,val in enumerate(amp_range):
             SpinCore_pp.runBoard();
     if not phase_cycling:
         SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
     raw_data.astype(float)
     if GDS:
         datalist=[]

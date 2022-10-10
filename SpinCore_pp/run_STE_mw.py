@@ -169,7 +169,7 @@ for x in range(nScans):
     SpinCore_pp.stop_ppg();
     print("\nRUNNING BOARD...\n")
     SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
     raw_data.astype(float)
     data = []
     data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
@@ -286,7 +286,7 @@ with Bridge12() as b:
             SpinCore_pp.stop_ppg();
             print("\nRUNNING BOARD...\n")
             SpinCore_pp.runBoard();
-            raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+            raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
             raw_data.astype(float)
             data = []
             data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
