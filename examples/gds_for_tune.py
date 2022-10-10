@@ -123,5 +123,6 @@ if tuning_dB < -25:
     print("congratulations! you have achieved a reflection ratio of %0.1f dB"%tuning_dB)
 else:
     print("Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!"%tuning_dB)
+# this is put here in case it used the default
 parser_dict["carrierFreq_MHz"] = carrier_frequency
 parser_dict.write()
