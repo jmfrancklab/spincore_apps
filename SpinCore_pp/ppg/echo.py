@@ -25,17 +25,16 @@ def run_spin_echo(
     nPoints,
     nEchoes,
     p90_us,
-    repetition,
+    repetition_us,
     tau_us,
     SW_kHz,
-    output_name,
     indirect_fields=None,
     ph1_cyc=r_[0, 1, 2, 3],
     ph2_cyc=r_[0],
     ret_data=None,
-    deadtime_us = 10.0,
-    deblank_us = 1.0,
-    amplitude = 1.0,
+    deadtime_us=10.0,
+    deblank_us=1.0,
+    amplitude=1.0,
 ):
     """run nScans and slot them into the indirect_idx index of ret_data -- assume
     that the first time this is run, it will be run with ret_data=None and that
@@ -62,16 +61,13 @@ def run_spin_echo(
                     program doesn't generate multiple echos.
     p90_us:         float
                     90 time of the probe in us
-    repetition:     int
+    repetition_us:  float
                     3-5 x T1 of the sample in seconds
     tau_us:         float
                     Echo Time should be a few ms for a good hermitian function to be
                     applied later in processing. Standard tau_us = 3500.
     SW_kHz:         float
                     spectral width of the data. Minimum = 1.9
-    output_name:    str
-                    file name the data will be saved under??
-                    (as noted below this might be obsolete/bogus)
     indirect_fields: tuple (pair) of str or (default) None
                     Name for the first field of the structured array
                     that stores the indirect dimension coordinates.
@@ -108,7 +104,6 @@ def run_spin_echo(
         run_scans_names.append("prog")
         spincore_load(
             [
-                ("marker", "start", 1),
                 ("phase_reset", 1),
                 ("delay_TTL", deblank_us),
                 ("pulse_TTL", p90_us, "ph1", ph1_cyc),
@@ -117,8 +112,7 @@ def run_spin_echo(
                 ("pulse_TTL", 2.0 * p90_us, "ph2", ph2_cyc),
                 ("delay", deadtime_us),
                 ("acquire", acq_time_ms),
-                ("delay", repetition),
-                ("jumpto", "start"),
+                ("delay", repetition_us),
             ]
         )
         run_scans_time_list.append(time.time())
@@ -129,9 +123,6 @@ def run_spin_echo(
         runBoard()
         run_scans_time_list.append(time.time())
         run_scans_names.append("get data")
-        # On reviewing the code, and comparing to line 119-120 of
-        # SpinCore_pp.i, it looks like this last argument is not used -- could
-        # it just be removed?? (output_name)
         raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps)
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")

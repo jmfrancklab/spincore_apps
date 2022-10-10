@@ -7,7 +7,8 @@ class configuration(object):
     registered_params = {
         "amplitude":(float, "acq_params", None),
         "deadtime_us":(float, "acq_params", None),
-        "tau_us":(float, "acq_params", None),
+        "tau_us":(float, "acq_params", None,
+            "extra delay added between 90° and 180° pulse -- note this is not the same as τ_echo!\nsee eq 6 of coherence paper"),
         "deblank_us":(float, "acq_params", None),
         "SW_kHz":(float, "acq_params", None),
         "acq_time_ms":(float, "acq_params", None),
@@ -17,6 +18,8 @@ class configuration(object):
         "p90_us":(float, "acq_params", None),
         "gamma_eff_MHz_G":(float, "acq_params", 0.00425),
         "field_width":(float,"acq_params",6),
+        "tau_extra_us":(float, "acq_params", 1000.0,
+            "amount of extra time both before and after the acquisition during a symmetric echo sequence"),
         "concentration":(float, "sample_params", None),
         "krho_cold":(float, "sample_params", None),
         "krho_hot":(float, "sample_params", None),

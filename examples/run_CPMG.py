@@ -17,21 +17,29 @@ config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 # {{{better tau
-marker = 1.0
-tau_extra = 1000.0  # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - config_dict["deadtime_us"]
-pad_end = tau_extra - config_dict["deblank_us"] * 2  # marker + deblank
-twice_tau = (
-    config_dict["deblank_us"]
-    + 2 * p90_us
-    + config_dict["deadtime_us"]
-    + pad_start
-    + config_dict["acq_time_ms"] * 1e3
-    + pad_end
-    + marker
+marker = 1.0  # 10/10/22 → what is this? → pretty sure the time needed to execute the marker command
+pad_start = config_dict["tau_extra_us"] - config_dict["deadtime_us"]
+pad_end = (
+    config_dict["tau_extra_us"] - config_dict["deblank_us"] - marker
+)  # marker + deblank
+assert (
+    pad_start > 0
+), "tau_extra_us must be set to more than deadtime and more than deblank!"
+assert (
+    pad_end > 0
+), "tau_extra_us must be set to more than deadtime and more than deblank!"
+twice_tau_echo_us = (  # the period between 180 pulses
+    config_dict["tau_extra_us"] * 2 + config_dict["acq_time_ms"] * 1e3
 )
-tau_us = twice_tau / 2.0
-config_dict["tau_us"] = tau_us
+# now twice_tau_echo_us/2.0 is τ_echo, so I need to subtract the extra delays
+# imposed by the ppg to determine the remaining τ that I need
+config_dict["tau_us"] = twice_tau_echo_us / 2.0 - (
+    2
+    * config_dict["p90_us"]
+    / pi  # evolution during pulse -- see eq 6 of coherence paper
+    + config_dict["deadtime_us"]  # following 90
+    + config_dict["deblank_us"]  # before 180
+)
 # }}}
 # {{{phase cycling
 phase_cycling = True
@@ -57,7 +65,6 @@ data = run_cpmg(
     SW_kHz=config_dict["SW_kHz"],
     pad_start_us=pad_start,
     pad_end_us=pad_end,
-    output_name=filename,
     ret_data=None,
 )
 # }}}
@@ -67,8 +74,10 @@ data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
 nodename = data.name()
+data.set_prop("postproc_type", "spincore_CPMGv2")
 if phase_cycling:
-    data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
+    data.chunk("t", ["ph1", "echo", "t2"], [len(ph1_cyc), config_dict["nEchoes"], -1])
+    data.setaxis("echo", r_[0 : config_dict["nEchoes"]])
     data.setaxis("ph1", ph1_cyc / 4)
     if config_dict["nScans"] > 1:
         data.setaxis("nScans", r_[0 : config_dict["nScans"]])
@@ -97,20 +106,4 @@ else:
                 "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
             )
 config_dict.write()
-# }}}
-# {{{visualize raw data
-s = data.C
-s.set_units("t", "s")
-orig_t = s.getaxis("t")
-acq_time_s = orig_t[nPoints]
-fl.next("time")
-fl.plot(abs(s))
-fl.plot(s.real, alpha=0.4)
-fl.plot(s.imag, alpha=0.4)
-s.ft("t", shift=True)
-fl.next("freq")
-fl.plot(abs(s))
-fl.plot(s.real, alpha=0.4)
-fl.plot(s.imag, alpha=0.4)
-fl.show()
 # }}}
