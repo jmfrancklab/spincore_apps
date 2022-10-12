@@ -143,14 +143,11 @@ if phase_cycling:
         .set_units("indirect", "scan #")
     )
     sweep_data.reorder("t2", first=False)
-    sweep_data.ft("t2", shift=True)
-    sweep_data.ft("ph1", unitary=True)
-    fl.next("Raw - frequency")
-    fl.image(
-        sweep_data.C.mean("nScans")
-        .setaxis("indirect", "#")
-        .set_units("indirect", "scan #")
-    )
+    for_pic = sweep_data.C
+    for_pic.ft('t2',shift=True)
+    for_pic.ft(['ph1'],unitary=True)
+    fl.next('FTed into coherence domain')
+    fl.image(for_pic)
 else:
     if config_dict["nScans"] > 1:
         sweep_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
@@ -161,10 +158,11 @@ else:
         .set_units("indirect", "scan #")
     )
     sweep_data.reorder("t", first=False)
-    sweep_data.ft("t", shift=True)
+    copy_data = sweep_data.C
+    copy_data.ft("t", shift=True)
     fl.next("Raw - frequency")
     fl.image(
-        sweep_data.C.mean("nScans")
+        copy_data.C.mean("nScans")
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )
