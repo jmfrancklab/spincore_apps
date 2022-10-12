@@ -1,12 +1,11 @@
 import sys
 from echo_experiment_ui import Ui_MainWindow
 import subprocess
-
 from PyQt5 import QtWidgets
-
 from pyspecdata import *
 import os
 import sys
+from datetime import datetime
 import SpinCore_pp
 
 class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
@@ -67,26 +66,27 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
 
     def run_Hahn_echo(self):
         #{{{ Verify arguments compatible with board
+        config_dict=SpinCore_pp.configuration("active.ini")
         def verifyParams():
-            if (nPoints > 16*1024 or nPoints < 1):
+            if (config_dict['nPoints'] > 16*1024 or config_dict['nPoints'] < 1):
                 print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
                 print("EXITING.")
                 quit()
             else:
                 print("VERIFIED NUMBER OF POINTS.")
-            if (nScans < 1):
+            if (config_dict['nScans'] < 1):
                 print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
                 print("EXITING.")
                 quit()
             else:
                 print("VERIFIED NUMBER OF SCANS.")
-            if (p90 < 0.065):
+            if (config_dict['p90_us'] < 0.065):
                 print("ERROR: PULSE TIME TOO SMALL.")
                 print("EXITING.")
                 quit()
             else:
                 print("VERIFIED PULSE TIME.")
-            if (tau < 0.065):
+            if (config_dict['tau_us'] < 0.065):
                 print("ERROR: DELAY TIME TOO SMALL.")
                 print("EXITING.")
                 quit()
@@ -94,14 +94,14 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                 print("VERIFIED DELAY TIME.")
             return
         #}}}
-        date = '200226'
+        date = datetime.now().strftime("%y%m%d")
         output_name = 'echo_1'
         adcOffset = int(self.ui.adcoffset)
-        carrierFreq_MHz = 14.898564
+        carrierFreq_MHz = config_dict['carrierFreq_MHz']
         tx_phases = r_[0.0,90.0,180.0,270.0]
-        amplitude = 1.0
-        nScans = 128
-        nEchoes = 1
+        amplitude = config_dict['amplitude']
+        nScans = config_dict['nScans']#128
+        nEchoes = config_dict['nEchoes']
         phase_cycling = False
         if phase_cycling:
             nPhaseSteps = 8
@@ -112,52 +112,22 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         # as this is generally what the SpinCore takes
         # note that acq_time is always milliseconds
         #}}}
-        p90 = 3.8
-        deadtime = 5.0
-        repetition = 1e6
-
-        SW_kHz = 24
-        nPoints = 1024*2
-
-        acq_time = nPoints/SW_kHz # ms
         tau_adjust = 0.0
-        deblank = 1.0
-        tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
+        tau = config_dict['deadtime_us'] + config_dict['acq_time_ms']*1e3*(1./8.) + tau_adjust
         pad = 0
-        #pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
-        #{{{ setting acq_params dictionary
-        acq_params = {}
-        acq_params['adcOffset'] = adcOffset
-        acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-        acq_params['amplitude'] = amplitude
-        acq_params['nScans'] = nScans
-        acq_params['nEchoes'] = nEchoes
-        acq_params['p90_us'] = p90
-        acq_params['deadtime_us'] = deadtime
-        acq_params['repetition_us'] = repetition
-        acq_params['SW_kHz'] = SW_kHz
-        acq_params['nPoints'] = nPoints
-        acq_params['tau_adjust_us'] = tau_adjust
-        acq_params['deblank_us'] = deblank
-        acq_params['tau_us'] = tau
-        acq_params['pad_us'] = pad 
-        if phase_cycling:
-            acq_params['nPhaseSteps'] = nPhaseSteps
-        #}}}
-        print("ACQUISITION TIME:",acq_time,"ms")
-        print("TAU DELAY:",tau,"us")
-        print("PAD DELAY:",pad,"us")
-        data_length = 2*nPoints*nEchoes*nPhaseSteps
-        for x in range(nScans):
+        data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
+        for x in range(config_dict['nScans']):
             print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
             print("\n*** *** ***\n")
             print("CONFIGURING TRANSMITTER...")
-            SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+            SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
+                    tx_phases, config_dict['amplitude'], nPoints)
             print("\nTRANSMITTER CONFIGURED.")
             print("***")
             print("CONFIGURING RECEIVER...")
-            acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
-            acq_params['acq_time_ms'] = acq_time
+            acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 1, 
+                    config_dict['nEchoes'], nPhaseSteps)
+            acq_params['acq_time_ms'] = config_dict['acq_time']
             # acq_time is in msec!
             print("ACQUISITION TIME IS",acq_time,"ms")
             verifyParams()
@@ -171,37 +141,35 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                 SpinCore_pp.load([
                     ('marker','start',1),
                     ('phase_reset',1),
-                    ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-                    ('delay',tau),
-                    ('delay_TTL',deblank),
-                    ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
-                    ('delay',deadtime),
-                    ('acquire',acq_time),
-                    #('delay',pad),
-                    ('delay',repetition),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',config_dict['p90_us'],'ph1',r_[0,1,2,3]),
+                    ('delay',config_dict['tau_us']),
+                    ('delay_TTL',config_dict['deblank']),
+                    ('pulse_TTL',2.0*config_dict['p90_us'],'ph2',r_[0,2]),
+                    ('delay',config_dict['deadtime_us']),
+                    ('acquire',config_dict['acq_time_ms']),
+                    ('delay',config_dict['repetition_us']),
                     ('jumpto','start')
                     ])
             if not phase_cycling:
                 SpinCore_pp.load([
                     ('marker','start',1),
                     ('phase_reset',1),
-                    ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,0),
-                    ('delay',tau),
-                    ('delay_TTL',deblank),
-                    ('pulse_TTL',2.0*p90,0),
-                    ('delay',deadtime),
-                    ('acquire',acq_time),
-                    #('delay',pad),
-                    ('delay',repetition),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',config_dict['p90_us'],0),
+                    ('delay',config_dict['tau_us']),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',2.0*config_dict['p90_us'],0),
+                    ('delay',config_dict['deadtime_us']),
+                    ('acquire',config_dict['acq_time_ms']),
+                    ('delay',config_dict['repetition_us']),
                     ('jumpto','start')
                     ])
             print("\nSTOPPING PROG BOARD...\n")
             SpinCore_pp.stop_ppg();
             print("\nRUNNING BOARD...\n")
             SpinCore_pp.runBoard();
-            raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
+            raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
             raw_data.astype(float)
             data_array = []
             data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
@@ -209,12 +177,12 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
             print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
             dataPoints = float(shape(data_array)[0])
             if x == 0:
-                time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-                data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=complex128)
+                time_axis = linspace(0.0,config_dict['nEchoes']*nPhaseSteps*config_dict['acq_time_ms']*1e-3,dataPoints)
+                data = ndshape([len(data_array),config_dict['nScans']],['t','nScans']).alloc(dtype=complex128)
                 data.setaxis('t',time_axis).set_units('t','s')
-                data.setaxis('nScans',r_[0:nScans])
+                data.setaxis('nScans',r_[0:config_dict['nScans']])
                 data.name('signal')
-                data.set_prop('acq_params',acq_params)
+                data.set_prop('acq_params',config_dict())
             data['nScans',x] = data_array
             SpinCore_pp.stopBoard();
         data.mean('nScans')
