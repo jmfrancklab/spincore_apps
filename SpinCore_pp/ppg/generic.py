@@ -16,24 +16,19 @@ import time
 import logging
 
 # {{{spin echo ppg
-def run_spin_echo(
+def generic(
+    ppg_list,
     nScans,
     indirect_idx,
     indirect_len,
     adcOffset,
     carrierFreq_MHz,
     nPoints,
-    nEchoes,
-    p90_us,
-    repetition_us,
-    tau_us,
     SW_kHz,
     indirect_fields=None,
     ph1_cyc=r_[0, 1, 2, 3],
     ph2_cyc=r_[0],
     ret_data=None,
-    deadtime_us=10.0,
-    deblank_us=1.0,
     amplitude=1.0,
 ):
     """run nScans and slot them into the indirect_idx index of ret_data -- assume
@@ -55,17 +50,6 @@ def run_spin_echo(
                         carrier frequency to be set in MHz
     nPoints:        int
                     number of points for the data
-    nEchoes:        int
-                    Number of Echoes to be acquired.
-                    This should always be 1, since this pulse
-                    program doesn't generate multiple echos.
-    p90_us:         float
-                    90 time of the probe in us
-    repetition_us:  float
-                    3-5 x T1 of the sample in seconds
-    tau_us:         float
-                    Echo Time should be a few ms for a good hermitian function to be
-                    applied later in processing. Standard tau_us = 3500.
     SW_kHz:         float
                     spectral width of the data. Minimum = 1.9
     indirect_fields: tuple (pair) of str or (default) None
@@ -78,16 +62,13 @@ def run_spin_echo(
                     to be a normal array, set this to None
 
                     This parameter is only used when `ret_data` is set to `None`.
-    ph1_cyc:        array
-                    phase steps for the first pulse
-    ph2_cyc:        array
-                    phase steps for the second pulse
     ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
     """
-    assert nEchoes == 1, "you must only choose nEchoes=1"
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-    nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
+    all_ppg_arrays = [j[3] for j in ppg_list if len(j)>3]
+    nPhaseSteps = prod([len(j) for j in all_ppg_arrays])
+    nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0] == 'marker' and j[1] == 'echo_label']
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
         run_scans_time_list = [time.time()]
@@ -96,25 +77,14 @@ def run_spin_echo(
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
-        acq_time_ms = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
+        check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
+        assert acq_time_ms == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
         run_scans_time_list.append(time.time())
         run_scans_names.append("prog")
-        spincore_load(
-            [
-                ("phase_reset", 1),
-                ("delay_TTL", deblank_us),
-                ("pulse_TTL", p90_us, "ph1", ph1_cyc),
-                ("delay", tau_us),
-                ("delay_TTL", deblank_us),
-                ("pulse_TTL", 2.0 * p90_us, "ph2", ph2_cyc),
-                ("delay", deadtime_us),
-                ("acquire", acq_time_ms),
-                ("delay", repetition_us),
-            ]
-        )
+        spincore_load(ppg_list)
         run_scans_time_list.append(time.time())
         run_scans_names.append("stop ppg")
         stop_ppg()
