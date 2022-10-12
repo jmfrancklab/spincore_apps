@@ -8,6 +8,7 @@ from datetime import datetime
 #init_logging(level='debug')
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
+raise RuntimeError("This pulse program has not been updated. Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
         print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")

@@ -7,8 +7,19 @@ from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 import time
 from datetime import datetime
-
+raise RuntimeError("This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 fl = figlist_var()
+# {{{ import acquisition parameters
+config_dict = SpinCore_pp.configuration('active.ini')
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
+#}}}
+#{{{create filename and save to config file
+date = datetime.now().strftime('%y%m%d')
+config_dict['type'] = 'Hahn_echo_mw_scans_outerloop'
+config_dict['date'] = date
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+filename_out = filename + ".h5"
+#}}}
 def gen_powerlist(max_power, steps, min_dBm_step=0.5):
     "generate a list of (roughly) evenly spaced powers up to max_power"
     lin_steps = steps
@@ -28,40 +39,9 @@ def gen_powerlist(max_power, steps, min_dBm_step=0.5):
                     "can't request %d steps between 0 and %f W without going"
                     "below %f a step?")%(steps,max_power,min_dBm_step)
     return dB_settings
-#{{{ Verify arguments compatible with board
-def verifyParams():
-    if (nPoints > 16*1024 or nPoints < 1):
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
-    return
-#}}}
-
 # Parameters for Bridge12
-max_power = 6.31
-power_steps = 10
-dB_settings = gen_powerlist(max_power,power_steps)
-append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-max_power*frac).argmin()]
+dB_settings = gen_powerlist(config_Dict['max_power'],config_dict['power_steps'])
+append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-config_dict['max_power']*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
 dB_settings = append(dB_settings,append_dB)
 print("dB_settings",dB_settings)
@@ -69,14 +49,7 @@ print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
 
-date = datetime.now().strftime('%y%m%d')
-output_name = 'AOT_RM_4AT_cap_probe_DNP_scansOuter_1'
-adcOffset = 38
-carrierFreq_MHz = 14.826694
 tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-nScans = 16
-nEchoes = 1
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 8
@@ -87,51 +60,21 @@ if not phase_cycling:
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 4.69
-deadtime = 10.0
-repetition = 1.3e6
-
-SW_kHz = 24.0
-nPoints = 1024*2
-
-acq_time = nPoints/SW_kHz # ms
 tau_adjust = 0.0
-deblank = 1.0
-#tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-tau = 3500.
-#{{{ setting acq_params dictionary
-acq_params = {}
-acq_params['adcOffset'] = adcOffset
-acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['amplitude'] = amplitude
-acq_params['nScans'] = nScans
-acq_params['nEchoes'] = nEchoes
-acq_params['p90_us'] = p90
-acq_params['deadtime_us'] = deadtime
-acq_params['repetition_us'] = repetition
-acq_params['SW_kHz'] = SW_kHz
-acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
-acq_params['deblank_us'] = deblank
-acq_params['tau_us'] = tau
-#acq_params['pad_us'] = pad 
-if phase_cycling:
-    acq_params['nPhaseSteps'] = nPhaseSteps
-#}}}
-for x in range(nScans):
-    print("ACQUISITION TIME:",acq_time,"ms")
-    print("TAU DELAY:",tau,"us")
-    data_length = 2*nPoints*nEchoes*nPhaseSteps
+for x in range(config_dict['nScans']):
+    print("ACQUISITION TIME:",config_dict['acq_time_ms'],"ms")
+    print("TAU DELAY:",config_dict['tau)us'],"us")
+    data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
     print("\n*** *** ***\n")
     print("CONFIGURING TRANSMITTER...")
-    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+    SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
+            tx_phases, config_dict['amplitude'], nPoints)
     print("\nTRANSMITTER CONFIGURED.")
     print("***")
     print("CONFIGURING RECEIVER...")
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
-    acq_params['acq_time_ms'] = acq_time
-    print("ACQUISITION TIME IS",acq_time,"ms")
-    verifyParams()
+    acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 1, 
+            config_dict['nEchoes'], nPhaseSteps)
+    print("ACQUISITION TIME IS",config_dict['acq_time_ms'],"ms")
     print("\nRECEIVER CONFIGURED.")
     print("***")
     print("\nINITIALIZING PROG BOARD...\n")
@@ -142,35 +85,35 @@ for x in range(nScans):
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-            ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',config_dict['p90_us'],'ph1',r_[0,1,2,3]),
+            ('delay',config_dict['tau_us']),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',2.0*config_dict['p90_us'],'ph2',r_[0,2]),
+            ('delay',config_dict['deadtime_us']),
+            ('acquire',config_dict['acq_time_ms']),
+            ('delay',config_dict['repetition_us']),
             ('jumpto','start')
             ])
     if not phase_cycling:
         SpinCore_pp.load([
-            ('marker','start',nScans),
+            ('marker','start',config_dict['nScans']),
             ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,0.0),
-            ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',config_dict['p90_us'],0.0),
+            ('delay',config_dict['tau_us']),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',2.0*config_dict['p90_us'],0.0),
+            ('delay',config_dict['deadtime_us']),
+            ('acquire',config_dict['acq_time_ms']),
+            ('delay',config_dict['repetition_us']),
             ('jumpto','start')
             ])
     print("\nSTOPPING PROG BOARD...\n")
     SpinCore_pp.stop_ppg();
     print("\nRUNNING BOARD...\n")
     SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
+    raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
     raw_data.astype(float)
     data = []
     # according to JF, this commented out line
@@ -182,22 +125,25 @@ for x in range(nScans):
     dataPoints = float(shape(data)[0])
     data = nddata(array(data),'t')
     if x == 0:
-        time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+        time_axis = linspace(0.0,config_dict['nEchoes']*nPhaseSteps*config_dict['acq_time_ms']*1e-3,
+                dataPoints)
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
-        data.set_prop('acq_params',acq_params)
+        data.set_prop('acq_params',config_dict())
         # Define nddata to store along the new power dimension
-        DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['power','nScans','t']).alloc(dtype=complex128)
+        DNP_data = ndshape([len(powers)+1,config_dict['nScans'],len(time_axis)],['power','nScans','t']).alloc(dtype=complex128)
         DNP_data.setaxis('power',r_[0,powers]).set_units('W')
-        DNP_data.setaxis('nScans',r_[0:nScans])
+        DNP_data.setaxis('nScans',r_[0:config_dict['nScans']])
         DNP_data.setaxis('t',time_axis).set_units('t','s')
     DNP_data['power',0]['nScans',x] = data
-
     with Bridge12() as b:
         b.set_wg(True)
         b.set_rf(True)
         b.set_amp(True)
-        this_return = b.lock_on_dip(ini_range=(9.8175e9,9.825e9))
+        this_return = b.lock_on_dip(ini_range=(
+            config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
+            config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
+        )
         dip_f = this_return[2]
         print("Frequency",dip_f)
         b.set_freq(dip_f)
@@ -237,11 +183,13 @@ for x in range(nScans):
             print("\n*** *** *** *** ***\n")
             print("\n*** *** ***\n")
             print("CONFIGURING TRANSMITTER...")
-            SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
+            SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
+                tx_phases, config_dict['amplitude'], nPoints)
             print("\nTRANSMITTER CONFIGURED.")
             print("***")
             print("CONFIGURING RECEIVER...")
-            acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps) #ms
+            acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 1, 
+                config_dict['nEchoes'], nPhaseSteps) #ms
             print("\nRECEIVER CONFIGURED.")
             print("***")
             print("\nINITIALIZING PROG BOARD...\n")
@@ -251,29 +199,29 @@ for x in range(nScans):
                 SpinCore_pp.load([
                     ('marker','start',1),
                     ('phase_reset',1),
-                    ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-                    ('delay',tau),
-                    ('delay_TTL',deblank),
-                    ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
-                    ('delay',deadtime),
-                    ('acquire',acq_time),
-                    ('delay',repetition),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',config_dict['p90_us'],'ph1',r_[0,1,2,3]),
+                    ('delay',config_dict['tau_us']),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',2.0*config_dict['p90_us'],'ph2',r_[0,2]),
+                    ('delay',config_dict['deadtime_us']),
+                    ('acquire',config_dict['acq_time_ms']),
+                    ('delay',config_dict['repetition_us']),
                     ('jumpto','start')
                     ])
                 #{{{
             if not phase_cycling:
                 SpinCore_pp.load([
-                    ('marker','start',nScans),
+                    ('marker','start',config_dict['nScans']),
                     ('phase_reset',1),
-                    ('delay_TTL',deblank),
-                    ('pulse_TTL',p90,0.0),
-                    ('delay',tau),
-                    ('delay_TTL',deblank),
-                    ('pulse_TTL',2.0*p90,0.0),
-                    ('delay',deadtime),
-                    ('acquire',acq_time),
-                    ('delay',repetition),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',config_dict['p90_us'],0.0),
+                    ('delay',config_dict['tau_us']),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',2.0*config_dict['p90_us'],0.0),
+                    ('delay',config_dict['deadtime_us']),
+                    ('acquire',config_dict['acq_time_ms']),
+                    ('delay',config_dict['repetition_us']),
                     ('jumpto','start')
                     ])
                 #}}}
@@ -281,7 +229,7 @@ for x in range(nScans):
             SpinCore_pp.stop_ppg();
             print("\nRUNNING BOARD...\n")
             SpinCore_pp.runBoard();
-            raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
+            raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
             raw_data.astype(float)
             data = []
             data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
@@ -303,13 +251,14 @@ for x in range(nScans):
     SpinCore_pp.stopBoard();
 print("EXITING...")
 print("\n*** *** ***\n")
+config_dict().write()
 save_file = True
 while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
-        DNP_data.set_prop('acq_params',acq_params)
+        DNP_data.set_prop('acq_params',config_dict())
         DNP_data.name('signal')
-        DNP_data.hdf5_write(date+'_'+output_name+'.h5',
+        DNP_data.hdf5_write(filename+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print("Name of saved data",DNP_data.name())
@@ -320,9 +269,9 @@ while save_file:
         print("\nEXCEPTION ERROR.")
         print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
         print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(output_name) is not 0:
-            DNP_data.hdf5_write(date+'_'+output_name+'.h5')
+        filename = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(filename) is not 0:
+            DNP_data.hdf5_write(filename+'.h5')
             print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
             break
         else:
@@ -340,4 +289,4 @@ fl.next('raw data - ft')
 fl.image(DNP_data.setaxis('power','#'))
 fl.next('abs raw data - ft')
 fl.image(abs(DNP_data).setaxis('power','#'))
-fl.show();quit()
+fl.show()
