@@ -198,7 +198,7 @@ SpinCore_pp.stopBoard();
 save_file = True
 while save_file:
     try:
-        DNP_data.set_prop('acq_params',config_dict())
+        DNP_data.set_prop('acq_params',config_dict.asdict())
         DNP_data.name(nodename)
         DNP_data.hdf5_write(filename+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/STE'))

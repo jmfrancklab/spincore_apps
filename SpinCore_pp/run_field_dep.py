@@ -9,7 +9,7 @@ import numpy as np
 import h5py
 logger = init_logging(level='debug')
 fl = figlist_var()
-# {{{importing acquisition parameters
+raise RuntimeError("This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")# {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 # }}}
 #{{{ make field axis
