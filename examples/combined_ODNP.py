@@ -83,7 +83,6 @@ control_thermal = run_spin_echo(
     repetition=parser_dict['repetition_us'],
     tau_us=parser_dict['tau_us'],
     SW_kHz=parser_dict['SW_kHz'],
-    output_name=filename,
     indirect_fields=("start_times", "stop_times"),
     ret_data=None,
 )  # assume that the power axis is 1 longer than the
@@ -139,7 +138,6 @@ for vd_idx, vd in enumerate(vd_list_us):
         repetition=config_dict["repetition_us"],
         ph1_cyc=ph1,
         ph2_cyc=ph2,
-        output_name=filename,
         SW_kHz=config_dict["SW_kHz"],
         ret_data=vd_data,
     )
@@ -196,7 +194,6 @@ with power_control() as p:
         repetition=parser_dict['repetition_us'],
         tau_us=parser_dict['tau_us'],
         SW_kHz=parser_dict['SW_kHz'],
-        output_name=filename,
         indirect_fields=("start_times", "stop_times"),
         ret_data=None,
     )  # assume that the power axis is 1 longer than the
@@ -237,7 +234,6 @@ with power_control() as p:
             repetition=parser_dict['repetition_us'],
             tau_us=parser_dict['tau_us'],
             SW_kHz=parser_dict['SW_kHz'],
-            output_name=filename,
             ret_data=DNP_data,
         )
         time_axis_coords[j + 1]["stop_times"] = time.time()
@@ -299,7 +295,6 @@ with power_control() as p:
                 repetition=config_dict["repetition_us"],
                 ph1_cyc=ph1,
                 ph2_cyc=ph2,
-                output_name=filename,
                 SW_kHz=config_dict["SW_kHz"],
                 ret_data=vd_data,
             )

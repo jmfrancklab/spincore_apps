@@ -72,7 +72,7 @@ for vd_idx, vd in enumerate(vd_list_us):
 vd_data.rename("indirect","vd")
 vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
 vd_data.set_prop("acq_params", config_dict.asdict())
-vd_data.set_prop("postproc_type", "spincore_IR_v2")
+vd_data.set_prop("postproc_type", "spincore_IR_v1")
 vd_data.name(config_dict["type"] + "_" + str(config_dict["IR_counter"]))
 if phase_cycling:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph1), len(ph2), -1])
