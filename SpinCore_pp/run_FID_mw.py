@@ -82,7 +82,7 @@ for x in range(config_dict['nScans']):
         time_axis = linspace(0.0,config_dict['nEchoes']*nPhaseSteps*config_dict['acq_time_ms']*1e-3,dataPoints)
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
-        data.set_prop('acq_params',config_dict())
+        data.set_prop('acq_params',config_dict.asdict())
     # Define nddata to store along the new power dimension
         DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['power','nScans','t']).alloc(dtype=np.complex128)
         DNP_data.setaxis('power',r_[0,powers]).set_units('W')
@@ -169,7 +169,7 @@ SpinCore_pp.stopBoard();
 #}}}
 #{{{save
 save_file = True
-DNP_data.set_prop('acq_params',config_dict())
+DNP_data.set_prop('acq_params',config_dict.asdict())
 while save_file:
     try:
         DNP_data.name('signal')

@@ -156,7 +156,7 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
                 data.setaxis('t',time_axis).set_units('t','s')
                 data.setaxis('nScans',r_[0:config_dict['nScans']])
                 data.name('signal')
-                data.set_prop('acq_params',config_dict())
+                data.set_prop('acq_params',config_dict.asdict())
             data['nScans',x] = data_array
             SpinCore_pp.stopBoard();
         data.mean('nScans')

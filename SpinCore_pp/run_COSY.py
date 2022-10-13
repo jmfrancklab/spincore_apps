@@ -86,7 +86,7 @@ for index,val in enumerate(t1_list):
         data = nddata(np.array(data),'t')
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
-        data.set_prop('acq_params',config_dict())
+        data.set_prop('acq_params',config_dict.asdict())
         data.set_prop('t1_list',t1_list)
         if index == 0 and x == 0:
             COSY_data = ndshape([len(t1_list),config_dict['nScans'],len(time_axis)],['t1','nScans','t']).alloc(dtype=np.complex128)
@@ -94,7 +94,7 @@ for index,val in enumerate(t1_list):
             COSY_data.setaxis('nScans',r_[0:config_dict['nScans']])
             COSY_data.setaxis('t',time_axis).set_units('t','s')
         COSY_data['t1',index]['nScans',x] = data
-        COSY_data.set_prop('acq_params',config_dict())
+        COSY_data.set_prop('acq_params',config_dict.asdict())
 SpinCore_pp.stopBoard();
 #}}}
 #{{{saving data

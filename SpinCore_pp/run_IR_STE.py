@@ -99,7 +99,7 @@ for vd_index,vd_val in enumerate(vd_list):
             data.setaxis('nScans',r_[0:config_dict['nScans']])
             data.setaxis('vd',vd_list)
             data.name(config_dict['type'])
-            data.set_prop('acq_params',config_dict())
+            data.set_prop('acq_params',config_dict.asdict())
         data['nScans',x]['vd',vd_index] = data_array
 SpinCore_pp.stopBoard();
 #}}}

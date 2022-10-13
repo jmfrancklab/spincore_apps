@@ -100,7 +100,7 @@ for x in range(config_dict['nScans']):
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:config_dict['nScans']])
         data.name(config_dict['type']+'_'+config_dict['echo_counter'])
-        data.set_prop('acq_params',config_dict())
+        data.set_prop('acq_params',config_dict.asdict())
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
 #}}}

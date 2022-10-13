@@ -92,7 +92,7 @@ for x in range(config_dict['nScans']):
                 dataPoints)
         data.setaxis('t',time_axis).set_units('t','s')
         data.name('signal')
-        data.set_prop('acq_params',config_dict())
+        data.set_prop('acq_params',config_dict.asdict())
         # Define nddata to store along the new power dimension
         DNP_data = ndshape([len(powers)+1,config_dict['nScans'],len(time_axis)],['power','nScans','t']).alloc(dtype=complex128)
         DNP_data.setaxis('power',r_[0,powers]).set_units('W')
@@ -192,7 +192,7 @@ config_dict().write()
 save_file = True
 while save_file:
     try:
-        DNP_data.set_prop('acq_params',config_dict())
+        DNP_data.set_prop('acq_params',config_dict.asdict())
         DNP_data.name('signal')
         DNP_data.hdf5_write(filename+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
