@@ -67,35 +67,10 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
     def run_Hahn_echo(self):
         #{{{ Verify arguments compatible with board
         config_dict=SpinCore_pp.configuration("active.ini")
-        def verifyParams():
-            if (config_dict['nPoints'] > 16*1024 or config_dict['nPoints'] < 1):
-                print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-                print("EXITING.")
-                quit()
-            else:
-                print("VERIFIED NUMBER OF POINTS.")
-            if (config_dict['nScans'] < 1):
-                print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-                print("EXITING.")
-                quit()
-            else:
-                print("VERIFIED NUMBER OF SCANS.")
-            if (config_dict['p90_us'] < 0.065):
-                print("ERROR: PULSE TIME TOO SMALL.")
-                print("EXITING.")
-                quit()
-            else:
-                print("VERIFIED PULSE TIME.")
-            if (config_dict['tau_us'] < 0.065):
-                print("ERROR: DELAY TIME TOO SMALL.")
-                print("EXITING.")
-                quit()
-            else:
-                print("VERIFIED DELAY TIME.")
-            return
         #}}}
         date = datetime.now().strftime("%y%m%d")
-        output_name = 'echo_1'
+        config_dict['type'] = 'echo'
+        output_name = f'{date}_{type}'
         adcOffset = int(self.ui.adcoffset)
         carrierFreq_MHz = config_dict['carrierFreq_MHz']
         tx_phases = r_[0.0,90.0,180.0,270.0]
@@ -112,9 +87,9 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         # as this is generally what the SpinCore takes
         # note that acq_time is always milliseconds
         #}}}
+        nPoints = int(config_dict['acq_time_mw']*config_dict['SW_kHz']+0.5)
         tau_adjust = 0.0
-        tau = config_dict['deadtime_us'] + config_dict['acq_time_ms']*1e3*(1./8.) + tau_adjust
-        pad = 0
+        tau = config_dict['tau_us']
         data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
         for x in range(config_dict['nScans']):
             print("*** *** *** SCAN NO. %d *** *** ***"%(x+1))
@@ -130,7 +105,6 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
             acq_params['acq_time_ms'] = config_dict['acq_time']
             # acq_time is in msec!
             print("ACQUISITION TIME IS",acq_time,"ms")
-            verifyParams()
             print("\nRECEIVER CONFIGURED.")
             print("***")
             print("\nINITIALIZING PROG BOARD...\n")
@@ -209,6 +183,7 @@ class mywindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.ui.xaxis = data.getaxis('t')
         self.ui.yaxis = data.data
         self.ui.data = data
+        config_dict.write()
 
 
 app = QtWidgets.QApplication([])

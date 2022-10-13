@@ -1,12 +1,11 @@
 from pyspecdata import *
 from numpy import *
-import os
-import sys
+import os,sys,time
 import SpinCore_pp
 from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
-import time
 from datetime import datetime
+from SpinCore_pp.power_helper import gen_powerlist
 raise RuntimeError("This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -20,26 +19,7 @@ config_dict["type"] = "FID_mw"
 config_dict["date"] = date
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
-def gen_powerlist(max_power, steps, min_dBm_step=0.5):
-    "generate a list of (roughly) evenly spaced powers up to max_power"
-    lin_steps = steps
-    def det_allowed(lin_steps):
-        powers = r_[0:max_power:1j*lin_steps][1:]
-        vectorize(powers)
-        rdB_settings = ones_like(powers)
-        for x in range(len(powers)):
-            rdB_settings[x] = round(10*(log10(powers[x])+3.0)/min_dBm_step)*min_dBm_step # round to nearest min_dBm_step
-        return unique(rdB_settings)
-    dB_settings = det_allowed(lin_steps)
-    while len(dB_settings) < steps-1:
-        lin_steps += 1
-        dB_settings = det_allowed(lin_steps)
-        if lin_steps >= 200:
-            raise ValueError("I think I'm in an infinite loop -- maybe you"
-                    "can't request %d steps between 0 and %f W without going"
-                    "below %f a step?")%(steps,max_power,min_dBm_step)
-    return dB_settings
-# Parameters for Bridge12
+#{{{ Parameters for Bridge12
 dB_settings = gen_powerlist(config_dict['max_power'],config_dict['power_steps'])
 append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-config_dict['max_power']*frac).argmin()]
         for frac in [0.75,0.5,0.25]]
@@ -54,12 +34,14 @@ if phase_cycling:
     nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
+#}}}    
 #{{{ note on timing
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
 data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
+#{{{ run ppg
 for x in range(config_dict['nScans']):
     print("\n*** *** ***\n")
     print("CONFIGURING TRANSMITTER...")
@@ -127,7 +109,7 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(
+    this_return = b.lock_on_dip(ini_range=
             config_dict['uw_dip_center_GHz']-config_dict['uw_dip_width_GHz'] / 2,
             config_dict['uw_dip_center_GHz']+config_dict['uw_dip_width_GHz']/2)
     dip_f = this_return[2]
@@ -225,11 +207,13 @@ DNP_data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
 print("EXITING...")
 print("\n*** *** ***\n")
+#}}}
+#{{{save
 save_file = True
+DNP_data.set_prop('acq_params',config_dict())
 while save_file:
     try:
         print("SAVING FILE IN TARGET DIRECTORY...")
-        DNP_data.set_prop('acq_params',config_dict())
         DNP_data.name('signal')
         DNP_data.hdf5_write(filename+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
@@ -253,6 +237,8 @@ while save_file:
             print("*** *** ***\n")
             break
         save_file = False
+#}}}
+#{{{ image raw
 fl.next('raw data')
 fl.image(DNP_data.setaxis('power','#'))
 fl.next('abs raw data')
@@ -262,4 +248,5 @@ fl.next('raw data - ft')
 fl.image(DNP_data.setaxis('power','#'))
 fl.next('abs raw data - ft')
 fl.image(abs(DNP_data).setaxis('power','#'))
+#}}}
 fl.show()

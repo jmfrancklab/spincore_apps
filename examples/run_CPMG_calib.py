@@ -49,28 +49,38 @@ nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG_calib"
 config_dict["date"] = date
-config_dict["echo_counter"] += 1
+config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
+#{{{making tau
 marker = 1.0
-tau_extra = 200.0  # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - config_dict["deadtime_us"]
-pad_end = tau_extra - config_dict["deblank_us"] * 2
+pad_start = config_dict['tau_extra_us'] - config_dict["deadtime_us"]
+pad_end = config_dict['tau_extra_us'] - config_dict["deblank_us"] - marker
+assert (
+    pad_start > 0
+), "tau_extra_us must be set to more than deadtime and more than deblank!"
+assert (
+    pad_end > 0
+), "tau_extra_us must be set to more than deadtime and more than deblank!"
+twice_tau_echo_us = (  # the period between 180 pulses
+    config_dict["tau_extra_us"] * 2 + config_dict["acq_time_ms"] * 1e3
+)
+#}}}
+#{{{phase cycling
 nPhaseSteps = 2
 ph1_cyc = r_[0, 2]
 # NOTE: Number of segments is nEchoes * nPhaseSteps
+#}}}
+#{{{run ppg
 for index, val in enumerate(p90_range):
-    p90 = val  # us
-    twice_tau = (
-        config_dict["deblank_us"]
-        + 2 * p90
-        + config_dict["deadtime_us"]
-        + pad_start
-        + config_dict["acq_time_ms"] * 1e3
-        + pad_end
-        + marker
-    )
-    tau_us = twice_tau / 2.0
+    p90_us = val  # us
+    config_dict['tau_us'] = twice_tau_echo_us / 2.0 - (
+            2*p90
+            /pi #evolution during pulse -- see eq 6 of coherence paper
+            + config_dict['deadtime_us'] # following 90
+            +config_dict['deblank_us'] #before 180
+            )
+
     print("***")
     print("INDEX %d - 90 TIME %f" % (index, val))
     print("***")
@@ -89,10 +99,13 @@ for index, val in enumerate(p90_range):
             pad_end_us=pad_end,
             tau_us=tau_us,
             SW_kHz=config_dict["SW_kHz"],
-            output_name=filename,
             ph1_cyc=ph1_cyc,
+            indirect_fields=('p90_idx','p90_us')
             ret_data=None,
         )
+     p90_axis = data.getaxis('indirect')
+     p90_axis[0]['p90_index'] = index
+     p90_axis[0]['p90_us'] = p90
     else:
         run_cpmg(
             nScans=config_dict["nScans"],
@@ -108,10 +121,12 @@ for index, val in enumerate(p90_range):
             pad_end_us=pad_end,
             tau_us=tau_us,
             SW_kHz=config_dict["SW_kHz"],
-            output_name=filename,
             ph1_cyc=ph1_cyc,
             ret_data=data,
         )
+        p90_axis[index+1]['p90_us'] = p90
+#}}}
+#{{{Save data
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
@@ -121,7 +136,7 @@ if config_dict["nScans"] > 1:
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
 nodename = data.name()
-if os.path.exists(filename + ".h5"):
+if os.path.exists(filename_out):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
@@ -146,9 +161,12 @@ else:
                 "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
             )
 config_dict.write()
+#}}}
+#{{{image data
 fl.next("raw data")
 fl.image(data)
 data.ft("t", shift=True)
 fl.next("FT raw data")
 fl.image(data)
+#}}}
 fl.show()

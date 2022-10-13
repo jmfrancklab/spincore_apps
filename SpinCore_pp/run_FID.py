@@ -20,19 +20,22 @@ config_dict["type"] = "FID"
 config_dict["date"] = date
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
-node_str = 'FID'
+#{{{ phase cycling
 tx_phases = r_[0.0,90.0,180.0,270.0]
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
+#}}}    
 #{{{ note on timing
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-print(("ACQUISITION TIME:",acq_time,"ms"))
+#{{{ppg
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
+print(("ACQUISITION TIME:",config_dict['acq_time_ms'],"ms"))
 data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
 for x in range(config_dict['nScans']):
     print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
@@ -90,12 +93,14 @@ for x in range(config_dict['nScans']):
         data = ndshape([len(data_array),config_dict['nScans']],['t','nScans']).alloc(dtype=np.complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:config_dict['nScans']])
-        data.name(node_str)
+        data.name(config_dict['type'])
         data.set_prop('acq_params',config_dict())
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
 print("EXITING...")
 print("\n*** *** ***\n")
+#}}}
+#{{{ saving data
 save_file = True
 while save_file:
     try:
@@ -122,32 +127,5 @@ while save_file:
             print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
             print("*** *** ***\n")
             break
-
-data.set_units('t','data')
-# {{{ once files are saved correctly, the following become obsolete
-print(ndshape(data))
-if not phase_cycling:
-    fl.next('raw data')
-    fl.plot(data)
-    data.ft('t',shift=True)
-    fl.next('ft')
-    fl.plot(data.real)
-    fl.plot(data.imag)
-if phase_cycling:
-    data.chunk('t',['ph1','t2'],[4,-1])
-    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    if nScans > 1:
-        data.setaxis('nScans',r_[0:config_dict['nScans']])
-    fl.next('image')
-    data.mean('nScans')
-    fl.image(data)
-    data.ft('t2',shift=True)
-    fl.next('image - ft')
-    fl.image(data)
-    fl.next('image - ft, coherence')
-    data.ft(['ph1'])
-    fl.image(data)
-    fl.next('data plot')
-    fl.plot(data['ph1',-1])
-    fl.plot(data.imag['ph1',-1])
-fl.show()
+config_dict.write()
+#}}}
