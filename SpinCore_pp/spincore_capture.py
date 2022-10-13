@@ -2,6 +2,7 @@ from pyspecdata import *
 import SpinCore_pp
 from datetime import datetime
 fl = figlist_var()
+raise RuntimeError("This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 #{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration('active.ini')
 nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
@@ -36,54 +37,43 @@ for x in range(config_dict['nScans']):
             ('marker','start',1),
             ('phase_reset',1),
             ('delay',config_dict['tau_us']),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
+            ('delay',config_dict['deadtime']),
+            ('acquire',config_dict['acq_time_ms']),
+            ('delay',config_dict['repetition_us']),
             ('jumpto','start')
             ])
     if not phase_cycling:
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            #('delay_TTL',deblank),
-            #('pulse_TTL',p90,0),
-            ('delay',tau),
-            #('delay_TTL',deblank),
-            #('pulse_TTL',2.0*p90,0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            #('delay',pad),
-            ('delay',repetition),
+            ('delay',config_dict['tau_us']),
+            ('delay',config_dict['deadtime_us']),
+            ('acquire',config_dict['acq_time_ms']),
+            ('delay',config_dict['repetition_us']),
             ('jumpto','start')
             ])
-    print("\nSTOPPING PROG BOARD...\n")
     SpinCore_pp.stop_ppg();
-    print("\nRUNNING BOARD...\n")
     SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
+    raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
     raw_data.astype(float)
     data_array = []
     data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print(("COMPLEX DATA ARRAY LENGTH:",shape(data_array)[0]))
-    print(("RAW DATA ARRAY LENGTH:",shape(raw_data)[0]))
     dataPoints = float(shape(data_array)[0])
     if x == 0:
-        time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-        data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=complex128)
+        time_axis = linspace(0.0,config_dict['nEchoes']*nPhaseSteps
+                *config_dict['acq_time_ms']*1e-3,dataPoints)
+        data = ndshape([len(data_array),config_dict['nScans']],['t','nScans']).alloc(dtype=complex128)
         data.setaxis('t',time_axis).set_units('t','s')
-        data.setaxis('nScans',r_[0:nScans])
+        data.setaxis('nScans',r_[0:config_dict['nScans']])
         data.name('signal')
-        data.set_prop('acq_params',acq_params)
+        data.set_prop('acq_params',config_dict.asdict())
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
-print("EXITING...")
-print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
         print("SAVING FILE...")
-        data.hdf5_write(date+'_'+output_name+'.h5')
-        print("FILE SAVED!")
+        data.hdf5_write(filename+'.h5')
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
         print(("Shape of saved data",ndshape(data)))
@@ -95,7 +85,6 @@ while save_file:
 
 data.set_units('t','data')
 # {{{ once files are saved correctly, the following become obsolete
-print(ndshape(data))
 if not phase_cycling:
     fl.next('raw data')
     fl.plot(data)
@@ -108,7 +97,7 @@ if phase_cycling:
     data.setaxis('ph2',r_[0.,2.]/4)
     data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
     if nScans > 1:
-        data.setaxis('nScans',r_[0:nScans])
+        data.setaxis('nScans',r_[0:config_dict['nScans']])
     fl.next('image')
     data.mean('nScans')
     fl.image(data)
@@ -121,49 +110,4 @@ if phase_cycling:
     fl.next('data plot')
     fl.plot(data['ph1',1]['ph2',0])
     fl.plot(data.imag['ph1',1]['ph2',0])
-fl.show();quit()
-
-if phase_cycling:
-    data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    data.setaxis('ph2',r_[0.,2.]/4)
-    data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-if nScans > 1:
-    data.setaxis('nScans',r_[0:nScans])
-# }}}
-data.squeeze()
-data.reorder('t2',first=False)
-if len(data.dimlabels) > 1:
-    fl.next('raw data - time|ph domain')
-    fl.image(data)
-else:
-    if 't' in data.dimlabels:
-        data.rename('t','t2')
-has_phcyc_dims = False
-for j in range(8):# up to 8 independently phase cycled pulses
-    phstr = 'ph%d'%j
-    if phstr in data.dimlabels:
-        has_phcyc_dims = True
-        print('phcyc along',phstr)
-        data.ft(phstr)
-if has_phcyc_dims:
-    fl.next('raw data - time|coh domain')
-    fl.image(data)
-data.ft('t2',shift=True)
-if len(data.dimlabels) > 1:
-    fl.next('raw data - freq|coh domain')
-    fl.image(data)
-if 'ph1' in data.dimlabels:
-    for phlabel,phidx in coherence_pathway:
-        data = data[phlabel,phidx]
-data.mean_all_but('t2')
-fl.next('raw data - FT')
-fl.plot(data,alpha=0.5)
-fl.plot(data.imag, alpha=0.5)
-fl.plot(abs(data),'k',alpha=0.1, linewidth=3)
-data.ift('t2')
-fl.next('avgd. and coh. ch. selected (where relevant) data -- time domain')
-fl.plot(data,alpha=0.5)
-fl.plot(data.imag, alpha=0.5)
-fl.plot(abs(data),'k',alpha=0.2, linewidth=2)
-fl.show();quit()
-
+fl.show()

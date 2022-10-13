@@ -1,115 +1,67 @@
 from pyspecdata import *
-import os
 from . import SpinCore_pp
 import socket
 import sys
 import time
 fl = figlist_var()
-#{{{ Verify arguments compatible with board
-def verifyParams():
-    if (nPoints > 16*1024 or nPoints < 1):
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
-    return
+#{{{importing acquisition parameters
+config_dict = SpinCore_pp.configuration('active.ini')
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
 #}}}
-#{{{ for setting EPR magnet
-def API_sender(value):
-    IP = "jmfrancklab-bruker.syr.edu"
-    if len(sys.argv) > 1:
-        IP = sys.argv[1]
-    PORT = 6001
-    print("target IP:", IP)
-    print("target port:", PORT)
-    MESSAGE = str(value)
-    print("SETTING FIELD TO...", MESSAGE)
-    sock = socket.socket(socket.AF_INET, # Internet
-            socket.SOCK_STREAM) # TCP
-    sock.connect((IP, PORT))
-    sock.send(MESSAGE)
-    sock.close()
-    print("FIELD SET TO...", MESSAGE)
-    time.sleep(5)
-    return
+#{{{create filename and save to config file
+date = datetime.now().strftime('%y%m%d')
+config_dict['type'] = 'nutation'
+config_dict['date'] = date
+config_dict['nutation_counter'] += 1
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
-set_field = False
-if set_field:
-    B0 = 3409.3 # Determine this from Field Sweep
-    API_sender(B0)
-date = '190116'
-output_name = 'test'
-adcOffset = 49
-carrierFreq_MHz = 14.46
+#{{{let computer set field
+print("I'm assuming that you've tuned your probe to",
+        config_dict['carrierFreq_MHz'],
+        "since that's what's in your .ini file")
+Field = config_dict['carrierFreq_MHz']/config_dict['gamma_eff_MHz_G']
+print("Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"%Field)
+with xepr() as x:
+    assert Field < 3700, "are you crazy??? field is too high!"
+    assert Field > 3300, "are you crazy?? field is too low!"
+    Field = x.set_field(Field)
+    print("field set to ",Field)
+#}}}
 tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-nScans = 10
-nEchoes = 1
-nPhaseSteps = 1
-# NOTE: Number of segments is nEchoes * nPhaseSteps
 transient = 500.0
-repetition = 1e6
-SW_kHz = 25.0
-nPoints = 128
-acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0.0
-tau = 10
-#tau = transient + acq_time*1e3*0.5 + tau_adjust
-print("ACQUISITION TIME:",acq_time,"ms")
-print("TAU DELAY:",tau,"us")
-data_length = 2*nPoints*nEchoes*nPhaseSteps
+data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
 p90_range = linspace(0.1,10.1,10,endpoint=False)
 for index,val in enumerate(p90_range):
     p90 = val # us
-    print("***")
-    print("INDEX %d - 90 TIME %f"%(index,val))
-    print("***")
-    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
+    SpinCore_pp.configureTX(config_dict['adcOffset'], 
+            config_dict['carrierFreq_MHz'], tx_phases, 
+            config_dict['amplitude'], nPoints)
+    acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 
+            config_dict['nScans'], config_dict['nEchoes'], nPhaseSteps) #ms
     SpinCore_pp.init_ppg();
     SpinCore_pp.load([
-        ('marker','start',nScans),
+        ('marker','start',config_dict['nScans']),
         ('phase_reset',1),
         ('pulse',p90,0.0),
-        ('delay',tau),
+        ('delay',config_dict['tau_us']),
         ('pulse',2.0*p90,0.0),
         ('delay',transient),
-        ('acquire',acq_time),
-        ('delay',repetition),
+        ('acquire',config_dict['acq_time_ms']),
+        ('delay',config_dict['repetition_us']),
         ('jumpto','start')
         ])
     SpinCore_pp.stop_ppg();
     SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
+    raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
     raw_data.astype(float)
     data = []
     # according to JF, this commented out line
     # should work same as line below and be more effic
     #data = raw_data.view(complex128)
     data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
     dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+    time_axis = linspace(0.0,config_dict['nEchoes']*nPhaseSteps
+            *config_dict['acq_time_ms']*1e-3,dataPoints)
     data = nddata(array(data),'t')
     data.setaxis('t',time_axis).set_units('t','s')
     data.name('signal')
@@ -119,14 +71,11 @@ for index,val in enumerate(p90_range):
         nutation_data.setaxis('t',time_axis).set_units('t','s')
     nutation_data['p_90',index] = data
 SpinCore_pp.stopBoard();
-print("EXITING...\n")
-print("\n*** *** ***\n")
 save_file = True
 while save_file:
     try:
-        print("SAVING FILE...")
         nutation_data.name('nutation')
-        nutation_data.hdf5_write(date+'_'+output_name+'.h5')
+        nutation_data.hdf5_write(filename+'.h5')
         print("Name of saved data",nutation_data.name())
         print("Units of saved data",nutation_data.get_units('t'))
         print("Shape of saved data",ndshape(nutation_data))
