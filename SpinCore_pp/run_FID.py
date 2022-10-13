@@ -35,26 +35,13 @@ if not phase_cycling:
 #}}}
 #{{{ppg
 nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
-print(("ACQUISITION TIME:",config_dict['acq_time_ms'],"ms"))
 data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
 for x in range(config_dict['nScans']):
-    print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
-    print("\n*** *** ***\n")
-    print("CONFIGURING TRANSMITTER...")
     SpinCore_pp.configureTX(config_dict['adcOffset_ms'], config_dict['carrierFreq_MHz'], 
             tx_phases, config_dict['amplitude'], nPoints)
-    print("\nTRANSMITTER CONFIGURED.")
-    print("***")
-    print("CONFIGURING RECEIVER...")
     acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 1, config_dict['nEchoes'], 
             nPhaseSteps)
-    print(("ACQUISITION TIME IS",config_dict['acq_time_ms'],"ms"))
-    print("\nRECEIVER CONFIGURED.")
-    print("***")
-    print("\nINITIALIZING PROG BOARD...\n")
     SpinCore_pp.init_ppg();
-    print("PROGRAMMING BOARD...")
-    print("\nLOADING PULSE PROG...\n")
     if phase_cycling:
         SpinCore_pp.load([
             ('marker','start',1),
@@ -77,16 +64,12 @@ for x in range(config_dict['nScans']):
             ('delay',config_dict['repetition_us']),
             ('jumpto','start')
             ])
-    print("\nSTOPPING PROG BOARD...\n")
     SpinCore_pp.stop_ppg();
-    print("\nRUNNING BOARD...\n")
     SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
     raw_data.astype(float)
     data_array = []
     data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print(("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0]))
-    print(("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0]))
     dataPoints = float(np.shape(data_array)[0])
     if x == 0:
         time_axis = np.linspace(0.0,config_dict['nEchoes']*nPhaseSteps*config_dict['acq_time_ms']*1e-3,dataPoints)
@@ -97,17 +80,13 @@ for x in range(config_dict['nScans']):
         data.set_prop('acq_params',config_dict())
     data['nScans',x] = data_array
     SpinCore_pp.stopBoard();
-print("EXITING...")
-print("\n*** *** ***\n")
 #}}}
 #{{{ saving data
 save_file = True
 while save_file:
     try:
-        print("SAVING FILE IN TARGET DIRECTORY...")
         data.hdf5_write(filename+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/FID'))
-        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
         print(("Shape of saved data",ndshape(data)))

@@ -43,22 +43,11 @@ if not phase_cycling:
 data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
 #{{{ run ppg
 for x in range(config_dict['nScans']):
-    print("\n*** *** ***\n")
-    print("CONFIGURING TRANSMITTER...")
     SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
             tx_phases, config_dict['amplitude'], nPoints)
-    print("\nTRANSMITTER CONFIGURED.")
-    print("***")
-    print("CONFIGURING RECEIVER...")
     acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 1, 
             config_dict['nEchoes'], nPhaseSteps)
-    print("ACQUISITION TIME IS",config_dict['acq_time_ms'],"ms")
-    print("\nRECEIVER CONFIGURED.")
-    print("***")
-    print("\nINITIALIZING PROG BOARD...\n")
     SpinCore_pp.init_ppg();
-    print("PROGRAMMING BOARD...")
-    print("\nLOADING PULSE PROG...\n")
     if phase_cycling:
         SpinCore_pp.load([
             ('marker','start',1),
@@ -81,16 +70,12 @@ for x in range(config_dict['nScans']):
             ('delay',config_dict['repetition_us']),
             ('jumpto','start')
             ])
-    print("\nSTOPPING PROG BOARD...\n")
     SpinCore_pp.stop_ppg();
-    print("\nRUNNING BOARD...\n")
     SpinCore_pp.runBoard();
     raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
     raw_data.astype(float)
     data = []
     data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
     dataPoints = float(np.shape(data)[0])
     data = nddata(np.array(data),'t')
     if x == 0:
@@ -113,30 +98,23 @@ with Bridge12() as b:
             config_dict['uw_dip_center_GHz']-config_dict['uw_dip_width_GHz'] / 2,
             config_dict['uw_dip_center_GHz']+config_dict['uw_dip_width_GHz']/2)
     dip_f = this_return[2]
-    print("Frequency",dip_f)
     b.set_freq(dip_f)
     meter_powers = zeros_like(dB_settings)
     for j,this_power in enumerate(dB_settings):
-        print("\n*** *** *** *** ***\n")
-        print("SETTING THIS POWER",this_power,"(",dB_settings[j-1],powers[j],"W)")
         if j>0 and this_power > last_power + 3:
             last_power += 3
-            print("SETTING TO...",last_power)
             b.set_power(last_power)
             time.sleep(3.0)
             while this_power > last_power+3:
                 last_power += 3
-                print("SETTING TO...",last_power)
                 b.set_power(last_power)
                 time.sleep(3.0)
-            print("FINALLY - SETTING TO DESIRED POWER")
             b.set_power(this_power)
         elif j == 0:
             threshold_power = 10
             if this_power > threshold_power:
                 next_power = threshold_power + 3
                 while next_power < this_power:
-                    print("SETTING To...",next_power)
                     b.set_power(next_power)
                     time.sleep(3.0)
                     next_power += 3
@@ -147,25 +125,12 @@ with Bridge12() as b:
         with prologix_connection() as p:
             with gigatronics(prologix_instance=p, address=7) as g:
                 meter_powers[j] = g.read_power()
-                print("POWER READING",meter_powers[j])
-        print("\n*** *** *** *** ***\n")
         for x in range(config_dict['nScans']):
-            print("\n*** *** ***\n")
-            print("CONFIGURING TRANSMITTER...")
             SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
                     tx_phases, config_dict['amplitude'], nPoints)
-            print("\nTRANSMITTER CONFIGURED.")
-            print("***")
-            print("CONFIGURING RECEIVER...")
             acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 
                     1, config_dict['nEchoes'], nPhaseSteps)
-            print("ACQUISITION TIME IS",config_dict['acq_time_ms'],"ms")
-            print("\nRECEIVER CONFIGURED.")
-            print("***")
-            print("\nINITIALIZING PROG BOARD...\n")
             SpinCore_pp.init_ppg();
-            print("PROGRAMMING BOARD...")
-            print("\nLOADING PULSE PROG...\n")
             if phase_cycling:
                 SpinCore_pp.load([
                     ('marker','start',1),
@@ -188,16 +153,12 @@ with Bridge12() as b:
                     ('delay',config_dict['repetition_us']),
                     ('jumpto','start')
                     ])
-            print("\nSTOPPING PROG BOARD...\n")
             SpinCore_pp.stop_ppg();
-            print("\nRUNNING BOARD...\n")
             SpinCore_pp.runBoard();
             raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
             raw_data.astype(float)
             data = []
             data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-            print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
-            print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
             dataPoints = float(np.shape(data)[0])
             data = nddata(np.array(data),'t')
             DNP_data['power',j+1]['nScans',x] = data
@@ -205,19 +166,15 @@ with Bridge12() as b:
 DNP_data.name('signal')
 DNP_data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
-print("EXITING...")
-print("\n*** *** ***\n")
 #}}}
 #{{{save
 save_file = True
 DNP_data.set_prop('acq_params',config_dict())
 while save_file:
     try:
-        print("SAVING FILE IN TARGET DIRECTORY...")
         DNP_data.name('signal')
         DNP_data.hdf5_write(filename+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
-        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print("Name of saved data",DNP_data.name())
         print("Units of saved data",DNP_data.get_units('t'))
         print("Shape of saved data",ndshape(DNP_data))

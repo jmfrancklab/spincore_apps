@@ -42,9 +42,6 @@ t1_list = r_[min_t1:max_t1:t1_step]
 #{{{ run ppg
 for index,val in enumerate(t1_list):
     t1 = val
-    print("***")
-    print("INDEX %d - t1 %f"%(index,val))
-    print("***")
     for x in range(config_dict['nScans']): 
         SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
                 tx_phases, config_dict['amplitude'], nPoints)
@@ -78,14 +75,11 @@ for index,val in enumerate(t1_list):
                 ('jumpto','start')
                 ])
         SpinCore_pp.stop_ppg();
-        print("\nRUNNING BOARD...\n")
         SpinCore_pp.runBoard();
         raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
         raw_data.astype(float)
         data = []
         data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-        print("COMPLEX DATA ARRAY LENGTH:",np.shape(data)[0])
-        print("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0])
         dataPoints = float(np.shape(data)[0])
         time_axis = np.linspace(0.0,config_dict['nEchoes']*nPhaseSteps
                 *config_dict['acq_time_ms']*1e-3,dataPoints)
@@ -105,8 +99,6 @@ SpinCore_pp.stopBoard();
 #}}}
 #{{{saving data
 config_dict.write()
-print("EXITING...\n")
-print("\n*** *** ***\n")
 save_file = True
 if phase_cycling:
     COSY_data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
@@ -117,13 +109,9 @@ else:
     COSY_data.rename('t','t2')
 while save_file:
     try:
-        print("SAVING FILE IN TARGET DIRECTORY...")
         COSY_data.name(nodename)
         COSY_data.hdf5_write(filename+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/COSY'))
-        print("*** *** *** *** *** *** *** *** *** *** ***")
-        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-        print("*** *** *** *** *** *** *** *** *** *** ***")
         print(("Name of saved data",COSY_data.name()))
         print(("Units of saved data",COSY_data.get_units('t2')))
         print(("Shape of saved data",ndshape(COSY_data)))
