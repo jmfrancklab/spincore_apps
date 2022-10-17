@@ -38,6 +38,7 @@ from pyspecdata import *
 from numpy import *
 from datetime import datetime
 from . import SpinCore_pp
+raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
 p90_range = linspace(3.0, 4.0, 5)

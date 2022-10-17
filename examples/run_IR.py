@@ -65,11 +65,10 @@ for vd_idx, vd in enumerate(vd_list_us):
         repetition=config_dict["repetition_us"],
         ph1_cyc=ph1,
         ph2_cyc=ph2,
-        output_name=filename,
         SW_kHz=config_dict["SW_kHz"],
         ret_data=vd_data,
     )
-vd_data.rename("indirect","vd")
+vd_data.rename("indirect", "vd")
 vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
 vd_data.set_prop("acq_params", config_dict.asdict())
 vd_data.set_prop("postproc_type", "spincore_IR_v1")

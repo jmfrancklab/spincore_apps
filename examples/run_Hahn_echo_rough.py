@@ -16,6 +16,7 @@ import SpinCore_pp
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
+
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -57,7 +58,7 @@ if not phase_cycling:
 total_pts = nPoints * nPhaseSteps
 assert total_pts < 2 ** 14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
-    % total_pts
+    % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
 # {{{acquire echo
@@ -74,7 +75,6 @@ echo_data = run_spin_echo(
     repetition=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
-    output_name=filename,
     ret_data=None,
 )
 # }}}
@@ -88,37 +88,21 @@ if phase_cycling:
     echo_data.chunk("t", ["ph1", "t2"], [4, -1])
     echo_data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
 else:
-    echo_data.rename("t","t2")
+    echo_data.rename("t", "t2")
 if config_dict["nScans"] > 1:
     echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 fl.next("image")
 echo_data.C.mean("nScans")
 fl.image(echo_data)
-echo_data.ft("t2", shift=True)
-fl.next("image - ft")
-fl.image(echo_data)
-if phase_cycling:    
-    fl.next("image - ft, coherence")
-    echo_data.ft(["ph1"])
-    fl.image(echo_data)
-    fl.next("data plot")
-    data_slice = echo_data["ph1", 1].C.mean('nScans')
-    fl.plot(data_slice, alpha=0.5)
-    fl.plot(data_slice.imag, alpha=0.5)
-    fl.plot(abs(data_slice), color="k", alpha=0.5)
-else:
-    fl.next("data plot")
-    fl.plot(echo_data.real)
-    fl.plot(echo_data.imag)
-    fl.plot(abs(echo_data), color="k", alpha=0.5)
 # }}}
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
 nodename = echo_data.name()
 if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
-    with h5py.File(os.path.normpath(os.path.join(target_directory, 
-        f"{filename_out}"))) as fp:
+    with h5py.File(
+        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+    ) as fp:
         if nodename in fp.keys():
             print("this nodename already exists, so I will call it temp")
             echo_data.name("temp")
@@ -137,10 +121,9 @@ else:
         echo_data.hdf5_write("temp.h5")
         print(
             "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-            )
+        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", echo_data.name()))
-print(("Shape of saved data", ndshape(echo_data)))
 config_dict.write()
 print(
     "Your *current* γ_eff (MHz/G) should be ",
@@ -150,6 +133,6 @@ print(
     "), where Δν is your resonance offset",
 )
 print(
-    "So, look at the resonance offset where your signal shows up, and enter the new value for gamma_eff_MHz_G into your .ini file, and run me again!"
+    "Now run Hahn_echo_proc.py to see your spectra and offset, that script will correct your gamma effective for you!"
 )
 fl.show()

@@ -40,6 +40,7 @@ from numpy import *
 import SpinCore_pp
 import time
 from datetime import datetime
+raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -48,39 +49,46 @@ nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
-config_dict["type"] = "echo"
+config_dict["type"] = "T1CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
-tx_phases = r_[0.0, 90.0, 180.0, 270.0]
 marker = 1.0
-tau_extra = 1500.0  # us, must be more than deadtime and more than deblank
-pad_start = tau_extra - deadtime_us
-pad_end = tau_extra - deblank_us * 2  # marker + deblank
-twice_tau = (
-    deblank_us
-    + 2 * p90_us
-    + deadtime_us
-    + pad_start
-    + acq_time_ms * 1e3
-    + pad_end
-    + marker
+pad_start = config_dict['tau_extra_us'] - config_dict['deadtime_us']
+pad_end = config_dict['tau_extra_us'] - config_dict['deblank_us'] - marker
+assert (
+    pad_start > 0
+), "tau_extra_us must be set to more than deadtime and more than deblank!"
+assert (
+    pad_end > 0
+), "tau_extra_us must be set to more than deadtime and more than deblank!"
+twice_tau_echo_us = (  # the period between 180 pulses
+    config_dict["tau_extra_us"] * 2 + config_dict["acq_time_ms"] * 1e3
 )
-tau_us = twice_tau / 2.0
+# now twice_tau_echo_us/2.0 is τ_echo, so I need to subtract the extra delays
+# imposed by the ppg to determine the remaining τ that I need
+config_dict["tau_us"] = twice_tau_echo_us / 2.0 - (
+    2
+    * config_dict["p90_us"]
+    / pi  # evolution during pulse -- see eq 6 of coherence paper
+    + config_dict["deadtime_us"]  # following 90
+    + config_dict["deblank_us"]  # before 180
+)
+# }}}
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 2
 if not phase_cycling:
     nPhaseSteps = 1
-data_length = 2 * nPoints * nEchoes * nPhaseSteps
+data_length = 2 * nPoints * config_dict['nEchoes'] * nPhaseSteps
 # NOTE: Number of segments is nEchoes * nPhaseSteps
 vd_kwargs = {
-        j:parser_dict[j]
+        j:config_dict[j]
         for j in ['krho_cold','krho_hot','T1water_cold','T1water_hot']
-        if j in parser_dict.keys()
+        if j in config_dict.keys()
         }
-vd_list = SpinCore_pp.vdlist_from_relaxivities(parser_dict['concentration'],**vd_kwargs) * 1e6 #convert to microseconds
+vd_list = SpinCore_pp.vdlist_from_relaxivities(config_dict['concentration'],**vd_kwargs) * 1e6 #convert to microseconds
 for index, val in enumerate(vd_list):
     vd_us = val
     print("***")

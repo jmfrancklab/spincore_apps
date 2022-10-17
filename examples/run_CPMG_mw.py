@@ -42,6 +42,7 @@ import SpinCore_pp
 from Instruments import Bridge12, prologix_connection, gigatronics
 from datetime import datetime
 import time
+raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
 # {{{importing acquisition parameters

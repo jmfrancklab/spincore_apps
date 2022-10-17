@@ -19,19 +19,23 @@ mw_freqs = []
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 # }}}
-#{{{make field axis
-left = (((config_dict['guessed_mhz_to_ghz']*config_dict['uw_dip_center_GHz'])/config_dict['gamma_eff_MHz_G']))
-left = left - (config_dict['field_width']/2)
-right = (((config_dict['guessed_mhz_to_ghz']*config_dict['uw_dip_center_GHz'])/config_dict['gamma_eff_MHz_G']))
-right = right + (config_dict['field_width']/2)
+# {{{make field axis
+left = (
+    config_dict["guessed_mhz_to_ghz"] * config_dict["uw_dip_center_GHz"]
+) / config_dict["gamma_eff_MHz_G"]
+left = left - (config_dict["field_width"] / 2)
+right = (
+    config_dict["guessed_mhz_to_ghz"] * config_dict["uw_dip_center_GHz"]
+) / config_dict["gamma_eff_MHz_G"]
+right = right + (config_dict["field_width"] / 2)
 assert right < 3700, "Are you crazy??? Field is too high!!!"
-assert left >3300, "Are you crazy??? Field is too low!!!"
+assert left > 3300, "Are you crazy??? Field is too low!!!"
 field_axis = r_[left:right:1.0]
-logger.info("Your field axis is:",field_axis)
+logger.info("Your field axis is:", field_axis)
 myinput = input("Does this look okay?")
 if myinput.lower().startswith("n"):
     raise ValueError("You said no!!!")
-#}}}
+# }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "field"
@@ -96,7 +100,6 @@ with power_control() as p:
             repetition=config_dict["repetition_us"],
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
-            output_name=filename,
             indirect_fields=("Field", "carrierFreq"),
             ret_data=None,
         )
@@ -123,10 +126,9 @@ with power_control() as p:
                 repetition=config_dict["repetition_us"],
                 tau_us=config_dict["tau_us"],
                 SW_kHz=config_dict["SW_kHz"],
-                output_name=filename,
                 ret_data=sweep_data,
             )
-sweep_data.set_prop('acq_params',config_dict.asdict())
+sweep_data.set_prop("acq_params", config_dict.asdict())
 # }}}
 # {{{chunk and save data
 if phase_cycling:
@@ -141,7 +143,7 @@ if phase_cycling:
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )
-    sweep_data.reorder('t2',first=False)
+    sweep_data.reorder("t2", first=False)
     sweep_data.ft("t2", shift=True)
     sweep_data.ft("ph1", unitary=True)
     fl.next("Raw - frequency")

@@ -50,21 +50,20 @@ nutation_data = run_spin_echo(
     repetition=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
-    output_name=filename,
-    indirect_fields = ("p_90","index"),
+    indirect_fields=("p_90", "index"),
     ret_data=None,
 )
-mytimes = nutation_data.getaxis('indirect')
-mytimes[0]['p_90'] = p90_range_us[0]
+mytimes = nutation_data.getaxis("indirect")
+mytimes[0]["p_90"] = p90_range_us[0]
 for index, val in enumerate(p90_range_us[1:]):
     p90_us = val  # us
     print("***")
     print("INDEX %d - 90 TIME %f" % (index, val))
     print("***")
-    mytimes[index+1]['p_90'] = p90_us
+    mytimes[index + 1]["p_90"] = p90_us
     run_spin_echo(
         nScans=config_dict["nScans"],
-        indirect_idx=index+1,
+        indirect_idx=index + 1,
         indirect_len=len(p90_range_us),
         adcOffset=config_dict["adc_offset"],
         carrierFreq_MHz=config_dict["carrierFreq_MHz"],
@@ -74,22 +73,21 @@ for index, val in enumerate(p90_range_us[1:]):
         repetition=config_dict["repetition_us"],
         tau_us=config_dict["tau_us"],
         SW_kHz=config_dict["SW_kHz"],
-        output_name=filename,
-        indirect_fields = ("p_90","index"),
+        indirect_fields=("p_90", "index"),
         ret_data=nutation_data,
     )
 nutation_data.set_prop("acq_params", config_dict.asdict())
 if phase_cycling:
-    nutation_data.chunk("t",["ph1","t2"],[4,-1])
+    nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
     nutation_data.setaxis("ph1", ph1_cyc)
-    nutation_data.setaxis('nScans',config_dict['nScans'])
+    nutation_data.setaxis("nScans", config_dict["nScans"])
 fl.next("raw data")
-fl.image(nutation_data.C.setaxis('indirect','#').set_units('indirect','scan #'))
+fl.image(nutation_data.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
 nutation_data.ft("t2", shift=True)
 if phase_cycling:
-    nutation_data.ft(['ph1'],unitary=True)
+    nutation_data.ft(["ph1"], unitary=True)
 fl.next("FT raw data")
-fl.image(nutation_data.C.setaxis('indirect','#').set_units('indirect','scan #'))
+fl.image(nutation_data.C.setaxis("indirect", "#").set_units("indirect", "scan #"))
 nutation_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
 filename_out = filename + ".h5"

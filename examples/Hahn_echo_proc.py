@@ -16,7 +16,9 @@ with figlist_var() as fl:
         exp_type="ODNP_NMR_comp/Echoes",
         expno=config_dict["type"] + "_" + str(config_dict["echo_counter"]),
     )
-    assert d.get_units("t2") is not None, "bad data file!  units of s for t2 should be stored in nddata!"
+    assert (
+        d.get_units("t2") is not None
+    ), "bad data file!  units of s for t2 should be stored in nddata!"
     d.ft("ph1", unitary=True)
     if "nScans" in d.dimlabels:
         d.mean("nScans")

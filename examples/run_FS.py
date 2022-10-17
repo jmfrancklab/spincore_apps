@@ -43,24 +43,29 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 import numpy as np
 import h5py
-logger = init_logging(level='debug')
+
+logger = init_logging(level="debug")
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 # }}}
-#{{{ make field axis
-left = (((config_dict['guessed_mhz_to_ghz']*config_dict['uw_dip_center_GHz'])/config_dict['gamma_eff_MHz_G']))
-left = left - (config_dict['field_width']/2)
-right = (((config_dict['guessed_mhz_to_ghz']*config_dict['uw_dip_center_GHz'])/config_dict['gamma_eff_MHz_G']))
-right = right + (config_dict['field_width']/2)
-assert right <3700, "Are you crazy??? Field is too high!!!"
+# {{{ make field axis
+left = (
+    config_dict["guessed_mhz_to_ghz"] * config_dict["uw_dip_center_GHz"]
+) / config_dict["gamma_eff_MHz_G"]
+left = left - (config_dict["field_width"] / 2)
+right = (
+    config_dict["guessed_mhz_to_ghz"] * config_dict["uw_dip_center_GHz"]
+) / config_dict["gamma_eff_MHz_G"]
+right = right + (config_dict["field_width"] / 2)
+assert right < 3700, "Are you crazy??? Field is too high!!!"
 assert left > 3300, "Are you crazy??? Field is too low!!!"
 field_axis = r_[left:right:1.0]
-logger.info("Your field axis is:",field_axis)
+logger.info("Your field axis is:", field_axis)
 myinput = input("Does this look okay?")
 if myinput.lower().startswith("n"):
     raise ValueError("you said no!!")
-#}}}
+# }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "field"
@@ -68,29 +73,56 @@ config_dict["date"] = date
 config_dict["field_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
-#{{{ phase cycling
+# {{{ phase cycling
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
 if not phase_cycling:
     nPhaseSteps = 1
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
-#}}}
+# }}}
 total_pts = nPoints * nPhaseSteps
 assert total_pts < 2 ** 14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
     % total_pts
 )
 with xepr() as x_server:
-        first_B0 = x_server.set_field(field_axis[0])
+    first_B0 = x_server.set_field(field_axis[0])
+    time.sleep(3.0)
+    carrierFreq_MHz = config_dict["gamma_eff_MHz_G"] * first_B0
+    sweep_data = run_spin_echo(
+        nScans=config_dict["nScans"],
+        indirect_idx=0,
+        indirect_len=len(field_axis),
+        adcOffset=config_dict["adc_offset"],
+        carrierFreq_MHz=carrierFreq_MHz,
+        nPoints=nPoints,
+        nEchoes=config_dict["nEchoes"],
+        p90_us=config_dict["p90_us"],
+        repetition=config_dict["repetition_us"],
+        tau_us=config_dict["tau_us"],
+        SW_kHz=config_dict["SW_kHz"],
+        output_name=filename,
+        indirect_fields=("Field", "carrierFreq"),
+        ret_data=None,
+    )
+    myfreqs_fields = sweep_data.getaxis("indirect")
+    myfreqs_fields[0]["Field"] = first_B0
+    myfreqs_fields[0]["carrierFreq"] = carrierFreq_MHz
+    for B0_index, desired_B0 in enumerate(field_axis[1:]):
+        true_B0 = x_server.set_field(desired_B0)
+        logging.info("My field in G is %f" % true_B0)
         time.sleep(3.0)
-        carrierFreq_MHz = config_dict["gamma_eff_MHz_G"] * first_B0
-        sweep_data = run_spin_echo(
+        new_carrierFreq_MHz = config_dict["gamma_eff_MHz_G"] * true_B0
+        myfreqs_fields[B0_index + 1]["Field"] = true_B0
+        myfreqs_fields[B0_index + 1]["carrierFreq"] = new_carrierFreq_MHz
+        logging.info("My frequency in MHz is", new_carrierFreq_MHz)
+        run_spin_echo(
             nScans=config_dict["nScans"],
-            indirect_idx=0,
+            indirect_idx=B0_index + 1,
             indirect_len=len(field_axis),
             adcOffset=config_dict["adc_offset"],
-            carrierFreq_MHz=carrierFreq_MHz,
+            carrierFreq_MHz=new_carrierFreq_MHz,
             nPoints=nPoints,
             nEchoes=config_dict["nEchoes"],
             p90_us=config_dict["p90_us"],
@@ -98,36 +130,9 @@ with xepr() as x_server:
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
             output_name=filename,
-            indirect_fields=("Field", "carrierFreq"),
-            ret_data=None,
+            ret_data=sweep_data,
         )
-        myfreqs_fields = sweep_data.getaxis("indirect")
-        myfreqs_fields[0]["Field"] = first_B0
-        myfreqs_fields[0]["carrierFreq"] = carrierFreq_MHz
-        for B0_index, desired_B0 in enumerate(field_axis[1:]):
-            true_B0 = x_server.set_field(desired_B0)
-            logging.info("My field in G is %f" % true_B0)
-            time.sleep(3.0)
-            new_carrierFreq_MHz = config_dict["gamma_eff_MHz_G"] * true_B0
-            myfreqs_fields[B0_index + 1]["Field"] = true_B0
-            myfreqs_fields[B0_index + 1]["carrierFreq"] = new_carrierFreq_MHz
-            logging.info("My frequency in MHz is", new_carrierFreq_MHz)
-            run_spin_echo(
-                nScans=config_dict["nScans"],
-                indirect_idx=B0_index + 1,
-                indirect_len=len(field_axis),
-                adcOffset=config_dict["adc_offset"],
-                carrierFreq_MHz=new_carrierFreq_MHz,
-                nPoints=nPoints,
-                nEchoes=config_dict["nEchoes"],
-                p90_us=config_dict["p90_us"],
-                repetition=config_dict["repetition_us"],
-                tau_us=config_dict["tau_us"],
-                SW_kHz=config_dict["SW_kHz"],
-                output_name=filename,
-                ret_data=sweep_data,
-            )
-#}}}
+# }}}
 # {{{chunk and save data
 sweep_data.set_prop("acq_params", config_dict.asdict())
 if phase_cycling:
@@ -144,9 +149,9 @@ if phase_cycling:
     )
     sweep_data.reorder("t2", first=False)
     for_pic = sweep_data.C
-    for_pic.ft('t2',shift=True)
-    for_pic.ft(['ph1'],unitary=True)
-    fl.next('FTed into coherence domain')
+    for_pic.ft("t2", shift=True)
+    for_pic.ft(["ph1"], unitary=True)
+    fl.next("FTed into coherence domain")
     fl.image(for_pic)
 else:
     if config_dict["nScans"] > 1:

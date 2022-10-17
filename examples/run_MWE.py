@@ -18,8 +18,23 @@ config_dict["date"] = date
 config_dict["echo_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
-B0 = (config_dict['carrierFreq_MHz'] / config_dict['gamma_eff_MHz_G'])  # Determine this from Field Sweep
-xepr().set_field(B0)
+# {{{let computer set field
+print(
+    "I'm assuming that you've tuned your probe to",
+    config_dict["carrierFreq_MHz"],
+    "since that's what's in your .ini file",
+)
+Field = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+print(
+    "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+    % Field
+)
+with xepr() as x:
+    assert Field < 3700, "are you crazy??? field is too high!"
+    assert Field > 3300, "are you crazy?? field is too low!"
+    Field = x.set_field(Field)
+    print("field set to ", Field)
+# }}}
 tx_phases = r_[0.0, 90.0, 180.0, 270.0]
 nPhaseSteps = 1
 # NOTE: Number of segments is nEchoes * nPhaseSteps

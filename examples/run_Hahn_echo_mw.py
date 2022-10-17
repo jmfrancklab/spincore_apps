@@ -12,7 +12,7 @@ import os
 import sys
 import SpinCore_pp
 from SpinCore_pp.ppg import run_spin_echo
-from Instruments import Bridge12, prologix_connection, gigatronics,power_control
+from Instruments import Bridge12, prologix_connection, gigatronics, power_control
 from serial import Serial
 import time
 from datetime import datetime
@@ -39,7 +39,7 @@ print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 input("Look ok?")
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
-#{{{phase cycling and checking nPoints
+# {{{phase cycling and checking nPoints
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
@@ -57,7 +57,8 @@ assert total_pts < 2 ** 14, (
 filename_out = filename + ".h5"
 if os.path.exists(filename_out):
     raise ValueError(
-        "the file %s already exists, either change the chemical name or try incrementing your counter +1" % filename_out
+        "the file %s already exists, either change the chemical name or try incrementing your counter +1"
+        % filename_out
     )
 # }}}
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
@@ -83,7 +84,6 @@ with power_control() as p:
         repetition=config_dict["repetition_us"],
         tau_us=config_dict["tau_us"],
         SW_kHz=config_dict["SW_kHz"],
-        output_name=filename,
         ret_data=None,
     )  # assume that the power axis is 1 longer than the
     #                         "powers" array, so that we can also store the
@@ -91,7 +91,7 @@ with power_control() as p:
     #                         that powers and other parameters are defined
     #                         globally w/in the script, as this function is not
     #                         designed to be moved outside the module
-    echo_data = echo_data['nScans',-1:]
+    echo_data = echo_data["nScans", -1:]
     power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
@@ -124,7 +124,6 @@ with power_control() as p:
             repetition=config_dict["repetition_us"],
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
-            output_name=filename,
             ret_data=echo_data,
         )
 echo_data.set_prop("postproc_type", "spincore_ODNP_v3")
@@ -133,7 +132,7 @@ echo_data.name(config_dict["type"])
 if phase_cycling:
     echo_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
     echo_data.setaxis("ph1", Ep_ph1_cyc / 4)
-    echo_data.reorder(['ph1','indirect','t2'])
+    echo_data.reorder(["ph1", "indirect", "t2"])
 echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 # }}}
 # }}}
@@ -152,11 +151,11 @@ fl.next("abs raw data_array - ft")
 fl.image(abs(echo_data.C.setaxis("indirect", "#")))
 nodename = echo_data.name()
 try:
-    echo_data.hdf5_write(f"{filename_out}",directory = target_directory)
+    echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
 except:
     print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
-        )
+        f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+    )
     if os.path.exists("temp.h5"):
         print("there is a temp.h5 already! -- I'm removing it")
         os.remove("temp.h5")

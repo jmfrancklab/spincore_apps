@@ -3,6 +3,7 @@ from pyspecdata import *
 from numpy import *
 import SpinCore_pp
 from datetime import datetime
+raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
 # {{{importing acquisition parameters
