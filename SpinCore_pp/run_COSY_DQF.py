@@ -16,8 +16,8 @@ nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "COSY_DQF"
 config_dict["date"] = date
-config_dict["cpmg_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['cpmg_counter'}"
+config_dict["cosy_counter"] += 1
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['cosy_counter'}"
 # }}}
 #{{{ phase cycling, tx phases
 tx_phases = r_[0.0,90.0,180.0,270.0]
