@@ -1,12 +1,14 @@
 from pylab import *
 from pyspecdata import *
-import os
-import sys
+import os,sys
 import SpinCore_pp
 from datetime import datetime
 import numpy as np
+from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from Instruments.XEPR_eth import xepr
+import h5py
 fl = figlist_var()
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/inv_rec")
 raise RuntimeError("This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -55,6 +57,7 @@ vd_list_us = (
     * 1e6
 )  # put vd list into microseconds
 # }}}
+#}}}
 #{{{ run ppg
 print(("TAU 1 DELAY:",tau1,"us"))
 print(("TAU 2 DELAY:",tau2,"us"))
@@ -102,33 +105,25 @@ for vd_index,vd_val in enumerate(vd_list):
             data.set_prop('acq_params',config_dict.asdict())
         data['nScans',x]['vd',vd_index] = data_array
 SpinCore_pp.stopBoard();
+data.name(config_dict['type'])        
 #}}}
 #{{{ save data
-save_file = True
-while save_file:
-    try:
-        data.hdf5_write(filename+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/STE'))
-        print(("Name of saved data",data.name()))
-        print(("Units of saved data",data.get_units('t')))
-        print(("Shape of saved data",ndshape(data)))
-        save_file = False
-    except Exception as e:
-        print(e)
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        filename = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(filename) is not 0:
-            data.hdf5_write(filename+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
-        else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
 config_dict.write()
+nodename = data.name()
+filename_out = filename+'.h5'
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+)) as fp:
+    if nodename in fp.keys():
+        print("this nodename already exists, so I will call it temp_IR_STE_%d"%config_dict['ir_counter'])
+        data.name("temp_IR_STE_%d"%config_dict['ir_counter'])
+        nodename = "temp_IR_STE_%d"%config_dict['ir_counter']
+        data.hdf5_write(f"{filename_out}",directory = target_directory)
+    else:
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", data.name()))
+print(("Shape of saved data", ndshape(data)))
 #}}}
 #{{{ image data
 data.set_units('t','data')

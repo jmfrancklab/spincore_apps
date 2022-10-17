@@ -2,11 +2,14 @@ from pyspecdata import *
 from numpy import *
 import os,sys,time
 import SpinCore_pp
+import h5py
+from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
 from datetime import datetime
 from SpinCore.power_helper import gen_powerlist
 fl = figlist_var()
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
@@ -195,32 +198,23 @@ DNP_data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
 #}}}
 #{{{ save data
-save_file = True
-while save_file:
-    try:
-        DNP_data.set_prop('acq_params',config_dict.asdict())
-        DNP_data.name(nodename)
-        DNP_data.hdf5_write(filename+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/STE'))
-        print("Name of saved data",DNP_data.name())
-        print("Units of saved data",DNP_data.get_units('t'))
-        print("Shape of saved data",ndshape(DNP_data))
-        save_file = False
-    except Exception as e:
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        filename = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(filename) is not 0:
-            DNP_data.hdf5_write(filename+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
-        else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
-        save_file = False
+DNP_data.set_prop('acq_params',config_dict.asdict())
+config_dict.write()
+nodename = DNP_data.name()
+filename_out = filename+'.h5'
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+)) as fp:
+    if nodename in fp.keys():
+        print("this nodename already exists, so I will call it temp_STE_mw_%d"%config_dict['odnp_counter'])
+        DNP_data.name("temp_STE_mw%d"%config_dict['odnp_counter'])
+        nodename = "temp_STE_mw_%d"%config_dict['odnp_counter']
+        DNP_data.hdf5_write(f"{filename_out}",directory = target_directory)
+    else:
+        DNP_data.hdf5_write(f"{filename_out}", directory=target_directory)
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", DNP_data.name()))
+print(("Shape of saved data", ndshape(DNP_data)))
 #}}}        
 #{{{ image data
 fl.next('raw data')

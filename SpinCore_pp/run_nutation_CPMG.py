@@ -3,10 +3,11 @@ from pyspecdata import *
 import os
 import SpinCore_pp
 import h5py
+from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from Instruments.XEPR_eth import xepr
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
-
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
 fl = figlist_var()
 p90_range = linspace(3.,15.,25,endpoint=False)
 # {{{importing acquisition parameters
@@ -90,33 +91,26 @@ for index,val in enumerate(p90_range[1:]):
             ph2_cyc=ph2,
             ret_data=nutation_data,
         )
+nutation_data.name(config_dict['type'] + '_' +config_dict['echo_counter'])
 nutation_data.setprop('acq_params',config_dict.asdict())
+#}}}
 #{{{ save
-save_file = True
-while save_file:
-    try:
-        nutation_data.name('nutation')
-        nutation_data.hdf5_write(filename+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/nutation'))
-        print("Name of saved data",nutation_data.name())
-        print("Units of saved data",nutation_data.get_units('t'))
-        print("Shape of saved data",ndshape(nutation_data))
-        save_file = False
-    except Exception as e:
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        filename = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(filename) is not 0:
-            nutation_data.hdf5_write(filename+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
-        else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
-        save_file = False
+nodename = vd_data.name()
+filename_out = filename +'.h5'
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+)) as fp:
+    if nodename in fp.keys():
+        print("this nodename already exists, so I will call it temp_nutation_CPMG_%d"%config_dict['echo_counter'])
+        nutation_data.name("temp_nutation_CPMG_%d"%config_dict['echo_counter'])
+        nodename = "temp_nutation_CPMG_%d"%config_dict['echo_counter']
+        nutation_data.hdf5_write(f"{filename_out}",directory = target_directory)
+    else:
+        nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", nutation_data.name()))
+print(("Shape of saved data", ndshape(nutation_data)))
+config_dict.write()
 #}}}
 #{{{ image data
 fl.next('raw data')

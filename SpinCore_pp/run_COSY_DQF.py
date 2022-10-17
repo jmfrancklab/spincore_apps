@@ -1,10 +1,10 @@
 from pyspecdata import *
-import os
+import os, sys, time
 import SpinCore_pp
-import socket
-import sys
-import time
+from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
+import h5py
 from datetime import datetime
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/COSY")
 raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 fl = figlist_var()
  {{{importing acquisition parameters
@@ -101,35 +101,25 @@ SpinCore_pp.stopBoard();
 config_dict.write()
 #}}}
 #{{{ save data
-save_file = True
+nodename = config_dict['type']+'_'+congi_dict['cpmg_counter']
+filename_out = filename+'.h5'
 if phase_cycling:
     COSY_data.chunk('t',['ph3','ph1','t2'],[4,4,-1])
     COSY_data.setaxis('ph1',r_[0,1,2,3]/4.)
     COSY_data.setaxis('ph3',r_[0,1,2,3]/4.)
 else:
     COSY_data.rename('t','t2')
-while save_file:
-    try:
-        COSY_data.name(config_dict['type']+'_'+config_dict['cpmg_counter'])
-        COSY_data.hdf5_write(filename+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/COSY'))
-        print(("Name of saved data",COSY_data.name()))
-        print(("Units of saved data",COSY_data.get_units('t2')))
-        print(("Shape of saved data",ndshape(COSY_data)))
-        save_file = False
-    except Exception as e:
-        print(e)
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        filename = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(filename) is not 0:
-            COSY_data.hdf5_write(filename+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
+with h5py.File(
+        os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+    )) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp_COSY_DQF_%d"%config_dict['cpmg_counter'])
+            COSY_data.name("temp_CPMG_DQF_%d"%config_dict['cpmg_counter'])
+            nodename = "temp_CPMG_DQF_%d"%config_dict['cpmg_counter']
+            COSY_data.hdf5_write(f"{filename_out}",directory = target_directory)
         else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
+            COSYd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+    print(("Name of saved data", COSY_data.name()))
+    print(("Shape of saved data", ndshape(COSY_data)))
 #}}}        

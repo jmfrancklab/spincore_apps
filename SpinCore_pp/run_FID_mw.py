@@ -4,9 +4,12 @@ import os,sys,time
 import SpinCore_pp
 from Instruments import Bridge12,prologix_connection,gigatronics
 from serial import Serial
+import h5py
 from datetime import datetime
+from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from SpinCore_pp.power_helper import gen_powerlist
 raise RuntimeError("This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -28,7 +31,6 @@ print("dB_settings",dB_settings)
 print("correspond to powers in Watts",10**(dB_settings/10.-3))
 input("Look ok?")
 powers = 1e-3*10**(dB_settings/10.)
-tx_phases = r_[0.0,90.0,180.0,270.0]
 phase_cycling = True
 if phase_cycling:
     nPhaseSteps = 4
@@ -163,47 +165,37 @@ with Bridge12() as b:
             data = nddata(np.array(data),'t')
             DNP_data['power',j+1]['nScans',x] = data
         last_power = this_power
-DNP_data.name('signal')
-DNP_data.set_prop('meter_powers',meter_powers)
+data.name('signal')
+data.set_prop('meter_powers',meter_powers)
 SpinCore_pp.stopBoard();
 #}}}
 #{{{save
-save_file = True
-DNP_data.set_prop('acq_params',config_dict.asdict())
-while save_file:
-    try:
-        DNP_data.name('signal')
-        DNP_data.hdf5_write(filename+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/ODNP'))
-        print("Name of saved data",DNP_data.name())
-        print("Units of saved data",DNP_data.get_units('t'))
-        print("Shape of saved data",ndshape(DNP_data))
-        save_file = False
-    except Exception as e:
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        filename = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(filename) is not 0:
-            DNP_data.hdf5_write(filename+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
-        else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
-        save_file = False
+data.set_prop('acq_params',config_dict.asdict())
+nodename = data.name()
+filename_out = filename+'.h5'
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+)) as fp:
+    if nodename in fp.keys():
+        print("this nodename already exists, so I will call it temp_%d"%j)
+        data.name("temp_FID_mw_%d"%config_dict['echo_counter'])
+        nodename = "temp_FID_mw_%d"%config_dict['echo_counter']
+        data.hdf5_write(f"{filename_out}",directory = target_directory)
+    else:
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", data.name()))
+print(("Shape of saved data", ndshape(data)))
 #}}}
 #{{{ image raw
 fl.next('raw data')
-fl.image(DNP_data.setaxis('power','#'))
+fl.image(data.setaxis('power','#'))
 fl.next('abs raw data')
-fl.image(abs(DNP_data).setaxis('power','#'))
+fl.image(abs(data).setaxis('power','#'))
 data.ft('t',shift=True)
 fl.next('raw data - ft')
-fl.image(DNP_data.setaxis('power','#'))
+fl.image(data.setaxis('power','#'))
 fl.next('abs raw data - ft')
-fl.image(abs(DNP_data).setaxis('power','#'))
+fl.image(abs(data).setaxis('power','#'))
 #}}}
 fl.show()

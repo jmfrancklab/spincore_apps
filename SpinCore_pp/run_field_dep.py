@@ -4,10 +4,12 @@ import os
 import SpinCore_pp
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
+from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from Instruments.XEPR_eth import xepr
 import numpy as np
 import h5py
 logger = init_logging(level='debug')
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/field_dependent")
 fl = figlist_var()
 raise RuntimeError("This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")# {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -132,7 +134,7 @@ else:
     )
 sweep_data.name(config_dict["type"] + "_" + str(config_dict["field_counter"]))
 sweep_data.set_prop("postproc_type", "field_sweep_v1")
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/field_dependent")
+sweep_data.set_prop('acq_params',config_dict.asdict())
 filename_out = filename + ".h5"
 nodename = sweep_data.name()
 if os.path.exists(filename + ".h5"):
