@@ -240,6 +240,20 @@ class configuration(object):
             converter, section, default, _ = self.registered_params[key]
             self._params[key] = converter(value)  # check that it's the right type
             self.configobj.set(section, key.lower(), str(self._params[key]))
+    def __str__(self):
+        retval = ['-'*50]
+        allkeys = [j for j in self._params.keys()]
+        idx = sorted(range(len(allkeys)), key=lambda x: allkeys.__getitem__(x).lower())
+        allkeys_sorted = [allkeys[j] for j in idx]
+        for key in allkeys_sorted:
+            converter, section, default, description = self.registered_params[key]
+            description = description.split('\n')
+            description = ['\t'+j for j in description]
+            description = '\n'.join(description)
+            value = self.__getitem__(key)
+            retval.append(f"{key} {value} (in [{section}])\n{description}")
+        retval.append('-'*50)
+        return '\n'.join(retval)
 
     def keys(self):
         return self._params.keys()
