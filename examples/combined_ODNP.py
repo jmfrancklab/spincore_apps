@@ -33,7 +33,7 @@ parser_dict["odnp_counter"] += 1
 filename = f"{parser_dict['date']}_{parser_dict['chemical']}_{parser_dict['type']}_{parser_dict['odnp_counter']}"
 filename_out = filename + ".h5"
 # }}}
-# {{{Make VD list based on concentration
+# {{{Make VD list based on concentration and FIR repetition delay as defined by Weiss
 vd_kwargs = {
     j: parser_dict[j]
     for j in ["krho_cold", "krho_hot", "T1water_cold", "T1water_hot"]
@@ -43,6 +43,7 @@ vd_list_us = (
     SpinCore_pp.vdlist_from_relaxivities(parser_dict["concentration"], **vd_kwargs)
     * 1e6
 )  # convert to microseconds
+FIR_rep = 2*(1.0/(config_dict['concentration']*config_dict['krho_hot']+1.0/config_dict['T1water_hot']))
 # }}}
 # {{{Power settings
 dB_settings = gen_powerlist(
@@ -149,7 +150,7 @@ for vd_idx, vd in enumerate(vd_list_us):
         carrierFreq_MHz=config_dict["carrierFreq_MHz"],
         p90_us=config_dict["p90_us"],
         tau_us=config_dict["tau_us"],
-        repetition=config_dict["repetition_us"],
+        repetition=FIR_rep,
         ph1_cyc=ph1,
         ph2_cyc=ph2,
         SW_kHz=config_dict["SW_kHz"],
@@ -309,7 +310,7 @@ with power_control() as p:
                 carrierFreq_MHz=config_dict["carrierFreq_MHz"],
                 p90_us=config_dict["p90_us"],
                 tau_us=config_dict["tau_us"],
-                repetition=config_dict["repetition_us"],
+                repetition=FIR_rep,
                 ph1_cyc=ph1,
                 ph2_cyc=ph2,
                 SW_kHz=config_dict["SW_kHz"],
