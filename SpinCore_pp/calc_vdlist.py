@@ -31,11 +31,12 @@ def return_vdlist(
         For ODNP, this is typically the value
         expected at 17 or 18°C.
     startconstant:
-        Fraction of smaller T1 value to start
+        Fraction of minimum T₁ bounds to start
         vdlist at (0.15 recommended).
+        (from Weiss, where T₁ determination problem is treated as determining
+        the T₁, which is known to be between some min and max bounds)
     stopconstant:
-        Fraction of larger T1 value to stop
-        vdlist at.
+        Fraction of max T₁ bounds to stop vdlist at.
 
         Weiss recommends 0.75, which only gives 5% recovery -- we choose 2.0,
         since it gives 73% recovery, and that makes us feel better
