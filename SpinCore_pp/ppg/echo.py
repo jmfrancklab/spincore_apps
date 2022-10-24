@@ -103,6 +103,7 @@ def run_spin_echo(
         run_scans_names.append("prog")
         spincore_load(
             [
+                ("marker", "start", 1),
                 ("phase_reset", 1),
                 ("delay_TTL", deblank_us),
                 ("pulse_TTL", p90_us, "ph1", ph1_cyc),
@@ -112,6 +113,7 @@ def run_spin_echo(
                 ("delay", deadtime_us),
                 ("acquire", acq_time_ms),
                 ("delay", repetition_us),
+                ("jumpto", "start"),
             ]
         )
         run_scans_time_list.append(time.time())
@@ -122,7 +124,7 @@ def run_spin_echo(
         runBoard()
         run_scans_time_list.append(time.time())
         run_scans_names.append("get data")
-        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps)
+        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps, 'output_name_required_for_getData')
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
         data_array = []

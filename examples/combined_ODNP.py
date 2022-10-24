@@ -43,7 +43,7 @@ vd_list_us = (
     SpinCore_pp.vdlist_from_relaxivities(parser_dict["concentration"], **vd_kwargs)
     * 1e6
 )  # convert to microseconds
-FIR_rep = 2*(1.0/(config_dict['concentration']*config_dict['krho_hot']+1.0/config_dict['T1water_hot']))
+FIR_rep = 2*(1.0/(parser_dict['concentration']*parser_dict['krho_hot']+1.0/parser_dict['T1water_hot']))*1e6
 # }}}
 # {{{Power settings
 dB_settings = gen_powerlist(
@@ -98,7 +98,7 @@ control_thermal = run_spin_echo(
     nPoints=nPoints,
     nEchoes=parser_dict["nEchoes"],
     p90_us=parser_dict["p90_us"],
-    repetition=parser_dict["repetition_us"],
+    repetition_us=parser_dict["repetition_us"],
     tau_us=parser_dict["tau_us"],
     SW_kHz=parser_dict["SW_kHz"],
     indirect_fields=("start_times", "stop_times"),
@@ -141,19 +141,19 @@ vd_data = None
 for vd_idx, vd in enumerate(vd_list_us):
     vd_data = run_IR(
         nPoints=nPoints,
-        nEchoes=config_dict["nEchoes"],
+        nEchoes=parser_dict["nEchoes"],
         indirect_idx=vd_idx,
         indirect_len=len(vd_list_us),
         vd=vd,
-        nScans=config_dict["nScans"],
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        p90_us=config_dict["p90_us"],
-        tau_us=config_dict["tau_us"],
-        repetition=FIR_rep,
-        ph1_cyc=ph1,
-        ph2_cyc=ph2,
-        SW_kHz=config_dict["SW_kHz"],
+        nScans=parser_dict["nScans"],
+        adcOffset=parser_dict["adc_offset"],
+        carrierFreq_MHz=parser_dict["carrierFreq_MHz"],
+        p90_us=parser_dict["p90_us"],
+        tau_us=parser_dict["tau_us"],
+        repetition_us=FIR_rep,
+        ph1_cyc=IR_ph1_cyc,
+        ph2_cyc=IR_ph2_cyc,
+        SW_kHz=parser_dict["SW_kHz"],
         ret_data=vd_data,
     )
 vd_data.rename("indirect", "vd")
@@ -208,7 +208,7 @@ with power_control() as p:
         nPoints=nPoints,
         nEchoes=parser_dict["nEchoes"],
         p90_us=parser_dict["p90_us"],
-        repetition=parser_dict["repetition_us"],
+        repetition_us=parser_dict["repetition_us"],
         tau_us=parser_dict["tau_us"],
         SW_kHz=parser_dict["SW_kHz"],
         indirect_fields=("start_times", "stop_times"),
@@ -229,6 +229,11 @@ with power_control() as p:
         logger.debug(
             "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], powers[j], "W)"
         )
+        if j == 0:
+            retval = p.dip_lock(
+                parser_dict['uw_dip_center_GHz'] - parser_dict['uw_dip_width_GHz'] / 2,
+                parser_dict['uw_dip_center_GHz'] + parser_dict['uw_dip_width_GHz'] / 2,
+            )
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
@@ -248,7 +253,7 @@ with power_control() as p:
             nPoints=nPoints,
             nEchoes=parser_dict["nEchoes"],
             p90_us=parser_dict["p90_us"],
-            repetition=parser_dict["repetition_us"],
+            repetition_us=parser_dict["repetition_us"],
             tau_us=parser_dict["tau_us"],
             SW_kHz=parser_dict["SW_kHz"],
             ret_data=DNP_data,
@@ -301,19 +306,19 @@ with power_control() as p:
         for vd_idx, vd in enumerate(vd_list_us):
             vd_data = run_IR(
                 nPoints=nPoints,
-                nEchoes=config_dict["nEchoes"],
+                nEchoes=parser_dict["nEchoes"],
                 indirect_idx=vd_idx,
                 indirect_len=len(vd_list_us),
                 vd=vd,
-                nScans=config_dict["nScans"],
-                adcOffset=config_dict["adc_offset"],
-                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-                p90_us=config_dict["p90_us"],
-                tau_us=config_dict["tau_us"],
-                repetition=FIR_rep,
-                ph1_cyc=ph1,
-                ph2_cyc=ph2,
-                SW_kHz=config_dict["SW_kHz"],
+                nScans=parser_dict["nScans"],
+                adcOffset=parser_dict["adc_offset"],
+                carrierFreq_MHz=parser_dict["carrierFreq_MHz"],
+                p90_us=parser_dict["p90_us"],
+                tau_us=parser_dict["tau_us"],
+                repetition_us=FIR_rep,
+                ph1_cyc=IR_ph1_cyc,
+                ph2_cyc=IR_ph2_cyc,
+                SW_kHz=parser_dict["SW_kHz"],
                 ret_data=vd_data,
             )
         vd_data.rename("indirect", "vd")

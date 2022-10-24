@@ -97,7 +97,7 @@ with power_control() as p:
             nPoints=nPoints,
             nEchoes=config_dict["nEchoes"],
             p90_us=config_dict["p90_us"],
-            repetition=config_dict["repetition_us"],
+            repetition_us=config_dict["repetition_us"],
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
             indirect_fields=("Field", "carrierFreq"),
@@ -123,7 +123,7 @@ with power_control() as p:
                 nPoints=nPoints,
                 nEchoes=config_dict["nEchoes"],
                 p90_us=config_dict["p90_us"],
-                repetition=config_dict["repetition_us"],
+                repetition_us=config_dict["repetition_us"],
                 tau_us=config_dict["tau_us"],
                 SW_kHz=config_dict["SW_kHz"],
                 ret_data=sweep_data,
@@ -144,14 +144,6 @@ if phase_cycling:
         .set_units("indirect", "scan #")
     )
     sweep_data.reorder("t2", first=False)
-    sweep_data.ft("t2", shift=True)
-    sweep_data.ft("ph1", unitary=True)
-    fl.next("Raw - frequency")
-    fl.image(
-        sweep_data.C.mean("nScans")
-        .setaxis("indirect", "#")
-        .set_units("indirect", "scan #")
-    )
 else:
     if config_dict["nScans"] > 1:
         sweep_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
@@ -162,13 +154,6 @@ else:
         .set_units("indirect", "scan #")
     )
     sweep_data.reorder("t", first=False)
-    sweep_data.ft("t", shift=True)
-    fl.next("Raw - frequency")
-    fl.image(
-        sweep_data.C.mean("nScans")
-        .setaxis("indirect", "#")
-        .set_units("indirect", "scan #")
-    )
 sweep_data.name(config_dict["type"] + "_" + str(config_dict["field_counter"]))
 sweep_data.set_prop("postproc_type", "field_sweep_v1")
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/field_dependent")

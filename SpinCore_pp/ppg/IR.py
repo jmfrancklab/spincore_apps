@@ -126,7 +126,7 @@ def run_IR(
         runBoard()
         run_scans_time_list.append(time.time())
         run_scans_names.append("get data")
-        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps)
+        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps,'getData needs this str here')
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
         data_array = []
