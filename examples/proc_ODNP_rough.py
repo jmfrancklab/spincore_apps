@@ -18,7 +18,6 @@ with figlist_var() as fl:
         filename,
         exp_type="ODNP_NMR_comp/ODNP",
         expno='enhancement'),
-    )
     assert Ep.get_units("t2") is not None, "bad data file!  units of s for t2 should be stored in nddata!"
     Ep.rename('indirect','power')
     Ep.reorder(['ph1','power'])
