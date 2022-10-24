@@ -44,4 +44,3 @@ with figlist_var() as fl:
         IR.ft(['ph1','ph2'],unitary = True)
         fl.next('Raw DCCT  -- %s'%nodename)
         fl.image(IR.C.mean('nScans'))
-fl.show()    
