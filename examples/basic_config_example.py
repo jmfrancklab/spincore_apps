@@ -39,12 +39,14 @@ except Exception as e:
 # }}}
 # {{{ pretty formatting
 myconfig["adc_offset"] = 30
-print(
+print("print out the config settings as a dictionary!",
     myconfig.asdict()
 )  # so we can, e.g. put in an HDF5 file -- this should have the nice case that was registered
+print("print them out more legibly!!\n",
+        myconfig)
 # }}}
 # {{{ set a parameter that is registered, and see that it will change, which can be seen by running the script twice
-print("echo counter was", myconfig["echo_counter"], "and I'm going to increment it")
+print("echo counter was", myconfig["echo_counter"], "and I'm going to increment it.  If you re-run this script, this value should increase")
 myconfig["echo_counter"] += 1
 myconfig.write()  # this should write the adc offset and whatever else we've changed
 # }}}
