@@ -10,6 +10,9 @@ from datetime import datetime
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
 fl = figlist_var()
 p90_range = linspace(3.,15.,25,endpoint=False)
+raise RuntimeError(
+    "This pulse program has been updated to use active.ini, and the cpmg function, but has not yet been tested!"
+)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
