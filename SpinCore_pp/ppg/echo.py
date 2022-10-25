@@ -124,7 +124,7 @@ def run_spin_echo(
         runBoard()
         run_scans_time_list.append(time.time())
         run_scans_names.append("get data")
-        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps, 'output_name_required_for_getData')
+        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps)
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
         data_array = []

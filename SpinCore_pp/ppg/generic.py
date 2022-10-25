@@ -37,6 +37,41 @@ def generic(
 
     Parameters
     ==========
+    ppg_list:       list of tuples
+                    The list that gives the actual pulse program.
+                    This is defined, ultimately by the swig .i file, but
+                    consists of at least the following pulse sequence elements.
+                    The first element of the tuple is always a string, and
+                    determines what type of element the tuple represents, as
+                    noted in the following.
+                    You can think of the first element of the tuple as a
+                    function, and the remaining elements as arguments to that
+                    function, if that's helpful.
+
+                    :phase_reset: second element is always 1.  Resets the phase accumulator,
+                        so that the carrier wave crosses zero exactly at this point.
+
+                        Note that spincore is funky, and there appear to
+                        be two carrier waves for Rx and Tx that differ by
+                        a few Hz (???), and this resets both of them.
+                    :marker: marks the beginning of the loop.  **Note** for
+                        this function to correctly determine the echo numbers, the
+                        marker for echo loops must be called echo_label
+                    :jumpto: marks the end of the loop -- always paired with a "marker" element.
+                    :XXX_TTL: trigger the corresponding TTL output to an on
+                        state for the duration given by the second element of the tuple (float
+                        μs)
+                    :pulse_TTL: (not included in previous -- this should really
+                        just be called "pulse", but whatever)
+
+                        A pulse!
+
+                        Three arguments -- pulse length, name of phase cycle, array giving phase cycle.
+                    :delay: one argument -- wait for that period of time (float, μs)
+                    :acquire: Acquire!  One argument, gives acquisition length
+                        in ms.  Note that you have multiple (stroboscopic)
+                        acquisitions -- e.g. in the case of a CPMG.
+
     nScans:         int
                     number of repeats of the pulse sequence (for averaging over data)
     indirect_idx:   int
@@ -66,14 +101,19 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
+    # {{{ pull info about phase cycling and echos from the ppg_list
+    # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle
     all_ppg_arrays = [j[3] for j in ppg_list if len(j)>3]
     nPhaseSteps = prod([len(j) for j in all_ppg_arrays])
+    # }}}
+    # {{{ for this to work, the loop label for echoes must be called "echo_label"
     nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0] == 'marker' and j[1] == 'echo_label']
+    # }}}
+    # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
         run_scans_time_list = [time.time()]
         run_scans_names = ["configure"]
-        logging.debug("*** *** *** SCAN NO. %d *** *** ***" % (nScans_idx + 1))
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
