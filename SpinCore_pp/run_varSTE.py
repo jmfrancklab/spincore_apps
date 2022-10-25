@@ -19,7 +19,7 @@ import SpinCore_pp
 from datetime import datetime
 import numpy as np
 from Instruments.XEPR_eth import xepr
-raise RuntimeError("This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")fl = figlist_var()
+raise RuntimeError("This pulse program has been updated to use active.ini, but not the ppg functions..  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")fl = figlist_var()
 #{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration('active.ini')
 nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
