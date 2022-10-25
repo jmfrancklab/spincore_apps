@@ -70,6 +70,12 @@ class configuration(object):
             None,
             "concentration of spin label in the sample in M",
         ),
+        "FIR_rep":(
+                float,
+                "odnp_params",
+                None,
+                "Repetition delay for fast inversion recovery as defined by Weiss-this is calculated in the combined ODNP ppg"
+        ),
         "krho_cold": (
             float,
             "sample_params",
