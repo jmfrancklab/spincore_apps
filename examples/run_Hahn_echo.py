@@ -82,8 +82,8 @@ echo_data = run_spin_echo(
 # }}}
 # {{{ chunk and save data
 if phase_cycling:
-    echo_data.chunk("t", ["ph1", "t2"], [4, -1])
-    echo_data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
+    echo_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
+    echo_data.setaxis("ph1", ph1_cyc / 4)
     if config_dict["nScans"] > 1:
         echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     echo_data.reorder(["ph1", "nScans", "t2"])

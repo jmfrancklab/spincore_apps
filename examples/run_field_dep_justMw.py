@@ -1,7 +1,12 @@
-""" Field Sweep at constant power
+"""
+Field Sweep at constant power
 =================================
-Here we will perform a series of echoes at a range of designated field values. This is normally run at a power of 3-4 W. To run this experiment, please open Xepr on the EPR computer, connect to spectrometer, enable XEPR_API. Then, in a separate terminal, run the program XEPR_API_server.py, wait for it to tell you 'I am listening' - then, you should be able to run this program in sync with the power_control_server.
-To run this in sync with the power_control_server, open a separate terminal on the NMR computer and move into git/inst_notebooks/Instruments and run winpty power_control_server(). This will print out "I am listening" when it is ready to go. You can then proceed to run this script to collect your field sweep data
+
+A ppg that performs a series of echoes at a range of designated field 
+values that are determined from the guessed_MHz_to_GHz value in your 
+active.ini and the field width parameter. To run this in sync with 
+the power_control_server, open a separate terminal on the NMR computer
+in your user directory and running "FLInst server" and waiting for it to print "I am listening..."
 """
 from pylab import *
 from pyspecdata import *
@@ -188,7 +193,7 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp")
+            print("this nodename already exists, so I will call it temp_field_sweep")
             sweep_data.name("temp_field_sweep")
             nodename = "temp_field_sweep"
     sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
@@ -197,14 +202,14 @@ else:
         sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_field_sweep.h5 in the current directory"
         )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 already! -- I'm removing it")
-            os.remove("temp.h5")
-            echo_data.hdf5_write("temp.h5")
+        if os.path.exists("temp_field_sweep.h5"):
+            print("there is a temp_field_sweep.h5 already! -- I'm removing it")
+            os.remove("temp_field_sweep.h5")
+            sweep_data.hdf5_write("temp_field_sweep.h5")
             print(
-                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+                "if I got this far, that probably worked -- be sure to move/rename temp_field_sweep.h5 to the correct name!!"
             )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", sweep_data.name()))
