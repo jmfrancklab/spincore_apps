@@ -1,5 +1,10 @@
 # {{{ note on phase cycling
 """
+CPMG with microwaves
+====================
+
+Standard CPMG experiment with microwaves on.
+
 FOR PHASE CYCLING: Provide both a phase cycle label (e.g.,
 'ph1', 'ph2') as str and an array containing the indices
 (i.e., registers) of the phases you which to use that are
@@ -33,7 +38,6 @@ case and 4 times in the second case.  for nScans = 2, the
 SpinCore will trigger 4 times in the first case and 8 times
 in the second case.
 """
-# }}}
 from pylab import *
 from pyspecdata import *
 from numpy import *
@@ -42,6 +46,7 @@ import SpinCore_pp
 from Instruments import Bridge12, prologix_connection, gigatronics
 from datetime import datetime
 import time
+import h5py
 raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
@@ -55,6 +60,15 @@ config_dict["type"] = "cpmg_mw"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+# }}}
+# {{{set phase cycling
+phase_cycling = True
+if phase_cycling:
+    ph1_cyc = r_[0, 2]
+    nPhaseSteps = 2
+if not phase_cycling:
+    ph1_cyc = 0.0
+    nPhaseSteps = 1
 # }}}
 # {{{power settings
 dB_settings = gen_powerlist(config_dict["max_power"], config_dict["power_steps"])
@@ -87,11 +101,6 @@ twice_tau = (
 tau_us = twice_tau / 2.0
 config_dict["tau_us"] = tau_us
 # }}}
-# {{{phase cycling
-nPhaseSteps = 2
-ph1_cyc = r_[0, 2]
-# NOTE: Number of segments is nEchoes * nPhaseSteps
-# }}}
 # {{{run CPMG
 cpmg_data = run_cpmg(
     nScans=config_dict["nScans"],
@@ -108,10 +117,9 @@ cpmg_data = run_cpmg(
     pad_end_us=pad_end,
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
-    output_name=filename,
     ret_data=None,
 )
-# raw_input("CONNECT AND TURN ON BRIDGE12...")
+raw_input("CONNECT AND TURN ON BRIDGE12...")
 with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
@@ -177,49 +185,67 @@ with Bridge12() as b:
         )
         last_power = this_power
 # }}}
-# {{{save and show data
-cpmg_data.set_prop("acq_params", config_dict.asdict()
+# {{{ chunk and save data
+if phase_cycling:
+    cpmg_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
+    cpmg_data.setaxis("ph1", ph1_cyc / 4)
+    if config_dict["nScans"] > 1:
+        cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    cpmg_data.reorder(["ph1", "nScans", "t2"])
+    cpmg_data.squeeze()
+    cpmg_data.set_units("t2", "s")
+    fl.next("Raw - time")
+    fl.image(
+        cpmg_data.C.mean("nScans"))
+    cpmg_data.reorder("t2", first=False)
+    for_plot = cpmg_data.C
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
+    )
+else:
+    if config_dict["nScans"] > 1:
+        cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    cpmg_data.rename('t','t2')
+    fl.next("Raw - time")
+    fl.image(
+        cpmg_data.C.mean("nScans"))
+    cpmg_data.reorder("t2", first=False)
+    for_plot = cpmg_data.C
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
+    fl.image(for_plot)
 cpmg_data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
-cpmg_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
-cpmg_data.setaxis("ph1", len(ph1_cyc) / 4)
-if config_dict["nScans"] > 1:
-    cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+cpmg_data.set_prop("acq_params", config_dict.asdict()
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
 nodename = cpmg_data.name()
-if os.path.exists(filename + ".h5"):
+if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp")
-            cpmg_data.name("temp")
-            nodename = "temp"
-        cpmg_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+            print("this nodename already exists, so I will call it temp_cpmg_mw")
+            cpmg_data.name("temp_cpmg_mw")
+            nodename = "temp_cpmg_mw"
+    cpmg_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         cpmg_data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_cpmg_mw.h5 in the current directory"
         )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 already! -- I'm removing it")
+        if os.path.exists("temp_cpmg_mw.h5"):
+            print("there is a temp_cpmg_mw.h5 already! -- I'm removing it")
             os.remove("temp.h5")
-            cpmg_data.hdf5_write("temp.h5")
+            cpmg_data.hdf5_write("temp_spmg_mw.h5")
             print(
-                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
+                "if I got this far, that probably worked -- be sure to move/rename temp_cpmg_mw.h5 to the correct name!!"
             )
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", echo_data.name()))
 config_dict.write()
-fl.next("raw data")
-fl.image(cpmg_data)
-fl.next("abs raw data")
-fl.image(abs(cpmg_data))
-cpmg_data.ft("t", shift=True)
-fl.next("raw data - ft")
-fl.image(cpmg_data)
-fl.next("abs raw data - ft")
-fl.image(abs(cpmg_data))
 fl.show()
-# }}}

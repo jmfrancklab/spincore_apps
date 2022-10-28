@@ -16,6 +16,7 @@ import SpinCore_pp
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
+import h5py
 
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -28,6 +29,15 @@ config_dict["type"] = "echo"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+# }}}
+# {{{set phase cycling
+phase_cycling = True
+if phase_cycling:
+    ph1_cyc = r_[0, 1, 2, 3]
+    nPhaseSteps = 4
+if not phase_cycling:
+    ph1_cyc = 0.0
+    nPhaseSteps = 1
 # }}}
 # {{{let computer set field
 print(
@@ -45,14 +55,6 @@ with xepr() as x:
     assert Field > 3300, "are you crazy?? field is too low!"
     Field = x.set_field(Field)
     print("field set to ", Field)
-# }}}
-# {{{set phase cycling
-phase_cycling = True
-if phase_cycling:
-    ph1_cyc = r_[0, 1, 2, 3]
-    nPhaseSteps = 4
-if not phase_cycling:
-    nPhaseSteps = 1
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
@@ -72,26 +74,46 @@ echo_data = run_spin_echo(
     nPoints=nPoints,
     nEchoes=config_dict["nEchoes"],
     p90_us=config_dict["p90_us"],
-    repetition=config_dict["repetition_us"],
+    repetition_us=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
 # }}}
-# {{{setting acq_params
+# {{{ chunk and save data
+if phase_cycling:
+    echo_data.chunk("t", ["ph1", "t2"], [4, -1])
+    echo_data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
+    if config_dict["nScans"] > 1:
+        echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    echo_data.reorder(["ph1", "nScans", "t2"])
+    echo_data.squeeze()
+    echo_data.set_units("t2", "s")
+    fl.next("Raw - time")
+    fl.image(
+        echo_data.C.mean("nScans"))
+    echo_data.reorder("t2", first=False)
+    for_plot = echo_data.C
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
+    )
+else:
+    if config_dict["nScans"] > 1:
+        echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    echo_data.rename('t','t2')
+    fl.next("Raw - time")
+    fl.image(
+        echo_data.C.mean("nScans"))
+    echo_data.reorder("t2", first=False)
+    for_plot = echo_data.C
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
+    fl.image(for_plot)
+echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"])
 echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
 echo_data.set_prop("acq_params", config_dict.asdict())
-echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-# }}}
-# {{{ chunking
-echo_data.chunk("t", ["ph1", "t2"], [4, -1])
-echo_data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
-if config_dict["nScans"] > 1:
-    echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-echo_data.reorder(["ph1", "nScans", "t2"])
-echo_data.squeeze()
-echo_data.set_units("t2", "s")
-# }}}
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
 nodename = echo_data.name()
@@ -101,23 +123,24 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, lets delete it to overwrite")
-            del fp[nodename]
-    echo_data.hdf5_write(f"{filename_out}/{nodename}", directory=target_directory)
+            print("this nodename already exists, so I will call it temp_echo")
+            echo_data.name("temp_echo")
+            nodename = "temp_echo"
+    echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_echo.h5 in the current directory"
         )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 already! -- I'm removing it")
-            os.remove("temp.h5")
-        echo_data.hdf5_write("temp.h5")
-        print(
-            "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-        )
+        if os.path.exists("temp_echo.h5"):
+            print("there is a temp_echo.h5 already! -- I'm removing it")
+            os.remove("temp_echo.h5")
+            echo_data.hdf5_write("temp_echo.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp_echo.h5 to the correct name!!"
+            )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", echo_data.name()))
 config_dict.write()

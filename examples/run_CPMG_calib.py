@@ -1,5 +1,8 @@
-# {{{ note on phase cycling
 """
+CPMG_calibration
+================
+CPMG meant for the purpose of calibration.
+
 FOR PHASE CYCLING: Provide both a phase cycle label (e.g.,
 'ph1', 'ph2') as str and an array containing the indices
 (i.e., registers) of the phases you which to use that are
@@ -33,11 +36,11 @@ case and 4 times in the second case.  for nScans = 2, the
 SpinCore will trigger 4 times in the first case and 8 times
 in the second case.
 """
-# }}}
 from pyspecdata import *
 from numpy import *
 from datetime import datetime
-from . import SpinCore_pp
+import SpinCore_pp
+import h5py
 raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
@@ -53,6 +56,15 @@ config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
+# {{{set phase cycling
+phase_cycling = True
+if phase_cycling:
+    ph1_cyc = r_[0, 2]
+    nPhaseSteps = 2
+if not phase_cycling:
+    ph1_cyc = 0.0
+    nPhaseSteps = 1
+# }}}
 #{{{making tau
 marker = 1.0
 pad_start = config_dict['tau_extra_us'] - config_dict["deadtime_us"]
@@ -67,11 +79,13 @@ twice_tau_echo_us = (  # the period between 180 pulses
     config_dict["tau_extra_us"] * 2 + config_dict["acq_time_ms"] * 1e3
 )
 #}}}
-#{{{phase cycling
-nPhaseSteps = 2
-ph1_cyc = r_[0, 2]
-# NOTE: Number of segments is nEchoes * nPhaseSteps
-#}}}
+# {{{check total points
+total_pts = nPoints * nPhaseSteps
+assert total_pts < 2 ** 14, (
+    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
+    % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
+)
+# }}}
 #{{{run ppg
 for index, val in enumerate(p90_range):
     p90_us = val  # us
@@ -128,46 +142,63 @@ for index, val in enumerate(p90_range):
         p90_axis[index+1]['p90_us'] = p90
 #}}}
 #{{{Save data
-data.set_prop("acq_params", config_dict.asdict())
-data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
 data.setaxis("ph1", ph1_cyc / 4)
 if config_dict["nScans"] > 1:
     data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+if phase_cycling:    
+    fl.next("Raw - time")
+    fl.image(
+        data.C.mean("nScans"))
+    data.reorder("t2", first=False)
+    for_plot = data.C
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
+    )
+else:
+    if config_dict["nScans"] > 1:
+        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    data.rename('t','t2')
+    fl.next("Raw - time")
+    fl.image(
+        data.C.mean("nScans"))
+    data.reorder("t2", first=False)
+    for_plot = data.C
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
+    fl.image(for_plot)
+data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
+data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
 nodename = data.name()
-if os.path.exists(filename_out):
+if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp")
-            data.name("temp")
-            nodename = "temp"
-        data.hdf5_write(f"{filename_out}", directory=target_directory)
+            print("this nodename already exists, so I will call it temp_cpmg_calib")
+            data.name("temp_cpmg_calib")
+            nodename = "temp_cpmg_calib"
+    data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_cpmg_calib.h5 in the current directory"
         )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 already! -- I'm removing it")
+        if os.path.exists("temp_cpmg_echo.h5"):
+            print("there is a temp_cpmg_calib.h5 already! -- I'm removing it")
             os.remove("temp.h5")
             data.hdf5_write("temp.h5")
             print(
                 "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
             )
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", data.name())
 config_dict.write()
-#}}}
-#{{{image data
-fl.next("raw data")
-fl.image(data)
-data.ft("t", shift=True)
-fl.next("FT raw data")
-fl.image(data)
-#}}}
 fl.show()
