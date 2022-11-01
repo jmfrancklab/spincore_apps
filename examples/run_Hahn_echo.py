@@ -65,19 +65,19 @@ assert total_pts < 2 ** 14, (
 # }}}
 # {{{acquire echo
 echo_data = run_spin_echo(
-    nScans=config_dict["nScans"],
-    indirect_idx=0,
-    indirect_len=1,
-    ph1_cyc=ph1_cyc,
-    adcOffset=config_dict["adc_offset"],
-    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=nPoints,
-    nEchoes=config_dict["nEchoes"],
-    p90_us=config_dict["p90_us"],
-    repetition_us=config_dict["repetition_us"],
-    tau_us=config_dict["tau_us"],
-    SW_kHz=config_dict["SW_kHz"],
-    ret_data=None,
+    nScans = config_dict["nScans"],
+    indirect_idx = 0,
+    indirect_len = 1,
+    ph1_cyc = ph1_cyc,
+    adcOffset = config_dict["adc_offset"],
+    carrierFreq_MHz = config_dict["carrierFreq_MHz"],
+    nPoints = nPoints,
+    nEchoes = config_dict["nEchoes"],
+    p90_us = config_dict["p90_us"],
+    repetition_us = config_dict["repetition_us"],
+    tau_us = config_dict["tau_us"],
+    SW_kHz = config_dict["SW_kHz"],
+    ret_data = None,
 )
 # }}}
 # {{{ chunk and save data
@@ -102,7 +102,7 @@ if phase_cycling:
 else:
     if config_dict["nScans"] > 1:
         echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    echo_data.rename('t','t2')
+    echo_data.rename("t", "t2")
     fl.next("Raw - time")
     fl.image(
         echo_data.C.mean("nScans"))
@@ -111,7 +111,7 @@ else:
     for_plot.ft('t2',shift=True)
     fl.next('FTed data')
     fl.image(for_plot)
-echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"])
+echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
 echo_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")

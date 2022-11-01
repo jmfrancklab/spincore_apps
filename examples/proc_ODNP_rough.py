@@ -3,7 +3,12 @@ An example of rough processing for ODNP -- this is designed to automatically pul
 
 For an example of how this works, if you have *not* just run a dataset, set the following key/values in your active.ini:
 ```
-[sample]
+[file_names]
+type = ODNP
+date = 221025
+chemical = 70mM_fin
+odnp_counter = 1
+
 ....
 ```
 """
