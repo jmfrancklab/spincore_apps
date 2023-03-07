@@ -1,19 +1,21 @@
+"""ppg for obtaining performing shimming calibration
+=====================================================
+The following is used when the shims are replaced or moved in any way. When moved the calibration or settings for the z and y shims need to be recalculated for certainty. Here, the user can calculated the appropriate voltage setting for each shim for optimal signal
+"""
 #{{{ Notes for use # To run this experiment, please open Xepr on the EPR computer, connect to # spectrometer, and enable XEPR API. Then, in a # separate terminal, run the program XEPR_API_server.py, and wait for it to # tell you 'I am listening' - then, you should be able to run this program from # the NMR computer to set the field etc.  # Note the booleans user_sets_Freq and
 # user_sets_Field allow you to run experiments as previously run in this lab.
 # If both values are set to True, this is the way we used to run them. If both
 # values are set to False, you specify what field you want, and the computer
 # will do the rest.
 #}}}
-
 from pylab import *
 from pyspecdata import *
-import os
-import sys
+import os, sys
 import SpinCore_pp
 from datetime import datetime
 import numpy as np
 from Instruments.XEPR_eth import xepr
-from Instruments import HP6623A, prologix_connection, gigatronics
+from Instruments import HP6623A, prologix_connection
 fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
@@ -43,10 +45,12 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-#{{{Parameters for sample
+#{{{Parameters for sample - user should check and edit as needed
 output_name = 'NiSO4'
 node_name = 'shims_addr5_Z_yOpt'
 adcOffset = 32
+carrierFreq_MHz = 14.890000
+field = 3504.0
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
 nScans = 4
@@ -71,33 +75,11 @@ deblank = 1.0
 tau = 2500. + deadtime
 pad = 0
 #}}}
-
-user_sets_Freq = True
-user_sets_Field = True
-
-#{{{ set field here
-if user_sets_Field:
-    # You must enter field set on XEPR here
-    true_B0 = 3490.985
-    print("My field in G should be %f"%true_B0)
-#}}}
-#{{{let computer set field
-if not user_sets_Field:
-    desired_B0 = 3506.50
-    with xepr() as x:
-        true_B0 = x.set_field(desired_B0)
-    print("My field in G is %f"%true_B0)
-#}}}
-#{{{ set frequency here
-if user_sets_Freq:
-    carrierFreq_MHz = 14.829902
-    print("My frequency in MHz is",carrierFreq_MHz)
-#}}}
-#{{{ let computer set frequency
-if not user_sets_Freq:
-    gamma_eff = (14.897706/3506.5)
-    carrierFreq_MHz = gamma_eff*true_B0
-    print("My frequency in MHz is",carrierFreq_MHz)
+#The standard procedure is to manually se the field and frequency but this can later be updated when the config file branch is merged
+#{{{set field
+with xepr() as x:
+    true_B0 = x.set_field(field)
+print("My field in G is %f"%field)
 #}}}
 #{{{phase cycling steps
 if phase_cycling:
@@ -105,32 +87,9 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 #}}}    
-#{{{ setting acq_params dictionary
-acq_params = {}
-acq_params['adcOffset'] = adcOffset
-acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['Ffield_G'] = true_B0
-acq_params['amplitude'] = amplitude
-acq_params['nScans'] = nScans
-acq_params['nEchoes'] = nEchoes
-acq_params['p90_us'] = p90
-acq_params['deadtime_us'] = deadtime
-acq_params['repetition_us'] = repetition
-acq_params['SW_kHz'] = SW_kHz
-acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
-acq_params['deblank_us'] = deblank
-acq_params['tau_us'] = tau
-acq_params['pad_us'] = pad 
-if phase_cycling:
-    acq_params['nPhaseSteps'] = nPhaseSteps
-#}}}
 #{{{ verify info is okay
 total_pts = nPoints*nPhaseSteps
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
-print(("ACQUISITION TIME:",acq_ms,"ms"))
-print(("TAU DELAY:",tau,"us"))
-print(("PAD DELAY:",pad,"us"))
 #}}}
 #{{{set up voltage info for the test 
 data_length = 2*nPoints*nEchoes*nPhaseSteps
@@ -247,6 +206,26 @@ with prologix_connection() as p:
         HP.output(test_ch,False)
 print("EXITING...")
 print("\n*** *** ***\n")
+#}}}
+#{{{save acquisition parameters
+acq_params = {j: eval(j) for j in dir() if j in [
+    "adcOffset",
+    "carrierFreq_MHz",
+    "amplitude",
+    "true_B0",
+    "nScans",
+    "nEchoes",
+    "p90_us",
+    "deadtime_us",
+    "repetition_us",
+    "SW_kHz",
+    "nPoints",
+    "deblank_us",
+    "tau_us",
+    "nPhaseSteps",
+    ]
+    }
+echo_data.set_prop("acq_params",acq_params)
 #}}}
 #{{{saving file
 save_file = True
