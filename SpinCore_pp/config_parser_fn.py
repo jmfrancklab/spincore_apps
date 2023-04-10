@@ -7,14 +7,14 @@ class configuration(object):
     # whether or not we can assume a default value
     registered_params = {
         "amplitude": (float, "acq_params", None, "amplitude of the pulse"),
-        "deadtime_us": (float, "acq_params", None, "delay between the pulse and tau"),
+        "deadtime_us": (float, "acq_params", None, "mandatory delay after the pulse -- allows receivers to recover"),
         "tau_us": (
             float,
             "acq_params",
             None,
             "extra delay added between 90° and 180° pulse -- note this is not the same as τ_echo!\nsee eq 6 of coherence paper",
         ),
-        "deblank_us": (float, "acq_params", None, "time for the TTL to deblank"),
+        "deblank_us": (float, "acq_params", None, "type between the deblank TTL pulse and the actual pulse itself"),
         "SW_kHz": (
             float,
             "acq_params",
@@ -37,20 +37,20 @@ class configuration(object):
             float,
             "acq_params",
             None,
-            "fraction of the repetition delay (0.15) that starts our vd list composition in FIR",
+            "Fraction of T₁ min bounds to start vdlist at (0.15 recommended).\n(from Weiss, where T₁ determination problem is treated as determining the T₁,\nwhich is known to be between some min and max bounds)",
         ),
         "stopconstant": (
             float,
             "acq_params",
             None,
-            "fraction of the repetition delay, that is the upper limit of our FIR vd list",
+            "Fraction of max T₁ bounds to stop vdlist at.\n \n Weiss recommends 0.75, which only gives 5% recovery -- we choose 2.0,\n since it gives 73% recovery, and that makes us feel better",
         ),
-        "p90_us": (float, "acq_params", None, "90 time of the probe in microseconds"),
+        "p90_us": (float, "acq_params", None, "90 time of the probe in microseconds.\nUsed to determine 90° 180°, etc pulses"),
         "gamma_eff_MHz_G": (
             float,
             "acq_params",
             0.00425,
-            "the ratio of the NMR resonance frequency to the resonance frequency of the B12",
+            "the ratio of the NMR resonance frequency to the field",
         ),
         "field_width": (
             float,
@@ -70,29 +70,35 @@ class configuration(object):
             None,
             "concentration of spin label in the sample in M",
         ),
+        "FIR_rep":(
+                float,
+                "odnp_params",
+                None,
+                "Repetition delay for fast inversion recovery as defined by Weiss-this is calculated in the combined ODNP ppg"
+        ),
         "krho_cold": (
             float,
             "sample_params",
             None,
-            "the self relaxivity constant of the specific sample at low temperatures/low power",
+            "the self relaxivity constant of the specific sample with the power off (i.e. when it is coldest)",
         ),
         "krho_hot": (
             float,
             "sample_params",
             None,
-            "the self relaxivity constant of the specific sample at high temperature/high power",
+            "the self relaxivity constant of the specific sample at the highest temperature/power",
         ),
         "T1water_hot": (
             float,
             "sample_params",
             None,
-            "T1 of ultra pure water at high powers - this really should not change unless a new measurement is made",
+            "T₁ of ultra pure water at the highest power - this really should not change unless a new measurement is made",
         ),
         "T1water_cold": (
             float,
             "sample_params",
             None,
-            "T1 of ultra pure water at low powers - this really should not change unless a new measurement is made",
+            "T₁ of ultra pure water with the microwave power off - this really should not change unless a new measurement is made",
         ),
         "repetition_us": (
             float,
@@ -124,13 +130,7 @@ class configuration(object):
             None,
             "the range over which the dip lock will be performed",
         ),
-        "FIR_rep": (
-            float,
-            "odnp_params",
-            None,
-            "fast inversion recovery repetition delay (should be around 2 x T1",
-        ),
-        "adc_offset": (int, "acq_params", None, "analog to DC conversion factor"),
+        "adc_offset": (int, "acq_params", None, "SpinCore-specific ADC offset correction\nwe believe this is a DC offset, but are not positive"),
         "nScans": (int, "acq_params", 1, "number of scans"),
         "thermal_nScans": (
             int,
@@ -138,7 +138,7 @@ class configuration(object):
             1,
             "number of thermal scans - useful for no power datasets with low signal",
         ),
-        "nEchoes": (int, "acq_params", None, "number of echoes - usually kept at 1"),
+        "nEchoes": (int, "acq_params", None, "number of echoes - 1, aside from CPMG, where it can be any desired number"),
         "IR_steps": (
             int,
             "acq_params",
@@ -157,6 +157,7 @@ class configuration(object):
             None,
             "number of IR experiments collected in the ODNP experiment",
         ),
+        # reviewed to here
         "odnp_counter": (
             int,
             "file_names",
@@ -240,6 +241,20 @@ class configuration(object):
             converter, section, default, _ = self.registered_params[key]
             self._params[key] = converter(value)  # check that it's the right type
             self.configobj.set(section, key.lower(), str(self._params[key]))
+    def __str__(self):
+        retval = ['-'*50]
+        allkeys = [j for j in self._params.keys()]
+        idx = sorted(range(len(allkeys)), key=lambda x: allkeys.__getitem__(x).lower())
+        allkeys_sorted = [allkeys[j] for j in idx]
+        for key in allkeys_sorted:
+            converter, section, default, description = self.registered_params[key]
+            description = description.split('\n')
+            description = ['\t'+j for j in description]
+            description = '\n'.join(description)
+            value = self.__getitem__(key)
+            retval.append(f"{key} {value} (in [{section}])\n{description}")
+        retval.append('-'*50)
+        return '\n'.join(retval)
 
     def keys(self):
         return self._params.keys()

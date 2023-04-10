@@ -3,7 +3,12 @@ An example of rough processing for ODNP -- this is designed to automatically pul
 
 For an example of how this works, if you have *not* just run a dataset, set the following key/values in your active.ini:
 ```
-[sample]
+[file_names]
+type = ODNP
+date = 221025
+chemical = 70mM_fin
+odnp_counter = 1
+
 ....
 ```
 """
@@ -29,12 +34,13 @@ with figlist_var() as fl:
     config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["type"] = "ODNP"
     filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}"
-    Ep = find_file(filename, exp_type="ODNP_NMR_comp/ODNP", expno="enhancement",)
-    assert (
-        Ep.get_units("t2") is not None
-    ), "bad data file!  units of s for t2 should be stored in nddata!"
-    Ep.rename("indirect", "power")
-    Ep.reorder(["ph1", "power"])
+    Ep = find_file(
+        filename,
+        exp_type="ODNP_NMR_comp/ODNP",
+        expno='enhancement'),
+    assert Ep.get_units("t2") is not None, "bad data file!  units of s for t2 should be stored in nddata!"
+    Ep.rename('indirect','power')
+    Ep.reorder(['ph1','power'])
     if nScans in Ep.dimlabels:
         Ep.mean("nScans")
     fl.next("raw Ep")

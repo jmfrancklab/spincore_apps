@@ -11,7 +11,7 @@ from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from ppg import generic
 
 raise RuntimeError(
-    "This pulse program has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!"
+    "This pulse program has been updated to use active.ini, but not the ppg functions..  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!"
 )
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 fl = figlist_var()

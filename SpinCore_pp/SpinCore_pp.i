@@ -121,7 +121,7 @@ def load(args):
 %}
 extern int runBoard();
 %apply (int* ARGOUT_ARRAY1, int DIM1) {(int* output_array, int length)};
-extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name);
+extern void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps);
 extern void stopBoard();
 extern int adc_offset();
 extern void tune(double carrier_freq);

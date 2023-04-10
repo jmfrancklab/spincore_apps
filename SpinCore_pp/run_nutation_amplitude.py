@@ -9,6 +9,9 @@ from Instruments.XEPR_eth import xepr
 from SpinCore_pp.ppg import run_spin_echo
 fl = figlist_var()
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
+raise RuntimeError(
+    "This pulse program has been updated to use active.ini, and the spin echo ppg function, but has not yet been tested!"
+)
 #{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration('active.ini')
 nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)

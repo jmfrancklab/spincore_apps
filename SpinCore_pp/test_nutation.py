@@ -5,6 +5,9 @@ import sys
 import time
 
 fl = figlist_var()
+raise RuntimeError(
+    "This pulse program has been updated to use active.ini, and the spin echo function, but has not yet been tested!"
+)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)

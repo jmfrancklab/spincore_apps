@@ -1,3 +1,4 @@
+"This example was a precursor to the GUI function.  Once GUI part of the master branch, probably delete this."
 from pylab import *
 from pyspecdata import *
 import SpinCore_pp
