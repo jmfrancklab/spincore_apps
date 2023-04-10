@@ -1,8 +1,8 @@
 import numpy as np
+from numpy import r_
 import sympy as sp
 from scipy.integrate import quad
 from pyspecdata import *
-from pyspecdata import r_
 
 "Helper functions for dealing with powers"
 # {{{ For even spacing based on phalf estimation
