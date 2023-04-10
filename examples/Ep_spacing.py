@@ -1,7 +1,14 @@
 from pyspecdata import *
-import SpinCore_pp
-#config_dict = SpinCore_pp.configuration("active.ini")
+from SpinCore_pp.power_helper import Ep_spacing_from_phalf 
+from SpinCore_pp.config_parser_fn import configuration 
+import matplotlib.pyplot as plt
+config_dict = configuration("active.ini")
 with figlist_var() as fl:
-    Ep_powers = gen_Ep_powers(sim_phalf = 0.2, sim_Emax = 10.0, sim_pmax = 3.16,
-            aspect_ratio = 1.618, p_steps = 15,fl=fl)
+    Ep_powers = Ep_spacing_from_phalf(est_phalf = config_dict['guessed_phalf'], 
+            max_power = config_dict['max_power'],
+            p_steps = config_dict['power_steps'],fl=fl)
+    plt.title('Evenly spaced Ep curve')
+    plt.ylabel('Signal')
+    plt.xlabel('Power / W')
+    print("The list with the optimal powers for this E(p) experiment is", Ep_powers)
     fl.show()

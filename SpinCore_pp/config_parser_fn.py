@@ -130,6 +130,12 @@ class configuration(object):
             None,
             "the range over which the dip lock will be performed",
         ),
+        "guessed_phalf": (
+            float,
+            "odnp_params",
+            None,
+            "estimated power for half saturation"
+        ),
         "adc_offset": (int, "acq_params", None, "SpinCore-specific ADC offset correction\nwe believe this is a DC offset, but are not positive"),
         "nScans": (int, "acq_params", 1, "number of scans"),
         "thermal_nScans": (
