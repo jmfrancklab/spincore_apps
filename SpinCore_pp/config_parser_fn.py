@@ -132,7 +132,7 @@ class configuration(object):
         ),
         "guessed_phalf": (
             float,
-            "odnp_params",
+            "sample_params",
             None,
             "estimated power for half saturation"
         ),
@@ -154,7 +154,7 @@ class configuration(object):
         "power_steps": (
             int,
             "odnp_params",
-            None,
+            14,
             "number of points collected in an enhancement experiment",
         ),
         "num_T1s": (
