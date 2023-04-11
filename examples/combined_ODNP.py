@@ -6,7 +6,9 @@ This needs to be run in sync with the power control server. To do so:
 Once the power control server is up and ready to go you may run this script to collect the enhancement data as well as a series of IRs at increasing power collected in sync with a time log.
 """
 import numpy as np
+from numpy import r_
 from pyspecdata import *
+from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from pyspecdata import strm
 import os, sys, time
 import h5py
@@ -18,6 +20,7 @@ from datetime import datetime
 
 logger = init_logging(level="debug")
 fl = figlist_var()
+thermal_scans = 4
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
@@ -28,6 +31,7 @@ config_dict["type"] = "ODNP"
 config_dict["date"] = date
 config_dict["odnp_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}"
+filename_out = filename + ".h5"
 # }}}
 # {{{set phase cycling
 phase_cycling = True
@@ -157,8 +161,8 @@ else:
             print(
                 "if I got this far, that probably worked -- be sure to move/rename temp_control_thermal.h5 to the correct name!!"
             )
-print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data", control_thermal.name()))
+logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+logger.debug(strm("Name of saved data", control_thermal.name()))
 # }}}
 # {{{IR at no power
 #   this is outside the log, so to deal with this during processing, just check
@@ -186,9 +190,10 @@ for vd_idx, vd in enumerate(vd_list_us):
     )
 vd_data.rename("indirect", "vd")
 vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
-vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
-vd_data.setaxis("ph1", IR_ph1_cyc / 4)
-vd_data.setaxis("ph2", IR_ph2_cyc / 4)
+if phase_cycling:
+    vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
+    vd_data.setaxis("ph1", IR_ph1_cyc / 4)
+    vd_data.setaxis("ph2", IR_ph2_cyc / 4)
 vd_data.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
 vd_data.name("FIR_noPower")
 vd_data.set_prop("stop_time", time.time())
@@ -220,8 +225,8 @@ else:
             print(
                 "if I got this far, that probably worked -- be sure to move/rename temp_FIR_noPower.h5 to the correct name!!"
             )
-print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data", vd_data.name()))
+logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+logger.debug(strm("Name of saved data", vd_data.name()))
 # }}}
 # {{{run enhancement
 input("Now plug the B12 back in and start up the power_server so we can continue!")
@@ -236,32 +241,48 @@ with power_control() as p:
     p.mw_off()
     time.sleep(16.0)
     p.start_log()
-    DNP_ini_time = time.time()
-    DNP_data = run_spin_echo(
-        nScans=config_dict["nScans"],
-        indirect_idx=0,
-        indirect_len=len(powers) + 1,
-        ph1_cyc=Ep_ph1_cyc,
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        nPoints=nPoints,
-        nEchoes=config_dict["nEchoes"],
-        p90_us=config_dict["p90_us"],
-        repetition_us=config_dict["repetition_us"],
-        tau_us=config_dict["tau_us"],
-        SW_kHz=config_dict["SW_kHz"],
-        indirect_fields=("start_times", "stop_times"),
-        ret_data=None,
-    )  # assume that the power axis is 1 longer than the
-    #                         "powers" array, so that we can also store the
-    #                         thermally polarized signal in this array (note
-    #                         that powers and other parameters are defined
-    #                         globally w/in the script, as this function is not
-    #                         designed to be moved outside the module
-    DNP_thermal_done = time.time()
-    time_axis_coords = DNP_data.getaxis("indirect")
-    time_axis_coords[0]["start_times"] = DNP_ini_time
-    time_axis_coords[0]["stop_times"] = DNP_thermal_done
+    for j in range(thermal_scans):
+        DNP_ini_time = time.time()
+        if j == 0:
+            DNP_data = run_spin_echo(
+                nScans=config_dict["nScans"],
+                indirect_idx=j,
+                indirect_len=len(powers) + thermal_scans,
+                ph1_cyc=Ep_ph1_cyc,
+                adcOffset=config_dict["adc_offset"],
+                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+                nPoints=nPoints,
+                nEchoes=config_dict["nEchoes"],
+                ph1_cyc=Ep_ph1_cyc,
+                p90_us=config_dict["p90_us"],
+                repetition_us=config_dict["repetition_us"],
+                tau_us=config_dict["tau_us"],
+                SW_kHz=config_dict["SW_kHz"],
+                indirect_fields=("start_times", "stop_times"),
+                ret_data=None,
+            )  
+            DNP_thermal_done = time.time()
+            time_axis_coords = DNP_data.getaxis("indirect")
+        else:
+            DNP_data = run_spin_echo(
+                nScans=parser_dict['nScans'],
+                indirect_idx=j,
+                indirect_len=len(powers) + thermal_scans,
+                adcOffset=parser_dict['adc_offset'],
+                carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
+                nPoints=nPoints,
+                nEchoes=parser_dict['nEchoes'],
+                ph1_cyc=Ep_ph1_cyc,
+                p90_us=parser_dict['p90_us'],
+                repetition_us=parser_dict['repetition_us'],
+                tau_us=parser_dict['tau_us'],
+                SW_kHz=parser_dict['SW_kHz'],
+                indirect_fields=("start_times", "stop_times"),
+                ret_data=DNP_data,
+            )
+        DNP_thermal_done = time.time()
+        time_axis_coords[j]["start_times"] = DNP_ini_time
+        time_axis_coords[j]["stop_times"] = DNP_thermal_done
     power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
@@ -282,11 +303,11 @@ with power_control() as p:
             raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
-        time_axis_coords[j + 1]["start_times"] = time.time()
+        time_axis_coords[j + thermal_scans]["start_times"] = time.time()
         run_spin_echo(
             nScans=config_dict["nScans"],
-            indirect_idx=j + 1,
-            indirect_len=len(powers) + 1,
+            indirect_idx=j + thermal_scans,
+            indirect_len=len(powers) + thermal_scans,
             ph1_cyc=Ep_ph1_cyc,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
@@ -298,15 +319,16 @@ with power_control() as p:
             SW_kHz=config_dict["SW_kHz"],
             ret_data=DNP_data,
         )
-        time_axis_coords[j + 1]["stop_times"] = time.time()
-    DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
-    DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
-    DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    DNP_data.reorder(["ph1", "nScans", "t2"])
-    DNP_data.name(config_dict["type"])
+        time_axis_coords[j + thermal_scans]["stop_times"] = time.time()
     DNP_data.set_prop("stop_time", time.time())
     DNP_data.set_prop("postproc_type", "spincore_ODNP_v4")
     DNP_data.set_prop("acq_params", config_dict.asdict())
+    DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    if phase_cycling:
+        DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
+        DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
+        DNP_data.reorder(["ph1", "nScans", "t2"])
+    DNP_data.name(config_dict["type"])
     nodename = DNP_data.name()
     try:
         DNP_data.hdf5_write(f"{filename_out}", directory=target_directory)
@@ -320,8 +342,8 @@ with power_control() as p:
             DNP_data.hdf5_write("temp_ODNP.h5", directory=target_directory)
             print(
                 "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!"
-    print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-    print(("Name of saved data", echo_data.name()))
+    logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+    logger.debug(strm("Name of saved data", echo_data.name()))
     # }}}
     # {{{run IR
     for j, this_dB in enumerate(T1_powers_dB):
@@ -362,16 +384,16 @@ with power_control() as p:
             )
         vd_data.rename("indirect", "vd")
         vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
+        vd_data.set_prop("start_time", ini_time)
+        vd_data.set_prop("stop_time", time.time())
+        vd_data.set_prop("acq_params", config_dict.asdict())
+        vd_data.set_prop("postproc_type", "spincore_IR_v1")
+        vd_data.name(T1_node_names[j])
         if phase_cycling:
             vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
             vd_data.setaxis("ph1", IR_ph1_cyc / 4)
             vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-        vd_data.name(T1_node_names[j])
-        vd_data.set_prop("start_time", ini_time)
-        vd_data.set_prop("stop_time", time.time())
-        vd_data.set_prop("acq_params", config_dict.asdict())
-        vd_data.set_prop("postproc_type", "spincore_IR_v1")
         nodename = vd_data.name()
         if os.path.exists(os.path.normpath(os.path.join(target_directory, f"{filename_out}/{nodename}")):
             if nodename in fp.keys():
@@ -393,3 +415,5 @@ config_dict.write()
 with h5py.File(os.path.join(target_directory, f"{filename_out}"), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
+
+
