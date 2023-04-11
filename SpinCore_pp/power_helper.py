@@ -2,7 +2,7 @@ import numpy as np
 from numpy import r_
 import sympy as sp
 from scipy.integrate import quad
-from pyspecdata import *
+import pyspecdata as psp
 
 "Helper functions for dealing with powers"
 # {{{ For even spacing based on phalf estimation
@@ -53,7 +53,7 @@ def Ep_spacing_from_phalf(
         sp.sqrt(1 + (sp.diff(f / Emax, p) * (max_power / aspect_ratio)) ** 2)
     )
     if fl is not None:
-        figure(figsize=(12, 12 / aspect_ratio))
+        psp.figure(figsize=(12, 12 / aspect_ratio))
     length_vs_p = sp.Integral(dline, (p, 0, pmax))
     length_vs_p_fn = np.vectorize(
         sp.lambdify(
@@ -63,7 +63,7 @@ def Ep_spacing_from_phalf(
         ),
         excluded=[0],
     )
-    length_data = nddata(length_vs_p_fn(est_phalf, p_array), [-1], ["p"]).setaxis(
+    length_data = psp.nddata(length_vs_p_fn(est_phalf, p_array), [-1], ["p"]).setaxis(
         "p", p_array
     )
     length_data.invinterp("p", np.linspace(0, length_data["p", -1].item(), p_steps))
@@ -71,7 +71,7 @@ def Ep_spacing_from_phalf(
         fl.plot(
             f_fn(sim_Emax, est_phalf, length_data.fromaxis("p")), "o", human_units=False
         )
-        plt.text(
+        psp.text(
             0.5,
             0.5,
             "Just showing the E(p) to show JF the spacing is what we want - \nwe can delete this figure after we are good with everything else",
