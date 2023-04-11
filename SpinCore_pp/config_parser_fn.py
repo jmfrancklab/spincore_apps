@@ -133,7 +133,7 @@ class configuration(object):
         "guessed_phalf": (
             float,
             "sample_params",
-            None,
+            0.2,
             "estimated power for half saturation"
         ),
         "adc_offset": (int, "acq_params", None, "SpinCore-specific ADC offset correction\nwe believe this is a DC offset, but are not positive"),
