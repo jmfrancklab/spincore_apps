@@ -415,5 +415,3 @@ config_dict.write()
 with h5py.File(os.path.join(target_directory, f"{filename_out}"), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
-
-
