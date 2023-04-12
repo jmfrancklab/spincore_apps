@@ -95,7 +95,7 @@ def Ep_spacing_from_phalf(
             for frac in [0.75, 0.5, 0.25]
         ]
         dB_settings = np.append(rdB_settings, append_dB)
-    return dB_settings
+    return dB_settings.real
 
 
 # }}}
