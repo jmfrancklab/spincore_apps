@@ -19,19 +19,19 @@ from Instruments import power_control
 from datetime import datetime
 
 logger = init_logging(level="debug")
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
 fl = figlist_var()
-thermal_scans = 4
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+thermal_scans = config_dict['thermal_nscans'] 
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "ODNP"
 config_dict["date"] = date
 config_dict["odnp_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}"
-filename_out = filename + ".h5"
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}" + ".h5"
 # }}}
 # {{{set phase cycling
 phase_cycling = True
@@ -135,32 +135,19 @@ control_thermal.name("control_thermal")
 control_thermal.set_prop("postproc_type", "spincore_ODNP_v3")
 control_thermal.set_prop("acq_params", config_dict.asdict())
 control_thermal.name("control_thermal")
-filename_out = filename + ".h5"
 nodename = control_thermal.name()
-if os.path.exists(f"{filename_out}"):
-    print("this file already exists so we will add a node to it!")
-    with h5py.File(
-        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
-    ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_control_thermal")
-            control_thermal.name("temp_control_thermal")
-            nodename = "temp_control_thermal"
+try:
     control_thermal.hdf5_write(f"{filename_out}", directory=target_directory)
-else:
-    try:
-        control_thermal_data.hdf5_write(f"{filename_out}", directory=target_directory)
-    except:
-        print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_control_thermal.h5 in the current directory"
-        )
-        if os.path.exists("temp_control_thermal.h5"):
-            print("there is a temp_control_thermal.h5 already! -- I'm removing it")
-            os.remove("temp_control_thermal.h5")
-            control_thermal.hdf5_write("temp_control_thermal.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp_control_thermal.h5 to the correct name!!"
-            )
+except:
+    print(
+        f"I had problems writing to the correct file {filename_out}, so I'm going to try to save your file to temp_ctrl.h5 in the current directory"
+    )
+    if os.path.exists("temp_ctrl.h5"):
+        print("There is already a temp_ctrl.h5 -- I'm removing it")
+        os.remove("temp_ctrl.h5")
+        DNP_data.hdf5_write("temp_ctrl.h5", directory=target_directory)
+        filename_out = "temp_ctrl.h5"
+        input("change the name accordingly once this is done running!")
 logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", control_thermal.name()))
 # }}}
@@ -201,30 +188,19 @@ vd_data.set_prop("start_time", ini_time)
 vd_data.set_prop("acq_params", config_dict.asdict())
 vd_data.set_prop("postproc_type", "spincore_IR_v1")
 nodename = vd_data.name()
-if os.path.exists(f"{filename_out}"):
-    print("this file already exists so we will add a node to it!")
-    with h5py.File(
-        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
-    ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_FIR_noPower")
-            vd_data.name("temp_FIR_noPower")
-            nodename = "temp_FIR_noPower"
-    vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
-else:
-    try:
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+) as fp:
+    if nodename in fp.keys():
+        print("this nodename already exists, so I will call it temp")
+        vd_data.name("temp_noPower")
+        nodename = "temp_noPower"
         vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
-    except:
-        print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_FIR_noPower.h5 in the current directory"
+        input(
+            f"I had problems writing to the correct file {filename_out} so I'm going to try to save this node as temp_noPower"
         )
-        if os.path.exists("temp_FIR_noPower.h5"):
-            print("there is a temp_FIR_noPower.h5 already! -- I'm removing it")
-            os.remove("temp_FIR_noPower.h5")
-            vd_data.hdf5_write("temp_FIR_noPower.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp_FIR_noPower.h5 to the correct name!!"
-            )
+    else:
+        vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
 logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", vd_data.name()))
 # }}}
@@ -265,18 +241,18 @@ with power_control() as p:
             time_axis_coords = DNP_data.getaxis("indirect")
         else:
             DNP_data = run_spin_echo(
-                nScans=parser_dict['nScans'],
+                nScans=config_dict['nScans'],
                 indirect_idx=j,
                 indirect_len=len(powers) + thermal_scans,
-                adcOffset=parser_dict['adc_offset'],
-                carrierFreq_MHz=parser_dict['carrierFreq_MHz'],
+                adcOffset=config_dict['adc_offset'],
+                carrierFreq_MHz=config_dict['carrierFreq_MHz'],
                 nPoints=nPoints,
-                nEchoes=parser_dict['nEchoes'],
+                nEchoes=config_dict['nEchoes'],
                 ph1_cyc=Ep_ph1_cyc,
-                p90_us=parser_dict['p90_us'],
-                repetition_us=parser_dict['repetition_us'],
-                tau_us=parser_dict['tau_us'],
-                SW_kHz=parser_dict['SW_kHz'],
+                p90_us=config_dict['p90_us'],
+                repetition_us=config_dict['repetition_us'],
+                tau_us=config_dict['tau_us'],
+                SW_kHz=config_dict['SW_kHz'],
                 indirect_fields=("start_times", "stop_times"),
                 ret_data=DNP_data,
             )
@@ -334,7 +310,7 @@ with power_control() as p:
         DNP_data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_ODNP.h5 in the current h5 file"
+            f"I had problems writing to the correct file {filename_out}, so I'm going to try to save your file to temp_ODNP.h5 in the current h5 file"
         )
         if os.path.exists("temp_ODNP.h5"):
             print("there is a temp_ODNP.h5 already! -- I'm removing it")
@@ -384,23 +360,25 @@ with power_control() as p:
             )
         vd_data.rename("indirect", "vd")
         vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
-        vd_data.set_prop("start_time", ini_time)
-        vd_data.set_prop("stop_time", time.time())
-        vd_data.set_prop("acq_params", config_dict.asdict())
-        vd_data.set_prop("postproc_type", "spincore_IR_v1")
-        vd_data.name(T1_node_names[j])
         if phase_cycling:
             vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
             vd_data.setaxis("ph1", IR_ph1_cyc / 4)
             vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+        vd_data.set_prop("start_time", ini_time)
+        vd_data.set_prop("stop_time", time.time())
+        vd_data.set_prop("acq_params", config_dict.asdict())
+        vd_data.set_prop("postproc_type", "spincore_IR_v1")
+        vd_data.name(T1_node_names[j])
         nodename = vd_data.name()
-        if os.path.exists(os.path.normpath(os.path.join(target_directory, f"{filename_out}/{nodename}")):
+        with h5py.File(
+            os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+        )) as fp:
             if nodename in fp.keys():
-                print("this nodename already exists, so I will call it temp_%d" % j)
-                vd_data.name("temp_%d" % this_dB)
-                nodename = "temp_%d" % this_dB
-                vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+                print("this nodename already exists, so I will call it temp_%d"%j)
+                vd_data.name("temp_%d"%j)
+                nodename = "temp_%d"%j
+                vd_data.hdf5_write(f"{filename_out}",directory = target_directory)
             else:
                 vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
