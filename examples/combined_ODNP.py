@@ -31,7 +31,7 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "ODNP"
 config_dict["date"] = date
 config_dict["odnp_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}" + ".h5"
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}.h5"
 # }}}
 # {{{set phase cycling
 phase_cycling = True
@@ -91,10 +91,10 @@ assert total_pts < 2 ** 14, (
 )
 # }}}
 # {{{ check for file
-if os.path.exists(filename_out):
+if os.path.exists(filename):
     raise ValueError(
         "the file %s already exists, so I'm not going to let you proceed!"
-        % filename_out
+        % filename
     )
 input(
     "B12 needs to be unplugged and turned off for the thermal! Don't have the power server running just yet"
@@ -136,17 +136,18 @@ control_thermal.set_prop("postproc_type", "spincore_ODNP_v3")
 control_thermal.set_prop("acq_params", config_dict.asdict())
 control_thermal.name("control_thermal")
 nodename = control_thermal.name()
+# I don't understand the point of this change -- please explain
 try:
-    control_thermal.hdf5_write(f"{filename_out}", directory=target_directory)
+    control_thermal.hdf5_write(f"{filename}", directory=target_directory)
 except:
     print(
-        f"I had problems writing to the correct file {filename_out}, so I'm going to try to save your file to temp_ctrl.h5 in the current directory"
+        f"I had problems writing to the correct file {filename}, so I'm going to try to save your file to temp_ctrl.h5 in the current directory"
     )
     if os.path.exists("temp_ctrl.h5"):
         print("There is already a temp_ctrl.h5 -- I'm removing it")
         os.remove("temp_ctrl.h5")
         DNP_data.hdf5_write("temp_ctrl.h5", directory=target_directory)
-        filename_out = "temp_ctrl.h5"
+        filename = "temp_ctrl.h5"
         input("change the name accordingly once this is done running!")
 logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", control_thermal.name()))
@@ -188,19 +189,20 @@ vd_data.set_prop("start_time", ini_time)
 vd_data.set_prop("acq_params", config_dict.asdict())
 vd_data.set_prop("postproc_type", "spincore_IR_v1")
 nodename = vd_data.name()
+# again, I don't understand this change, please explain
 with h5py.File(
-    os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+    os.path.normpath(os.path.join(target_directory, f"{filename}"))
 ) as fp:
     if nodename in fp.keys():
         print("this nodename already exists, so I will call it temp")
         vd_data.name("temp_noPower")
         nodename = "temp_noPower"
-        vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+        vd_data.hdf5_write(f"{filename}", directory=target_directory)
         input(
-            f"I had problems writing to the correct file {filename_out} so I'm going to try to save this node as temp_noPower"
+            f"I had problems writing to the correct file {filename} so I'm going to try to save this node as temp_noPower"
         )
     else:
-        vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+        vd_data.hdf5_write(f"{filename}", directory=target_directory)
 logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", vd_data.name()))
 # }}}
@@ -307,10 +309,10 @@ with power_control() as p:
     DNP_data.name(config_dict["type"])
     nodename = DNP_data.name()
     try:
-        DNP_data.hdf5_write(f"{filename_out}", directory=target_directory)
+        DNP_data.hdf5_write(f"{filename}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename_out}, so I'm going to try to save your file to temp_ODNP.h5 in the current h5 file"
+            f"I had problems writing to the correct file {filename}, so I'm going to try to save your file to temp_ODNP.h5 in the current h5 file"
         )
         if os.path.exists("temp_ODNP.h5"):
             print("there is a temp_ODNP.h5 already! -- I'm removing it")
@@ -360,6 +362,7 @@ with power_control() as p:
             )
         vd_data.rename("indirect", "vd")
         vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
+        # why is this block of code moved below?
         if phase_cycling:
             vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
             vd_data.setaxis("ph1", IR_ph1_cyc / 4)
@@ -371,16 +374,17 @@ with power_control() as p:
         vd_data.set_prop("postproc_type", "spincore_IR_v1")
         vd_data.name(T1_node_names[j])
         nodename = vd_data.name()
+        # what is this change doing?
         with h5py.File(
-            os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+            os.path.normpath(os.path.join(target_directory,f"{filename}")
         )) as fp:
             if nodename in fp.keys():
                 print("this nodename already exists, so I will call it temp_%d"%j)
                 vd_data.name("temp_%d"%j)
                 nodename = "temp_%d"%j
-                vd_data.hdf5_write(f"{filename_out}",directory = target_directory)
+                vd_data.hdf5_write(f"{filename}",directory = target_directory)
             else:
-                vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+                vd_data.hdf5_write(f"{filename}", directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
     final_frq = p.dip_lock(
@@ -390,6 +394,6 @@ with power_control() as p:
     this_log = p.stop_log()
 # }}}
 config_dict.write()
-with h5py.File(os.path.join(target_directory, f"{filename_out}"), "a") as f:
+with h5py.File(os.path.join(target_directory, f"{filename}"), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
