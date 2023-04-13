@@ -121,15 +121,12 @@ control_thermal = run_spin_echo(
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 ) 
+if config_dict["thermal_nScans"] > 1:
+    control_thermal.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
 if phase_cycling:
     control_thermal.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
     control_thermal.setaxis("ph1", Ep_ph1_cyc / 4)
-    if config_dict["thermal_nScans"] > 1:
-        control_thermal.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
     control_thermal.reorder(["ph1", "nScans", "t2"])
-else:
-    if config_dict["thermal_nScans"] > 1:
-        control_thermal.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
 control_thermal.name("control_thermal")
 control_thermal.set_prop("postproc_type", Ep_postproc)
 control_thermal.set_prop("acq_params", config_dict.asdict())
@@ -283,7 +280,6 @@ with power_control() as p:
     DNP_data.set_prop("stop_time", time.time())
     DNP_data.set_prop("postproc_type", "spincore_ODNP_v4")
     DNP_data.set_prop("acq_params", config_dict.asdict())
-    DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     if phase_cycling:
         DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
         DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
@@ -355,7 +351,6 @@ with power_control() as p:
             vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
             vd_data.setaxis("ph1", IR_ph1_cyc / 4)
             vd_data.setaxis("ph2", IR_ph2_cyc / 4)
-        vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
         vd_data.name(T1_node_names[j])
         nodename = vd_data.name()
         with h5py.File(
