@@ -156,11 +156,14 @@ logger.debug(strm("Name of saved data", control_thermal.name()))
 ini_time = time.time()
 vd_data = None
 for vd_idx, vd in enumerate(vd_list_us):
+    # call A to run_IR
     vd_data = run_IR(
         nPoints=nPoints,
         nEchoes=config_dict["nEchoes"],
         indirect_idx=vd_idx,
         indirect_len=len(vd_list_us),
+        ph1_cyc=IR_ph1_cyc,
+        ph2_cyc=IR_ph2_cyc,
         vd=vd,
         nScans=config_dict["thermal_nScans"],
         adcOffset=config_dict["adc_offset"],
@@ -168,8 +171,6 @@ for vd_idx, vd in enumerate(vd_list_us):
         p90_us=config_dict["p90_us"],
         tau_us=config_dict["tau_us"],
         repetition_us=FIR_rep,
-        ph1_cyc=IR_ph1_cyc,
-        ph2_cyc=IR_ph2_cyc,
         SW_kHz=config_dict["SW_kHz"],
         ret_data=vd_data,
     )
@@ -218,45 +219,27 @@ with power_control() as p:
     p.start_log()
     for j in range(thermal_scans):
         DNP_ini_time = time.time()
+        # call B/C to run spin echo
         if j == 0:
-            # call B to run spin echo
-            DNP_data = run_spin_echo(
-                nScans=config_dict["nScans"],
-                indirect_idx=j,
-                indirect_len=len(powers) + thermal_scans,
-                ph1_cyc=Ep_ph1_cyc, # this is not present in call A!
-                adcOffset=config_dict["adc_offset"],
-                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-                nPoints=nPoints,
-                nEchoes=config_dict["nEchoes"],
-                ph1_cyc=Ep_ph1_cyc,
-                p90_us=config_dict["p90_us"],
-                repetition_us=config_dict["repetition_us"],
-                tau_us=config_dict["tau_us"],
-                SW_kHz=config_dict["SW_kHz"],
-                indirect_fields=("start_times", "stop_times"),
-                ret_data=None,
-            )  
-            DNP_thermal_done = time.time()
-            time_axis_coords = DNP_data.getaxis("indirect")
+            ret_data=None # only difference between B and C was this and next line (and issue noted below which I think is an explicit default, but should nonetheless be changed in A!)
         else:
-            # call C to run spin echo
-            DNP_data = run_spin_echo(
-                nScans=config_dict['nScans'],
-                indirect_idx=j,
-                indirect_len=len(powers) + thermal_scans,
-                adcOffset=config_dict['adc_offset'],
-                carrierFreq_MHz=config_dict['carrierFreq_MHz'],
-                nPoints=nPoints,
-                nEchoes=config_dict['nEchoes'],
-                ph1_cyc=Ep_ph1_cyc,
-                p90_us=config_dict['p90_us'],
-                repetition_us=config_dict['repetition_us'],
-                tau_us=config_dict['tau_us'],
-                SW_kHz=config_dict['SW_kHz'],
-                indirect_fields=("start_times", "stop_times"),
-                ret_data=DNP_data,
-            )
+            ret_data=DNP_data # this was C
+        DNP_data = run_spin_echo(
+            nScans=config_dict["nScans"],
+            indirect_idx=j,
+            indirect_len=len(powers) + thermal_scans,
+            adcOffset=config_dict["adc_offset"],
+            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+            nPoints=nPoints,
+            nEchoes=config_dict["nEchoes"],
+            ph1_cyc=Ep_ph1_cyc,
+            p90_us=config_dict["p90_us"],
+            repetition_us=config_dict["repetition_us"],
+            tau_us=config_dict["tau_us"],
+            SW_kHz=config_dict["SW_kHz"],
+            indirect_fields=("start_times", "stop_times"),
+            ret_data=ret_data,
+        )
         DNP_thermal_done = time.time()
         time_axis_coords[j]["start_times"] = DNP_ini_time
         time_axis_coords[j]["stop_times"] = DNP_thermal_done
@@ -282,19 +265,21 @@ with power_control() as p:
         power_settings_dBm[j] = p.get_power_setting()
         time_axis_coords[j + thermal_scans]["start_times"] = time.time()
         # call D to run spin echo
+        # so now you have run your thermal scans, and you are walking through the different powers?
         run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j + thermal_scans,
             indirect_len=len(powers) + thermal_scans,
-            ph1_cyc=Ep_ph1_cyc,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
             nEchoes=config_dict["nEchoes"],
+            ph1_cyc=Ep_ph1_cyc,
             p90_us=config_dict["p90_us"],
             repetition_us=config_dict["repetition_us"],
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
+            indirect_fields=("start_times", "stop_times"),
             ret_data=DNP_data,
         )
         time_axis_coords[j + thermal_scans]["stop_times"] = time.time()
@@ -343,6 +328,7 @@ with power_control() as p:
         ini_time = time.time()
         vd_data = None
         for vd_idx, vd in enumerate(vd_list_us):
+            # call B to run_IR
             vd_data = run_IR(
                 nPoints=nPoints,
                 nEchoes=config_dict["nEchoes"],
