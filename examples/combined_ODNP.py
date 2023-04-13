@@ -2,8 +2,10 @@
 ==================================
 This needs to be run in sync with the power control server. To do so:
     1. Open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py. When this is ready to go you will see it say "I am listening".
-    2. Open new terminal on NMR computer, move into git/inst_notebooks/Instruments and run wipty power_control_server.py. When this is ready to go it will read "I am listening"
-Once the power control server is up and ready to go you may run this script to collect the enhancement data as well as a series of IRs at increasing power collected in sync with a time log.
+    2. The experiment starts with the B12 off. It collects your IR at no power along with a series of "control" thermals. These can be used for diagnosing issues with the enhancement thermal.
+    3. You will then be prompted to turn the B12 and the power control server on. To turn the power control server on, open a new terminal and type "FLInst server",
+        wait until you see "I am listening" before continuing with the experiment.
+    At the end of the experiment you will have a series of FIR experiments, a progressive power saturation dataset, and a log of the power over time saved as nodes in an h5 file.
 """
 import numpy as np
 from numpy import r_
@@ -77,7 +79,7 @@ if myinput.lower().startswith("n"):
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
 # {{{ these change if we change the way the data is saved
-IR_postproc = "spincore_IR_v3" # note that you have changed the way the data is saved, and so this should change likewise!!!!
+IR_postproc = "spincore_IR_v1" # note that you have changed the way the data is saved, and so this should change likewise!!!!
 Ep_postproc = "spincore_ODNP_v3"
 # }}}
 #{{{check total points
@@ -107,7 +109,7 @@ input(
 control_thermal = run_spin_echo(
     nScans=config_dict["thermal_nScans"],
     indirect_idx=0,
-    indirect_len=len(powers) + 1,# it seems like you are saving control_thermal to a separate node vs. the main DNP data -- if that is the case, why are you telling it that it's len(powers)+1 instead of just 1 here?
+    indirect_len=1,
     ph1_cyc=Ep_ph1_cyc,
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
@@ -117,25 +119,19 @@ control_thermal = run_spin_echo(
     repetition_us=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
-    indirect_fields=("start_times", "stop_times"),
     ret_data=None,
-)  # assume that the power axis is 1 longer than the
-#                         "powers" array, so that we can also store the
-#                         thermally polarized signal in this array (note
-#                         that powers and other parameters are defined
-#                         globally w/in the script, as this function is not
-#                         designed to be moved outside the module
+) 
 if phase_cycling:
     control_thermal.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
     control_thermal.setaxis("ph1", Ep_ph1_cyc / 4)
-    if config_dict["nScans"] > 1:
-        control_thermal.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    if config_dict["thermal_nScans"] > 1:
+        control_thermal.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
     control_thermal.reorder(["ph1", "nScans", "t2"])
 else:
-    if config_dict["nScans"] > 1:
-        control_thermal.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    if config_dict["thermal_nScans"] > 1:
+        control_thermal.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
 control_thermal.name("control_thermal")
-control_thermal.set_prop("postproc_type", "spincore_ODNP_v3")
+control_thermal.set_prop("postproc_type", Ep_postproc)
 control_thermal.set_prop("acq_params", config_dict.asdict())
 control_thermal.name("control_thermal")
 nodename = control_thermal.name()
@@ -213,7 +209,7 @@ logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", vd_data.name()))
 # }}}
 # {{{run enhancement
-input("Now plug the B12 back in and start up the power_server so we can continue!")
+input("Now plug the B12 back in and start up the FLInst power control server so we can continue!")
 with power_control() as p:
     # JF points out it should be possible to save time by removing this (b/c we
     # shut off microwave right away), but AG notes that doing so causes an
@@ -223,9 +219,10 @@ with power_control() as p:
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
     p.mw_off()
-    time.sleep(16.0)
+    time.sleep(16.0) #give some time for the power source to "settle"
     p.start_log()
     DNP_data = None # initially, there is no data, and run_spin_echo knows how to deal with this
+    #Run the actual thermal where the power log is recording. This will be your thermal for enhancement and can be compared to previous thermals if issues arise
     for j in range(thermal_scans):
         DNP_ini_time = time.time()
         # call B/C to run spin echo
@@ -254,12 +251,6 @@ with power_control() as p:
         logger.debug(
             "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], powers[j], "W)"
         )
-        if j == 0:
-            # why do we dip lock at the lowest power -- I don't quite understand this
-            retval = p.dip_lock(
-                config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
-                config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
-            )
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
@@ -271,7 +262,7 @@ with power_control() as p:
         power_settings_dBm[j] = p.get_power_setting()
         time_axis_coords[j + thermal_scans]["start_times"] = time.time()
         # call D to run spin echo
-        # so now you have run your thermal scans, and you are walking through the different powers?
+        #Now that the thermal is collected we increment our powers and collect our data at each power
         run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j + thermal_scans,
@@ -318,7 +309,6 @@ with power_control() as p:
     # }}}
     # {{{run IR
     for j, this_dB in enumerate(T1_powers_dB):
-        # why is dip locking eliminated from here
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
@@ -368,7 +358,6 @@ with power_control() as p:
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
         vd_data.name(T1_node_names[j])
         nodename = vd_data.name()
-        # what is this change doing?
         with h5py.File(
             os.path.normpath(os.path.join(target_directory, filename))
             ) as fp:
