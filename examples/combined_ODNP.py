@@ -372,10 +372,13 @@ with power_control() as p:
         with h5py.File(
             os.path.normpath(os.path.join(target_directory, filename))
             ) as fp:
+            tempcounter = 1
+            orig_nodename = nodename
             while nodename in fp.keys():
-                print("this nodename already exists, so I will call it temp_%d"%j)
-                nodename = "temp_%d"%j
+                nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+                final_log.append("this nodename already exists, so I will call it {nodename}")
                 vd_data.name(nodename)
+                tempcounter += 1
         # hdf5_write should be outside the h5py.File with block, since it opens the file itself
         vd_data.hdf5_write(filename, directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
