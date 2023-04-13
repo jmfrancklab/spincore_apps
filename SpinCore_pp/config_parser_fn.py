@@ -134,9 +134,7 @@ class configuration(object):
             float,
             "odnp_params",
             1.0,
-            "dBm increment for making the power list in
-            ODNP and for T1(p). Depending on the power source
-            this can be 0.1, 0.5, or 1.0",
+            "dBm increment for making the power list in ODNP and for T1(p). Depending on the power source this can be 0.1, 0.5, or 1.0",
         ),
         "guessed_phalf": (
             float,
