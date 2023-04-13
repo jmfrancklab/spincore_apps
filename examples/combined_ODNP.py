@@ -37,16 +37,12 @@ filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type'
 phase_cycling = True
 if phase_cycling:
     Ep_ph1_cyc = r_[0, 1, 2, 3]
-    Ep_nPhaseSteps = 4
     IR_ph1_cyc = r_[0, 2]
     IR_ph2_cyc = r_[0, 2]
-    IR_nPhaseSteps = 4
 if not phase_cycling:
     Ep_ph1_cyc = 0.0
-    Ep_nPhaseSteps = 1
     IR_ph1_cyc = 0.0
     IR_ph2_cyc = 0.0
-    IR_nPhaseSteps = 2
 #}}}
 # {{{Make VD list based on concentration and FIR repetition delay as defined by Weiss
 vd_kwargs = {
@@ -101,10 +97,11 @@ input(
 )
 # }}}
 # {{{Collect Thermals - serves as a control to compare the thermal of Ep to ensure no microwaves were leaking
+# call A to run spin echo
 control_thermal = run_spin_echo(
     nScans=config_dict["thermal_nScans"],
     indirect_idx=0,
-    indirect_len=len(powers) + 1,
+    indirect_len=len(powers) + 1,# it seems like you are saving control_thermal to a separate node vs. the main DNP data -- if that is the case, why are you telling it that it's len(powers)+1 instead of just 1 here?
     ph1_cyc=Ep_ph1_cyc,
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
@@ -222,11 +219,12 @@ with power_control() as p:
     for j in range(thermal_scans):
         DNP_ini_time = time.time()
         if j == 0:
+            # call B to run spin echo
             DNP_data = run_spin_echo(
                 nScans=config_dict["nScans"],
                 indirect_idx=j,
                 indirect_len=len(powers) + thermal_scans,
-                ph1_cyc=Ep_ph1_cyc,
+                ph1_cyc=Ep_ph1_cyc, # this is not present in call A!
                 adcOffset=config_dict["adc_offset"],
                 carrierFreq_MHz=config_dict["carrierFreq_MHz"],
                 nPoints=nPoints,
@@ -242,6 +240,7 @@ with power_control() as p:
             DNP_thermal_done = time.time()
             time_axis_coords = DNP_data.getaxis("indirect")
         else:
+            # call C to run spin echo
             DNP_data = run_spin_echo(
                 nScans=config_dict['nScans'],
                 indirect_idx=j,
@@ -282,6 +281,7 @@ with power_control() as p:
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
         time_axis_coords[j + thermal_scans]["start_times"] = time.time()
+        # call D to run spin echo
         run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j + thermal_scans,
