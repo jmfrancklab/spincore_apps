@@ -217,13 +217,10 @@ with power_control() as p:
     p.mw_off()
     time.sleep(16.0)
     p.start_log()
+    DNP_data = None # initially, there is no data, and run_spin_echo knows how to deal with this
     for j in range(thermal_scans):
         DNP_ini_time = time.time()
         # call B/C to run spin echo
-        if j == 0:
-            ret_data=None # only difference between B and C was this and next line (and issue noted below which I think is an explicit default, but should nonetheless be changed in A!)
-        else:
-            ret_data=DNP_data # this was C
         DNP_data = run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j,
@@ -238,7 +235,7 @@ with power_control() as p:
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
             indirect_fields=("start_times", "stop_times"),
-            ret_data=ret_data,
+            ret_data=DNP_data,
         )
         DNP_thermal_done = time.time()
         time_axis_coords[j]["start_times"] = DNP_ini_time
@@ -250,6 +247,7 @@ with power_control() as p:
             "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], powers[j], "W)"
         )
         if j == 0:
+            # why do we dip lock at the lowest power -- I don't quite understand this
             retval = p.dip_lock(
                 config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
                 config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
@@ -310,6 +308,7 @@ with power_control() as p:
     # }}}
     # {{{run IR
     for j, this_dB in enumerate(T1_powers_dB):
+        # why is dip locking eliminated from here
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
@@ -362,8 +361,8 @@ with power_control() as p:
         nodename = vd_data.name()
         # what is this change doing?
         with h5py.File(
-            os.path.normpath(os.path.join(target_directory,f"{filename}")
-        )) as fp:
+            os.path.normpath(os.path.join(target_directory, filename))
+            ) as fp:
             if nodename in fp.keys():
                 print("this nodename already exists, so I will call it temp_%d"%j)
                 vd_data.name("temp_%d"%j)
@@ -380,6 +379,6 @@ with power_control() as p:
     this_log = p.stop_log()
 # }}}
 config_dict.write()
-with h5py.File(os.path.join(target_directory, f"{filename}"), "a") as f:
+with h5py.File(os.path.join(target_directory, filename), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
