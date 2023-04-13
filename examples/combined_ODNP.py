@@ -206,7 +206,8 @@ with h5py.File(
             f"I had problems writing to the correct file {filename} so I'm going to try to save this node as temp_noPower"
         )
         vd_data.name(nodename)
-    vd_data.hdf5_write(filename, directory=target_directory)
+# hdf5_write should be outside the h5py.File with block, since it opens the file itself
+vd_data.hdf5_write(filename, directory=target_directory)
 # }}}
 logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", vd_data.name()))
@@ -371,13 +372,12 @@ with power_control() as p:
         with h5py.File(
             os.path.normpath(os.path.join(target_directory, filename))
             ) as fp:
-            if nodename in fp.keys():
+            while nodename in fp.keys():
                 print("this nodename already exists, so I will call it temp_%d"%j)
-                vd_data.name("temp_%d"%j)
                 nodename = "temp_%d"%j
-                vd_data.hdf5_write(f"{filename}",directory = target_directory)
-            else:
-                vd_data.hdf5_write(f"{filename}", directory=target_directory)
+                vd_data.name(nodename)
+        # hdf5_write should be outside the h5py.File with block, since it opens the file itself
+        vd_data.hdf5_write(filename, directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
     final_frq = p.dip_lock(
