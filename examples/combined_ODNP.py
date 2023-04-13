@@ -18,6 +18,8 @@ from SpinCore_pp.ppg import run_spin_echo, run_IR
 from Instruments import power_control
 from datetime import datetime
 
+final_log = []
+
 logger = init_logging(level="debug")
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
 fl = figlist_var()
@@ -73,6 +75,10 @@ myinput = input("Look ok?")
 if myinput.lower().startswith("n"):
     raise ValueError("you said no!!!")
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
+# }}}
+# {{{ these change if we change the way the data is saved
+IR_postproc = "spincore_IR_v3" # note that you have changed the way the data is saved, and so this should change likewise!!!!
+Ep_postproc = "spincore_ODNP_v3"
 # }}}
 #{{{check total points
 total_points = len(Ep_ph1_cyc) * nPoints
@@ -133,19 +139,21 @@ control_thermal.set_prop("postproc_type", "spincore_ODNP_v3")
 control_thermal.set_prop("acq_params", config_dict.asdict())
 control_thermal.name("control_thermal")
 nodename = control_thermal.name()
-# I don't understand the point of this change -- please explain
+# {{{ on first write, if we can't access the directory, write to a temp file
 try:
-    control_thermal.hdf5_write(f"{filename}", directory=target_directory)
+    control_thermal.hdf5_write(filename, directory=target_directory)
 except:
-    print(
+    final_log.append(
         f"I had problems writing to the correct file {filename}, so I'm going to try to save your file to temp_ctrl.h5 in the current directory"
     )
     if os.path.exists("temp_ctrl.h5"):
-        print("There is already a temp_ctrl.h5 -- I'm removing it")
+        final_log.append("There is already a temp_ctrl.h5 -- I'm removing it")
         os.remove("temp_ctrl.h5")
-        DNP_data.hdf5_write("temp_ctrl.h5", directory=target_directory)
+        target_directory = os.path.getcwd()
         filename = "temp_ctrl.h5"
-        input("change the name accordingly once this is done running!")
+        DNP_data.hdf5_write(filename, directory=target_directory)
+        final_log.append("change the name accordingly once this is done running!")
+# }}}
 logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", control_thermal.name()))
 # }}}
@@ -185,22 +193,21 @@ vd_data.name("FIR_noPower")
 vd_data.set_prop("stop_time", time.time())
 vd_data.set_prop("start_time", ini_time)
 vd_data.set_prop("acq_params", config_dict.asdict())
-vd_data.set_prop("postproc_type", "spincore_IR_v1")
+vd_data.set_prop("postproc_type", IR_postproc)
 nodename = vd_data.name()
-# again, I don't understand this change, please explain
+# {{{ again, implement a file fallback
 with h5py.File(
     os.path.normpath(os.path.join(target_directory, f"{filename}"))
 ) as fp:
     if nodename in fp.keys():
-        print("this nodename already exists, so I will call it temp")
-        vd_data.name("temp_noPower")
+        final_log.append("this nodename already exists, so I will call it temp")
         nodename = "temp_noPower"
-        vd_data.hdf5_write(f"{filename}", directory=target_directory)
-        input(
+        final_log.append(
             f"I had problems writing to the correct file {filename} so I'm going to try to save this node as temp_noPower"
         )
-    else:
-        vd_data.hdf5_write(f"{filename}", directory=target_directory)
+        vd_data.name(nodename)
+    vd_data.hdf5_write(filename, directory=target_directory)
+# }}}
 logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", vd_data.name()))
 # }}}
@@ -292,16 +299,18 @@ with power_control() as p:
     DNP_data.name(config_dict["type"])
     nodename = DNP_data.name()
     try:
-        DNP_data.hdf5_write(f"{filename}", directory=target_directory)
+        DNP_data.hdf5_write(filename, directory=target_directory)
     except:
         print(
             f"I had problems writing to the correct file {filename}, so I'm going to try to save your file to temp_ODNP.h5 in the current h5 file"
         )
+        target_directory = os.path.getcwd()
+        filename = "temp_ctrl.h5"
         if os.path.exists("temp_ODNP.h5"):
-            print("there is a temp_ODNP.h5 already! -- I'm removing it")
+            final_log.append("there is a temp_ODNP.h5 already! -- I'm removing it")
             os.remove("temp_ODNP.h5")
-            DNP_data.hdf5_write("temp_ODNP.h5", directory=target_directory)
-            print(
+            DNP_data.hdf5_write(filename, directory=target_directory)
+            final_log.append(
                 "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!"
     logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
     logger.debug(strm("Name of saved data", echo_data.name()))
@@ -345,18 +354,17 @@ with power_control() as p:
                 SW_kHz=config_dict["SW_kHz"],
                 ret_data=vd_data,
             )
+        vd_data.set_prop("start_time", ini_time)
+        vd_data.set_prop("stop_time", time.time())
+        vd_data.set_prop("acq_params", config_dict.asdict())
+        vd_data.set_prop("postproc_type", IR_postproc)
         vd_data.rename("indirect", "vd")
         vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
-        # why is this block of code moved below?
         if phase_cycling:
             vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
             vd_data.setaxis("ph1", IR_ph1_cyc / 4)
             vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-        vd_data.set_prop("start_time", ini_time)
-        vd_data.set_prop("stop_time", time.time())
-        vd_data.set_prop("acq_params", config_dict.asdict())
-        vd_data.set_prop("postproc_type", "spincore_IR_v1")
         vd_data.name(T1_node_names[j])
         nodename = vd_data.name()
         # what is this change doing?
@@ -382,3 +390,4 @@ config_dict.write()
 with h5py.File(os.path.join(target_directory, filename), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
+print('*'*30+'\n'+'\n'.join(final_log))
