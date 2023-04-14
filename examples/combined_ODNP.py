@@ -79,7 +79,7 @@ if myinput.lower().startswith("n"):
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
 # {{{ these change if we change the way the data is saved
-IR_postproc = "spincore_IR_v3" # note that you have changed the way the data is saved, and so this should change likewise!!!!
+IR_postproc = "spincore_IR_v1" # note that you have changed the way the data is saved, and so this should change likewise!!!!
 Ep_postproc = "spincore_ODNP_v3"
 # }}}
 #{{{check total points
