@@ -124,6 +124,9 @@ def ppg_element(str_label, firstarg, secondarg=0):
     return _SpinCore_pp.ppg_element(str_label, firstarg, secondarg)
 ppg_element = _SpinCore_pp.ppg_element
 
+import logging
+def strm(*args):
+    return ' '.join([j for j in args])
 marker_names = {}
 from numpy import *
 def apply_cycles(ppg_in,list_of_cycles_found):
@@ -162,11 +165,11 @@ def apply_cycles(ppg_in,list_of_cycles_found):
             found_cycle = True
             break
     if found_cycle:
-        print("found phase cycle named",cycle_name)
+        logging.debug(strm("found phase cycle named",cycle_name))
         all_cycles = [ppg_element[3] for ppg_element in ppg_in if (((ppg_element[0] == 'pulse' or ppg_element[0] == 'pulse_TTL') and ppg_element[2] == cycle_name) if len(ppg_element)>3 else False )]
         maxlen = max(map(len,all_cycles))
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
-        print("LIST OF CYCLES FOUND NOW")
+        logging.debug("LIST OF CYCLES FOUND NOW")
         ppg_out = []
         for j in range(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
@@ -178,12 +181,12 @@ def apply_cycles(ppg_in,list_of_cycles_found):
                 else:
                     ppg_out.append(ppg_elem)
         del ppg_in
-        print("***")
-        print("AFTER CYCLING:\n",'\n'.join(map(str,ppg_out)))
+        logging.debug("***")
+        logging.debug(strm("AFTER CYCLING:\n",'\n'.join(map(str,ppg_out))))
         return apply_cycles(ppg_out,list_of_cycles_found)
     else:
-        print("***")
-        print("FOUND NO CYCLING ELEMENTS")
+        logging.debug("***")
+        logging.debug("FOUND NO CYCLING ELEMENTS")
         return ppg_in,list_of_cycles_found
 def load(args):
     ppg_list = []
@@ -209,8 +212,8 @@ def runBoard():
     return _SpinCore_pp.runBoard()
 runBoard = _SpinCore_pp.runBoard
 
-def getData(output_array, nPoints, nEchoes, nPhaseSteps, output_name):
-    return _SpinCore_pp.getData(output_array, nPoints, nEchoes, nPhaseSteps, output_name)
+def getData(output_array, nPoints, nEchoes, nPhaseSteps):
+    return _SpinCore_pp.getData(output_array, nPoints, nEchoes, nPhaseSteps)
 getData = _SpinCore_pp.getData
 
 def stopBoard():

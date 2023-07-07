@@ -1,190 +1,168 @@
+"""
+Varied Tau Experiment
+=====================
+
+A standard echo that is repeated varying the echo time between pulses. The tau value is adjusted 
+to ensure a symmetric echo.
+"""
 from pyspecdata import *
 import os
-import sys
 import SpinCore_pp
+from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
-fl = figlist_var()
-#{{{ Verify arguments compatible with board
-def verifyParams():
-    if (nPoints > 16*1024 or nPoints < 1):
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED PULSE TIME.")
-    if (tau < 0.065):
-        print("ERROR: DELAY TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED DELAY TIME.")
-    return
-#}}}
+import h5py
 
-output_name = 'Ni_cap_probe_var_tau_4'
-adcOffset = 44
-carrierFreq_MHz = 14.893722
-tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-nScans = 1
-nEchoes = 1
+fl = figlist_var()
+tau_adjust_range = r_[1e3:30e3:1000]
+# {{{importing acquisition parameters
+config_dict = SpinCore_pp.configuration("active.ini")
+nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+# }}}
+# {{{create filename and save to config file
+date = datetime.now().strftime("%y%m%d")
+config_dict["type"] = "Var_Tau"
+config_dict["date"] = date
+config_dict["echo_counter"] += 1
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+# }}}
+# {{{set phase cycling
 phase_cycling = True
-coherence_pathway = [('ph1',1),('ph2',-2)]
-date = datetime.now().strftime('%y%m%d')
 if phase_cycling:
+    ph1_cyc = r_[0, 1, 2, 3]
+    ph2_cyc = r_[0, 2]
     nPhaseSteps = 8
 if not phase_cycling:
+    ph1_cyc = 0.0
+    ph2_cyc = 0.0
     nPhaseSteps = 1
-#{{{ note on timinzag
+# }}}    
+# {{{ note on timing
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
-#}}}
-p90 = 3.8
-deadtime = 10.0
-repetition = 3e6
-
-SW_kHz = 24
-nPoints = 1024*2
-
-acq_time = nPoints/SW_kHz # ms
-tau_adjust_range = r_[1e3:30e3:1000]
-deblank = 1.0
-tau = 5e3#deadtime + acq_time*1e3*(1./8.) + tau_adjust_range
+# }}}
+# {{{check total points
+total_pts = nPoints * nPhaseSteps
+assert total_pts < 2 ** 14, (
+    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
+    % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
+)
+# }}}
+tau = config_dict['deadtime'] + config_dict['acq_time_ms']*1e3*(1./8.) +tau_adjust_range
 tau_axis = tau
-pad = 0
-#pad = 2.0*tau - deadtime - acq_time*1e3 - deblank
-#{{{ setting acq_params dictionary
-acq_params = {}
-acq_params['adcOffset'] = adcOffset
-acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['amplitude'] = amplitude
-acq_params['nScans'] = nScans
-acq_params['nEchoes'] = nEchoes
-acq_params['p90_us'] = p90
-acq_params['deadtime_us'] = deadtime
-acq_params['repetition_us'] = repetition
-acq_params['SW_kHz'] = SW_kHz
-acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust_range
-acq_params['deblank_us'] = deblank
-acq_params['tau_us'] = tau
-#acq_params['pad_us'] = pad 
-if phase_cycling:
-    acq_params['nPhaseSteps'] = nPhaseSteps
-#}}}
-print(("ACQUISITION TIME:",acq_time,"ms"))
-data_length = 2*nPoints*nEchoes*nPhaseSteps
-for index,val in enumerate(tau_adjust_range):
-    tau_adjust = val # us
+# }}}
+# {{{ acquire varied tau data
+var_tau_data = run_spin_echo(
+    nScans = config_dict["nScans"],
+    indirect_idx = 0,
+    indirect_len = len(tau_adjust_range),
+    ph1_cyc = ph1_cyc,
+    ph2_cyc = ph2_cyc,
+    adcOffset = config_dict["adc_offset"],
+    carrierFreq_MHz = config_dict["carrierFreq_MHz"],
+    nPoints = nPoints,
+    nEchoes = config_dict["nEchoes"],
+    p90_us = config_dict["p90_us"],
+    repetition_us = config_dict["repetition_us"],
+    tau_us = tau,
+    SW_kHz = config_dict["SW_kHz"],
+    indirect_fields = ("tau_adjust","tau"),
+    ret_data = None,
+)
+mytau_axis = var_tau_data.getaxis("indirect")
+mytau_axis[0]["tau_adjust"] = tau_adjust
+mytaus_axis[0]["tau"] = tau
+# {{{run varied tau
+for tau_idx, val in enumerate(tau_adjust_range[1:]):
+    tau_adjust = val  # us
     # calculate tau each time through
-    tau = deadtime + acq_time*1e3*(1./8.) + tau_adjust
-    print("***")
-    print("INDEX %d - TAU %f"%(index,tau))
-    print("***")
-    SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-    acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps) #ms
-    acq_params['acq_time_ms'] = acq_time
-    SpinCore_pp.init_ppg();
-    if phase_cycling:
-        SpinCore_pp.load([
-            ('marker','start',1),
-            ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
-            ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-    if not phase_cycling: 
-        SpinCore_pp.load([
-            ('marker','start',nScans),
-            ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,0.0),
-            ('delay',tau),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',2.0*p90,0.0),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
-            ('jumpto','start')
-            ])
-    SpinCore_pp.stop_ppg();
-    if phase_cycling:
-        for x in range(nScans):
-            print("SCAN NO. %d"%(x+1))
-            SpinCore_pp.runBoard();
-    if not phase_cycling:
-        SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
-    raw_data.astype(float)
-    data = []
-    # according to JF, this commented out line
-    # should work same as line below and be more effic
-    #data = raw_data.view(complex128)
-    data[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
-    print("COMPLEX DATA ARRAY LENGTH:",shape(data)[0])
-    print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
-    dataPoints = float(shape(data)[0])
-    time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-    data = nddata(array(data),'t')
-    data.setaxis('t',time_axis).set_units('t','s')
-    data.name('signal')
-    if index == 0:
-        var_tau_data = ndshape([len(tau_adjust_range),len(time_axis)],['tau','t']).alloc(dtype=complex128)
-        var_tau_data.setaxis('tau',tau_axis*1e-6).set_units('tau','s')
-        var_tau_data.setaxis('t',time_axis).set_units('t','s')
-    var_tau_data['tau',index] = data
-SpinCore_pp.stopBoard();
-print("EXITING...\n")
-print("\n*** *** ***\n")
-save_file = True
-while save_file:
+    tau = (
+        config_dict["deadtime_us"]
+        + config_dict["acq_time_ms"] * 1e3 * (1.0 / 8.0)
+        + tau_adjust
+    )
+    var_tau_data = run_spin_echo(
+            nScans = config_dict["nScans"],
+            indirect_idx = tau_idx+1,
+            indirect_len = len(tau_adjust_range),
+            ph1_cyc = ph1_cyc,
+            ph2_cyc = ph2_cyc,
+            adcOffset = config_dict["adc_offset"],
+            carrierFreq_MHz = config_dict["carrierFreq_MHz"],
+            nPoints = nPoints,
+            nEchoes = config_dict["nEchoes"],
+            p90_us = config_dict["p90_us"],
+            repetition_us = config_dict["repetition_us"],
+            tau_us = tau,
+            SW_kHz = config_dict["SW_kHz"],
+            indirect_fields = ("tau_adjust","tau"),
+            ret_data = var_tau_data,
+        )
+        mytau_axis = var_tau_data.getaxis("indirect")
+        mytau_axis[tau_idx+1]["tau_adjust"] = tau_adjust
+        mytaus_axis[tau_idx+1]["tau"] = tau
+if phase_cycling:
+    var_tau_data.chunk("t", ["ph1", "ph2","t2"], [len(ph1_cyc),len(ph2_cyc) -1])
+    var_tau_data.setaxis("ph1", ph1_cyc)
+    var_tau_data.setaxis("ph2", ph2_cyc)
+    if config_dict["nScans"] > 1:
+        var_tau_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    var_tau_data.reorder(["ph1", "ph2", "nScans", "t2"])
+    var_tau_data.squeeze()
+    var_tau_data.set_units("t2", "s")
+    fl.next("Raw - time")
+    fl.image(
+        var_tau_data.C.mean("nScans"))
+    var_tau_data.reorder("t2", first=False)
+    for_plot = var_tau_data.C
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1', 'ph2'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
+    )
+else:
+    if config_dict["nScans"] > 1:
+        var_tau_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    var_tau_data.rename("t", "t2")
+    fl.next("Raw - time")
+    fl.image(
+        var_tau_data.C.mean("nScans"))
+    var_tau_data.reorder("t2", first=False)
+    for_plot = var_tau_data.C
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
+    fl.image(for_plot)
+var_tau_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
+var_tau_data.set_prop("postproc_type","SpinCore_var_tau_v1") #still needs to be added to load_Data
+var_tau_data.set_prop("acq_params", config_dict.asdict())
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/var_tau")
+filename_out = filename + ".h5"
+nodename = var_tau_data.name()
+if os.path.exists(f"{filename_out}"):
+    print("this file already exists so we will add a node to it!")
+    with h5py.File(
+        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+    ) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp_var_tau")
+            var_tau_data.name("temp_var_tau")
+            nodename = "temp_var_tau"
+        var_tau_data.hdf5_write(f"{filename_out}", directory=target_directory)
+else:
     try:
-        print("SAVING FILE...")
-        var_tau_data.set_prop('acq_params',acq_params)
-        var_tau_data.name('var_tau')
-        var_tau_data.hdf5_write(date+'_'+output_name+'.h5')
-        print("Name of saved data",var_tau_data.name())
-        print("Units of saved data",var_tau_data.get_units('t'))
-        print("Shape of saved data",ndshape(var_tau_data))
-        save_file = False
-    except Exception as e:
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(output_name) is not 0:
-            var_tau_data.hdf5_write(date+'_'+output_name+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
-        else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
-        save_file = False
-fl.next('raw data')
-fl.image(var_tau_data)
-var_tau_data.ft('t',shift=True)
-fl.next('FT raw data')
-fl.image(var_tau_data)
+        var_tau_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_var_tau.h5 in the current directory"
+        )
+        if os.path.exists("temp_var_tau.h5"):
+            print("there is a temp_var_tau.h5 already! -- I'm removing it")
+            os.remove("temp_var_tau.h5")
+            var_tau_data.hdf5_write("temp_var_tau.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp_var_tau.h5 to the correct name!!"
+            )
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", var_tau_data.name()))
+config_dict.write()
 fl.show()
-

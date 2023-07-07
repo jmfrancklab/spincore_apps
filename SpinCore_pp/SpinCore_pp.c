@@ -41,17 +41,10 @@ DWORD error_catch(int error, int line_number)
 
 int configureTX(int adcOffset, double carrierFreq_MHz, double* tx_phases, int nPhases, double amplitude, unsigned int nPoints){
     int j;
-    printf("***");
-    printf("RECEIVED %d TX PHASES...\n",nPhases);
-    for(j=0;j<nPhases;j++){
-        printf("%f\n",tx_phases[j]);
-    }
     double freqs[1] = {carrierFreq_MHz};
     double amp[1] = {amplitude};
     ERROR_CATCH( spmri_init() );
-    printf("SpinAPI initialized...");
     ERROR_CATCH( spmri_set_defaults() );
-    printf("Set to defaults...");
     ERROR_CATCH( spmri_set_adc_offset(adcOffset));
     ERROR_CATCH( spmri_set_frequency_registers( freqs, 1));
     // ERROR_CATCH( spmri_set_phase_registers( phases, 1 ));
@@ -75,12 +68,8 @@ double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, uns
                 &dec_amount
                 ));
     double actual_SW = (adcFrequency_MHz * 1e6) / (double) dec_amount;
-    printf("Decimation: %d\n", dec_amount);
-    printf("Actual SW: %f Hz\n", actual_SW);
     double acq_time = nPoints / actual_SW * 1000.0;
-    printf("Acq time: %f ms\n", acq_time);
     int nSegments = nEchoes*nPhaseSteps;
-    printf("Number of segements (i.e., buffers): %d\n",nSegments);
     if(nPoints*nEchoes*nPhaseSteps > 16384){
         printf("WARNING: TRYING TO ACQUIRE TOO MANY POINTS THAN BOARD CAN STORE.\n");
     }
@@ -100,7 +89,6 @@ int init_ppg(){
 	// printf("imw_sin_phase_bits: %d\n",cur_board->imw_sin_phase_bits);
 	// printf("imw_cos_phase_bits: %d\n",cur_board->imw_cos_phase_bits);
     ERROR_CATCH(spmri_start_programming());
-    printf("Initializing pulse programming...\n");
     return 0;
 }
 
@@ -130,7 +118,6 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
     int error_status;
     if (strcmp(str_label,"pulse")==0){
         error_status = 0;
-        printf("PULSE: length %0.1f us phase %0.1f\n",firstarg,secondarg);
         /* COMMAND FOR PROGRAMMING RF PULSE */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -142,7 +129,6 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
                     ));
     }else if (strcmp(str_label,"pulse_TTL")==0){
         error_status = 0;
-        printf("TRIGGERED PULSE: length %0.1f us phase %0.1f\n",firstarg,secondarg);
         /* COMMAND FOR PROGRAMMING RF PULSE */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -158,7 +144,6 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
             error_status = 1;
             error_message = "PHASE RESET tuples should only be 'phase_reset' followed by the delay";
         }
-        printf("PHASE RESET: length %0.1f us\n",firstarg);
         /* COMMAND FOR RESETTING PHASE */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -184,7 +169,6 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
 
             error_message = "ACQUIRE tuples should only be 'acquire' followed by length of acquisition time";
         }
-        printf("ACQUIRE: length %0.1f ms\n",firstarg);
         /* COMMAND FOR PROGRAMMING DELAY */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -200,7 +184,6 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
             error_status = 1;
             error_message = "DELAY tuples should only be 'delay' followed by the delay";
         }
-        printf("DELAY: length %g s\n",firstarg/1e6);
         /* COMMAND FOR PROGRAMMING DELAY */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -216,7 +199,6 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
             error_status = 1;
             error_message = "DELAY tuples should only be 'delay' followed by the delay";
         }
-        printf("TRIGGERED DELAY: length %0.1f us \n",firstarg);
         /* COMMAND FOR PROGRAMMING DELAY */
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
@@ -228,12 +210,9 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
                     ));
     }else if (strcmp(str_label,"marker")==0){
         error_status = 0;
-        printf("MARKER: label %d, %d times\n",(int) firstarg,(double) secondarg);
-        printf("READING TO MEMORY...\n");
         int label = (int) firstarg;
         unsigned int nTimes = (int) secondarg;
         ERROR_CATCH(spmri_read_addr( &jump_addresses[label] ));
-        printf("BEGINNING LOOP INSTRUCTION, jump address %04x...\n",jump_addresses[label]);
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
                     0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
@@ -242,16 +221,13 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
                     // PB: flags = TTL low (off), data, opcode -- listed in radioprocessor g manual, delay
                     0x00,nTimes,LOOP,1.0*us
                     ));
-        printf("ENDING LOOP INSTRUCTION...\n");
     }else if (strcmp(str_label,"jumpto")==0){
         error_status = 0;
         if(secondarg != 0){
             error_status = 1;
             error_message = "JUMPTO tuples should only provide label to which you wish to jump";
         }
-        printf("JUMPTO: label %d\n",(int) firstarg);
         int label = (int) firstarg;
-        printf("BEGINNING END_LOOP INSTRUCTION, marker address %04x...\n",jump_addresses[label]);
         ERROR_CATCH(spmri_mri_inst(
                     // DAC: Amplitude, DAC Select, Write, Update, Clear
                     0.0,ALL_DACS,DO_WRITE,DO_UPDATE,DONT_CLEAR,
@@ -260,7 +236,6 @@ int ppg_element(char *str_label, double firstarg, int secondarg){ /*takes 3 vars
                     // PB: flags = TTL low (off), data, opcode -- listed in radioprocessor g manual, delay
                     0x00,jump_addresses[label],END_LOOP,1.0*us
                     ));
-        printf("ENDING END_LOOP INSTRUCTION...\n");
     }else{
         error_status = 1;
         error_message = "unknown ppg element";
@@ -275,7 +250,6 @@ char *exception_info() {
 int runBoard()
 {
     ERROR_CATCH(spmri_start());
-    printf("Board is running...\n");
     int done = 0;
     int last_scan = 0;
     int status;
@@ -287,38 +261,30 @@ int runBoard()
         if( status == 0x01 ) {
             done = 1; }
         else if(current_scan != last_scan) {
-            printf("Current scan: %d\n", current_scan);
         last_scan = current_scan;
         }
         }
-    printf("Scan completed.\n");
     return 0;
 }
 
-void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps, char* output_name){
+void getData(int* output_array, int length, unsigned int nPoints, unsigned int nEchoes, unsigned int nPhaseSteps){
     int* real = malloc(nPoints * nEchoes * nPhaseSteps * sizeof(int));
     int* imag = malloc(nPoints * nEchoes * nPhaseSteps * sizeof(int));
     int j;
     int index=0;
-    printf("Reading data...\n");
     ERROR_CATCH(spmri_read_memory(real, imag, nPoints*nEchoes*nPhaseSteps));
-    printf("Read data. Creating array...\n");
     for( j = 0 ; j < nPoints*nEchoes*nPhaseSteps ; j++){
         output_array[index] = real[j];
         output_array[index+1] = imag[j];
         index = index+2;
     }
-    printf("Finished getting data.\n");
     free(real);
     free(imag);
     return;
 }
 
 void stopBoard(){
-    printf("Calling STOP BOARD...\n");
-    //pause();
     ERROR_CATCH(spmri_stop());
-    printf("Stopped pulse program. Reset board.\n");
     return;
 }
 
@@ -328,13 +294,11 @@ void tune(double carrier_freq)
     // Initialize MRI SpinAPI
     ERROR_CATCH( spmri_init() );
 
-    printf("SpinAPI initialized.\n");
     // Set all values on board to default values
     ERROR_CATCH( spmri_set_defaults() );
 
     // Carrier Frequency Registers
     // previously hard-coded carrier 14.902344
-    printf("I'm using a carrier frequency of %0.6f", carrier_freq);
     double freq[1] = {carrier_freq};
     ERROR_CATCH( spmri_set_frequency_registers( freq, 1 ) );
 
@@ -347,8 +311,6 @@ void tune(double carrier_freq)
     ERROR_CATCH( spmri_set_amplitude_registers( amp, 1 ) );
     
     // ** Program Board **
-    printf("RPG match/tune in time domain \n\n");
-    printf("FREQUENCY: %lf \n",freq[0]);
     // Signal board that ready to start sending it instructions
     ERROR_CATCH( spmri_start_programming() );
     // Read current memory address for ability to return back to this point later on in the program
@@ -427,12 +389,9 @@ void tune(double carrier_freq)
                1.0 * us // delay
                ));
 
-   printf("Board programmed.\n");
-
    // Starts the pulse program stored on board
    ERROR_CATCH(spmri_start());
 
-   printf("Board is running...\n");
 
    pause();
 
@@ -464,7 +423,7 @@ int adc_offset_readData(int adc_offset, double* peak)
 	
 	dc_value = 0;
 	for( i = 0 ; i < ADC_OFFSET_NUM_POINTS ; i++ ) {
-        //printf("for adc offset %d, point %d, I get %d\n",adc_offset,i,real[i]);
+        ////printf("for adc offset %d, point %d, I get %d\n",adc_offset,i,real[i]);
 		dc_value += real[i];
 	}
 	
@@ -487,14 +446,14 @@ int adc_offset(int argc, char *argv[])
 
 
     if(max_offset_result==0 && min_offset_result==0){
-        printf("both max and min offset results are 0 -- try using an adc offset of 0\n");
+        //printf("both max and min offset results are 0 -- try using an adc offset of 0\n");
         return 0;
     }
 	
 	double theoretical_adc_offset = (0 - min_offset_result) / (max_offset_result - min_offset_result) * (ADC_OFFSET_MAX - ADC_OFFSET_MIN) + ADC_OFFSET_MIN;
 	int test_offset = round( theoretical_adc_offset );
 	
-	printf("Correct ADC offset = %d\n", test_offset);
+	//printf("Correct ADC offset = %d\n", test_offset);
 	
 	return test_offset;
 }

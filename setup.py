@@ -19,7 +19,7 @@ for j in ["conda_libs","spincore"]:
 ext_modules.append(Extension(name='SpinCore_pp._SpinCore_pp',
     sources = ["SpinCore_pp/SpinCore_pp.i", "SpinCore_pp/SpinCore_pp.c"],
     define_macros = [('ADD_UNDERSCORE',None)],
-    # flags from compile_SpinCore_pp.sh
+    #  flags from compile_SpinCore_pp.sh
     extra_compile_args = [
         "-shared",
         "-DMS_WIN64",
@@ -46,4 +46,6 @@ setup(
         "pyserial>=3.0",
         ],
     ext_modules = ext_modules,
+    entry_points=dict(console_scripts=
+            ['calc_tempol_vd=SpinCore_pp.calc_vdlist:print_tempo_vdlist'],)
 )

@@ -14,184 +14,81 @@
 
 from pylab import *
 from pyspecdata import *
-import os
-import sys
+import os,sys
 import SpinCore_pp
 from datetime import datetime
 import numpy as np
 from Instruments.XEPR_eth import xepr
-fl = figlist_var()
-#{{{ Verify arguments compatible with board
-def verifyParams():
-    if (nPoints > 16*1024 or nPoints < 1):
-        print("ERROR: MAXIMUM NUMBER OF POINTS IS 16384.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
-        print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
-        print("ERROR: PULSE TIME TOO SMALL.")
-        print("EXITING.")
-        quit()
-    else:
-        print("VERIFIED PULSE TIME.")
-    return
+raise RuntimeError("This pulse program has been updated to use active.ini, but not the ppg functions..  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")fl = figlist_var()
+#{{{importing acquisition parameters
+config_dict = SpinCore_pp.configuration('active.ini')
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
 #}}}
-
-output_name = '150uM_TEMPOL_TempProbe_oilFlow_varSTE'
-node_name = 'tau_36dBm'
-
-adcOffset = 29
-
-user_sets_Freq = True
-user_sets_Field = True
-
-#{{{ set field here
-if user_sets_Field:
-    # You must enter field set on XEPR here
-    true_B0 = 3456.8
-    print("My field in G should be %f"%true_B0)
-#}}}
-#{{{let computer set field
-if not user_sets_Field:
-    desired_B0 = 3488.9
-    with xepr() as x:
-        true_B0 = x.set_field(desired_B0)
-        print("My field in G is %f"%true_B0)
-#}}}
-#{{{ set frequency here
-if user_sets_Freq:
-    carrierFreq_MHz = 14.686622
-    print("My frequency in MHz is",carrierFreq_MHz)
-#}}}
-#{{{ let computer set frequency
-if not user_sets_Freq:
-    gamma_eff = (14.824903/3489.4)
-    carrierFreq_MHz = gamma_eff*true_B0
-    print("My frequency in MHz is",carrierFreq_MHz)
+#{{{create filename and save to config file
+date = datetime.now().strftime('%y%m%d')
+config_dict['type'] = 'varied_echo'
+config_dict['date'] = date
+config_dict['echo_counter'] += 1
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 #}}}
 tx_phases = r_[0.0,90.0,180.0,270.0]
-amplitude = 1.0
-nScans = 1
-nEchoes = 1
 phase_cycling = True
 coherence_pathway = [('ph1',1),('ph2',-2)]
-date = datetime.now().strftime('%y%m%d')
 nPhaseSteps = 8
 #{{{ note on timing
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 #}}}
-p90 = 1.781
-deadtime = 10
-repetition = 15e6
-
-SW_kHz = 24
-nPoints = 1024*2
-
-acq_time = nPoints/SW_kHz # ms
-tau_adjust = 0
-deblank = 1.0
 tau1 = 2
-print(("ACQUISITION TIME:",acq_time,"ms"))
-print(("TAU 1 DELAY:",tau1,"us"))
-data_length = 2*nPoints*nEchoes*nPhaseSteps
+data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
 tau2_range = linspace(6000.,100000.,15,endpoint=False)
-#tau2_range = linspace(6000.,100000.,3,endpoint=False)
-#{{{ setting acq_params dictionary
-acq_params = {}
-acq_params['adcOffset'] = adcOffset
-acq_params['carrierFreq_MHz'] = carrierFreq_MHz
-acq_params['Ffield_G'] = true_B0
-acq_params['amplitude'] = amplitude
-acq_params['nScans'] = nScans
-acq_params['nEchoes'] = nEchoes
-acq_params['p90_us'] = p90
-acq_params['deadtime_us'] = deadtime
-acq_params['repetition_us'] = repetition
-acq_params['SW_kHz'] = SW_kHz
-acq_params['nPoints'] = nPoints
-acq_params['tau_adjust_us'] = tau_adjust
-acq_params['deblank_us'] = deblank
-acq_params['tau1_us'] = tau1
-acq_params['tau2_us'] = tau2_range
-acq_params['nPhaseSteps'] = nPhaseSteps
-#}}}
 for tau2_index,tau2_val in enumerate(tau2_range):
     for x in range(nScans):
         tau2 = tau2_val
-        print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
-        print("INDEX %d - TAU 2 VAL %f"%(tau2_index,tau2_val))
-        print("\n*** *** ***\n")
-        print("CONFIGURING TRANSMITTER...")
-        SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-        print("\nTRANSMITTER CONFIGURED.")
-        print("***")
-        print("CONFIGURING RECEIVER...")
-        acq_time = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
-        acq_params['acq_time_ms'] = acq_time
-        # acq_time is in msec!
-        print(("ACQUISITION TIME IS",acq_time,"ms"))
-        verifyParams()
-        print("\nRECEIVER CONFIGURED.")
-        print("***")
-        print("\nINITIALIZING PROG BOARD...\n")
+        SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
+                tx_phases, config_dict['amplitude'], nPoints)
         SpinCore_pp.init_ppg();
-        print("PROGRAMMING BOARD...")
-        print("\nLOADING PULSE PROG...\n")
         SpinCore_pp.load([
             ('marker','start',1),
             ('phase_reset',1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph1',r_[0,2]),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',config_dict['p90_us'],'ph1',r_[0,2]),
             ('delay',tau1),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph2',r_[0,2]),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',config_dict['p90_us'],'ph2',r_[0,2]),
             ('delay',tau2),
-            ('delay_TTL',deblank),
-            ('pulse_TTL',p90,'ph3',r_[0,2]),
-            ('delay',deadtime),
-            ('acquire',acq_time),
-            ('delay',repetition),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',config_dict['p90_us'],'ph3',r_[0,2]),
+            ('delay',config_dict['deadtime_us']),
+            ('acquire',config_dict['acq_time_ms']),
+            ('delay',config_dict['repetition_us']),
             ('jumpto','start')
             ])
-        print("\nSTOPPING PROG BOARD...\n")
         SpinCore_pp.stop_ppg();
-        print("\nRUNNING BOARD...\n")
         SpinCore_pp.runBoard();
-        raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+        raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
         raw_data.astype(float)
         data_array = []
         data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-        print(("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0]))
-        print(("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0]))
         dataPoints = float(np.shape(data_array)[0])
         if x == 0 and tau2_index == 0:
-            time_axis = np.linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
-            data = ndshape([len(tau2_range),len(data_array),nScans],['tau2','t','nScans']).alloc(dtype=np.complex128)
+            time_axis = np.linspace(0.0,config_dict['nEchoes']*nPhaseSteps
+                    *config_dict['acq_time_ms']*1e-3,dataPoints)
+            data = ndshape([len(tau2_range),len(data_array),config_dict['nScans']],['tau2','t','nScans']).alloc(dtype=np.complex128)
             data.setaxis('t',time_axis).set_units('t','s')
-            data.setaxis('nScans',r_[0:nScans])
+            data.setaxis('nScans',r_[0:config_dict['nScans']])
             data.setaxis('tau2',tau2_range).set_units('tau2','s')
-            data.name(node_name)
-            data.set_prop('acq_params',acq_params)
+            data.name(config_dict['type']+'_'+config_dict['echo_counter'])
+            data.set_prop('acq_params',config_dict.asdict())
         data['nScans',x]['tau2',tau2_index] = data_array
 SpinCore_pp.stopBoard();
-print("EXITING...")
-print("\n*** *** ***\n")
+config_dict.write()
 save_file = True
 while save_file:
     try:
-        print("SAVING FILE IN TARGET DIRECTORY...")
-        data.hdf5_write(date+'_'+output_name+'.h5',
+        data.hdf5_write(filename+'.h5',
                 directory=getDATADIR(exp_type='ODNP_NMR_comp/STE'))
-        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data",data.name()))
         print(("Units of saved data",data.get_units('t')))
         print(("Shape of saved data",ndshape(data)))
@@ -201,9 +98,9 @@ while save_file:
         print("\nEXCEPTION ERROR.")
         print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
         print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(output_name) is not 0:
-            data.hdf5_write(date+'_'+output_name+'.h5')
+        filename = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
+        if len(filename) is not 0:
+            data.hdf5_write(filename+'.h5')
             print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
             break
         else:
@@ -211,19 +108,13 @@ while save_file:
             print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
             print("*** *** ***\n")
             break
-
 data.set_units('t','data')
-print(ndshape(data))
-print(" *** *** *** ")
-print("My field in G is %f"%true_B0)
-print("My frequency in MHz is",carrierFreq_MHz)
-print(" *** *** *** ")
 data.chunk('t',['ph3','ph2','ph1','t2'],[2,2,2,-1])
 data.setaxis('ph2',r_[0.,2.]/4)
 data.setaxis('ph2',r_[0.,2.]/4)
 data.setaxis('ph1',r_[0.,2.]/4)
 if nScans > 1:
-    data.setaxis('nScans',r_[0:nScans])
+    data.setaxis('nScans',r_[0:config_Dict['nScans']])
 fl.next('image')
 data.mean('nScans')
 fl.image(data)
@@ -235,4 +126,4 @@ data.ft(['ph1','ph2','ph3'])
 fl.image(data)
 fl.next('image - ft, coherence, exclude FID')
 fl.image(data['ph1',1]['ph3',-1])
-fl.show();quit()
+fl.show()

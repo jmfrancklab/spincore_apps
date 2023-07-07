@@ -130,7 +130,7 @@ for scan_num in range(nScans):
         SpinCore_pp.runBoard(); 
         runtime = time.time()-start
         logger.debug(strm("for vd",vd/1e6," s run time is",runtime))
-        raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+        raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
         raw_data.astype(float)
         data = []
         # according to JF, this commented out line
