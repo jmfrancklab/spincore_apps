@@ -1,3 +1,7 @@
+""" Generate an appropriately spaced power axis for a progressive saturation
+============================================================================
+Using an estimated p_1/2 (can be set in the configuration file), an appropriately spaced power axis is generated so that the linear regime of a progressive saturation is not skipped over.
+"""
 from pyspecdata import *
 from SpinCore_pp.power_helper import Ep_spacing_from_phalf
 from SpinCore_pp.config_parser_fn import configuration

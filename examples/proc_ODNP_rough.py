@@ -11,6 +11,7 @@ odnp_counter = 1
 
 ....
 ```
+where the parameters are those of the desired dataset
 """
 from numpy import empty
 import pylab as plt
@@ -34,13 +35,12 @@ with figlist_var() as fl:
     config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["type"] = "ODNP"
     filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}"
-    Ep = find_file(
-        filename,
-        exp_type="ODNP_NMR_comp/ODNP",
-        expno='enhancement'),
-    assert Ep.get_units("t2") is not None, "bad data file!  units of s for t2 should be stored in nddata!"
-    Ep.rename('indirect','power')
-    Ep.reorder(['ph1','power'])
+    Ep = (find_file(filename, exp_type="ODNP_NMR_comp/ODNP", expno="enhancement"),)
+    assert (
+        Ep.get_units("t2") is not None
+    ), "bad data file!  units of s for t2 should be stored in nddata!"
+    Ep.rename("indirect", "power")
+    Ep.reorder(["ph1", "power"])
     if nScans in Ep.dimlabels:
         Ep.mean("nScans")
     fl.next("raw Ep")
@@ -56,7 +56,7 @@ with figlist_var() as fl:
             filename,
             exp_type="ODNP_NMR_comp/ODNP",
             expno=nodename,
-            postproc=IR_postproc,
+            postproc="spincore_IR_v1",
             lookup=lookup_table,
         )
         IR.reorder(["ph1", "ph2", "nScans", "vd", "t2"])

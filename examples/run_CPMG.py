@@ -67,22 +67,36 @@ assert total_pts < 2 ** 14, (
 # }}}
 # {{{run cpmg
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-data = run_cpmg(
-    nScans = config_dict["nScans"],
-    indirect_idx = 0,
-    indirect_len = 1,
-    ph1_cyc = ph1_cyc,
-    adcOffset = config_dict["adc_offset"],
-    carrierFreq_MHz = config_dict["carrierFreq_MHz"],
-    nPoints = nPoints,
-    nEchoes = config_dict["nEchoes"],
-    p90_us = config_dict["p90_us"],
-    repetition_us = config_dict["repetition_us"],
-    tau_us = config_dict["tau_us"],
-    SW_kHz = config_dict["SW_kHz"],
-    pad_start_us = pad_start,
-    pad_end_us = pad_end,
-    ret_data = None,
+data = generic(
+        ppg_list = [
+                ("phase_reset", 1),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
+                ("delay", config_dict["tau_us"]),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+                ("delay", config_dict["deadtime_us"]),
+                ("delay", pad_start_us),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", pad_end_us),
+                ("marker", "echo_label", (config_dict["nEchoes"] - 1)),  # 1 us delay
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+                ("delay", config_dict["deadtime_us"]),
+                ("delay", pad_start_us),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", pad_end_us),
+                ("jumpto", "echo_label"),  # 1 us delay
+                ("delay", config_dict["repetition_us"]),
+            ],
+        nScans = config_dict["nScans"],
+        indirect_idx = 0,
+        indirect_len = 1,
+        adcOffset = config_dict["adc_offset"],
+        carrierFreq_MHz = config_dict["carrierFreq_MHz"],
+        nPoints = nPoints,
+        SW_kHz = config_dict["SW_kHz"],
+        ret_data = None,
 )
 # }}}
 # {{{ chunk and save data
