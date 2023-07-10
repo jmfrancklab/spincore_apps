@@ -1,8 +1,8 @@
 """Automated Combined DNP with Log
 ==================================
 This needs to be run in sync with the power control server. To do so:
-    1. Open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py. When this is ready to go you will see it say "I am listening".
-    2. The experiment starts with the B12 off. It collects your IR at no power along with a series of "control" thermals. These can be used for diagnosing issues with the enhancement thermal.
+    1. Open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py which allows the bruker electromagnet to communicate with the ppg. When this is ready to go you will see the terminal say "I am listening".
+    2. The experiment starts with the B12 off. It collects your IR at no power along with a series of "control" thermals. These can be used for diagnosing issues with the enhancement thermal, for example, if microwaves are leaking into the cavity.
     3. You will then be prompted to turn the B12 and the power control server on. To turn the power control server on, open a new terminal and type "FLInst server",
         wait until you see "I am listening" before continuing with the experiment.
     At the end of the experiment you will have a series of FIR experiments, a progressive power saturation dataset, and a log of the power over time saved as nodes in an h5 file.
@@ -68,7 +68,7 @@ dB_settings = gen_powerlist(
 T1_powers_dB = gen_powerlist(
     config_dict["max_power"], config_dict["num_T1s"], three_down=False
 )
-T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
+T1_node_names = ["FIR_%0.1fdBm" % j for j in T1_powers_dB]
 logger.info("dB_settings", dB_settings)
 logger.info("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 logger.info("T1_powers_dB", T1_powers_dB)
@@ -119,6 +119,7 @@ control_thermal = run_spin_echo(
     repetition_us=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
+    indirect_fields = ("start_times", "stop_times")
     ret_data=None,
 ) 
 if config_dict["thermal_nScans"] > 1:
@@ -144,7 +145,7 @@ except:
         os.remove("temp_ctrl.h5")
         target_directory = os.path.getcwd()
         filename = "temp_ctrl.h5"
-        DNP_data.hdf5_write(filename, directory=target_directory)
+        DNP_data.hdf5_write(f'{filename}', directory=target_directory)
         final_log.append("change the name accordingly once this is done running!")
 # }}}
 logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
@@ -205,8 +206,8 @@ vd_data.hdf5_write(filename, directory=target_directory)
 logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", vd_data.name()))
 # }}}
-# {{{run enhancement
 input("Now plug the B12 back in and start up the FLInst power control server so we can continue!")
+# {{{run enhancement
 with power_control() as p:
     # JF points out it should be possible to save time by removing this (b/c we
     # shut off microwave right away), but AG notes that doing so causes an
@@ -283,7 +284,7 @@ with power_control() as p:
         )
         time_axis_coords[j + thermal_scans]["stop_times"] = time.time()
     DNP_data.set_prop("stop_time", time.time())
-    DNP_data.set_prop("postproc_type", "spincore_ODNP_v4")
+    DNP_data.set_prop("postproc_type", Ep_postproc)
     DNP_data.set_prop("acq_params", config_dict.asdict())
     DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     if phase_cycling:
