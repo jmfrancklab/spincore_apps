@@ -1,4 +1,3 @@
-# {{{ note on phase cycling
 """
 CPMG with microwaves
 ====================
@@ -47,7 +46,10 @@ from Instruments import Bridge12, prologix_connection, gigatronics
 from datetime import datetime
 import time
 import h5py
-raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
+
+raise RuntimeError(
+    "This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!"
+)
 
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -102,20 +104,34 @@ tau_us = twice_tau / 2.0
 config_dict["tau_us"] = tau_us
 # }}}
 # {{{run CPMG
-cpmg_data = run_cpmg(
+cpmg_data = generic(
+    ppg_list=[
+        ("phase_reset", 1),
+        ("delay_TTL", config_dict["deblank_us"]),
+        ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
+        ("delay", config_dict["tau_us"]),
+        ("delay_TTL", config_dict["deblank_us"]),
+        ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+        ("delay", config_dict["deadtime_us"]),
+        ("delay", pad_start_us),
+        ("acquire", config_dict["acq_time_ms"]),
+        ("delay", pad_end_us),
+        ("marker", "echo_label", (config_dict["nEchoes"] - 1)),  # 1 us delay
+        ("delay_TTL", config_dict["deblank_us"]),
+        ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+        ("delay", config_dict["deadtime_us"]),
+        ("delay", pad_start_us),
+        ("acquire", config_dict["acq_time_ms"]),
+        ("delay", pad_end_us),
+        ("jumpto", "echo_label"),  # 1 us delay
+        ("delay", config_dict["repetition_us"]),
+    ],
     nScans=config_dict["nScans"],
     indirect_idx=0,
     indirect_len=len(powers) + 1,
-    ph1_cyc=ph1_cyc,
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
-    nEchoes=config_dict["nEchoes"],
-    p90_us=config_dict["p90_us"],
-    repetition_us=config_dict["repetition_us"],
-    pad_start_us=pad_start,
-    pad_end_us=pad_end,
-    tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
@@ -124,9 +140,12 @@ with Bridge12() as b:
     b.set_wg(True)
     b.set_rf(True)
     b.set_amp(True)
-    this_return = b.lock_on_dip(ini_range=
-            (config_dict['uw_dip_center_GHz']-config_dict['uw_dip_width_GHz']/2,
-                config_dict['uw_dip_center_GHz']+config_dict['uw_dip_width']/2))
+    this_return = b.lock_on_dip(
+        ini_range=(
+            config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+            config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width"] / 2,
+        )
+    )
     dip_f = this_return[2]
     print("Frequency", dip_f)
     b.set_freq(dip_f)
@@ -165,23 +184,37 @@ with Bridge12() as b:
             with gigatronics(prologix_instance=p, address=7) as g:
                 meter_powers[j] = g.read_power()
                 print("POWER READING", meter_powers[j])
-        run_cpmg(
+        generic(
+            ppg_list=[
+                ("phase_reset", 1),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
+                ("delay", config_dict["tau_us"]),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+                ("delay", config_dict["deadtime_us"]),
+                ("delay", pad_start_us),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", pad_end_us),
+                ("marker", "echo_label", (config_dict["nEchoes"] - 1)),  # 1 us delay
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+                ("delay", config_dict["deadtime_us"]),
+                ("delay", pad_start_us),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", pad_end_us),
+                ("jumpto", "echo_label"),  # 1 us delay
+                ("delay", config_dict["repetition_us"]),
+            ],
             nScans=config_dict["nScans"],
             indirect_idx=j + 1,
             indirect_len=len(powers) + 1,
-            ph1_cyc=ph1_cyc,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
-            nEchoes=config_dict["nEchoes"],
-            p90_us=config_dict["p90_us"],
-            repetition_us=config_dict["repetition_us"],
-            pad_start_us=pad_start,
-            pad_end_us=pad_end,
-            tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
-            output_name=filename,
-            ret_data=cpmg_data,
+            indirect_fileds=("p90_idx", "p90_us"),
+            ret_data=None,
         )
         last_power = this_power
 # }}}
@@ -195,29 +228,26 @@ if phase_cycling:
     cpmg_data.squeeze()
     cpmg_data.set_units("t2", "s")
     fl.next("Raw - time")
-    fl.image(
-        cpmg_data.C.mean("nScans"))
+    fl.image(cpmg_data.C.mean("nScans"))
     cpmg_data.reorder("t2", first=False)
     for_plot = cpmg_data.C
-    for_plot.ft('t2',shift=True)
-    for_plot.ft(['ph1'], unitary = True)
-    fl.next('FTed data')
-    fl.image(for_plot.C.mean("nScans")
-    )
+    for_plot.ft("t2", shift=True)
+    for_plot.ft(["ph1"], unitary=True)
+    fl.next("FTed data")
+    fl.image(for_plot.C.mean("nScans"))
 else:
     if config_dict["nScans"] > 1:
         cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    cpmg_data.rename('t','t2')
+    cpmg_data.rename("t", "t2")
     fl.next("Raw - time")
-    fl.image(
-        cpmg_data.C.mean("nScans"))
+    fl.image(cpmg_data.C.mean("nScans"))
     cpmg_data.reorder("t2", first=False)
     for_plot = cpmg_data.C
-    for_plot.ft('t2',shift=True)
-    fl.next('FTed data')
+    for_plot.ft("t2", shift=True)
+    fl.next("FTed data")
     fl.image(for_plot)
 cpmg_data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
-cpmg_data.set_prop("acq_params", config_dict.asdict()
+cpmg_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
 nodename = cpmg_data.name()
