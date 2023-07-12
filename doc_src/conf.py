@@ -52,12 +52,12 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     #'IPython.sphinxext.ipython_console_highlighting',
     #'IPython.sphinxext.ipython_directive',
-    'sphinx_gallery.gen_gallery',
+    #'sphinx_gallery.gen_gallery',
 ]
 
 sphinx_gallery_conf = {
         'examples_dirs': '../examples', #path to examples scripts
-        'gallery_dirs': 'auto_examples', #path to where to save gallery generated output
+        #'gallery_dirs': 'auto_examples', #path to where to save gallery generated output
         'filename_pattern': '.py', # modified to make more general
         }
 autosummary_generate = True

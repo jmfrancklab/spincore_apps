@@ -36,13 +36,9 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="_static/plot_directive.css" type="text/css" />
   <link rel="stylesheet" href="_static/gallery_custom.css" type="text/css" />
-  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  <link rel="stylesheet" href="_static/gallery-binder.css" type="text/css" />
-  <link rel="stylesheet" href="_static/gallery-dataframe.css" type="text/css" />
-  <link rel="stylesheet" href="_static/gallery-rendered-html.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Lowest level" href="intro.html" /> 
+    <link rel="next" title="&lt;no title&gt;" href="intro.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -92,10 +88,6 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">SpinCore Example Gallery</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Lowest level</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#first-level-in-this-repo">First level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#second-level-in-this-repo">Second level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#top-level">Top level</a></li>
 </ul>
 
             
@@ -164,19 +156,15 @@
 <h1>Welcome to Spincore_applications’s documentation!<a class="headerlink" href="#welcome-to-spincore-applications-s-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">SpinCore Example Gallery</a><ul>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Lowest level</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#first-level-in-this-repo">First level in this repo</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#second-level-in-this-repo">Second level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="intro.html#top-level">Top level</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">SpinCore Example Gallery</a></li>
 </ul>
 </div>
 <p>This is the documentation for a set of programs to run various experiments such as Inversion recover, ODNP, and CPMG based on the <a class="reference external" href="https://jmfrancklab.github.io/pyspecdata">pyspecdata</a> module.</p>
-<p>To <strong>jump into examples</strong>, click
+<p>The programs are made to utilize a global configuration file that contains all necessary parameters for a given experiment such as the repetition delay, the dwell time, spectral width, the 90 time of the probe, even deblanking times and deadtimes, and much more.</p>
+<p>The generic pulse program works by taking a list of tuples as an argument (along with the other parameters you can specify by implementing the configuration file. These tuples include but are not limited to the pulses, markers, delay times, and deblanking times.</p>
+<p>Phase cycling is an important part of our labs data acquisition and so of course, we have this implemented for pulse programming! The pulses mentioned inside the tuple for pulse programming easily automates phase cycling by making a phase cycle label (e.g., ‘ph1’,’ph2’) as a str followed by an array that contains the indices (i.e., registers) of the phases you want to use. These indices are specified in the numpy array ‘tx_phases’. Our example for ‘run_CPMG_mw.py’ gives an excellent example of how you can adjust the phase cycling.</p>
+<p>Since ODNP is a central experiment to our lab we have the general outline of tuning our probe in the cavity using gds_for_tune.py which pulls the desired NMR frequency we wish to tune to from the configuration file. This is then followed by running a Hahn echo that calculates the proper field using the gamma_eff_mhz_g parameter in the configuration file. By adjusting this parameter we stay at the NMR frequency we tuned to but the field is shifted to get the signal on resonance. We then find the ESR frequency (GHz) of the hyperfine by running a general field sweep at a set power using ‘run_field_dep_just_mw.py’. We find our desired frequency, retune and then run the one ‘combined_ODNP.py’ script that automates a log to collect powers at all times, runs a progressive saturation, and collects a specified number of IR at evenly spaced powers (all pulled from the configuration file). In total this ODNP experiment takes about an hour using these scripts.
+To <strong>jump into examples</strong>, click
 <a class="reference internal" href="auto_examples/index.html#sphx-glr-auto-examples"><span class="std std-ref">here</span></a>.</p>
 <p>To understand the structure of the experiments and code,
 start on the <a class="reference internal" href="intro.html"><span class="doc">intro</span></a> page, or browse the documentation to the left.</p>
@@ -190,7 +178,7 @@ start on the <a class="reference internal" href="intro.html"><span class="doc">i
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="intro.html" class="btn btn-neutral float-right" title="Lowest level" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="intro.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>

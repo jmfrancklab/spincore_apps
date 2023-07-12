@@ -59,7 +59,7 @@ Calculates the ADC offset of the SpinCore transceiver board and automatically ap
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  0.010 seconds)
+   **Total running time of the script:** ( 0 minutes  0.011 seconds)
 
 
 .. _sphx_glr_download_auto_examples_adc_offset.py:

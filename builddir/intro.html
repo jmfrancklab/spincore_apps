@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Lowest level &mdash; spincore_apps 0.9 documentation</title>
+  <title>&lt;no title&gt; &mdash; spincore_apps 0.9 documentation</title>
   
 
   
@@ -36,10 +36,6 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="_static/plot_directive.css" type="text/css" />
   <link rel="stylesheet" href="_static/gallery_custom.css" type="text/css" />
-  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  <link rel="stylesheet" href="_static/gallery-binder.css" type="text/css" />
-  <link rel="stylesheet" href="_static/gallery-dataframe.css" type="text/css" />
-  <link rel="stylesheet" href="_static/gallery-rendered-html.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="SpinCore Example Gallery" href="auto_examples/index.html" />
@@ -91,14 +87,8 @@
               
             
             
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">SpinCore Example Gallery</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Lowest level</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#first-level-in-this-repo">First level in this repo</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="#second-level-in-this-repo">Second level in this repo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#top-level">Top level</a></li>
 </ul>
 
             
@@ -144,7 +134,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Lowest level</li>
+      <li>&lt;no title&gt;</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -163,7 +153,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <p>If you’re uncertain, start with examples!</p>
+  <p>This repo gives examples of how we can interface with SpinCore to produce practical experiments to collect data for inversion recovery, ODNP, Hahn echoes, CPMG and more. The basic format of the scripts relies on 3 basic ppgs in SpinCore_pp: a standard echo, inversion recovery, and a generic ppg that allows the user to create a ppg of their own. All scripts utilize a central configuration file called active.ini. This script carries all the information any of the experiments will require! The configuration file contains parameters such as the dwell time, spectral width, power steps in dB, maximum set power, and repetition delays. So, when one goes to run an experiment, all that’s needed is the configuration file and the example script to run the desired experiment. We supply several examples on how to apply these scripts.</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">SpinCore Example Gallery</a><ul>
@@ -171,89 +161,6 @@
 </li>
 </ul>
 </div>
-<p>The processing is structured into multiple levels.</p>
-<section id="lowest-level">
-<h1>Lowest level<a class="headerlink" href="#lowest-level" title="Permalink to this headline">¶</a></h1>
-<p>At the lowest level lives <a class="reference external" href="http://jmfrancklab.github.io/pyspecdata">pySpecData</a>, which
-provides an object-oriented structure (nddata) for
-storing all information about code (<em>e.g.</em> data, error,
-axes, units, and names of dimensions) in a single
-“container” (technically called an “object”), as well
-as routines (“methods”) for manipulating that data
-(doing things like Fourier transforming, taking sums,
-etc. etc.).
-pySpecData provides a fundamentally unique was of
-dealing with spectroscopic data in Python
-(it enables things like <code class="docutils literal notranslate"><span class="pre">d['t2':(0.1,0.5)]</span></code> to slice
-out times from 0.1 to 0.5 s, automatic relabeling of
-axes during a Fourier transform, and automatic
-propagation of error, to name a few).
-If there are more efficient ways of dealing with axes,
-specifying data slices, dealing with Fourier <em>vs.</em>
-time-domain data, these are all implemented at the
-pySpecData level (which lives in a different repository
-than the application scripts here).</p>
-</section>
-<section id="first-level-in-this-repo">
-<h1>First level in this repo<a class="headerlink" href="#first-level-in-this-repo" title="Permalink to this headline">¶</a></h1>
-<p>Currently, we have the following modules that provide
-functions intended to be reused.  We will refer to
-these as “first level” routines:</p>
-<div class="toctree-wrapper compound">
-</div>
-</section>
-<section id="second-level-in-this-repo">
-<h1>Second level in this repo<a class="headerlink" href="#second-level-in-this-repo" title="Permalink to this headline">¶</a></h1>
-<p>We are currently in the process of identifying the most
-up to date code that does each of the following tasks,
-and each will be separated into a function inside an
-appropriate module, and added to the previous list.
-At least parts of this should be relevant to most
-data processing tasks involving ODNP or relaxometry.
-We will refer to these as “second level”
-routines, since they use the “first level” routines:</p>
-<ul class="simple">
-<li><p>load raw data, and put into appropriately shaped nddata (whether
-Bruker or Spincore) → most up to date is in the processing code
-associated with ODNP aquisition, which currently lives in
-<code class="docutils literal notranslate"><span class="pre">run_Hahn_echo_mw.py</span></code> in <code class="docutils literal notranslate"><span class="pre">spincore_apps/SpinCore_pp</span></code></p></li>
-<li><p>Convert short spin echoes into appropriately sliced and phased FIDs
-→ most up to date in <code class="docutils literal notranslate"><span class="pre">proc_echo_mw.py</span></code></p></li>
-<li><p>Integrate and phase the integrals → most up to date in <code class="docutils literal notranslate"><span class="pre">proc_IR.py</span></code></p></li>
-<li><p>Fit the integrals with a relevant curve → Sam’s version of
-<code class="docutils literal notranslate"><span class="pre">proc_echo_mw.py</span></code></p></li>
-<li><p>Any potentially reusable code in the Q test code → <code class="docutils literal notranslate"><span class="pre">proc_square_refl.py</span></code></p></li>
-</ul>
-</section>
-<section id="top-level">
-<h1>Top level<a class="headerlink" href="#top-level" title="Permalink to this headline">¶</a></h1>
-<p>Finally, we will construct higher-level functions, all
-in a single module, that utilize these to</p>
-<span class="target" id="module-toplevel"></span><p>(<em>e.g.</em>) process an ODNP dataset, process a <sup>2</sup>H
-CPMG relaxometry dataset, <em>etc.</em></p>
-<p>These are the <em>top level</em> routines, because they use
-second-level routines.  For the sake of organization,
-there are <strong>only three levels</strong> of functions,
-and all the top level functions live in <code class="docutils literal notranslate"><span class="pre">toplevel.py</span></code>.
-(The top level functions will replace the current
-independent processing scripts).</p>
-<p>The idea is that these <strong>only</strong> accept file names and
-simple numbers and true-false values are arguments.
-They should consist <strong>mostly or entirely</strong> of
-second-level functions.
-The idea is that you would call these either from a GUI
-or from your notebook directory.</p>
-<p>Scripts to be converted to top level functions:</p>
-<ul class="simple">
-<li><p>proc_CPMG.py</p></li>
-<li><p>proc_echo_mw.py</p></li>
-<li><p>proc_Hahn_echoph.py</p></li>
-<li><p>proc_IR.py</p></li>
-<li><p>proc_IR_noecho.py</p></li>
-<li><p>proc_nutation.py</p></li>
-<li><p>proc_square_refl.py</p></li>
-</ul>
-</section>
 
 
            </div>

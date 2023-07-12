@@ -436,7 +436,7 @@ This needs to be run in sync with the power control server. To do so:
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  0.017 seconds)
+   **Total running time of the script:** ( 0 minutes  0.016 seconds)
 
 
 .. _sphx_glr_download_auto_examples_combined_ODNP.py:

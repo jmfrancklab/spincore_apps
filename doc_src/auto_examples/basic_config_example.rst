@@ -121,7 +121,7 @@ Demonstration of the basic functions and usage of the configuration file includi
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  0.006 seconds)
+   **Total running time of the script:** ( 0 minutes  0.005 seconds)
 
 
 .. _sphx_glr_download_auto_examples_basic_config_example.py:
