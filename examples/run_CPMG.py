@@ -10,7 +10,7 @@ from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp
-from SpinCore_pp.ppg import run_cpmg
+from SpinCore_pp.ppg import generic
 import os
 from datetime import datetime
 import h5py
@@ -103,34 +103,7 @@ data = generic(
 )
 # }}}
 # {{{ chunk and save data
-if phase_cycling:
-    data.chunk("t", ["ph1", "echo", "t2"], [len(ph1_cyc), config_dict["nEchoes"], -1])
-    data.setaxis("ph1", ph1_cyc / 4)
-    data.setaxis("echo", r_[0 : config_dict["nEchoes"]])
-    if config_dict["nScans"] > 1:
-        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    data.squeeze()
-    data.set_units("t2", "s")
-    fl.next("Raw - time")
-    fl.image(data.C.mean("nScans"))
-    data.reorder("t2", first=False)
-    for_plot = data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary=True)
-    fl.next("FTed data")
-    fl.image(for_plot.C.mean("nScans"))
-else:
-    if config_dict["nScans"] > 1:
-        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    data.rename("t", "t2")
-    fl.next("Raw - time")
-    fl.image(data.C.mean("nScans"))
-    data.reorder("t2", first=False)
-    for_plot = echo_data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
-    fl.image(for_plot)
-data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
+idata.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.set_prop("postproc_type", "spincore_CPMGv2")
 data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")

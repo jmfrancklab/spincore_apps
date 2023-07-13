@@ -8,6 +8,7 @@ from pyspecdata import *
 from numpy import *
 from datetime import datetime
 import SpinCore_pp
+from SpinCore_pp.ppg import generic
 import h5py
 
 fl = figlist_var()
@@ -95,7 +96,7 @@ for index, val in enumerate(p90_range):
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
             SW_kHz=config_dict["SW_kHz"],
-            indirect_fileds=("p90_idx", "p90_us"),
+            indirect_fields=("p90_idx", "p90_us"),
             ret_data=None,
         )
         p90_axis = data.getaxis("indirect")
@@ -137,30 +138,6 @@ for index, val in enumerate(p90_range):
         p90_axis[index + 1]["p90_us"] = p90
 # }}}
 # {{{Save data
-data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
-data.setaxis("ph1", ph1_cyc / 4)
-if config_dict["nScans"] > 1:
-    data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-if phase_cycling:
-    fl.next("Raw - time")
-    fl.image(data.C.mean("nScans"))
-    data.reorder("t2", first=False)
-    for_plot = data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary=True)
-    fl.next("FTed data")
-    fl.image(for_plot.C.mean("nScans"))
-else:
-    if config_dict["nScans"] > 1:
-        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    data.rename("t", "t2")
-    fl.next("Raw - time")
-    fl.image(data.C.mean("nScans"))
-    data.reorder("t2", first=False)
-    for_plot = data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
-    fl.image(for_plot)
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")

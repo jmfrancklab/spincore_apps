@@ -219,27 +219,44 @@ with power_control() as p:
     p.mw_off()
     time.sleep(16.0) #give some time for the power source to "settle"
     p.start_log()
-    DNP_data = None # initially, there is no data, and run_spin_echo knows how to deal with this
-    #Run the actual thermal where the power log is recording. This will be your thermal for enhancement and can be compared to previous thermals if issues arise
     for j in range(thermal_scans):
         DNP_ini_time = time.time()
         # call B/C to run spin echo
-        DNP_data = run_spin_echo(
-            nScans=config_dict["nScans"],
-            indirect_idx=j,
-            indirect_len=len(powers) + thermal_scans,
-            adcOffset=config_dict["adc_offset"],
-            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=nPoints,
-            nEchoes=config_dict["nEchoes"],
-            ph1_cyc=Ep_ph1_cyc,
-            p90_us=config_dict["p90_us"],
-            repetition_us=config_dict["repetition_us"],
-            tau_us=config_dict["tau_us"],
-            SW_kHz=config_dict["SW_kHz"],
-            indirect_fields=("start_times", "stop_times"),
-            ret_data=DNP_data,
-        )
+        if j == 0:
+            DNP_data = run_spin_echo(
+                nScans=config_dict["nScans"],
+                indirect_idx=j,
+                indirect_len=len(powers) + thermal_scans,
+                adcOffset=config_dict["adc_offset"],
+                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+                nPoints=nPoints,
+                nEchoes=config_dict["nEchoes"],
+                ph1_cyc=Ep_ph1_cyc,
+                p90_us=config_dict["p90_us"],
+                repetition_us=config_dict["repetition_us"],
+                tau_us=config_dict["tau_us"],
+                SW_kHz=config_dict["SW_kHz"],
+                indirect_fields=("start_times", "stop_times"),
+                ret_data=None,
+            )
+            time_axis_coords = DNP_data.getaxis('indirect')
+        else:
+             DNP_data = run_spin_echo(
+                nScans=config_dict["nScans"],
+                indirect_idx=j,
+                indirect_len=len(powers) + thermal_scans,
+                adcOffset=config_dict["adc_offset"],
+                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+                nPoints=nPoints,
+                nEchoes=config_dict["nEchoes"],
+                ph1_cyc=Ep_ph1_cyc,
+                p90_us=config_dict["p90_us"],
+                repetition_us=config_dict["repetition_us"],
+                tau_us=config_dict["tau_us"],
+                SW_kHz=config_dict["SW_kHz"],
+                indirect_fields=("start_times", "stop_times"),
+                ret_data=None,
+            )
         DNP_thermal_done = time.time()
         time_axis_coords[j]["start_times"] = DNP_ini_time
         time_axis_coords[j]["stop_times"] = DNP_thermal_done
