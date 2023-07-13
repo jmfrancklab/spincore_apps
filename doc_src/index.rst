@@ -4,22 +4,51 @@
    contain the root `toctree` directive.
 
 Welcome to Spincore_applications's documentation!
-=================================================
++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. toctree::
    :maxdepth: 1
 
    intro
 
-This is the documentation for a set of programs to run various experiments such as Inversion recover, ODNP, and CPMG based on the `pyspecdata <https://jmfrancklab.github.io/pyspecdata>`_ module.
+This is the documentation for a set of programs to run various experiments such as Inversion recover, ODNP, and CPMG based on the `pyspecdata <https://jmfrancklab.github.io/pyspecdata>`_ module and the SpinCore RadioProcessor-G transceiver board.
 
-The programs are made to utilize a global configuration file that contains all necessary parameters for a given experiment such as the repetition delay, the dwell time, spectral width, the 90 time of the probe, even deblanking times and deadtimes, and much more. 
+The configuration file - "config file"
+--------------------------------------
+The configuration file (called "active.ini" in our examples directory) is central to all pulse programming presented here. In this file all parameters needed for an experiment (aside from the actual pulse program) are included. For example, the repetition delay, spectral width, dwell times, the desired maximum power, and number of scans. A parser then uses this configuration file to communicate the settings to the pulse program experiment. 
 
-The generic pulse program works by taking a list of tuples as an argument (along with the other parameters you can specify by implementing the configuration file. These tuples include but are not limited to the pulses, markers, delay times, and deblanking times. 
+The pulse programs
+------------------
+There are three ppg options available: a standard echo, an inversion recovery, and a generic option that allows the user to create their own. The generic option takes the parameters from the configuration file as well as a list of tuples describing the element types of the desired experiment (e.g., pulses, markers, delays, etc.). There is an excellent example on how it might be used for CPMG experiments in the example directory. With this structure, pulse sequences for more extensive experiments like DQF-COSY can be created in minutes!
 
-Phase cycling is an important part of our labs data acquisition and so of course, we have this implemented for pulse programming! The pulses mentioned inside the tuple for pulse programming easily automates phase cycling by making a phase cycle label (e.g., 'ph1','ph2') as a str followed by an array that contains the indices (i.e., registers) of the phases you want to use. These indices are specified in the numpy array 'tx_phases'. Our example for 'run_CPMG_mw.py' gives an excellent example of how you can adjust the phase cycling.
+Phase cycling is an important part of our labs data acquisition and so of course, we have phase cycling can be implemented and automated for pulse programming! In order to automate phase cycling in the pule sequence, provide both a phase cycle label (e.g., 'ph1', or 'ph2') as a str and an array containing the indices (i.e. registers) of the phases you wish to use that are specified in the numpy array 'tx_phases'.Note that specifying the same phase cycle label will loop the corresponding phase steps together, regardless of whether the indices are the same or not.
+e.g.,
+The following::
+    ('pulse',2.0,'ph1',r_[0,1]),
+    ('delay',1.5),
+    ('pulse',2.0,'ph1',r_[2,3])
+  will provide two transients with phases of the two pulses (p1,p2):
+    (0,2)
+    (1,3)
+whereas the following::
+    ('pulse',2.0,'ph1',r_[0,1]),
+    ('delay',1.5),
+    ('pulse',2.0,'ph2',r_[2,3])
+  will provide four transients with phases of the two pulses (p1,p2):
+    (0,2)
+    (0.3)
+    (1,2)
+    (1,3)
+The total number of transients that will be collected are determined by both nScans (from your configuration file) and the number of steps calculated in the phase cycle as shown above. Thus for nScans = 1, the SpinCore will trigger 2 times in the first case and 4 times in the second case. For nScans = 2, the SpinCore will trigger 4 times in the first case and 8 times in the second case.
 
-Since ODNP is a central experiment to our lab we have the general outline of tuning our probe in the cavity using gds_for_tune.py which pulls the desired NMR frequency we wish to tune to from the configuration file. This is then followed by running a Hahn echo that calculates the proper field using the gamma_eff_mhz_g parameter in the configuration file. By adjusting this parameter we stay at the NMR frequency we tuned to but the field is shifted to get the signal on resonance. We then find the ESR frequency (GHz) of the hyperfine by running a general field sweep at a set power using 'run_field_dep_just_mw.py'. We find our desired frequency, retune and then run the one 'combined_ODNP.py' script that automates a log to collect powers at all times, runs a progressive saturation, and collects a specified number of IR at evenly spaced powers (all pulled from the configuration file). In total this ODNP experiment takes about an hour using these scripts.
+Example of how the Franck lab collects ODNP data
+------------------------------------------------
+#. Tune the NMR probe to the desired RF frequency using ``gds_for_tune.py``
+#. Get on NMR resonance with ``run_Hahn_echo.py`` - this is actually pretty neat - because we tuned to a specific NMR carrier frequency (specified in the config file) we don't want to change the carrier frequency to get on resonance - rather we adjust the "gamma_eff_mhz_g" parameter in the configuration file which is then used to shift the *field* instead to get us on resonance. As the name implies this is our ratio of the carrier frequency in MHz to the field in G.
+#. We run a field sweep to identify the ratio of resonance frequencies for NMR and ESR using ``run_field_dep_just_mw.py``
+#. We then get on resonance to that ratio of the resonant frequency of the cavity again using ``run_Hahn_echo.py``
+#. Finally a fully automated ODNP experiment is performed that logs the power output by the microwaves throughout the experiment. It collects the progressive saturation to capture the enhancement as a function of power as well as inversion recovery datasets collected at evenly spaced powers along the power axis used in the progressive saturation. This is all done using ``combined_ODNP.py``.   
+
 To **jump into examples**, click
 :ref:`here <sphx_glr_auto_examples>`.
 
