@@ -1,6 +1,6 @@
 """Run Inversion Recovery at set power
 ======================================
-A standard inversion recovery experiment that utilizes parameters in the configuration file to create an evenly spaced appropriate vdlist. The user can adjust the desired power using the 'max_power' parameter in the configuration file.
+A standard inversion recovery experiment that utilizes parameters in the configuration file to create an evenly spaced appropriate vdlist. The user can adjust the desired power using the 'max_power' parameter in the configuration file. In order to properly set the powers the FLInst server needs to be running to communicate with the B12.
 """
 from pyspecdata import *
 import os
@@ -33,16 +33,16 @@ if not phase_cycling:
     nPhaseSteps = 1
 # }}}
 # {{{ Parameters for Bridge12
-powers = r_[config_dict["max_power"]]
+power = r_[config_dict["max_power"]]
 min_dBm_step = 0.5
-for x in range(len(powers)):
-    dB_settings = (
-        round(10 * (log10(powers[x]) + 3.0) / min_dBm_step) * min_dBm_step
+for x in range(len(power)):
+    dB_setting = (
+        round(10 * (log10(power[x]) + 3.0) / min_dBm_step) * min_dBm_step
     )  # round to nearest min_dBm_step
-print("dB_settings", dB_settings)
-print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
+print("dB_setting", dB_setting)
+print("correspond to power in Watts", 10 ** (dB_setting / 10.0 - 3))
 input("Look ok?")
-powers = 1e-3 * 10 ** (dB_settings / 10.0)
+power = 1e-3 * 10 ** (dB_setting / 10.0)
 # }}}
 
 # {{{make vd list
@@ -70,18 +70,15 @@ with power_control() as p:
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
     dip_f /= 1e9
-    p.set_power(dB_settings)
+    p.set_power(dB_setting)
     for k in range(10):
         time.sleep(0.5)
-        if p.get_power_setting() >= dB_settings:
+        if p.get_power_setting() >= dB_setting:
             break
-    if p.get_power_setting() < dB_settings:
+    if p.get_power_setting() < dB_setting:
         raise ValueError("After 10 tries, this power has still not settled")
-    meter_powers = np.zeros_like(dB_settings)
-    with xepr() as x_server:
-        first_B0 = x_server.set_field(field_axis[0])
-        time.sleep(3.0)
-        carrierFreq_MHz = config_dict["gamma_eff_MHz_G"] * first_B0
+    time.sleep(5)
+    meter_power = p.get_power_setting()
     vd_data = None
     for vd_idx, vd in enumerate(vd_list_us):
         vd_data = run_IR(
@@ -101,8 +98,14 @@ with power_control() as p:
             SW_kHz=config_dict["SW_kHz"],
             ret_data=vd_data,
         )
+    final_frq = p.dip_lock(
+        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
+    )
 # }}}
 # {{{ chunk and save data
+vd_data.rename("indirect", "vd")
+vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
 if phase_cycling:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph1), len(ph2), -1])
     vd_data.setaxis("ph1", ph1 / 4)
@@ -111,7 +114,7 @@ if phase_cycling:
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     vd_data.reorder(["ph1", "ph2", "vd", "t2"])
     vd_data.squeeze()
-    vd.data.set_uits("t2", "s")
+    vd_data.set_units("t2", "s")
     fl.next("Raw - time")
     fl.image(vd_data)
     for_plot = vd_data.C
@@ -130,7 +133,9 @@ else:
     for_plot.ft("t2", shift=True)
     fl.next("FTed data")
     fl.image(for_plot)
-vd_data.name(config_dict["type"] + "_" + str(config_dict["ir_counter"]))
+vd_data.name(
+    config_dict["type"] + "_" + str(dB_setting) + "_" + str(config_dict["ir_counter"])
+)
 vd_data.set_prop("postproc_type", "Spincore_IR_v1")
 vd_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/inv_rec")

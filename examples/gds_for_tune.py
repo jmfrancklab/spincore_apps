@@ -24,21 +24,22 @@ import numpy as np
 
 parser_dict = SpinCore_pp.configuration("active.ini")
 carrier_frequency = parser_dict["carrierFreq_MHz"]
-print(
-    "I'm using the carrier frequency of %f entered into your active.ini"
-    % carrier_frequency
+logger.info(
+    strm(
+        "I'm using the carrier frequency of %f entered into your active.ini"
+        % carrier_frequency
+    )
 )
-
-print("")
+logger.info(strm(""))
 input(
     "Please note I'm going to assume the control is hooked up to CH1 of the GDS and the reflection is hooked up to CH2 of the GDS... (press enter to continue)"
 )
 
 fl = figlist_var()
 
-print("These are the instruments available:")
+logger.info("These are the instruments available:")
 SerialInstrument(None)
-print("done printing available instruments")
+logger.info("done printing available instruments")
 
 
 def grab_waveforms(g):
@@ -117,12 +118,12 @@ with figlist_var() as fl:
             d.hdf5_write("201020_sol_probe_1.h5")
             try_again = False
         except Exception as e:
-            print(e)
-            print("name taken, trying again...")
+            logger.info(strm(e))
+            logger.infor(strm("name taken, trying again..."))
             try_again = True
-    print(("name of data", d.name()))
-    print(("units should be", d.get_units("t")))
-    print(("shape of data", ndshape(d)))
+    logger.info(strm("name of data", d.name()))
+    logger.info(strm("units should be", d.get_units("t")))
+    logger.info(strm("shape of data", ndshape(d)))
     fl.next("waveforms")
     fl.plot(d, alpha=0.1)
     fl.plot(abs(d), alpha=0.5, linewidth=3)

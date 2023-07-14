@@ -36,7 +36,7 @@ if not phase_cycling:
     ph1_cyc = 0.0
     nPhaseSteps = 1
 # }}}
-# {{{better tau
+# {{{better tau for a perfectly symmetric echo
 marker = 1.0  # 10/10/22 → what is this? → pretty sure the time needed to execute the marker command
 pad_start = config_dict["tau_extra_us"] - config_dict["deadtime_us"]
 pad_end = (
@@ -102,7 +102,7 @@ data = generic(
     ret_data=None,
 )
 # }}}
-# {{{ chunk and save data
+# {{{ save data
 idata.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.set_prop("postproc_type", "spincore_CPMGv2")
 data.set_prop("acq_params", config_dict.asdict())
@@ -136,4 +136,3 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
-fl.show()

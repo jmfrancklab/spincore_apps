@@ -1,3 +1,7 @@
+"""Inversion recovery with a stimulated echo
+============================================
+Inversion recovery followed by stimulated echo with a linearly spaced vd list made based off of parameters in the configuration file
+"""
 from pylab import *
 from pyspecdata import *
 import os, sys
@@ -10,9 +14,6 @@ import h5py
 
 fl = figlist_var()
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/inv_rec")
-raise RuntimeError(
-    "This pulse program has been updated to use active.ini, but not the ppg functions..  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!"
-)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
@@ -43,11 +44,20 @@ with xepr() as x:
     print("field set to ", Field)
 # }}}
 # {{{phase cycling
-tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-nPhaseSteps = 8
+phase_cycling = True
+if phase_cycling:
+    ph1_cyc = r_[0, 2]
+    ph2_cyc = r_[0, 2]
+    ph3_cyc = r_[0, 2]
+    nPhaseSteps = 8
+else:
+    ph1_cyc = 0.0
+    ph2_cyc = 0.0
+    ph3_cyc = 0.0
+    nPhaseSteps = 1
 # }}}
 # {{{ note on timing
-# putting all times in microseconds
+# putting all times in mic
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
 # }}}
@@ -70,88 +80,102 @@ vd_list_us = (
 print(("TAU 1 DELAY:", tau1, "us"))
 print(("TAU 2 DELAY:", tau2, "us"))
 data_length = 2 * nPoints * nEchoes * nPhaseSteps
+vd_data = None
 for vd_index, vd_val in enumerate(vd_list):
-    for x in range(nScans):
-        vd = vd_val
-        SpinCore_pp.configureTX(
-            config_dict["adcOffset"],
-            config_dict["carrierFreq_MHz"],
-            tx_phases,
-            config_dict["amplitude"],
-            nPoints,
+    vd_data = generic(
+        ppg_list=[
+            ("marker", "start", 1),
+            ("phase_reset", 1),
+            ("delay_TTL", config_dict["deblank_us"]),
+            ("pulse_TTL", 2.0 * config_dict["p90_us"], 0),
+            ("delay", vd),
+            ("delay_TTL", config_dict["deblank_us"]),
+            ("pulse_TTL", config_dict["p90_us"], "ph1", phy_cyc),
+            ("delay", tau1),
+            ("delay_TTL", config_dict["deblank_us"]),
+            ("pulse_TTL", config_dict["p90_us"], "ph2", ph2_cyc),
+            ("delay", tau2),
+            ("delay_TTL", config_dict["deblank_us"]),
+            ("pulse_TTL", config_dict["p90_us"], "ph3", ph3_cyc),
+            ("delay", config_dict["deadtime_us"]),
+            ("acquire", config_dict["acq_time_ms"]),
+            ("delay", config_dict["repetition_us"]),
+            ("jumpto", "start"),
+        ],
+        nScans=config_dict["nScans"],
+        indirect_idx=0,
+        indirect_len=1,
+        adcOffset=config_dict["adc_offset"],
+        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+        nPoints=nPoints,
+        SW_kHz=config_dict["SW_kHz"],
+        ret_data=vd_data,
+    )
+    vd_data.set_prop("acq_params", config_dict.asdict())
+    vd_data.rename("indirect", "vd")
+    vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
+    if phase_cycling:
+        vd_data.chunk(
+            "t",
+            ["ph1", "ph2", "ph3", "t2"],
+            [len(ph1_cyc), len(ph2_cyc), len(ph3_cyc), -1],
         )
-        SpinCore_pp.init_ppg()
-        SpinCore_pp.load(
-            [
-                ("marker", "start", 1),
-                ("phase_reset", 1),
-                ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0),
-                ("delay", vd),
-                ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", config_dict["p90_us"], "ph1", r_[0, 2]),
-                ("delay", tau1),
-                ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", config_dict["p90_us"], "ph2", r_[0, 2]),
-                ("delay", tau2),
-                ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", config_dict["p90_us"], "ph3", r_[0, 2]),
-                ("delay", config_dict["deadtime_us"]),
-                ("acquire", config_dict["acq_time_ms"]),
-                ("delay", config_dict["repetition_us"]),
-                ("jumpto", "start"),
-            ]
-        )
-        SpinCore_pp.stop_ppg()
-        SpinCore_pp.runBoard()
-        raw_data = SpinCore_pp.getData(
-            data_length, nPoints, config_dict["nEchoes"], nPhaseSteps
-        )
-        raw_data.astype(float)
-        data_array = []
-        data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
-        dataPoints = float(np.shape(data_array)[0])
-        if x == 0 and vd_index == 0:
-            time_axis = np.linspace(
-                0.0,
-                config_dict["nEchoes"]
-                * nPhaseSteps
-                * config_dict["acq_time_ms"]
-                * 1e-3,
-                dataPoints,
-            )
-            data = ndshape(
-                [len(vd_list), len(data_array), nScans], ["vd", "t", "nScans"]
-            ).alloc(dtype=np.complex128)
-            data.setaxis("t", time_axis).set_units("t", "s")
-            data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-            data.setaxis("vd", vd_list)
-            data.name(config_dict["type"])
-            data.set_prop("acq_params", config_dict.asdict())
-        data["nScans", x]["vd", vd_index] = data_array
-SpinCore_pp.stopBoard()
-data.name(config_dict["type"])
+        vd_data.setaxis("ph1", ph1_cyc / 4)
+        vd_data.setaxis("ph2", ph2_cyc / 4)
+        vd_data.setaxis("ph3", ph3_cyc / 4)
+    else:
+        vd_data.rename("t", "t2")
+    if configdict["nScans"] > 1:
+        vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    vd_data.reorder(["ph1", "ph2", "ph3", "nScans", "vd", "t2"])
+    vd_data.squeeze()
+    vd_datan.set_units("t2", "s")
+    fl.next("Raw data - time domain")
+    fl.image(vd_data)
+    for_plot = vd_data.C
+    for_plot.ft("t2", shift=True)
+    for_plot.ft(["ph1", "ph2", "ph3"], unitary=True)
+    fl.next("Raw data - frequency domain")
+    fl.image(for_plot)
 # }}}
 # {{{ save data
-config_dict.write()
+vd_data.name(config_dict["type"])
 nodename = data.name()
 filename_out = filename + ".h5"
-with h5py.File(
-    os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
-) as fp:
-    if nodename in fp.keys():
+if os.path.exists(f"{filename_out}"):
+    print("this file already exists so we will add a node to it!")
+    with h5py.File(
+        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+    ) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp_IR_STE")
+            vd_data.name("temp_IR_STE")
+            nodename = "temp_IR_STE"
+    vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+else:
+    try:
+        vd_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
         print(
-            "this nodename already exists, so I will call it temp_IR_STE_%d"
-            % config_dict["ir_counter"]
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_IR_STE.h5 in the current directory"
         )
-        data.name("temp_IR_STE_%d" % config_dict["ir_counter"])
-        nodename = "temp_IR_STE_%d" % config_dict["ir_counter"]
-        data.hdf5_write(f"{filename_out}", directory=target_directory)
-    else:
-        data.hdf5_write(f"{filename_out}", directory=target_directory)
+        if os.path.exists("temp_IR_STE.h5"):
+            print("there is a temp_IR_STE.h5 already! -- I'm removing it")
+            os.remove("temp_IR_STE.h5")
+            echo_data.hdf5_write("temp_IR_STE.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp_IR_STE.h5 to the correct name!!"
+            )
+        if os.path.exists("temp_IR_STE.h5"):
+            print("there is a temp_IR_STE.h5 -- I'm removing it")
+            os.remove("temp_IR_STE.h5")
+        vd_data.hdf5_write("temp_IR_STE.h5")
+        print(
+            "if I got this far, that probably worked -- be sure to move/rename temp_IR_STE.h5 to the correct name!!"
+        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data", data.name()))
-print(("Shape of saved data", ndshape(data)))
+print(("Name of saved data", vd_data.name()))
+config_dict.write()
 # }}}
 # {{{ image data
 data.set_units("t", "data")

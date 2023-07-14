@@ -1,6 +1,6 @@
 """
 An example of rough processing for ODNP -- this is designed to automatically pull the last dataset acquired.
-
+Ideally this is run immediately after data acquisition to check things out and make sure the data acquisition was successful.
 For an example of how this works, if you have *not* just run a dataset, set the following key/values in your active.ini:
 ```
 [file_names]
@@ -13,9 +13,6 @@ odnp_counter = 1
 ```
 where the parameters are those of the desired dataset
 """
-from numpy import empty
-import pylab as plt
-import h5py, time
 from pyspecdata import *
 from matplotlib.ticker import FuncFormatter
 import matplotlib.transforms as transforms
@@ -35,7 +32,7 @@ with figlist_var() as fl:
     config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["type"] = "ODNP"
     filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}"
-    Ep = (find_file(filename, exp_type="ODNP_NMR_comp/ODNP", expno="enhancement"),)
+    Ep = (find_file(filename, exp_type="ODNP_NMR_comp/ODNP", expno="ODNP"),)
     assert (
         Ep.get_units("t2") is not None
     ), "bad data file!  units of s for t2 should be stored in nddata!"

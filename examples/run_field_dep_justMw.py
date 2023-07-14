@@ -15,7 +15,7 @@ import SpinCore_pp
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 import numpy as np
-from Instruments import power_control, Bridge12, prologix_connection, gigatronics
+from Instruments import power_control
 from Instruments.XEPR_eth import xepr
 import h5py
 
@@ -60,10 +60,10 @@ if not phase_cycling:
 # }}}
 # {{{ Parameters for Bridge12
 powers = r_[config_dict["max_power"]]
-min_dBm_step = 0.5
 for x in range(len(powers)):
     dB_settings = (
-        round(10 * (log10(powers[x]) + 3.0) / min_dBm_step) * min_dBm_step
+        round(10 * (log10(powers[x]) + 3.0) / config_dict["min_dBm_step"])
+        * config_dict["min_dBm_step"]
     )  # round to nearest min_dBm_step
 print("dB_settings", dB_settings)
 print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))

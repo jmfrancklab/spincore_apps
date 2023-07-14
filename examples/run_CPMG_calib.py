@@ -1,7 +1,7 @@
 """
 CPMG_calibration
 ================
-CPMG meant for the purpose of calibration.
+Here we can calibrate our 90 time by cycling through 90 times (which are defined as a list in this script) and thus tau is fixed accordingly to maintain symmetric echoes.
 
 """
 from pyspecdata import *
@@ -33,7 +33,7 @@ if not phase_cycling:
     ph1_cyc = 0.0
     nPhaseSteps = 1
 # }}}
-# {{{making tau
+# {{{making tau for a symmetric echo given delays
 marker = 1.0
 pad_start = config_dict["tau_extra_us"] - config_dict["deadtime_us"]
 pad_end = config_dict["tau_extra_us"] - config_dict["deblank_us"] - marker
@@ -57,7 +57,7 @@ assert total_pts < 2**14, (
 # {{{run ppg
 for index, val in enumerate(p90_range):
     p90_us = val  # us
-    config_dict["tau_us"] = twice_tau_echo_us / 2.0 - (
+    this_tau = twice_tau_echo_us / 2.0 - (
         2 * p90 / pi  # evolution during pulse -- see eq 6 of coherence paper
         + config_dict["deadtime_us"]  # following 90
         + config_dict["deblank_us"]  # before 180
@@ -72,7 +72,7 @@ for index, val in enumerate(p90_range):
                 ("phase_reset", 1),
                 ("delay_TTL", config_dict["deblank_us"]),
                 ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-                ("delay", config_dict["tau_us"]),
+                ("delay", this_tau),
                 ("delay_TTL", config_dict["deblank_us"]),
                 ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
                 ("delay", config_dict["deadtime_us"]),
@@ -96,11 +96,11 @@ for index, val in enumerate(p90_range):
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
             SW_kHz=config_dict["SW_kHz"],
-            indirect_fields=("p90_idx", "p90_us"),
+            indirect_fields=("tau", "p90_us"),
             ret_data=None,
         )
         p90_axis = data.getaxis("indirect")
-        p90_axis[0]["p90_index"] = index
+        p90_axis[0]["tau"] = this_tau
         p90_axis[0]["p90_us"] = p90
     else:
         generic(
@@ -108,7 +108,7 @@ for index, val in enumerate(p90_range):
                 ("phase_reset", 1),
                 ("delay_TTL", config_dict["deblank_us"]),
                 ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-                ("delay", config_dict["tau_us"]),
+                ("delay", this_tau),
                 ("delay_TTL", config_dict["deblank_us"]),
                 ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
                 ("delay", config_dict["deadtime_us"]),
@@ -132,10 +132,11 @@ for index, val in enumerate(p90_range):
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
             SW_kHz=config_dict["SW_kHz"],
-            indirect_fileds=("p90_idx", "p90_us"),
-            ret_data=None,
+            indirect_fileds=("tau", "p90_us"),
+            ret_data=data,
         )
         p90_axis[index + 1]["p90_us"] = p90
+        p90_axis[index + 1]["tau"] = this_tau
 # }}}
 # {{{Save data
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
@@ -170,4 +171,3 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
-fl.show()

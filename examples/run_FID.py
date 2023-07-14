@@ -1,11 +1,12 @@
-# Just capturing FID, not echo detection
-# 4-step phase cycle
+"""Standard FID
+===============
+This ppg just captures a simple FID (no echo!) with a 4 step phase cycle but the user is welcome to disable phase cycling by setting the argument to false in this ppg script
+"""
 from pylab import *
 from pyspecdata import *
 import os
 import SpinCore_pp
 from datetime import datetime
-import numpy as np
 import h5py
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from ppg import generic
@@ -26,7 +27,7 @@ filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type'
 # {{{ phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph1_cyc = r_[0,1,2,3]
+    ph1_cyc = r_[0, 1, 2, 3]
     nPhaseSteps = 4
 if not phase_cycling:
     ph1_cyc = 0.0
@@ -40,24 +41,25 @@ if not phase_cycling:
 # {{{ppg
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 data = generic(
-        ppg_list = [
-            ("marker", "start", 1),
-            ("phase_reset", 1),
-            ("delay_TTL", config_dict["deblank_us"]),
-            ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-            ("delay", config_dict["deadtime_us"]),
-            ("acquire", config_dict["acq_time_ms"]),
-            ("delay", config_dict["repetition_us"]),
-            ("jumpto", "start")],
-        nScans = config_dict['nScans'],
-        indirect_len = 1,
-        indirect_idx = 0,
-        adcOffset = config_dict['adc_offset'],
-        carrierFreq_MHz = config_dict['carrierFreq_MHz'],
-        nPoints = nPoints,
-        SW_kHz - config_dict['SW_kHz'],
-        ret_data = None
-        )
+    ppg_list=[
+        ("marker", "start", 1),
+        ("phase_reset", 1),
+        ("delay_TTL", config_dict["deblank_us"]),
+        ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
+        ("delay", config_dict["deadtime_us"]),
+        ("acquire", config_dict["acq_time_ms"]),
+        ("delay", config_dict["repetition_us"]),
+        ("jumpto", "start"),
+    ],
+    nScans=config_dict["nScans"],
+    indirect_len=1,
+    indirect_idx=0,
+    adcOffset=config_dict["adc_offset"],
+    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+    nPoints=nPoints,
+    SW_kHz=config_dict["SW_kHz"],
+    ret_data=None,
+)
 # }}}
 # {{{ saving data
 if phase_cycling:
@@ -119,4 +121,3 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
-fl.show()

@@ -1,8 +1,7 @@
 """
 CPMG with microwaves
 ====================
-
-Standard CPMG experiment with progressively increasing power. A CPMG is taken at evenly spaced steps up to the maximum power defined in the configuration file
+Standard CPMG experiment with progressively increasing power. A CPMG is taken at evenly spaced steps up to the maximum power defined in the configuration file. The FLInst server must be running in order to communicate with the B12 to set the powers. The powers are logged as a function of time that can be compared to the indirect axis of the data that stores the start and stop times of each individual CPMG - this allows us to track the RX of the microwaves as well as any fluctuations in power throughout the experiment.
 """
 from pylab import *
 from pyspecdata import *
@@ -39,7 +38,9 @@ if not phase_cycling:
     nPhaseSteps = 1
 # }}}
 # {{{power settings
-dB_settings = gen_powerlist(config_dict["max_power"], config_dict["power_steps"],three_down = False)
+dB_settings = gen_powerlist(
+    config_dict["max_power"], config_dict["power_steps"], three_down=False
+)
 print("dB_settings", dB_settings)
 print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 input("Look ok?")
@@ -69,9 +70,9 @@ with power_control() as p:
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
     p.mw_off()
-    time.sleep(16.0) #give some time for the power source to "settle"
+    time.sleep(5.0)  # give some time for the power source to "settle"
     p.start_log()
-    ini_time = time.time() 
+    ini_time = time.time()
     cpmg_data = generic(
         ppg_list=[
             ("phase_reset", 1),
@@ -101,23 +102,21 @@ with power_control() as p:
         carrierFreq_MHz=config_dict["carrierFreq_MHz"],
         nPoints=nPoints,
         SW_kHz=config_dict["SW_kHz"],
-        indirect_fields = ("start_times","stop_times")
+        indirect_fields=("start_times", "stop_times"),
         ret_data=None,
     )
     done_t = time.time()
-    time_axis_coords = cpmg_data.getaxis('indirect')
-    time_axis_coords[0]['start_times'] = ini_time
-    time_axis_coords[0]['stop_times'] = done_t
+    time_axis_coords = cpmg_data.getaxis("indirect")
+    time_axis_coords[0]["start_times"] = ini_time
+    time_axis_coords[0]["stop_times"] = done_t
     power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
-        logger.debug(
-            "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], ")"
-        )
+        logger.debug("SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], ")")
         if j == 0:
             retval = p.dip_lock(
-                config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
-                config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
+                config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+                config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
             )
         p.set_power(this_dB)
         for k in range(10):
@@ -152,57 +151,59 @@ with power_control() as p:
                 ("delay", config_dict["repetition_us"]),
             ],
             nScans=config_dict["nScans"],
-            indirect_idx=j+1,
+            indirect_idx=j + 1,
             indirect_len=len(powers) + 1,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
             SW_kHz=config_dict["SW_kHz"],
-            indirect_fields = ("start_times","stop_times")
+            indirect_fields=("start_times", "stop_times"),
             ret_data=cpmg_data,
         )
-        time_axis_coords[j+1]['stop_times'] = time.time()
-    cpmg_data.setaxis('nScans',r_[0:config_dict['nScans']])
-    cpmg_data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
-    cpmg_data.set_prop("acq_params", config_dict.asdict())
-    target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
-    filename_out = filename + ".h5"
-    nodename = cpmg_data.name()
-    if os.path.exists(f"{filename_out}"):
-        print("this file already exists so we will add a node to it!")
-        with h5py.File(
-            os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
-        ) as fp:
-            if nodename in fp.keys():
-                print("this nodename already exists, so I will call it temp_cpmg_mw")
-                cpmg_data.name("temp_cpmg_mw")
-                nodename = "temp_cpmg_mw"
-        cpmg_data.hdf5_write(f"{filename_out}", directory=target_directory)
-    else:
-        try:
-            cpmg_data.hdf5_write(f"{filename_out}", directory=target_directory)
-        except:
-            print(
-                f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_cpmg_mw.h5 in the current directory"
-            )
-            if os.path.exists("temp_cpmg_mw.h5"):
-                print("there is a temp_cpmg_mw.h5 already! -- I'm removing it")
-                os.remove("temp.h5")
-                cpmg_data.hdf5_write("temp_spmg_mw.h5")
-                print(
-                    "if I got this far, that probably worked -- be sure to move/rename temp_cpmg_mw.h5 to the correct name!!"
-                )
-    print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-    print(("Name of saved data", echo_data.name()))
+        time_axis_coords[j + 1]["stop_times"] = time.time()
     final_frq = p.dip_lock(
         config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
-    this_log = p.stop_log()
+cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+cpmg_data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
+cpmg_data.set_prop("acq_params", config_dict.asdict())
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
+filename_out = filename + ".h5"
+nodename = cpmg_data.name()
+if os.path.exists(f"{filename_out}"):
+    print("this file already exists so we will add a node to it!")
+    with h5py.File(
+        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+    ) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, so I will call it temp_cpmg_mw")
+            cpmg_data.name("temp_cpmg_mw")
+            nodename = "temp_cpmg_mw"
+    cpmg_data.hdf5_write(f"{filename_out}", directory=target_directory)
+else:
+    try:
+        cpmg_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    except:
+        print(
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_cpmg_mw.h5 in the current directory"
+        )
+        if os.path.exists("temp_cpmg_mw.h5"):
+            print("there is a temp_cpmg_mw.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+            cpmg_data.hdf5_write("temp_spmg_mw.h5")
+            print(
+                "if I got this far, that probably worked -- be sure to move/rename temp_cpmg_mw.h5 to the correct name!!"
+            )
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", echo_data.name()))
+final_frq = p.dip_lock(
+    config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+    config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
+)
+this_log = p.stop_log()
 # }}}
 config_dict.write()
 with h5py.File(os.path.join(target_directory, filename), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
-print('*'*30+'\n'+'\n'.join(final_log))
-fl.show()
