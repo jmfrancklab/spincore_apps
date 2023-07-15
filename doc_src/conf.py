@@ -20,7 +20,7 @@ import mock
 from matplotlib import rcParams
 #print("datapath is",rcParams['datapath'])
  
-autodoc_mock_imports = ['numpy', 'scipy', 'scipy.interpolate', 'pylab', 'mpl_toolkits', 'get_ipython', 'pyspecdata', 'matplotlib', 'tables']
+autodoc_mock_imports = ['numpy', 'scipy', 'scipy.interpolate', 'pylab', 'mpl_toolkits', 'get_ipython', 'pyspecdata', 'matplotlib', 'tables', '_SpinCore_pp']
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
