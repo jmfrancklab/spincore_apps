@@ -1,7 +1,9 @@
 """Automated Combined DNP with Log
 ==================================
-This needs to be run in sync with the power control server. To do so:
-    1. Open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py which allows the bruker electromagnet to communicate with the computer the user is running this script on. When this is ready to go you will see the terminal on the EPR computer say "I am listening".
+This needs to be run with both the power control server (on the computer with the Spincore) and
+the API wrapper (on the computer with XEPR). 
+To do so:
+    1. Open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py inside inst_notebooks which allows the bruker electromagnet to communicate with the computer the user is running this script on. When this is ready to go you will see the terminal on the EPR computer say "I am listening".
     2. The experiment starts with the B12 off. It collects your IR at no power along with a series of "control" thermals. These can be used for diagnosing issues with the enhancement thermal, for example, if microwaves are leaking into the cavity.
     3. You will then be prompted to turn the B12 and the power control server on. To turn the power control server on, open a new terminal and type "FLInst server",
         wait until you see "I am listening" before continuing with the experiment.
@@ -47,7 +49,7 @@ if not phase_cycling:
     Ep_ph1_cyc = 0.0
     IR_ph1_cyc = 0.0
     IR_ph2_cyc = 0.0
-# }}}
+#}}}
 # {{{Make VD list based on concentration and FIR repetition delay as defined by Weiss
 vd_kwargs = {
     j: config_dict[j]
@@ -97,17 +99,17 @@ if myinput.lower().startswith("n"):
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
 # {{{ these change if we change the way the data is saved
-IR_postproc = "spincore_IR_v1"  # note that you have changed the way the data is saved, and so this should change likewise!!!!
+IR_postproc = "spincore_IR_v1" # note that you have changed the way the data is saved, and so this should change likewise!!!!
 Ep_postproc = "spincore_ODNP_v3"
 # }}}
-# {{{check total points
+#{{{check total points
 total_points = len(Ep_ph1_cyc) * nPoints
-assert total_points < 2**14, (
+assert total_points < 2 ** 14, (
     "For Ep: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % total_pts
 )
 total_pts = len(IR_ph2_cyc) * len(IR_ph1_cyc) * nPoints
-assert total_pts < 2**14, (
+assert total_pts < 2 ** 14, (
     "For IR: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % total_pts
 )
@@ -115,15 +117,17 @@ assert total_pts < 2**14, (
 # {{{ check for file
 if os.path.exists(filename):
     raise ValueError(
-        "the file %s already exists, so I'm not going to let you proceed!" % filename
+        "the file %s already exists, so I'm not going to let you proceed!"
+        % filename
     )
 input(
     "B12 needs to be unplugged and turned off for the thermal! Don't have the power server running just yet"
 )
 # }}}
 # {{{Collect Thermals - serves as a control to compare the thermal of Ep to ensure no microwaves were leaking
+# call A to run spin echo
 control_thermal = run_spin_echo(
-    nScans=config_dict["nScans"],
+    nScans=config_dict["thermal_nScans"],
     indirect_idx=0,
     indirect_len=1,
     ph1_cyc=Ep_ph1_cyc,
@@ -135,11 +139,10 @@ control_thermal = run_spin_echo(
     repetition_us=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
-    indirect_fields=("start_times", "stop_times"),
     ret_data=None,
-)
-if config_dict["nScans"] > 1:
-    control_thermal.setaxis("nScans", r_[0 : config_dict["nScans"]])
+) 
+if config_dict["thermal_nScans"] > 1:
+    control_thermal.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
 if phase_cycling:
     control_thermal.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
     control_thermal.setaxis("ph1", Ep_ph1_cyc / 4)
@@ -162,7 +165,7 @@ except:
         os.remove("temp_ctrl.h5")
         target_directory = os.path.getcwd()
         filename = "temp_ctrl.h5"
-        DNP_data.hdf5_write(f"{filename}", directory=target_directory)
+        DNP_data.hdf5_write(filename, directory=target_directory)
         final_log.append("change the name accordingly once this is done running!")
 # }}}
 logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
@@ -175,6 +178,7 @@ logger.debug(strm("Name of saved data", control_thermal.name()))
 ini_time = time.time()
 vd_data = None
 for vd_idx, vd in enumerate(vd_list_us):
+    # call A to run_IR
     vd_data = run_IR(
         nPoints=nPoints,
         nEchoes=config_dict["nEchoes"],
@@ -215,7 +219,9 @@ vd_data.set_prop(
 )  # this is the initial postprocessing method defined in 'load_data' in proc_scripts
 nodename = vd_data.name()
 # {{{ again, implement a file fallback
-with h5py.File(os.path.normpath(os.path.join(target_directory, f"{filename}"))) as fp:
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory, f"{filename}"))
+    ) as fp:
     if nodename in fp.keys():
         final_log.append("this nodename already exists, so I will call it temp")
         nodename = "temp_noPower"
@@ -242,47 +248,31 @@ with power_control() as p:
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
     p.mw_off()  # turn rf and amp off for the first thermal (no power)
-    time.sleep(5.0)  # give some time for the power source to "settle"
+    time.sleep(16.0) #give some time for the power source to "settle"
     p.start_log()  # starting to log times with power from power meter
+    DNP_data = None # initially, there is no data, and run_spin_echo knows how to deal with this
+    #Run the actual thermal where the power log is recording. This will be your thermal for enhancement and can be compared to previous thermals if issues arise
     for j in range(thermal_scans):
         DNP_ini_time = time.time()
-        if j == 0:
-            # the initial data set doesn't exsist so this one will have ret_data = None while the rest will build onto this data set
-            DNP_data = run_spin_echo(
-                nScans=config_dict["nScans"],
-                indirect_idx=j,
-                indirect_len=len(powers) + thermal_scans,
-                adcOffset=config_dict["adc_offset"],
-                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-                nPoints=nPoints,
-                nEchoes=config_dict["nEchoes"],
-                ph1_cyc=Ep_ph1_cyc,
-                p90_us=config_dict["p90_us"],
-                repetition_us=config_dict["repetition_us"],
-                tau_us=config_dict["tau_us"],
-                SW_kHz=config_dict["SW_kHz"],
-                indirect_fields=("start_times", "stop_times"),
-                ret_data=None,
-            )
-            time_axis_coords = DNP_data.getaxis("indirect")
-        else:
-            DNP_data = run_spin_echo(
-                nScans=config_dict["nScans"],
-                indirect_idx=j,
-                indirect_len=len(powers) + thermal_scans,
-                adcOffset=config_dict["adc_offset"],
-                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-                nPoints=nPoints,
-                nEchoes=config_dict["nEchoes"],
-                ph1_cyc=Ep_ph1_cyc,
-                p90_us=config_dict["p90_us"],
-                repetition_us=config_dict["repetition_us"],
-                tau_us=config_dict["tau_us"],
-                SW_kHz=config_dict["SW_kHz"],
-                indirect_fields=("start_times", "stop_times"),
-                ret_data=DNP_data,
-            )
+        # call B/C to run spin echo
+        DNP_data = run_spin_echo(
+            nScans=config_dict["nScans"],
+            indirect_idx=j,
+            indirect_len=len(powers) + thermal_scans,
+            adcOffset=config_dict["adc_offset"],
+            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+            nPoints=nPoints,
+            nEchoes=config_dict["nEchoes"],
+            ph1_cyc=Ep_ph1_cyc,
+            p90_us=config_dict["p90_us"],
+            repetition_us=config_dict["repetition_us"],
+            tau_us=config_dict["tau_us"],
+            SW_kHz=config_dict["SW_kHz"],
+            indirect_fields=("start_times", "stop_times"),
+            ret_data=DNP_data,
+        )
         DNP_thermal_done = time.time()
+        time_axis_coords = DNP_data.getaxis("indirect")
         time_axis_coords[j][
             "start_times"
         ] = DNP_ini_time  # we keep track of start and stop time to later compare against the power log to get a real representation of power fluctuations over this dataset acquisition
@@ -380,6 +370,7 @@ with power_control() as p:
         vd_data = None
         # each IR will be it's own node/dataset so we need ret_Data to be None for all of them
         for vd_idx, vd in enumerate(vd_list_us):
+            # call B to run_IR
             vd_data = run_IR(
                 nPoints=nPoints,
                 nEchoes=config_dict["nEchoes"],
@@ -410,20 +401,16 @@ with power_control() as p:
             vd_data.setaxis("ph1", IR_ph1_cyc / 4)
             vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-        vd_data.name(
-            T1_node_names[j]
-        )  # naming the dataset after the power it was run at
+        vd_data.name(T1_node_names[j]) # naming the dataset after the power it was run at
         nodename = vd_data.name()
         with h5py.File(
             os.path.normpath(os.path.join(target_directory, filename))
-        ) as fp:
+            ) as fp:
             tempcounter = 1
             orig_nodename = nodename
             while nodename in fp.keys():
-                nodename = "%s_temp_%d" % (orig_nodename, tempcounter)
-                final_log.append(
-                    "this nodename already exists, so I will call it {nodename}"
-                )
+                nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+                final_log.append("this nodename already exists, so I will call it {nodename}")
                 vd_data.name(nodename)
                 tempcounter += 1
         # hdf5_write should be outside the h5py.File with block, since it opens the file itself

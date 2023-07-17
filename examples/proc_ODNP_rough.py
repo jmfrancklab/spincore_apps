@@ -32,10 +32,11 @@ with figlist_var() as fl:
     config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["type"] = "ODNP"
     filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}_{config_dict['odnp_counter']}"
-    Ep = (find_file(filename, exp_type="ODNP_NMR_comp/ODNP", expno="ODNP"),)
-    assert (
-        Ep.get_units("t2") is not None
-    ), "bad data file!  units of s for t2 should be stored in nddata!"
+    Ep = find_file(
+        filename,
+        exp_type="ODNP_NMR_comp/ODNP",
+        expno="ODNP"),
+    assert Ep.get_units("t2") is not None, "bad data file!  units of s for t2 should be stored in nddata!"
     Ep.rename("indirect", "power")
     Ep.reorder(["ph1", "power"])
     if nScans in Ep.dimlabels:

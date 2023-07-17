@@ -4,10 +4,10 @@ test of logging
 
 This test of the logging mimics an ODNP field sweep experiment.
 """
-import Instruments
 from numpy import *
 from numpy.random import rand
 from pyspecdata import *
+from Instruments import *
 import os
 import sys
 import time

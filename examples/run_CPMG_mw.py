@@ -1,20 +1,53 @@
+# {{{ note on phase cycling
 """
 CPMG with microwaves
 ====================
-Standard CPMG experiment with progressively increasing power. A CPMG is taken at evenly spaced steps up to the maximum power defined in the configuration file. The FLInst server must be running in order to communicate with the B12 to set the powers. The powers are logged as a function of time that can be compared to the indirect axis of the data that stores the start and stop times of each individual CPMG - this allows us to track the RX of the microwaves as well as any fluctuations in power throughout the experiment.
+
+Standard CPMG experiment with microwaves on.
+
+FOR PHASE CYCLING: Provide both a phase cycle label (e.g.,
+'ph1', 'ph2') as str and an array containing the indices
+(i.e., registers) of the phases you which to use that are
+specified in the numpy array 'tx_phases'.  Note that
+specifying the same phase cycle label will loop the
+corresponding phase steps together, regardless of whether
+the indices are the same or not.
+    e.g.,
+    The following:
+        ('pulse',2.0,'ph1',r_[0,1]),
+        ('delay',1.5),
+        ('pulse',2.0,'ph1',r_[2,3]),
+    will provide two transients with phases of the two pulses (p1,p2):
+        (0,2)
+        (1,3)
+    whereas the following:
+        ('pulse',2.0,'ph1',r_[0,1]),
+        ('delay',1.5),
+        ('pulse',2.0,'ph2',r_[2,3]),
+    will provide four transients with phases of the two pulses (p1,p2):
+        (0,2)
+        (0,3)
+        (1,2)
+        (1,3)
+FURTHER: The total number of transients that will be
+collected are determined by both nScans (determined when
+calling the appropriate marker) and the number of steps
+calculated in the phase cycle as shown above.  Thus for
+nScans = 1, the SpinCore will trigger 2 times in the first
+case and 4 times in the second case.  for nScans = 2, the
+SpinCore will trigger 4 times in the first case and 8 times
+in the second case.
 """
 from pylab import *
 from pyspecdata import *
 from numpy import *
 import os
 import SpinCore_pp
-from SpinCore_pp.ppg import generic
-from Instruments import power_control
-from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
-from SpinCore_pp.power_helper import gen_powerlist
+from Instruments import Bridge12, prologix_connection, gigatronics
 from datetime import datetime
 import time
 import h5py
+raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -38,9 +71,14 @@ if not phase_cycling:
     nPhaseSteps = 1
 # }}}
 # {{{power settings
-dB_settings = gen_powerlist(
-    config_dict["max_power"], config_dict["power_steps"], three_down=False
-)
+dB_settings = gen_powerlist(config_dict["max_power"], config_dict["power_steps"])
+append_dB = [
+    dB_settings[
+        abs(10 ** (dB_settings / 10.0 - 3) - config_dict["max_power"] * frac).argmin()
+    ]
+    for frac in [0.75, 0.5, 0.25]
+]
+dB_settings = append(dB_settings, append_dB)
 print("dB_settings", dB_settings)
 print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 input("Look ok?")
@@ -64,110 +102,122 @@ tau_us = twice_tau / 2.0
 config_dict["tau_us"] = tau_us
 # }}}
 # {{{run CPMG
-with power_control() as p:
-    retval_thermal = p.dip_lock(
-        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-    )
-    p.mw_off()
-    time.sleep(5.0)  # give some time for the power source to "settle"
-    p.start_log()
-    ini_time = time.time()
-    cpmg_data = generic(
-        ppg_list=[
-            ("phase_reset", 1),
-            ("delay_TTL", config_dict["deblank_us"]),
-            ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-            ("delay", config_dict["tau_us"]),
-            ("delay_TTL", config_dict["deblank_us"]),
-            ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
-            ("delay", config_dict["deadtime_us"]),
-            ("delay", pad_start_us),
-            ("acquire", config_dict["acq_time_ms"]),
-            ("delay", pad_end_us),
-            ("marker", "echo_label", (config_dict["nEchoes"] - 1)),  # 1 us delay
-            ("delay_TTL", config_dict["deblank_us"]),
-            ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
-            ("delay", config_dict["deadtime_us"]),
-            ("delay", pad_start_us),
-            ("acquire", config_dict["acq_time_ms"]),
-            ("delay", pad_end_us),
-            ("jumpto", "echo_label"),  # 1 us delay
-            ("delay", config_dict["repetition_us"]),
-        ],
-        nScans=config_dict["nScans"],
-        indirect_idx=0,
-        indirect_len=len(powers) + 1,
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        nPoints=nPoints,
-        SW_kHz=config_dict["SW_kHz"],
-        indirect_fields=("start_times", "stop_times"),
-        ret_data=None,
-    )
-    done_t = time.time()
-    time_axis_coords = cpmg_data.getaxis("indirect")
-    time_axis_coords[0]["start_times"] = ini_time
-    time_axis_coords[0]["stop_times"] = done_t
-    power_settings_dBm = np.zeros_like(dB_settings)
-    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
-    for j, this_dB in enumerate(dB_settings):
-        logger.debug("SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], ")")
-        if j == 0:
-            retval = p.dip_lock(
-                config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-                config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-            )
-        p.set_power(this_dB)
-        for k in range(10):
-            time.sleep(0.5)
-            if p.get_power_setting() >= this_dB:
-                break
-        if p.get_power_setting() < this_dB:
-            raise ValueError("After 10 tries, the power has still not settled")
-        time.sleep(5)
-        power_settings_dBm[j] = p.get_power_setting()
-        time_axis_coords[j + 1]["start_times"] = time.time()
-        generic(
-            ppg_list=[
-                ("phase_reset", 1),
-                ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-                ("delay", config_dict["tau_us"]),
-                ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
-                ("delay", config_dict["deadtime_us"]),
-                ("delay", pad_start_us),
-                ("acquire", config_dict["acq_time_ms"]),
-                ("delay", pad_end_us),
-                ("marker", "echo_label", (config_dict["nEchoes"] - 1)),  # 1 us delay
-                ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
-                ("delay", config_dict["deadtime_us"]),
-                ("delay", pad_start_us),
-                ("acquire", config_dict["acq_time_ms"]),
-                ("delay", pad_end_us),
-                ("jumpto", "echo_label"),  # 1 us delay
-                ("delay", config_dict["repetition_us"]),
-            ],
+cpmg_data = run_cpmg(
+    nScans=config_dict["nScans"],
+    indirect_idx=0,
+    indirect_len=len(powers) + 1,
+    ph1_cyc=ph1_cyc,
+    adcOffset=config_dict["adc_offset"],
+    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+    nPoints=nPoints,
+    nEchoes=config_dict["nEchoes"],
+    p90_us=config_dict["p90_us"],
+    repetition_us=config_dict["repetition_us"],
+    pad_start_us=pad_start,
+    pad_end_us=pad_end,
+    tau_us=config_dict["tau_us"],
+    SW_kHz=config_dict["SW_kHz"],
+    ret_data=None,
+)
+raw_input("CONNECT AND TURN ON BRIDGE12...")
+with Bridge12() as b:
+    b.set_wg(True)
+    b.set_rf(True)
+    b.set_amp(True)
+    this_return = b.lock_on_dip(ini_range=
+            (config_dict['uw_dip_center_GHz']-config_dict['uw_dip_width_GHz']/2,
+                config_dict['uw_dip_center_GHz']+config_dict['uw_dip_width']/2))
+    dip_f = this_return[2]
+    print("Frequency", dip_f)
+    b.set_freq(dip_f)
+    meter_powers = zeros_like(dB_settings)
+    for j, this_power in enumerate(dB_settings):
+        print("\n*** *** *** *** ***\n")
+        print(
+            "SETTING THIS POWER", this_power, "(", dB_settings[j - 1], powers[j], "W)"
+        )
+        if j > 0 and this_power > last_power + 3:
+            last_power += 3
+            print("SETTING TO...", last_power)
+            b.set_power(last_power)
+            time.sleep(3.0)
+            while this_power > last_power + 3:
+                last_power += 3
+                print("SETTING TO...", last_power)
+                b.set_power(last_power)
+                time.sleep(3.0)
+            print("FINALLY - SETTING TO DESIRED POWER")
+            b.set_power(this_power)
+        elif j == 0:
+            threshold_power = 10
+            if this_power > threshold_power:
+                next_power = threshold_power + 3
+                while next_power < this_power:
+                    print("SETTING To...", next_power)
+                    b.set_power(next_power)
+                    time.sleep(3.0)
+                    next_power += 3
+            b.set_power(this_power)
+        else:
+            b.set_power(this_power)
+        time.sleep(15)
+        with prologix_connection() as p:
+            with gigatronics(prologix_instance=p, address=7) as g:
+                meter_powers[j] = g.read_power()
+                print("POWER READING", meter_powers[j])
+        run_cpmg(
             nScans=config_dict["nScans"],
             indirect_idx=j + 1,
             indirect_len=len(powers) + 1,
+            ph1_cyc=ph1_cyc,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
+            nEchoes=config_dict["nEchoes"],
+            p90_us=config_dict["p90_us"],
+            repetition_us=config_dict["repetition_us"],
+            pad_start_us=pad_start,
+            pad_end_us=pad_end,
+            tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
-            indirect_fields=("start_times", "stop_times"),
+            output_name=filename,
             ret_data=cpmg_data,
         )
-        time_axis_coords[j + 1]["stop_times"] = time.time()
-    final_frq = p.dip_lock(
-        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
+        last_power = this_power
+# }}}
+# {{{ chunk and save data
+if phase_cycling:
+    cpmg_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
+    cpmg_data.setaxis("ph1", ph1_cyc / 4)
+    if config_dict["nScans"] > 1:
+        cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    cpmg_data.reorder(["ph1", "nScans", "t2"])
+    cpmg_data.squeeze()
+    cpmg_data.set_units("t2", "s")
+    fl.next("Raw - time")
+    fl.image(
+        cpmg_data.C.mean("nScans"))
+    cpmg_data.reorder("t2", first=False)
+    for_plot = cpmg_data.C
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
     )
-cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+else:
+    if config_dict["nScans"] > 1:
+        cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    cpmg_data.rename('t','t2')
+    fl.next("Raw - time")
+    fl.image(
+        cpmg_data.C.mean("nScans"))
+    cpmg_data.reorder("t2", first=False)
+    for_plot = cpmg_data.C
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
+    fl.image(for_plot)
 cpmg_data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
-cpmg_data.set_prop("acq_params", config_dict.asdict())
+cpmg_data.set_prop("acq_params", config_dict.asdict()
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
 nodename = cpmg_data.name()
@@ -197,13 +247,5 @@ else:
             )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", echo_data.name()))
-final_frq = p.dip_lock(
-    config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-    config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-)
-this_log = p.stop_log()
-# }}}
 config_dict.write()
-with h5py.File(os.path.join(target_directory, filename), "a") as f:
-    log_grp = f.create_group("log")
-    hdf_save_dict_to_group(log_grp, this_log.__getstate__())
+fl.show()

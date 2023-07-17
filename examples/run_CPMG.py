@@ -10,10 +10,11 @@ from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp
-from SpinCore_pp.ppg import generic
+from SpinCore_pp.ppg import run_cpmg
 import os
 from datetime import datetime
 import h5py
+raise RuntimeError("This pulse program has not been updated. Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -42,12 +43,8 @@ pad_start = config_dict["tau_extra_us"] - config_dict["deadtime_us"]
 pad_end = (
     config_dict["tau_extra_us"] - config_dict["deblank_us"] - marker
 )  # marker + deblank
-assert (
-    pad_start > 0
-), "tau_extra_us must be set to more than deadtime and more than deblank!"
-assert (
-    pad_end > 0
-), "tau_extra_us must be set to more than deadtime and more than deblank!"
+assert(pad_start > 0), "tau_extra_us must be set to more than deadtime and more than deblank!"
+assert (pad_end > 0), "tau_extra_us must be set to more than deadtime and more than deblank!"
 twice_tau_echo_us = (  # the period between 180 pulses
     config_dict["tau_extra_us"] * 2 + config_dict["acq_time_ms"] * 1e3
 )
@@ -63,47 +60,63 @@ config_dict["tau_us"] = twice_tau_echo_us / 2.0 - (
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2**14, (
+assert total_pts < 2 ** 14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
 # {{{run cpmg
 # NOTE: Number of segments is nEchoes * nPhaseSteps
-data = generic(
-    ppg_list=[
-        ("phase_reset", 1),
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-        ("delay", config_dict["tau_us"]),
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
-        ("delay", config_dict["deadtime_us"]),
-        ("delay", pad_start_us),
-        ("acquire", config_dict["acq_time_ms"]),
-        ("delay", pad_end_us),
-        ("marker", "echo_label", (config_dict["nEchoes"] - 1)),  # 1 us delay
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
-        ("delay", config_dict["deadtime_us"]),
-        ("delay", pad_start_us),
-        ("acquire", config_dict["acq_time_ms"]),
-        ("delay", pad_end_us),
-        ("jumpto", "echo_label"),  # 1 us delay
-        ("delay", config_dict["repetition_us"]),
-    ],
-    nScans=config_dict["nScans"],
-    indirect_idx=0,
-    indirect_len=1,
-    adcOffset=config_dict["adc_offset"],
-    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=nPoints,
-    SW_kHz=config_dict["SW_kHz"],
-    ret_data=None,
+data = run_cpmg(
+    nScans = config_dict["nScans"],
+    indirect_idx = 0,
+    indirect_len = 1,
+    ph1_cyc = ph1_cyc,
+    adcOffset = config_dict["adc_offset"],
+    carrierFreq_MHz = config_dict["carrierFreq_MHz"],
+    nPoints = nPoints,
+    nEchoes = config_dict["nEchoes"],
+    p90_us = config_dict["p90_us"],
+    repetition_us = config_dict["repetition_us"],
+    tau_us = config_dict["tau_us"],
+    SW_kHz = config_dict["SW_kHz"],
+    pad_start_us = pad_start,
+    pad_end_us = pad_end,
+    ret_data = None,
 )
 # }}}
-# {{{ save data
-idata.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
+# {{{ chunk and save data
+if phase_cycling:
+    data.chunk("t", ["ph1", "echo", "t2"], [len(ph1_cyc), config_dict["nEchoes"], -1])
+    data.setaxis("ph1", ph1_cyc / 4)
+    data.setaxis("echo", r_[0 : config_dict["nEchoes"]])
+    if config_dict["nScans"] > 1:
+        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    data.squeeze()
+    data.set_units("t2", "s")
+    fl.next("Raw - time")
+    fl.image(
+        data.C.mean("nScans"))
+    data.reorder("t2", first=False)
+    for_plot = data.C
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
+    )
+else:
+    if config_dict["nScans"] > 1:
+        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    data.rename("t","t2")
+    fl.next("Raw - time")
+    fl.image(
+        data.C.mean("nScans"))
+    data.reorder("t2", first=False)
+    for_plot = echo_data.C
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
+    fl.image(for_plot)
+data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.set_prop("postproc_type", "spincore_CPMGv2")
 data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
@@ -136,3 +149,4 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
+fl.show()

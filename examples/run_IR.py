@@ -1,6 +1,12 @@
 """Run Inversion Recovery at set power
 ======================================
-A standard inversion recovery experiment that utilizes parameters in the configuration file to create an evenly spaced appropriate vdlist. The user can adjust the desired power using the 'max_power' parameter in the configuration file. In order to properly set the powers the FLInst server needs to be running to communicate with the B12.
+A standard inversion recovery experiment that utilizes parameters in the configuration file 
+to create an evenly spaced appropriate vdlist. The user can adjust the desired power 
+using the 'max_power' parameter in the configuration file. In order to properly set the powers, 
+the FLInst server on the computer with the SpinCore, needs to be running along with the 'XEPR_API.py'
+wrapper on the computer with XEPR to communicate with the B12. When both servers are ready
+you will see "I am listening..." on the terminal on the computer running XEPR and on the terminal
+running on the computer with the SpinCore.
 """
 from pyspecdata import *
 import os
@@ -58,7 +64,7 @@ vd_list_us = (
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2**14, (
+assert total_pts < 2 ** 14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
@@ -114,12 +120,12 @@ if phase_cycling:
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     vd_data.reorder(["ph1", "ph2", "vd", "t2"])
     vd_data.squeeze()
-    vd_data.set_units("t2", "s")
+    vd_data.set_units("t2","s")
     fl.next("Raw - time")
     fl.image(vd_data)
     for_plot = vd_data.C
     for_plot.ft("t2")
-    for_plot.ft(["ph1", "ph2"], unitary=True)
+    for_plot.ft(["ph1", "ph2"],unitary=True)
     fl.next("FTed data")
     fl.image(for_plot)
 else:

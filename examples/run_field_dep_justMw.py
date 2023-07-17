@@ -4,9 +4,11 @@ Field Sweep at constant power
 
 A ppg that performs a series of echoes at a range of designated field 
 values that are determined from the guessed_MHz_to_GHz value in your 
-active.ini and the field width parameter. To run this in sync with 
-the power_control_server, open a separate terminal on the NMR computer
-in your user directory and running "FLInst server" and waiting for it to print "I am listening..."
+active.ini and the field width parameter. The API wrapper on the computer with XEPR
+should be enabled already. If not open a terminal on the computer with XEPR and in
+inst_notebooks type 'XEPR_API.py', when ready you will read "I am listening...".
+To run the power_control_server, open a separate terminal on the computer with the spincore
+in your user directory and run "FLInst server". Wait for it to print "I am listening..."
 """
 from pylab import *
 from pyspecdata import *
@@ -72,12 +74,12 @@ powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2**14, (
+assert total_pts < 2 ** 14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
-# }}}
-# {{{Run field sweep
+#}}}
+#{{{Run field sweep
 with power_control() as p:
     dip_f = p.dip_lock(
         config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,

@@ -2,7 +2,10 @@
 Nutation
 ========
 
-Simple nutation experiment where the 90 time is varied by a list specified in this script. All other parameters are pulled from the configuration file. Prior to running this you should already be on resonance as this does not set the field independently.
+Simple nutation experiment where the 90 time is varied by a list 
+specified in this script. All other parameters are pulled from the 
+configuration file. Prior to running this you should already be on 
+resonance as this does not set the field independently.
 """
 from pyspecdata import *
 import os
@@ -43,7 +46,7 @@ thisB0 = xepr().set_field(B0)
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2**14, (
+assert total_pts < 2 ** 14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
