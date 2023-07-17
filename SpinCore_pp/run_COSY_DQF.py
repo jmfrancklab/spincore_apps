@@ -123,4 +123,3 @@ with h5py.File(
     print(("Name of saved data", COSY_data.name()))
     print(("Shape of saved data", ndshape(COSY_data)))
 #}}}        
-

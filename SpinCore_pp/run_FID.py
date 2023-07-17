@@ -127,4 +127,3 @@ print(("Name of saved data", data.name()))
 print(("Shape of saved data", ndshape(data)))
 config_dict.write()
 # }}}
-

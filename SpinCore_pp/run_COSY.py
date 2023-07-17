@@ -153,4 +153,3 @@ fl.next("FT abs raw data")
 fl.image(abs(COSY_data).setaxis("t1", "#"))
 fl.show()
 # }}}
-

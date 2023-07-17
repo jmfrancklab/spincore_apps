@@ -199,4 +199,3 @@ fl.next('abs raw data - ft')
 fl.image(abs(data).setaxis('power','#'))
 #}}}
 fl.show()
-

@@ -174,4 +174,3 @@ fl.next("image - ft, coherence, exclude FID")
 fl.image(data["ph1", 1]["ph3", -1])
 fl.show()
 # }}}
-
