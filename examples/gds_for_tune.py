@@ -9,7 +9,7 @@ the GDS scope to observe the reflection.
 The output pulse will take the carrierfreq_mhz parameter from the configuration file.
 The user then adjusts the tune and match of the probe. Upon completion a plot of the reflection overlaid with the output wave will be displayed and the ratio thereof will be printed.
 """
-import Instruments
+from Instruments import *
 from pyspecdata import *
 import time
 from serial.tools.list_ports import comports
