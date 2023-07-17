@@ -1,16 +1,18 @@
-"""Standard FID
-===============
-This ppg just captures a simple FID (no echo!) with a 4 step phase cycle but the user is welcome to disable phase cycling by setting the argument to false in this ppg script
-"""
+# Just capturing FID, not echo detection
+# 4-step phase cycle
 from pylab import *
 from pyspecdata import *
 import os
 import SpinCore_pp
 from datetime import datetime
+import numpy as np
 import h5py
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from ppg import generic
 
+raise RuntimeError(
+    "This pulse program has been updated to use active.ini, but not the ppg functions..  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!"
+)
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -25,12 +27,11 @@ config_dict["date"] = date
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 # {{{ phase cycling
+tx_phases = r_[0.0, 90.0, 180.0, 270.0]
 phase_cycling = True
 if phase_cycling:
-    ph1_cyc = r_[0, 1, 2, 3]
     nPhaseSteps = 4
 if not phase_cycling:
-    ph1_cyc = 0.0
     nPhaseSteps = 1
 # }}}
 # {{{ note on timing
@@ -40,84 +41,90 @@ if not phase_cycling:
 # }}}
 # {{{ppg
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
-data = generic(
-    ppg_list=[
-        ("marker", "start", 1),
-        ("phase_reset", 1),
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-        ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict["acq_time_ms"]),
-        ("delay", config_dict["repetition_us"]),
-        ("jumpto", "start"),
-    ],
-    nScans=config_dict["nScans"],
-    indirect_len=1,
-    indirect_idx=0,
-    adcOffset=config_dict["adc_offset"],
-    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=nPoints,
-    SW_kHz=config_dict["SW_kHz"],
-    ret_data=None,
-)
+data_length = 2 * nPoints * config_dict["nEchoes"] * nPhaseSteps
+for x in range(config_dict["nScans"]):
+    SpinCore_pp.configureTX(
+        config_dict["adcOffset_ms"],
+        config_dict["carrierFreq_MHz"],
+        tx_phases,
+        config_dict["amplitude"],
+        nPoints,
+    )
+    acq_time = SpinCore_pp.configureRX(
+        config_dict["SW_kHz"], nPoints, 1, config_dict["nEchoes"], nPhaseSteps
+    )
+    SpinCore_pp.init_ppg()
+    if phase_cycling:
+        SpinCore_pp.load(
+            [
+                ("marker", "start", 1),
+                ("phase_reset", 1),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", config_dict["p90_us"], "ph1", r_[0, 1, 2, 3]),
+                ("delay", config_dict["deadtime_us"]),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", config_dict["repetition_us"]),
+                ("jumpto", "start"),
+            ]
+        )
+    if not phase_cycling:
+        SpinCore_pp.load(
+            [
+                ("marker", "start", 1),
+                ("phase_reset", 1),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", config_dict["p90_us"], 0),
+                ("delay", config_dict["deadtime_us"]),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", config_dict["repetition_us"]),
+                ("jumpto", "start"),
+            ]
+        )
+    SpinCore_pp.stop_ppg()
+    SpinCore_pp.runBoard()
+    raw_data = SpinCore_pp.getData(
+        data_length, nPoints, config_dict["nEchoes"], nPhaseSteps
+    )
+    raw_data.astype(float)
+    data_array = []
+    data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
+    dataPoints = float(np.shape(data_array)[0])
+    if x == 0:
+        time_axis = np.linspace(
+            0.0,
+            config_dict["nEchoes"] * nPhaseSteps * config_dict["acq_time_ms"] * 1e-3,
+            dataPoints,
+        )
+        data = ndshape([len(data_array), config_dict["nScans"]], ["t", "nScans"]).alloc(
+            dtype=np.complex128
+        )
+        data.setaxis("t", time_axis).set_units("t", "s")
+        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+        data.name(config_dict["type"])
+        data.set_prop("acq_params", config_dict.asdict())
+    data["nScans", x] = data_array
+    SpinCore_pp.stopBoard()
 # }}}
 # {{{ saving data
-if phase_cycling:
-    data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
-    data.setaxis("ph1", ph1_cyc / 4)
-    if config_dict["nScans"] > 1:
-        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    data.reorder(["ph1", "nScans", "t2"])
-    data.squeeze()
-    data.set_units("t2", "s")
-    fl.next("Raw - time")
-    fl.image(data.C.mean("nScans"))
-    data.reorder("t2", first=False)
-    for_plot = data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary=True)
-    fl.next("FTed data")
-    fl.image(for_plot.C.mean("nScans"))
-else:
-    if config_dict["nScans"] > 1:
-        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    data.rename("t", "t2")
-    fl.next("Raw - time")
-    fl.image(data.C.mean("nScans"))
-    data.reorder("t2", first=False)
-    for_plot = data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
-    fl.image(for_plot)
-data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-data.set_prop("acq_params", config_dict.asdict())
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
+config_dict.write()
+nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
 filename_out = filename + ".h5"
-nodename = data.name()
-if os.path.exists(f"{filename_out}"):
-    print("this file already exists so we will add a node to it!")
-    with h5py.File(
-        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
-    ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_FID")
-            data.name("temp_FID")
-            nodename = "temp_FID"
-    data.hdf5_write(f"{filename_out}", directory=target_directory)
-else:
-    try:
-        data.hdf5_write(f"{filename_out}", directory=target_directory)
-    except:
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
+) as fp:
+    if nodename in fp.keys():
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_FID.h5 in the current directory"
+            "this nodename already exists, so I will call it temp_FID_%d"
+            % config_dict["echo_counter"]
         )
-        if os.path.exists("temp_FID.h5"):
-            print("there is a temp_FID.h5 already! -- I'm removing it")
-            os.remove("temp_FID.h5")
-            data.hdf5_write("temp_FID.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp_FID.h5 to the correct name!!"
-            )
+        data.name("temp_FID_%d" % config_dict["echo_counter"])
+        nodename = "temp_FID_%d" % config_dict["echo_counter"]
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
+    else:
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
+print(("Shape of saved data", ndshape(data)))
 config_dict.write()
+# }}}
+

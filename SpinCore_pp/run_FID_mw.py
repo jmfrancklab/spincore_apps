@@ -1,19 +1,14 @@
-"""FID with microwaves
-======================
-Runs FID at increasing power up to the max power set by the configuration file. Number of steps is also specified in the configuration file. For this script to work the FLInst server must be running to communicate with the B12 for setting powers. The actual output and RX of the microwaves is tracked using the log and start/stop times of each FID acquisition.
-"""
 from pyspecdata import *
-from pyspecdata import strm
 from numpy import *
-import os, sys, time
+import os,sys,time
 import SpinCore_pp
+from Instruments import Bridge12,prologix_connection,gigatronics
+from serial import Serial
 import h5py
 from datetime import datetime
-from Spincore_pp.ppg import generic
-from Instruments import power_control
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 from SpinCore_pp.power_helper import gen_powerlist
-
+raise RuntimeError("This pulse program has been updated to use active.ini, but not the ppg functions..  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
 fl = figlist_var()
 # {{{importing acquisition parameters
@@ -27,142 +22,181 @@ config_dict["type"] = "FID_mw"
 config_dict["date"] = date
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
+#{{{ Parameters for Bridge12
+dB_settings = gen_powerlist(config_dict['max_power'],config_dict['power_steps'])
+append_dB = [dB_settings[abs(10**(dB_settings/10.-3)-config_dict['max_power']*frac).argmin()]
+        for frac in [0.75,0.5,0.25]]
+dB_settings = append(dB_settings,append_dB)
+print("dB_settings",dB_settings)
+print("correspond to powers in Watts",10**(dB_settings/10.-3))
+input("Look ok?")
+powers = 1e-3*10**(dB_settings/10.)
 phase_cycling = True
 if phase_cycling:
-    ph1_cyc = r_[0, 1, 2, 3]
     nPhaseSteps = 4
 if not phase_cycling:
-    ph1_cyc = 0.0
     nPhaseSteps = 1
-# {{{ Parameters for Bridge12
-dB_settings = gen_powerlist(
-    config_dict["max_power"], config_dict["power_steps"], three_down=False
-)
-logger.info("dB settings", dB_settings)
-logger.info("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
-input("Look ok?")
-powers = 1e-3 * 10 ** (dB_settings / 10.0)
-# }}}
-# {{{ note on timing
+#}}}    
+#{{{ note on timing
 # putting all times in microseconds
 # as this is generally what the SpinCore takes
 # note that acq_time is always milliseconds
-# }}}
-total_points = len(ph1_cyc) * nPoints
-assert total_points < 2**14, (
-    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
-    % total_points
-)
-# {{{ run ppg
-with power_control() as p:
-    retval_thermal = p.dip_lock(
-        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-    )
-    p.mw_off()
-    time.sleep(16.0)  # give some time for the power source to "settle"
-    p.start_log()
-    ini_time = time.time()
-    FID = generic(
-        ppg=[
-            ("marker", "start", 1),
-            ("phase_reset", 1),
-            ("delay_TTL", config_dict["deblank_us"]),
-            ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-            ("delay", config_dict["deadtime_us"]),
-            ("acquire", config_dict["acq_time_ms"]),
-            ("delay", config_dict["repetition_us"]),
-            ("jumpto", "start"),
-        ],
-        nScans=config_dict["nScans"],
-        indirect_len=len(dB_settings)
-        + 1,  # make length long enough to include this no power
-        indirect_idx=0,
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        nPoints=nPoints,
-        SW_kHz=config_dict["SW_kHz"],
-        indirect_fields=("start_times", "stop_times"),
-        ret_data=None,
-    )
-    done_t = time.time()
-    time_axis_coords = FID.getaxis("indirect")
-    time_axis_coords[0]["start_times"] = ini_time
-    time_axis_coords[0]["stop_times"] = done_t
-    power_settings_dBm = np.zeros_like(dB_settings)
-    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
-    for j, this_dB in enumerate(dB_settings):
-        logger.debug("SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], ")")
-        if j == 0:
-            retval = p.dip_lock(
-                config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-                config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-            )
-        p.set_power(this_dB)
-        for k in range(10):
-            time.sleep(0.5)
-            if p.get_power_setting() >= this_dB:
-                break
-        if p.get_power_setting() < this_dB:
-            raise ValueError("After 10 tries, the power has still not settled")
-        time.sleep(5)
-        power_settings_dBm[j] = p.get_power_setting()
-        time_axis_coords[j + 1]["start_times"] = time.time()
-        generic(
-            ppg=[
-                ("marker", "start", 1),
-                ("phase_reset", 1),
-                ("delay_TTL", config_dict["deblank_us"]),
-                ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
-                ("delay", config_dict["deadtime_us"]),
-                ("acquire", config_dict["acq_time_ms"]),
-                ("delay", config_dict["repetition_us"]),
-                ("jumpto", "start"),
-            ],
-            nScans=config_dict["nScans"],
-            indirect_len=len(dB_settings) + 1,
-            indirect_idx=j + 1,
-            adcOffset=config_dict["adc_offset"],
-            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=nPoints,
-            SW_kHz=config_dict["SW_kHz"],
-            indirect_fields=("start_times", "stop_times"),
-            ret_data=FID,
-        )
-        time_axis_coords[j + 1]["stop_times"] = time.time()
-    FID.set_prop("acq_params", config_dict.asdict())
-    FID.setaxis("nScans", r_[0 : config_dict["nScans"]])
+#}}}
+data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
+#{{{ run ppg
+for x in range(config_dict['nScans']):
+    SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
+            tx_phases, config_dict['amplitude'], nPoints)
+    acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 1, 
+            config_dict['nEchoes'], nPhaseSteps)
+    SpinCore_pp.init_ppg();
     if phase_cycling:
-        FID.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
-        FID.setaxis("ph1", ph1_cyc / 4)
-        FID.reorder(["ph1", "nScans", "t2"])
-    FID.name(config_dict["type"])
-    nodename = FID.name()
-    try:
-        FID.hdf5_write(filename, directory=target_directory)
-    except:
-        print(
-            f"I had problems writing to the correct file {filename}, so I'm going to try to save your file to temp_FID_mw.h5 in the current h5 file"
-        )
-        target_directory = os.path.getcwd()
-        filename = "temp_FID_mw.h5"
-        if os.path.exists("temp_FID_mw.h5"):
-            final_log.append("there is a temp_FID_mw.h5 already! -- I'm removing it")
-            os.remove("temp_FID_mw.h5")
-            DNP_data.hdf5_write(filename, directory=target_directory)
-            final_log.append(
-                "if I got this far, that probably worked -- be sure to move/rename temp_FID_mw.h5 to the correct name!!"
-            )
-    logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-    logger.debug(strm("Name of saved data", FID.name()))
-    # }}}
-    final_frq = p.dip_lock(
-        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-    )
-    this_log = p.stop_log()
-# }}}
-config_dict.write()
-with h5py.File(os.path.join(target_directory, filename), "a") as f:
-    log_grp = f.create_group("log")
-    hdf_save_dict_to_group(log_grp, this_log.__getstate__())
+        SpinCore_pp.load([
+            ('marker','start',1),
+            ('phase_reset',1),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',config_dict['p90_us'],'ph1',r_[0,1,2,3]),
+            ('delay',config_dict['deadtime_us']),
+            ('acquire',config_dict['acq_time_ms']),
+            ('delay',config_dict['repetition_us']),
+            ('jumpto','start')
+            ])
+    if not phase_cycling:
+        SpinCore_pp.load([
+            ('marker','start',1),
+            ('phase_reset',1),
+            ('delay_TTL',config_dict['deblank_us']),
+            ('pulse_TTL',config_dict['p90_us'],0.0),
+            ('delay',config_dict['deadtime_us']),
+            ('acquire',config_dict['acq_time_ms']),
+            ('delay',config_dict['repetition_us']),
+            ('jumpto','start')
+            ])
+    SpinCore_pp.stop_ppg();
+    SpinCore_pp.runBoard();
+    raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
+    raw_data.astype(float)
+    data = []
+    data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
+    dataPoints = float(np.shape(data)[0])
+    data = nddata(np.array(data),'t')
+    if x == 0:
+        time_axis = linspace(0.0,config_dict['nEchoes']*nPhaseSteps*config_dict['acq_time_ms']*1e-3,dataPoints)
+        data.setaxis('t',time_axis).set_units('t','s')
+        data.name('signal')
+        data.set_prop('acq_params',config_dict.asdict())
+    # Define nddata to store along the new power dimension
+        DNP_data = ndshape([len(powers)+1,nScans,len(time_axis)],['power','nScans','t']).alloc(dtype=np.complex128)
+        DNP_data.setaxis('power',r_[0,powers]).set_units('W')
+        DNP_data.setaxis('nScans',r_[0:config_dict['nScans']])
+        DNP_data.setaxis('t',time_axis).set_units('t','s')
+    DNP_data['power',0]['nScans',x] = data
+
+with Bridge12() as b:
+    b.set_wg(True)
+    b.set_rf(True)
+    b.set_amp(True)
+    this_return = b.lock_on_dip(ini_range=
+            config_dict['uw_dip_center_GHz']-config_dict['uw_dip_width_GHz'] / 2,
+            config_dict['uw_dip_center_GHz']+config_dict['uw_dip_width_GHz']/2)
+    dip_f = this_return[2]
+    b.set_freq(dip_f)
+    meter_powers = zeros_like(dB_settings)
+    for j,this_power in enumerate(dB_settings):
+        if j>0 and this_power > last_power + 3:
+            last_power += 3
+            b.set_power(last_power)
+            time.sleep(3.0)
+            while this_power > last_power+3:
+                last_power += 3
+                b.set_power(last_power)
+                time.sleep(3.0)
+            b.set_power(this_power)
+        elif j == 0:
+            threshold_power = 10
+            if this_power > threshold_power:
+                next_power = threshold_power + 3
+                while next_power < this_power:
+                    b.set_power(next_power)
+                    time.sleep(3.0)
+                    next_power += 3
+            b.set_power(this_power)
+        else:
+            b.set_power(this_power)
+        time.sleep(15)
+        with prologix_connection() as p:
+            with gigatronics(prologix_instance=p, address=7) as g:
+                meter_powers[j] = g.read_power()
+        for x in range(config_dict['nScans']):
+            SpinCore_pp.configureTX(config_dict['adcOffset'], config_dict['carrierFreq_MHz'], 
+                    tx_phases, config_dict['amplitude'], nPoints)
+            acq_time = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 
+                    1, config_dict['nEchoes'], nPhaseSteps)
+            SpinCore_pp.init_ppg();
+            if phase_cycling:
+                SpinCore_pp.load([
+                    ('marker','start',1),
+                    ('phase_reset',1),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',config_dict['p90_us'],'ph1',r_[0,1,2,3]),
+                    ('delay',config_dict['deadtime_us']),
+                    ('acquire',config_dict['acq_time_ms']),
+                    ('delay',config_dict['repetition_us']),
+                    ('jumpto','start')
+                    ])
+            if not phase_cycling:
+                SpinCore_pp.load([
+                    ('marker','start',1),
+                    ('phase_reset',1),
+                    ('delay_TTL',config_dict['deblank_us']),
+                    ('pulse_TTL',config_dict['p90_us'],0.0),
+                    ('delay',config_dict['deadtime_us']),
+                    ('acquire',config_dict['acq_time_ms']),
+                    ('delay',config_dict['repetition_us']),
+                    ('jumpto','start')
+                    ])
+            SpinCore_pp.stop_ppg();
+            SpinCore_pp.runBoard();
+            raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps)
+            raw_data.astype(float)
+            data = []
+            data[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
+            dataPoints = float(np.shape(data)[0])
+            data = nddata(np.array(data),'t')
+            DNP_data['power',j+1]['nScans',x] = data
+        last_power = this_power
+data.name('signal')
+data.set_prop('meter_powers',meter_powers)
+SpinCore_pp.stopBoard();
+#}}}
+#{{{save
+data.set_prop('acq_params',config_dict.asdict())
+nodename = data.name()
+filename_out = filename+'.h5'
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory,f"{filename_out}")
+)) as fp:
+    if nodename in fp.keys():
+        print("this nodename already exists, so I will call it temp_%d"%j)
+        data.name("temp_FID_mw_%d"%config_dict['echo_counter'])
+        nodename = "temp_FID_mw_%d"%config_dict['echo_counter']
+        data.hdf5_write(f"{filename_out}",directory = target_directory)
+    else:
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data", data.name()))
+print(("Shape of saved data", ndshape(data)))
+#}}}
+#{{{ image raw
+fl.next('raw data')
+fl.image(data.setaxis('power','#'))
+fl.next('abs raw data')
+fl.image(abs(data).setaxis('power','#'))
+data.ft('t',shift=True)
+fl.next('raw data - ft')
+fl.image(data.setaxis('power','#'))
+fl.next('abs raw data - ft')
+fl.image(abs(data).setaxis('power','#'))
+#}}}
+fl.show()
+
