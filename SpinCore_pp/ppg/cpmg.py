@@ -169,4 +169,3 @@ def run_cpmg(
             )
         )
     return ret_data
-
