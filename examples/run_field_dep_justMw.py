@@ -15,7 +15,7 @@ import SpinCore_pp
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 import numpy as np
-from Instruments import power_control, Bridge12, prologix_connection, gigatronics
+from Instruments import power_control
 from Instruments.XEPR_eth import xepr
 import h5py
 
@@ -60,10 +60,10 @@ if not phase_cycling:
 # }}}
 # {{{ Parameters for Bridge12
 powers = r_[config_dict["max_power"]]
-min_dBm_step = 0.5
 for x in range(len(powers)):
     dB_settings = (
-        round(10 * (log10(powers[x]) + 3.0) / min_dBm_step) * min_dBm_step
+        round(10 * (log10(powers[x]) + 3.0) / config_dict["min_dBm_step"])
+        * config_dict["min_dBm_step"]
     )  # round to nearest min_dBm_step
 print("dB_settings", dB_settings)
 print("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
@@ -72,12 +72,12 @@ powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2 ** 14, (
+assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
-#}}}
-#{{{Run field sweep
+# }}}
+# {{{Run field sweep
 with power_control() as p:
     dip_f = p.dip_lock(
         config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
@@ -100,17 +100,17 @@ with power_control() as p:
             nScans=config_dict["nScans"],
             indirect_idx=0,
             indirect_len=len(field_axis),
-            ph1_cyc = ph1_cyc,
-            adcOffset = config_dict["adc_offset"],
-            carrierFreq_MHz = carrierFreq_MHz,
-            nPoints = nPoints,
-            nEchoes = config_dict["nEchoes"],
-            p90_us = config_dict["p90_us"],
-            repetition_us = config_dict["repetition_us"],
-            tau_us = config_dict["tau_us"],
-            SW_kHz = config_dict["SW_kHz"],
-            indirect_fields = ("Field", "carrierFreq"),
-            ret_data = None,
+            ph1_cyc=ph1_cyc,
+            adcOffset=config_dict["adc_offset"],
+            carrierFreq_MHz=carrierFreq_MHz,
+            nPoints=nPoints,
+            nEchoes=config_dict["nEchoes"],
+            p90_us=config_dict["p90_us"],
+            repetition_us=config_dict["repetition_us"],
+            tau_us=config_dict["tau_us"],
+            SW_kHz=config_dict["SW_kHz"],
+            indirect_fields=("Field", "carrierFreq"),
+            ret_data=None,
         )
         myfreqs_fields = sweep_data.getaxis("indirect")
         myfreqs_fields[0]["Field"] = first_B0
@@ -127,7 +127,7 @@ with power_control() as p:
                 nScans=config_dict["nScans"],
                 indirect_idx=B0_index + 1,
                 indirect_len=len(field_axis),
-                ph1_cyc = ph1_cyc,
+                ph1_cyc=ph1_cyc,
                 adcOffset=config_dict["adc_offset"],
                 carrierFreq_MHz=new_carrierFreq_MHz,
                 nPoints=nPoints,
@@ -157,17 +157,18 @@ if phase_cycling:
     )
     sweep_data.reorder("t2", first=False)
     for_plot = sweep_data.C
-    for_plot.ft('t2',shift=True)
-    for_plot.ft(['ph1'], unitary = True)
-    fl.next('FTed data')
-    fl.image(for_plot.C.mean("nScans")
+    for_plot.ft("t2", shift=True)
+    for_plot.ft(["ph1"], unitary=True)
+    fl.next("FTed data")
+    fl.image(
+        for_plot.C.mean("nScans")
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )
 else:
     if config_dict["nScans"] > 1:
         sweep_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    sweep_data.rename('t','t2')    
+    sweep_data.rename("t", "t2")
     fl.next("Raw - time")
     fl.image(
         sweep_data.C.mean("nScans")
@@ -175,9 +176,10 @@ else:
         .set_units("indirect", "scan #")
     )
     for_plot = sweep_data.C
-    for_plot.ft('t2',shift=True)
-    fl.next('FTed data')
-    fl.image(for_plot.C.mean("nScans")
+    for_plot.ft("t2", shift=True)
+    fl.next("FTed data")
+    fl.image(
+        for_plot.C.mean("nScans")
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )

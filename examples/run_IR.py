@@ -1,6 +1,6 @@
 """Run Inversion Recovery at set power
 ======================================
-You will need to manually set the power manually with FLInst setfield and the B12. Once the power is set and the parameters are adjusted, you can run this program to collect the inversion recovery dataset at the set power.
+A standard inversion recovery experiment that utilizes parameters in the configuration file to create an evenly spaced appropriate vdlist. The user can adjust the desired power using the 'max_power' parameter in the configuration file. In order to properly set the powers the FLInst server needs to be running to communicate with the B12.
 """
 from pyspecdata import *
 import os
@@ -31,6 +31,20 @@ if not phase_cycling:
     ph1 = 0.0
     ph2 = 0.0
     nPhaseSteps = 1
+# }}}
+# {{{ Parameters for Bridge12
+power = r_[config_dict["max_power"]]
+min_dBm_step = 0.5
+for x in range(len(power)):
+    dB_setting = (
+        round(10 * (log10(power[x]) + 3.0) / min_dBm_step) * min_dBm_step
+    )  # round to nearest min_dBm_step
+print("dB_setting", dB_setting)
+print("correspond to power in Watts", 10 ** (dB_setting / 10.0 - 3))
+input("Look ok?")
+power = 1e-3 * 10 ** (dB_setting / 10.0)
+# }}}
+
 # {{{make vd list
 vd_kwargs = {
     j: config_dict[j]
@@ -44,62 +58,84 @@ vd_list_us = (
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2 ** 14, (
+assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
 # {{{run IR
-vd_data = None
-for vd_idx, vd in enumerate(vd_list_us):
-    vd_data = run_IR(
-        nScans=config_dict["nScans"],
-        indirect_idx=vd_idx,
-        indirect_len=len(vd_list_us),
-        ph1_cyc=ph1,
-        ph2_cyc=ph2,
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        nPoints=nPoints,
-        nEchoes=config_dict["nEchoes"],
-        vd=vd,
-        p90_us=config_dict["p90_us"],
-        repetition_us=config_dict["repetition_us"],
-        tau_us=config_dict["tau_us"],
-        SW_kHz=config_dict["SW_kHz"],
-        ret_data=vd_data,
+with power_control() as p:
+    dip_f = p.dip_lock(
+        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
+    )
+    dip_f /= 1e9
+    p.set_power(dB_setting)
+    for k in range(10):
+        time.sleep(0.5)
+        if p.get_power_setting() >= dB_setting:
+            break
+    if p.get_power_setting() < dB_setting:
+        raise ValueError("After 10 tries, this power has still not settled")
+    time.sleep(5)
+    meter_power = p.get_power_setting()
+    vd_data = None
+    for vd_idx, vd in enumerate(vd_list_us):
+        vd_data = run_IR(
+            nScans=config_dict["nScans"],
+            indirect_idx=vd_idx,
+            indirect_len=len(vd_list_us),
+            ph1_cyc=ph1,
+            ph2_cyc=ph2,
+            adcOffset=config_dict["adc_offset"],
+            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+            nPoints=nPoints,
+            nEchoes=config_dict["nEchoes"],
+            vd=vd,
+            p90_us=config_dict["p90_us"],
+            repetition_us=config_dict["repetition_us"],
+            tau_us=config_dict["tau_us"],
+            SW_kHz=config_dict["SW_kHz"],
+            ret_data=vd_data,
+        )
+    final_frq = p.dip_lock(
+        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
 # }}}
 # {{{ chunk and save data
-if phase_cycling:    
+vd_data.rename("indirect", "vd")
+vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
+if phase_cycling:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph1), len(ph2), -1])
     vd_data.setaxis("ph1", ph1 / 4)
     vd_data.setaxis("ph2", ph2 / 4)
-    if config_dict['nScans'] > 1:
-        vd_data.setaxis('nScans',[0:config_dict['nScans']])
+    if config_dict["nScans"] > 1:
+        vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     vd_data.reorder(["ph1", "ph2", "vd", "t2"])
     vd_data.squeeze()
-    vd.data.set_uits("t2","s")
+    vd_data.set_units("t2", "s")
     fl.next("Raw - time")
     fl.image(vd_data)
     for_plot = vd_data.C
-    for_plot.ft('t2')
-    for_plot.ft(['ph1','ph2'],unitary = True)
-    fl.next('FTed data')
+    for_plot.ft("t2")
+    for_plot.ft(["ph1", "ph2"], unitary=True)
+    fl.next("FTed data")
     fl.image(for_plot)
 else:
     if config_dict["nScans"] > 1:
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     vd_data.rename("t", "t2")
     fl.next("Raw - time")
-    fl.image(
-        vd_data.C.mean("nScans"))
+    fl.image(vd_data.C.mean("nScans"))
     vd_data.reorder("t2", first=False)
     for_plot = vd_data.C
-    for_plot.ft('t2',shift=True)
-    fl.next('FTed data')
+    for_plot.ft("t2", shift=True)
+    fl.next("FTed data")
     fl.image(for_plot)
-vd_data.name(config_dict["type"] + "_" + str(config_dict["ir_counter"]))
+vd_data.name(
+    config_dict["type"] + "_" + str(dB_setting) + "_" + str(config_dict["ir_counter"])
+)
 vd_data.set_prop("postproc_type", "Spincore_IR_v1")
 vd_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/inv_rec")
@@ -129,8 +165,6 @@ else:
             print(
                 "if I got this far, that probably worked -- be sure to move/rename temp_IR.h5 to the correct name!!"
             )
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_IR.h5 in the current directory"
-        )
         if os.path.exists("temp_IR.h5"):
             print("there is a temp_IR.h5 -- I'm removing it")
             os.remove("temp_IR.h5")

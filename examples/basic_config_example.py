@@ -1,5 +1,8 @@
-"just testing/illustrating the basic function of configfiles -- really for devel purposes"
+""" Example of how the configuration file is called and used
+============================================================
 
+Demonstration of the basic functions and usage of the configuration file including how to initialize, and call parameters that are defaulted in the parser function or set in the configuration file. If a parameter is neither in the parser function nor the configuration file an error will be thrown letting the user know. The configuration file can easily be updated and written to within any script and then called again.
+"""
 import configparser
 import os
 import SpinCore_pp
@@ -39,14 +42,17 @@ except Exception as e:
 # }}}
 # {{{ pretty formatting
 myconfig["adc_offset"] = 30
-print("print out the config settings as a dictionary!",
-    myconfig.asdict()
+print(
+    "print out the config settings as a dictionary!", myconfig.asdict()
 )  # so we can, e.g. put in an HDF5 file -- this should have the nice case that was registered
-print("print them out more legibly!!\n",
-        myconfig)
+print("print them out more legibly!!\n", myconfig)
 # }}}
 # {{{ set a parameter that is registered, and see that it will change, which can be seen by running the script twice
-print("echo counter was", myconfig["echo_counter"], "and I'm going to increment it.  If you re-run this script, this value should increase")
+print(
+    "echo counter was",
+    myconfig["echo_counter"],
+    "and I'm going to increment it.  If you re-run this script, this value should increase",
+)
 myconfig["echo_counter"] += 1
 myconfig.write()  # this should write the adc offset and whatever else we've changed
 # }}}

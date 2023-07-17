@@ -1,47 +1,15 @@
 """
 CPMG_calibration
 ================
-CPMG meant for the purpose of calibration.
+Here we can calibrate our 90 time and tau by cycling through 90 times (which are defined as a list in this script) and thus tau is fixed accordingly to maintain symmetric echoes.
 
-FOR PHASE CYCLING: Provide both a phase cycle label (e.g.,
-'ph1', 'ph2') as str and an array containing the indices
-(i.e., registers) of the phases you which to use that are
-specified in the numpy array 'tx_phases'.  Note that
-specifying the same phase cycle label will loop the
-corresponding phase steps together, regardless of whether
-the indices are the same or not.
-    e.g.,
-    The following:
-        ('pulse',2.0,'ph1',r_[0,1]),
-        ('delay',1.5),
-        ('pulse',2.0,'ph1',r_[2,3]),
-    will provide two transients with phases of the two pulses (p1,p2):
-        (0,2)
-        (1,3)
-    whereas the following:
-        ('pulse',2.0,'ph1',r_[0,1]),
-        ('delay',1.5),
-        ('pulse',2.0,'ph2',r_[2,3]),
-    will provide four transients with phases of the two pulses (p1,p2):
-        (0,2)
-        (0,3)
-        (1,2)
-        (1,3)
-FURTHER: The total number of transients that will be
-collected are determined by both nScans (determined when
-calling the appropriate marker) and the number of steps
-calculated in the phase cycle as shown above.  Thus for
-nScans = 1, the SpinCore will trigger 2 times in the first
-case and 4 times in the second case.  for nScans = 2, the
-SpinCore will trigger 4 times in the first case and 8 times
-in the second case.
 """
 from pyspecdata import *
 from numpy import *
 from datetime import datetime
 import SpinCore_pp
+from SpinCore_pp.ppg import generic
 import h5py
-raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
 p90_range = linspace(3.0, 4.0, 5)
@@ -65,10 +33,10 @@ if not phase_cycling:
     ph1_cyc = 0.0
     nPhaseSteps = 1
 # }}}
-#{{{making tau
+# {{{making tau for a symmetric echo given delays
 marker = 1.0
-pad_start = config_dict['tau_extra_us'] - config_dict["deadtime_us"]
-pad_end = config_dict['tau_extra_us'] - config_dict["deblank_us"] - marker
+pad_start = config_dict["tau_extra_us"] - config_dict["deadtime_us"]
+pad_end = config_dict["tau_extra_us"] - config_dict["deblank_us"] - marker
 assert (
     pad_start > 0
 ), "tau_extra_us must be set to more than deadtime and more than deblank!"
@@ -78,97 +46,99 @@ assert (
 twice_tau_echo_us = (  # the period between 180 pulses
     config_dict["tau_extra_us"] * 2 + config_dict["acq_time_ms"] * 1e3
 )
-#}}}
+# }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2 ** 14, (
+assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
-#{{{run ppg
+# {{{run ppg
 for index, val in enumerate(p90_range):
     p90_us = val  # us
-    config_dict['tau_us'] = twice_tau_echo_us / 2.0 - (
-            2*p90
-            /pi #evolution during pulse -- see eq 6 of coherence paper
-            + config_dict['deadtime_us'] # following 90
-            +config_dict['deblank_us'] #before 180
-            )
+    this_tau = twice_tau_echo_us / 2.0 - (
+        2 * p90 / pi  # evolution during pulse -- see eq 6 of coherence paper
+        + config_dict["deadtime_us"]  # following 90
+        + config_dict["deblank_us"]  # before 180
+    )
 
     print("***")
     print("INDEX %d - 90 TIME %f" % (index, val))
     print("***")
     if index == 0:
-        data = run_cpmg(
+        data = generic(
+            ppg_list=[
+                ("phase_reset", 1),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
+                ("delay", this_tau),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+                ("delay", config_dict["deadtime_us"]),
+                ("delay", pad_start_us),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", pad_end_us),
+                ("marker", "echo_label", (config_dict["nEchoes"] - 1)),  # 1 us delay
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+                ("delay", config_dict["deadtime_us"]),
+                ("delay", pad_start_us),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", pad_end_us),
+                ("jumpto", "echo_label"),  # 1 us delay
+                ("delay", config_dict["repetition_us"]),
+            ],
             nScans=config_dict["nScans"],
             indirect_idx=0,
             indirect_len=len(p90_range) + 1,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
-            nEchoes=config_dict["nEchoes"],
-            p90_us=p90_us,
-            repetition_us=config_dict["repetition_us"],
-            pad_start_us=pad_start,
-            pad_end_us=pad_end,
-            tau_us=tau_us,
             SW_kHz=config_dict["SW_kHz"],
-            ph1_cyc=ph1_cyc,
-            indirect_fields=('p90_idx','p90_us')
+            indirect_fields=("tau", "p90_us"),
             ret_data=None,
         )
-     p90_axis = data.getaxis('indirect')
-     p90_axis[0]['p90_index'] = index
-     p90_axis[0]['p90_us'] = p90
+        p90_axis = data.getaxis("indirect")
+        p90_axis[0]["tau"] = this_tau
+        p90_axis[0]["p90_us"] = p90
     else:
-        run_cpmg(
+        generic(
+            ppg_list=[
+                ("phase_reset", 1),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", config_dict["p90_us"], "ph1", ph1_cyc),
+                ("delay", this_tau),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+                ("delay", config_dict["deadtime_us"]),
+                ("delay", pad_start_us),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", pad_end_us),
+                ("marker", "echo_label", (config_dict["nEchoes"] - 1)),  # 1 us delay
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], 0.0),
+                ("delay", config_dict["deadtime_us"]),
+                ("delay", pad_start_us),
+                ("acquire", config_dict["acq_time_ms"]),
+                ("delay", pad_end_us),
+                ("jumpto", "echo_label"),  # 1 us delay
+                ("delay", config_dict["repetition_us"]),
+            ],
             nScans=config_dict["nScans"],
             indirect_idx=index + 1,
             indirect_len=len(p90_range + 1),
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
-            nEchoes=config_dict["nEchoes"],
-            p90_us=p90,
-            repetition_us=config_dict["repetition_us"],
-            pad_start_us=pad_start,
-            pad_end_us=pad_end,
-            tau_us=tau_us,
             SW_kHz=config_dict["SW_kHz"],
-            ph1_cyc=ph1_cyc,
+            indirect_fileds=("tau", "p90_us"),
             ret_data=data,
         )
-        p90_axis[index+1]['p90_us'] = p90
-#}}}
-#{{{Save data
-data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
-data.setaxis("ph1", ph1_cyc / 4)
-if config_dict["nScans"] > 1:
-    data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-if phase_cycling:    
-    fl.next("Raw - time")
-    fl.image(
-        data.C.mean("nScans"))
-    data.reorder("t2", first=False)
-    for_plot = data.C
-    for_plot.ft('t2',shift=True)
-    for_plot.ft(['ph1'], unitary = True)
-    fl.next('FTed data')
-    fl.image(for_plot.C.mean("nScans")
-    )
-else:
-    if config_dict["nScans"] > 1:
-        data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    data.rename('t','t2')
-    fl.next("Raw - time")
-    fl.image(
-        data.C.mean("nScans"))
-    data.reorder("t2", first=False)
-    for_plot = data.C
-    for_plot.ft('t2',shift=True)
-    fl.next('FTed data')
-    fl.image(for_plot)
+        p90_axis[index + 1]["p90_us"] = p90
+        p90_axis[index + 1]["tau"] = this_tau
+# }}}
+# {{{Save data
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
@@ -199,6 +169,5 @@ else:
                 "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
             )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data", data.name())
+print(("Name of saved data", data.name()))
 config_dict.write()
-fl.show()
