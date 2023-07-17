@@ -1,7 +1,7 @@
 """
 CPMG_calibration
 ================
-Here we can calibrate our 90 time by cycling through 90 times (which are defined as a list in this script) and thus tau is fixed accordingly to maintain symmetric echoes.
+Here we can calibrate our 90 time and tau by cycling through 90 times (which are defined as a list in this script) and thus tau is fixed accordingly to maintain symmetric echoes.
 
 """
 from pyspecdata import *
