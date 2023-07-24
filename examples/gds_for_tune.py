@@ -24,22 +24,21 @@ import numpy as np
 
 parser_dict = SpinCore_pp.configuration("active.ini")
 carrier_frequency = parser_dict["carrierFreq_MHz"]
-logger.info(
-    strm(
-        "I'm using the carrier frequency of %f entered into your active.ini"
-        % carrier_frequency
-    )
+print(
+    "I'm using the carrier frequency of %f entered into your active.ini"
+    % carrier_frequency
 )
-logger.info(strm(""))
+
+print("")
 input(
     "Please note I'm going to assume the control is hooked up to CH1 of the GDS and the reflection is hooked up to CH2 of the GDS... (press enter to continue)"
 )
 
 fl = figlist_var()
 
-logger.info("These are the instruments available:")
+print("These are the instruments available:")
 SerialInstrument(None)
-logger.info("done printing available instruments")
+print("done printing available instruments")
 
 
 def grab_waveforms(g):
@@ -118,12 +117,12 @@ with figlist_var() as fl:
             d.hdf5_write("201020_sol_probe_1.h5")
             try_again = False
         except Exception as e:
-            logger.info(strm(e))
-            logger.infor(strm("name taken, trying again..."))
+            print(e)
+            print("name taken, trying again...")
             try_again = True
-    logger.info(strm("name of data", d.name()))
-    logger.info(strm("units should be", d.get_units("t")))
-    logger.info(strm("shape of data", ndshape(d)))
+    print(("name of data", d.name()))
+    print(("units should be", d.get_units("t")))
+    print(("shape of data", ndshape(d)))
     fl.next("waveforms")
     fl.plot(d, alpha=0.1)
     fl.plot(abs(d), alpha=0.5, linewidth=3)
@@ -141,5 +140,6 @@ if tuning_dB < -25:
     )
 else:
     print("Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!" % tuning_dB)
+# this is put here in case it used the default
 parser_dict["carrierFreq_MHz"] = carrier_frequency
 parser_dict.write()

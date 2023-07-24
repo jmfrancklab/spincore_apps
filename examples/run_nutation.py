@@ -16,7 +16,6 @@ from datetime import datetime
 import h5py
 
 fl = figlist_var()
-# here you make the list of p90's you want - (starting p90, last p90, number of points between)
 p90_range_us = linspace(1.0, 10.0, 20, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -52,20 +51,20 @@ assert total_pts < 2 ** 14, (
 )
 # }}}
 nutation_data = run_spin_echo(
-    nScans=config_dict["nScans"],
-    indirect_idx=0,
-    indirect_len=len(p90_range_us),
-    ph1_cyc=ph1_cyc,
-    adcOffset=config_dict["adc_offset"],
-    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=nPoints,
-    nEchoes=config_dict["nEchoes"],
-    p90_us=p90_range_us[0],
-    repetition_us=config_dict["repetition_us"],
-    tau_us=config_dict["tau_us"],
-    SW_kHz=config_dict["SW_kHz"],
-    indirect_fields=("p_90", "index"),
-    ret_data=None,
+    nScans = config_dict["nScans"],
+    indirect_idx = 0,
+    indirect_len = len(p90_range_us),
+    ph1_cyc = ph1_cyc,
+    adcOffset = config_dict["adc_offset"],
+    carrierFreq_MHz = config_dict["carrierFreq_MHz"],
+    nPoints = nPoints,
+    nEchoes = config_dict["nEchoes"],
+    p90_us = p90_range_us[0],
+    repetition_us = config_dict["repetition_us"],
+    tau_us = config_dict["tau_us"],
+    SW_kHz = config_dict["SW_kHz"],
+    indirect_fields = ("p_90", "index"),
+    ret_data = None,
 )
 mytimes = nutation_data.getaxis("indirect")
 mytimes[0]["p_90"] = p90_range_us[0]
@@ -73,48 +72,51 @@ for index, val in enumerate(p90_range_us[1:]):
     p90_us = val  # us
     mytimes[index + 1]["p_90"] = p90_us
     run_spin_echo(
-        nScans=config_dict["nScans"],
-        indirect_idx=index + 1,
-        indirect_len=len(p90_range_us),
-        ph1_cyc=ph1_cyc,
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        nPoints=nPoints,
-        nEchoes=config_dict["nEchoes"],
-        p90_us=p90_us,
-        repetition_us=config_dict["repetition_us"],
-        tau_us=config_dict["tau_us"],
-        SW_kHz=config_dict["SW_kHz"],
-        indirect_fields=("p_90", "index"),
-        ret_data=nutation_data,
+        nScans = config_dict["nScans"],
+        indirect_idx = index + 1,
+        indirect_len = len(p90_range_us),
+        ph1_cyc = ph1_cyc,
+        adcOffset = config_dict["adc_offset"],
+        carrierFreq_MHz = config_dict["carrierFreq_MHz"],
+        nPoints = nPoints,
+        nEchoes = config_dict["nEchoes"],
+        p90_us = p90_us,
+        repetition_us = config_dict["repetition_us"],
+        tau_us = config_dict["tau_us"],
+        SW_kHz = config_dict["SW_kHz"],
+        indirect_fields = ("p_90", "index"),
+        ret_data = nutation_data,
     )
-    mytimes[j + 1]["p_90"] = p90_val
+    mytimes[j+1]["p_90"] = p90_val
 if phase_cycling:
     nutation_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
     nutation_data.setaxis("ph1", ph1_cyc/4)
     if config_dict["nScans"] > 1:
         nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    nutation_data.reorder(["ph1", "nScans", "t2"])
+    nutation_data.reorder(["ph1","nScans", "t2"])
     nutation_data.squeeze()
     nutation_data.set_units("t2", "s")
     fl.next("Raw - time")
-    fl.image(nutation_data.C.mean("nScans"))
+    fl.image(
+        nutation_data.C.mean("nScans"))
     nutation_data.reorder("t2", first=False)
     for_plot = nutation_data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary=True)
-    fl.next("FTed data")
-    fl.image(for_plot.C.mean("nScans"))
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
+    )
 else:
     if config_dict["nScans"] > 1:
         nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     nutation_data.rename("t", "t2")
     fl.next("Raw - time")
-    fl.image(nutation_data.C.mean("nScans"))
+    fl.image(
+        nutation_data.C.mean("nScans"))
     nutation_data.reorder("t2", first=False)
     for_plot = nutation_data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
     fl.image(for_plot)
 nutation_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 nutation_data.set_prop("postproc_type", "spincore_nutation_v1")

@@ -102,17 +102,17 @@ with power_control() as p:
             nScans=config_dict["nScans"],
             indirect_idx=0,
             indirect_len=len(field_axis),
-            ph1_cyc=ph1_cyc,
-            adcOffset=config_dict["adc_offset"],
-            carrierFreq_MHz=carrierFreq_MHz,
-            nPoints=nPoints,
-            nEchoes=config_dict["nEchoes"],
-            p90_us=config_dict["p90_us"],
-            repetition_us=config_dict["repetition_us"],
-            tau_us=config_dict["tau_us"],
-            SW_kHz=config_dict["SW_kHz"],
-            indirect_fields=("Field", "carrierFreq"),
-            ret_data=None,
+            ph1_cyc = ph1_cyc,
+            adcOffset = config_dict["adc_offset"],
+            carrierFreq_MHz = carrierFreq_MHz,
+            nPoints = nPoints,
+            nEchoes = config_dict["nEchoes"],
+            p90_us = config_dict["p90_us"],
+            repetition_us = config_dict["repetition_us"],
+            tau_us = config_dict["tau_us"],
+            SW_kHz = config_dict["SW_kHz"],
+            indirect_fields = ("Field", "carrierFreq"),
+            ret_data = None,
         )
         myfreqs_fields = sweep_data.getaxis("indirect")
         myfreqs_fields[0]["Field"] = first_B0
@@ -129,7 +129,7 @@ with power_control() as p:
                 nScans=config_dict["nScans"],
                 indirect_idx=B0_index + 1,
                 indirect_len=len(field_axis),
-                ph1_cyc=ph1_cyc,
+                ph1_cyc = ph1_cyc,
                 adcOffset=config_dict["adc_offset"],
                 carrierFreq_MHz=new_carrierFreq_MHz,
                 nPoints=nPoints,
@@ -159,18 +159,17 @@ if phase_cycling:
     )
     sweep_data.reorder("t2", first=False)
     for_plot = sweep_data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary=True)
-    fl.next("FTed data")
-    fl.image(
-        for_plot.C.mean("nScans")
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )
 else:
     if config_dict["nScans"] > 1:
         sweep_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    sweep_data.rename("t", "t2")
+    sweep_data.rename('t','t2')    
     fl.next("Raw - time")
     fl.image(
         sweep_data.C.mean("nScans")
@@ -178,10 +177,9 @@ else:
         .set_units("indirect", "scan #")
     )
     for_plot = sweep_data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
-    fl.image(
-        for_plot.C.mean("nScans")
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )

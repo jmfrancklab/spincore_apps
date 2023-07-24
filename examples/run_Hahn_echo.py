@@ -90,23 +90,26 @@ if phase_cycling:
     echo_data.squeeze()
     echo_data.set_units("t2", "s")
     fl.next("Raw - time")
-    fl.image(echo_data.C.mean("nScans"))
+    fl.image(
+        echo_data.C.mean("nScans"))
     echo_data.reorder("t2", first=False)
     for_plot = echo_data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary=True)
-    fl.next("FTed data")
-    fl.image(for_plot.C.mean("nScans"))
+    for_plot.ft('t2',shift=True)
+    for_plot.ft(['ph1'], unitary = True)
+    fl.next('FTed data')
+    fl.image(for_plot.C.mean("nScans")
+    )
 else:
     if config_dict["nScans"] > 1:
         echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     echo_data.rename("t", "t2")
     fl.next("Raw - time")
-    fl.image(echo_data.C.mean("nScans"))
+    fl.image(
+        echo_data.C.mean("nScans"))
     echo_data.reorder("t2", first=False)
     for_plot = echo_data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
     fl.image(for_plot)
 echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 echo_data.set_prop("postproc_type", "proc_Hahn_echoph")

@@ -30,7 +30,7 @@ fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
-thermal_scans = config_dict["thermal_nscans"]
+thermal_scans = config_dict['thermal_nscans'] 
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -60,21 +60,10 @@ vd_list_us = (
     SpinCore_pp.vdlist_from_relaxivities(config_dict["concentration"], **vd_kwargs)
     * 1e6
 )  # convert to microseconds
-FIR_rep = (
-    2
-    * (
-        1.0
-        / (
-            config_dict["concentration"] * config_dict["krho_hot"]
-            + 1.0 / config_dict["T1water_hot"]
-        )
-    )
-    * 1e6
-)
-config_dict["FIR_rep"] = FIR_rep
+FIR_rep = 2*(1.0/(config_dict['concentration']*config_dict['krho_hot']+1.0/config_dict['T1water_hot']))*1e6
+config_dict['FIR_rep'] = FIR_rep
 # }}}
 # {{{Power settings
-# the power list for the progressive enhancement uses the Ep_spacing function so we get plenty of points in the low power/linear regime
 dB_settings = Ep_spacing_from_phalf(
     est_phalf=config_dict["guessed_phalf"] / 4,
     max_power=config_dict["max_power"],
@@ -82,13 +71,10 @@ dB_settings = Ep_spacing_from_phalf(
     min_dBm_step=config_dict["min_dBm_step"],
     three_down=True,
 )
-# the power list for the IRs can just be linearly spaced - we don't care about focusing on one specific region more than any other
 T1_powers_dB = gen_powerlist(
     config_dict["max_power"], config_dict["num_T1s"], three_down=False
 )
-T1_node_names = [
-    "FIR_%0.1fdBm" % j for j in T1_powers_dB
-]  # for the node names in the final HDF5 file
+T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
 logger.info("dB_settings", dB_settings)
 logger.info("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 logger.info("T1_powers_dB", T1_powers_dB)
@@ -147,10 +133,8 @@ if phase_cycling:
     control_thermal.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
     control_thermal.setaxis("ph1", Ep_ph1_cyc / 4)
     control_thermal.reorder(["ph1", "nScans", "t2"])
-control_thermal.name("control_thermal")  # nodename for this data in the final HDF5 file
-control_thermal.set_prop(
-    "postproc_type", Ep_postproc
-)  # this will set the initial postprocessing method
+control_thermal.name("control_thermal")
+control_thermal.set_prop("postproc_type", Ep_postproc)
 control_thermal.set_prop("acq_params", config_dict.asdict())
 nodename = control_thermal.name()
 # {{{ on first write, if we can't access the directory, write to a temp file
@@ -196,32 +180,24 @@ for vd_idx, vd in enumerate(vd_list_us):
         SW_kHz=config_dict["SW_kHz"],
         ret_data=vd_data,
     )
-vd_data.rename(
-    "indirect", "vd"
-)  # the default is to name the extra axis 'indirect'-so we rename appropriately
-vd_data.setaxis("vd", vd_list_us * 1e-6).set_units(
-    "vd", "s"
-)  # hard set the vd axis to the list of vds we used
+vd_data.rename("indirect", "vd")
+vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
 if phase_cycling:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
     vd_data.setaxis("ph2", IR_ph2_cyc / 4)
 if config_dict["thermal_nScans"] > 1:
     vd_data.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
-vd_data.name("FIR_noPower")  # nodename for this data in final HDF5 file
-vd_data.set_prop(
-    "stop_time", time.time()
-)  # log has not been started yet so we are giving this guy an extra parameter
+vd_data.name("FIR_noPower")
+vd_data.set_prop("stop_time", time.time())
 vd_data.set_prop("start_time", ini_time)
 vd_data.set_prop("acq_params", config_dict.asdict())
-vd_data.set_prop(
-    "postproc_type", IR_postproc
-)  # this is the initial postprocessing method defined in 'load_data' in proc_scripts
+vd_data.set_prop("postproc_type", IR_postproc)
 nodename = vd_data.name()
 # {{{ again, implement a file fallback
 with h5py.File(
     os.path.normpath(os.path.join(target_directory, f"{filename}"))
-    ) as fp:
+) as fp:
     if nodename in fp.keys():
         final_log.append("this nodename already exists, so I will call it temp")
         nodename = "temp_noPower"
@@ -235,10 +211,8 @@ vd_data.hdf5_write(filename, directory=target_directory)
 logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", vd_data.name()))
 # }}}
-input(
-    "Now plug the B12 back in and start up the FLInst power control server so we can continue!"
-)
 # {{{run enhancement
+input("Now plug the B12 back in and start up the FLInst power control server so we can continue!")
 with power_control() as p:
     # JF points out it should be possible to save time by removing this (b/c we
     # shut off microwave right away), but AG notes that doing so causes an
@@ -247,9 +221,9 @@ with power_control() as p:
         config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
-    p.mw_off()  # turn rf and amp off for the first thermal (no power)
+    p.mw_off()
     time.sleep(16.0) #give some time for the power source to "settle"
-    p.start_log()  # starting to log times with power from power meter
+    p.start_log()
     DNP_data = None # initially, there is no data, and run_spin_echo knows how to deal with this
     #Run the actual thermal where the power log is recording. This will be your thermal for enhancement and can be compared to previous thermals if issues arise
     for j in range(thermal_scans):
@@ -284,12 +258,11 @@ with power_control() as p:
             "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], powers[j], "W)"
         )
         if j == 0:
-            # after the rf and amp are turned off, the B12 gets grumpy if a dip lock is not run prior to setting a power the first time
             retval = p.dip_lock(
-                config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-                config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
+                config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
+                config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
             )
-        p.set_power(this_dB)  # set power in list
+        p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
             if p.get_power_setting() >= this_dB:
@@ -298,11 +271,9 @@ with power_control() as p:
             raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
-        time_axis_coords[j + thermal_scans][
-            "start_times"
-        ] = (
-            time.time()
-        )  # again keep track of start and stop times to compare to power log in post processing
+        time_axis_coords[j + thermal_scans]["start_times"] = time.time()
+        # call D to run spin echo
+        #Now that the thermal is collected we increment our powers and collect our data at each power
         run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j + thermal_scans,
@@ -368,7 +339,6 @@ with power_control() as p:
         meter_power = p.get_power_setting()
         ini_time = time.time()
         vd_data = None
-        # each IR will be it's own node/dataset so we need ret_Data to be None for all of them
         for vd_idx, vd in enumerate(vd_list_us):
             # call B to run_IR
             vd_data = run_IR(
@@ -395,13 +365,11 @@ with power_control() as p:
         vd_data.rename("indirect", "vd")
         vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
         if phase_cycling:
-            vd_data.chunk(
-                "t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1]
-            )
+            vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
             vd_data.setaxis("ph1", IR_ph1_cyc / 4)
             vd_data.setaxis("ph2", IR_ph2_cyc / 4)
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-        vd_data.name(T1_node_names[j]) # naming the dataset after the power it was run at
+        vd_data.name(T1_node_names[j])
         nodename = vd_data.name()
         with h5py.File(
             os.path.normpath(os.path.join(target_directory, filename))
@@ -417,16 +385,14 @@ with power_control() as p:
         vd_data.hdf5_write(filename, directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
-    # before shutting down the B12 wants another dip lock
     final_frq = p.dip_lock(
         config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
-    this_log = p.stop_log()  # we are all done so stop logging the power
+    this_log = p.stop_log()
 # }}}
 config_dict.write()
-# save the power log to the same HDF5 file
 with h5py.File(os.path.join(target_directory, filename), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
-print("*" * 30 + "\n" + "\n".join(final_log))
+print('*'*30+'\n'+'\n'.join(final_log))

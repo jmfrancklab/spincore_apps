@@ -142,4 +142,3 @@ fl.next('FT raw data')
 fl.image(nutation_data)
 fl.show()
 
-
