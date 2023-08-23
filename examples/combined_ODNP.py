@@ -186,8 +186,7 @@ if phase_cycling:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
     vd_data.setaxis("ph2", IR_ph2_cyc / 4)
-if config_dict["thermal_nScans"] > 1:
-    vd_data.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
+vd_data.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
 vd_data.name("FIR_noPower")
 vd_data.set_prop("stop_time", time.time())
 vd_data.set_prop("start_time", ini_time)
@@ -294,8 +293,7 @@ with power_control() as p:
     DNP_data.set_prop("stop_time", time.time())
     DNP_data.set_prop("postproc_type", Ep_postproc)
     DNP_data.set_prop("acq_params", config_dict.asdict())
-    if config_dict["nScans"] > 1:
-        DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     if phase_cycling:
         DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
         DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
