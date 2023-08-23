@@ -116,32 +116,31 @@ if phase_cycling:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph1), len(ph2), -1])
     vd_data.setaxis("ph1", ph1 / 4)
     vd_data.setaxis("ph2", ph2 / 4)
-    if config_dict["nScans"] > 1:
-        vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    if config_dict['nScans'] > 1:
+        vd_data.setaxis('nScans', r_[0 : config_dict['nScans']])
     vd_data.reorder(["ph1", "ph2", "vd", "t2"])
     vd_data.squeeze()
     vd_data.set_units("t2","s")
     fl.next("Raw - time")
     fl.image(vd_data)
     for_plot = vd_data.C
-    for_plot.ft("t2")
-    for_plot.ft(["ph1", "ph2"],unitary=True)
-    fl.next("FTed data")
+    for_plot.ft('t2')
+    for_plot.ft(['ph1','ph2'],unitary = True)
+    fl.next('FTed data')
     fl.image(for_plot)
 else:
     if config_dict["nScans"] > 1:
         vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     vd_data.rename("t", "t2")
     fl.next("Raw - time")
-    fl.image(vd_data.C.mean("nScans"))
+    fl.image(
+        vd_data.C.mean("nScans"))
     vd_data.reorder("t2", first=False)
     for_plot = vd_data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
+    for_plot.ft('t2',shift=True)
+    fl.next('FTed data')
     fl.image(for_plot)
-vd_data.name(
-    config_dict["type"] + "_" + str(dB_setting) + "_" + str(config_dict["ir_counter"])
-)
+vd_data.name(config_dict["type"] + "_" + str(dB_setting) + "_" + str(config_dict["ir_counter"]))
 vd_data.set_prop("postproc_type", "Spincore_IR_v1")
 vd_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/inv_rec")

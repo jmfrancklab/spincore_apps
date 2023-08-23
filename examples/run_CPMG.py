@@ -14,7 +14,7 @@ from SpinCore_pp.ppg import run_cpmg
 import os
 from datetime import datetime
 import h5py
-raise RuntimeError("This pulse program has not been updated. Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
+raise RuntimeError("This pulse proram has not been updated.  Before running again, it should be possible to replace a lot of the code below with a call to the function provided by the 'generic' pulse program inside the ppg directory!")
 
 fl = figlist_var()
 # {{{importing acquisition parameters
