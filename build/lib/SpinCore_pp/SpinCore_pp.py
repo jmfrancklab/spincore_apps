@@ -168,13 +168,13 @@ def apply_cycles(ppg_in,list_of_cycles_found):
         list_of_cycles_found = [(cycle_name,maxlen)] + list(list_of_cycles_found)
         print "LIST OF CYCLES FOUND NOW"
         ppg_out = []
-        for j in range(maxlen):
+        for j in xrange(maxlen):
             for k,ppg_elem in enumerate(ppg_in):
                 if len(ppg_elem) > 3 and ppg_elem[2] == cycle_name:
                     elem_copy = list(ppg_elem)
                     spec_len = len(elem_copy[3])
                     c_idx = j % spec_len
-                    ppg_out.append(tuple(elem_copy[:2]+[elem_copy[3][c_idx].item()]))
+                    ppg_out.append(tuple(elem_copy[:2]+[elem_copy[3][c_idx]]))
                 else:
                     ppg_out.append(ppg_elem)
         del ppg_in
@@ -216,14 +216,6 @@ getData = _SpinCore_pp.getData
 def stopBoard():
     return _SpinCore_pp.stopBoard()
 stopBoard = _SpinCore_pp.stopBoard
-
-def adc_offset():
-    return _SpinCore_pp.adc_offset()
-adc_offset = _SpinCore_pp.adc_offset
-
-def tune(carrier_freq):
-    return _SpinCore_pp.tune(carrier_freq)
-tune = _SpinCore_pp.tune
 # This file is compatible with both classic and new-style classes.
 
 
