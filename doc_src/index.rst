@@ -4,15 +4,12 @@
    contain the root `toctree` directive.
 
 Welcome to Spincore_applications's documentation!
-+++++++++++++++++++++++++++++++++++++++++++++++++
+=================================================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
 
    intro
-   ppg_PhaseCycling_details
-   FranckLabMethods
-   ConfigFile
 
 This is the documentation for a set of programs to run various experiments such as Inversion recover, ODNP, and CPMG based on the `pyspecdata <https://jmfrancklab.github.io/pyspecdata>`_ module and the SpinCore RadioProcessor-G transceiver board.
 
@@ -22,3 +19,14 @@ To **jump into examples**, click
 
 To understand the structure of the experiments and code,
 start on the :doc:`intro <./intro>` page, or browse the documentation to the left.
+
+Contents:
+---------
+
+.. toctree::
+    :maxdepth:2
+
+
+    ppg_PhaseCycling_details.rst
+    ConfigFile.rst
+    FranckLabMethods.rst
