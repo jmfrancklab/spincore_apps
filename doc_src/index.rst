@@ -7,7 +7,7 @@ Welcome to Spincore_applications's documentation!
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
 
    intro
    ppg_PhaseCycling_details
