@@ -11,6 +11,8 @@ Welcome to Spincore_applications's documentation!
 
    intro
    ppg_PhaseCycling_details
+   FranckLabMethods
+   ConfigFile
 
 This is the documentation for a set of programs to run various experiments such as Inversion recover, ODNP, and CPMG based on the `pyspecdata <https://jmfrancklab.github.io/pyspecdata>`_ module and the SpinCore RadioProcessor-G transceiver board.
 
