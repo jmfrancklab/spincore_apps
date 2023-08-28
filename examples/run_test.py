@@ -51,7 +51,7 @@ if phase_cycling:
             ("marker", "start", 1),
             ("phase_reset", 1),
             ("delay_TTL", 1.0),
-            ("pulse_TTL", config_dict['p90'], "ph1", ph1_cyc,
+            ("pulse_TTL", config_dict['p90'], "ph1", ph1_cyc),
             ("delay", 3e6),
             ("jumpto", "start"),
         ]

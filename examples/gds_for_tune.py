@@ -6,12 +6,8 @@ A command line utility for tuning using the SpinCore as a pulse generator and
 the GDS scope to observe the reflection.
 (GDS scope must be hooked up to an appropriate splitter configuration).
 
-Takes one or two command line arguments:
-
-1.      *Either* a field in G or a frequency in *MHz* --> note that these will
-        be very different types of numbers (thousands vs. tens respectively),
-        so the program can use that to determine. 
-2.      If supplied, this overrides the default effective γ value.
+The output pulse will take the carrierfreq_mhz parameter from the configuration file.
+The user then adjusts the tune and match of the probe. Upon completion a plot of the reflection overlaid with the output wave will be displayed and the ratio thereof will be printed.
 """
 from Instruments import *
 from pyspecdata import *
@@ -110,7 +106,6 @@ with GDS_scope() as g:
         "t":(3.7e-6, 6.5e-6)
     ]  # will always be the same since the scope settings are the same
 with figlist_var() as fl:
-    # d['ch',1] *= sqrt(2) # I'm only observing 1/2 of the power of the reflection (so 1/sqrt(2) of the voltage)
     d[
         "ch", 1
     ] *= 2  # just empirically, I need to scale up the reflection by a factor of 2 in order to get it to be the right size

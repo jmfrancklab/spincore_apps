@@ -1,5 +1,8 @@
-"just testing/illustrating the basic function of configfiles -- really for devel purposes"
+""" Example of how the configuration file is called and used
+============================================================
 
+Demonstration of the basic functions and usage of the configuration file including how to initialize, and call parameters that are defaulted in the parser function or set in the configuration file. If a parameter is neither in the parser function nor the configuration file an error will be thrown letting the user know. The configuration file can easily be updated and written to within any script and then called again.
+"""
 import configparser
 import os
 import SpinCore_pp

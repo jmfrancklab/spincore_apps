@@ -152,7 +152,7 @@ SpinCore_pp.stopBoard()
 data_2d.name("signal")
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
 filename_out = filename + ".h5"
-nodename = 2d_data.name()
+nodename = data_2d.name()
 if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(

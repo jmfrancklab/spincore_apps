@@ -110,7 +110,7 @@ with power_control() as p:
             nScans=config_dict["nScans"],
             indirect_idx=j + 1,
             indirect_len=len(powers) + 1,
-            ph1_cyc = ph1_cyc
+            ph1_cyc = ph1_cyc,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
@@ -151,7 +151,7 @@ else:
     for_plot.ft('t2',shift=True)
     fl.next('FTed data')
     fl.image(for_plot)
-echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"])
+echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
 echo_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")

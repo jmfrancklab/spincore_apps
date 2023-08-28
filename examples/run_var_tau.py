@@ -98,9 +98,9 @@ for tau_idx, val in enumerate(tau_adjust_range[1:]):
             indirect_fields = ("tau_adjust","tau"),
             ret_data = var_tau_data,
         )
-        mytau_axis = var_tau_data.getaxis("indirect")
-        mytau_axis[tau_idx+1]["tau_adjust"] = tau_adjust
-        mytaus_axis[tau_idx+1]["tau"] = tau
+    mytau_axis = var_tau_data.getaxis("indirect")
+    mytau_axis[tau_idx+1]["tau_adjust"] = tau_adjust
+    mytaus_axis[tau_idx+1]["tau"] = tau
 if phase_cycling:
     var_tau_data.chunk("t", ["ph1", "ph2","t2"], [len(ph1_cyc),len(ph2_cyc) -1])
     var_tau_data.setaxis("ph1", ph1_cyc)

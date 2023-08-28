@@ -2,9 +2,10 @@
 Nutation
 ========
 
-A standard echo where the 90 time is varied so 
-that we are able to see when the signal rotates through 90 to 
-180 degrees.
+Simple nutation experiment where the 90 time is varied by a list 
+specified in this script. All other parameters are pulled from the 
+configuration file. Prior to running this you should already be on 
+resonance as this does not set the field independently.
 """
 from pyspecdata import *
 import os
@@ -88,8 +89,8 @@ for index, val in enumerate(p90_range_us[1:]):
     )
     mytimes[j+1]["p_90"] = p90_val
 if phase_cycling:
-    nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
-    nutation_data.setaxis("ph1", ph1_cyc)
+    nutation_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
+    nutation_data.setaxis("ph1", ph1_cyc/4)
     if config_dict["nScans"] > 1:
         nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     nutation_data.reorder(["ph1","nScans", "t2"])

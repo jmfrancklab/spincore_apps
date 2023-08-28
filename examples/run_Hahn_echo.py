@@ -2,11 +2,11 @@
 Spin Echo
 =========
 
-To run this experiment, please open Xepr on the EPR computer, connect to
-spectrometer, load the experiment 'set_field' and enable XEPR API. Then, in a
-separate terminal, run the program XEPR_API_server.py, and wait for it to
-tell you 'I am listening' - then, you should be able to run this program from
-the NMR computer to set the field etc. 
+A standard Hahn echo experiment that utilizes parameters from the configuration file 
+In order to run this script the computer with the SpinCore board needs to communicate
+with the computer that runs XEPR. To do so, run XEPR_API.py in the inst_notebooks
+repo on the computer running XEPR. When you see "I am listening" you are set to now
+run this script on the computer with the SpinCore board.
 """
 
 from pylab import *

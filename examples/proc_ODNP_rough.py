@@ -1,6 +1,6 @@
 """
 An example of rough processing for ODNP -- this is designed to automatically pull the last dataset acquired.
-
+Ideally this is run immediately after data acquisition to check things out and make sure the data acquisition was successful.
 For an example of how this works, if you have *not* just run a dataset, set the following key/values in your active.ini:
 ```
 [file_names]
@@ -11,10 +11,8 @@ odnp_counter = 1
 
 ....
 ```
+where the parameters are those of the desired dataset
 """
-from numpy import empty
-import pylab as plt
-import h5py, time
 from pyspecdata import *
 from matplotlib.ticker import FuncFormatter
 import matplotlib.transforms as transforms
@@ -37,7 +35,7 @@ with figlist_var() as fl:
     Ep = find_file(
         filename,
         exp_type="ODNP_NMR_comp/ODNP",
-        expno='enhancement'),
+        expno="ODNP"),
     assert Ep.get_units("t2") is not None, "bad data file!  units of s for t2 should be stored in nddata!"
     Ep.rename('indirect','power')
     Ep.reorder(['ph1','power'])
@@ -56,7 +54,7 @@ with figlist_var() as fl:
             filename,
             exp_type="ODNP_NMR_comp/ODNP",
             expno=nodename,
-            postproc=IR_postproc,
+            postproc="spincore_IR_v1",
             lookup=lookup_table,
         )
         IR.reorder(["ph1", "ph2", "nScans", "vd", "t2"])

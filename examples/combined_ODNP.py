@@ -1,8 +1,10 @@
 """Automated Combined DNP with Log
 ==================================
-This needs to be run in sync with the power control server. To do so:
-    1. Open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py. When this is ready to go you will see it say "I am listening".
-    2. The experiment starts with the B12 off. It collects your IR at no power along with a series of "control" thermals. These can be used for diagnosing issues with the enhancement thermal.
+This needs to be run with both the power control server (on the computer with the Spincore) and
+the API wrapper (on the computer with XEPR). 
+To do so:
+    1. Open Xepr on EPR computer, connect to spectrometer, enable XEPR_API and then in new terminal, run XEPR_API_server.py inside inst_notebooks which allows the bruker electromagnet to communicate with the computer the user is running this script on. When this is ready to go you will see the terminal on the EPR computer say "I am listening".
+    2. The experiment starts with the B12 off. It collects your IR at no power along with a series of "control" thermals. These can be used for diagnosing issues with the enhancement thermal, for example, if microwaves are leaking into the cavity.
     3. You will then be prompted to turn the B12 and the power control server on. To turn the power control server on, open a new terminal and type "FLInst server",
         wait until you see "I am listening" before continuing with the experiment.
     At the end of the experiment you will have a series of FIR experiments, a progressive power saturation dataset, and a log of the power over time saved as nodes in an h5 file.
@@ -62,8 +64,12 @@ FIR_rep = 2*(1.0/(config_dict['concentration']*config_dict['krho_hot']+1.0/confi
 config_dict['FIR_rep'] = FIR_rep
 # }}}
 # {{{Power settings
-dB_settings = gen_powerlist(
-    config_dict["max_power"], config_dict["power_steps"] + 1, three_down=True
+dB_settings = Ep_spacing_from_phalf(
+    est_phalf=config_dict["guessed_phalf"] / 4,
+    max_power=config_dict["max_power"],
+    p_steps=config_dict["power_steps"] + 1,
+    min_dBm_step=config_dict["min_dBm_step"],
+    three_down=True,
 )
 T1_powers_dB = gen_powerlist(
     config_dict["max_power"], config_dict["num_T1s"], three_down=False
@@ -130,7 +136,6 @@ if phase_cycling:
 control_thermal.name("control_thermal")
 control_thermal.set_prop("postproc_type", Ep_postproc)
 control_thermal.set_prop("acq_params", config_dict.asdict())
-control_thermal.name("control_thermal")
 nodename = control_thermal.name()
 # {{{ on first write, if we can't access the directory, write to a temp file
 try:
@@ -240,7 +245,10 @@ with power_control() as p:
             ret_data=DNP_data,
         )
         DNP_thermal_done = time.time()
-        time_axis_coords[j]["start_times"] = DNP_ini_time
+        time_axis_coords = DNP_data.getaxis("indirect")
+        time_axis_coords[j][
+            "start_times"
+        ] = DNP_ini_time  # we keep track of start and stop time to later compare against the power log to get a real representation of power fluctuations over this dataset acquisition
         time_axis_coords[j]["stop_times"] = DNP_thermal_done
     power_settings_dBm = np.zeros_like(dB_settings)
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
@@ -283,7 +291,7 @@ with power_control() as p:
         )
         time_axis_coords[j + thermal_scans]["stop_times"] = time.time()
     DNP_data.set_prop("stop_time", time.time())
-    DNP_data.set_prop("postproc_type", "spincore_ODNP_v4")
+    DNP_data.set_prop("postproc_type", Ep_postproc)
     DNP_data.set_prop("acq_params", config_dict.asdict())
     DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     if phase_cycling:
@@ -299,13 +307,14 @@ with power_control() as p:
             f"I had problems writing to the correct file {filename}, so I'm going to try to save your file to temp_ODNP.h5 in the current h5 file"
         )
         target_directory = os.path.getcwd()
-        filename = "temp_ctrl.h5"
+        filename = "temp_ODNP.h5"
         if os.path.exists("temp_ODNP.h5"):
             final_log.append("there is a temp_ODNP.h5 already! -- I'm removing it")
             os.remove("temp_ODNP.h5")
             DNP_data.hdf5_write(filename, directory=target_directory)
             final_log.append(
                 "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!"
+            )
     logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
     logger.debug(strm("Name of saved data", echo_data.name()))
     # }}}
