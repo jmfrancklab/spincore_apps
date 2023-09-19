@@ -4,7 +4,7 @@ CPMG
 
 This script will perform a standard CPMG experiment. 
 In order to form a symmetric echo, a padding time is added before 
-and after your tau through a series of delays. 
+and after your tau. 
 """
 from pylab import *
 from pyspecdata import *
@@ -30,31 +30,27 @@ filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type'
 # {{{set phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph1_cyc = r_[0, 1, 2, 3]
-    nPhaseSteps = 4
+    ph1_cyc = r_[0, 2, 1, 3, 2, 4, 3, 5]
+    ph2_cyc = [0, 0, 1, 1, 2, 2, 3, 3]
+    nPhaseSteps = 8
+
 if not phase_cycling:
     ph1_cyc = 0.0
     nPhaseSteps = 1
 # }}}
-# {{{better tau
-marker = 1.0  # 10/10/22 → what is this? → pretty sure the time needed to execute the marker command
-pad_start = config_dict["tau_extra_us"] - config_dict["deadtime_us"]
-pad_end = (
-    config_dict["tau_extra_us"] - config_dict["deblank_us"] - marker
-)  # marker + deblank
-assert(pad_start > 0), "tau_extra_us must be set to more than deadtime and more than deblank!"
-assert (pad_end > 0), "tau_extra_us must be set to more than deadtime and more than deblank!"
-twice_tau_echo_us = (  # the period between 180 pulses
-    config_dict["tau_extra_us"] * 2 + config_dict["acq_time_ms"] * 1e3
+# {{{symmetric tau
+marker = 1.0
+jumpto = 1.0
+x_us = 2500.0 #must be more than deadtime and more than deblanking time
+pad_start = x_us - config_dict['deadtime_us']
+pad_end = x_us - config_dict['deblank_us'] - marker - jumpto
+twice_tau_echo_us = (  # the period between end of first 180 pulse and start of next
+    config_dict['deadtime_us'] + pad_start + config_dict["acq_time_ms"] * 1e3 + pad_end + marker + config_dict['deblank_us']
 )
-# now twice_tau_echo_us/2.0 is τ_echo, so I need to subtract the extra delays
-# imposed by the ppg to determine the remaining τ that I need
-config_dict["tau_us"] = twice_tau_echo_us / 2.0 - (
+config_dict["tau_us"] = twice_tau_echo_us / 2.0 + (
     2
     * config_dict["p90_us"]
     / pi  # evolution during pulse -- see eq 6 of coherence paper
-    + config_dict["deadtime_us"]  # following 90
-    + config_dict["deblank_us"]  # before 180
 )
 # }}}
 # {{{check total points
@@ -65,7 +61,6 @@ assert total_pts < 2 ** 14, (
 )
 # }}}
 # {{{run cpmg
-# NOTE: Number of segments is nEchoes * nPhaseSteps
 data = generic(
         ppg_list = [
                 ("phase_reset", 1),
@@ -73,24 +68,26 @@ data = generic(
                 ("pulse_TTL", config_dict['p90_us'], "ph1", ph1_cyc),
                 ("delay", tau_us),
                 ("delay_TTL", config_dict['deblank_us']),
-                ("pulse_TTL", 2.0 * config_dict['p90_us'], 0.0),
+                ("pulse_TTL", 2.0 * config_dict['p90_us'], "ph2", ph2_cyc),
                 ("delay", config_dict['deadtime_us']),
-                ("delay", pad_start_us),
+                ("delay", pad_start),
                 ("acquire", config_dict['acq_time_ms']),
-                ("delay", pad_end_us),
-                ("marker", "echo_label", (config_dict['nEchoes'] - 1)),  # 1 us delay
+                ("delay", pad_end),
+                ("delay",1.0), #matching the jumpto delay
+                ("marker", "echo_label", (config_dict['nEchoes'] - 1)), 
                 ("delay_TTL", config_dict['deblank_us']),
                 ("pulse_TTL", 2.0 * config_dict['p90_us'], 0.0),
                 ("delay", config_dict['deadtime_us']),
                 ("delay", pad_start_us),
                 ("acquire", config_dict['acq_time_ms']),
-                ("delay", pad_end_us),
-                ("jumpto", "echo_label"),  # 1 us delay
+                ("delay", pad_end),
+                ("jumpto", "echo_label"), 
                 ("delay", config_dict['repetition_us']),
+                ("jumpto","start")
             ],
         nScans = config_dict["nScans"],
         indirect_idx = 0,
-        indirect_len = 1,
+        indirect_len = len(config_dict['nEchoes']),
         adcOffset = config_dict["adc_offset"],
         carrierFreq_MHz = config_dict["carrierFreq_MHz"],
         nPoints = nPoints,
@@ -99,13 +96,9 @@ data = generic(
     )
 # }}}
 # {{{ chunk and save data
-data.chunk("t", ["ph1", "echo", "t2"], [len(ph1_cyc), config_dict["nEchoes"], -1])
-data.setaxis("ph1", ph1_cyc / 4)
-data.setaxis("echo", r_[0 : config_dict["nEchoes"]])
-if config_dict["nScans"] > 1:
-    data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-data.squeeze()
-data.set_units("t2", "s")
+data.chunk("t", ["ph1", "ph2", "tE", "t2"], [len(ph1_cyc), len(ph2_cyc), config_dict["nEchoes"], -1])
+data.setaxis("ph1", ph1_cyc / len(ph1_cyc)
+data.setaxis("ph2", ph2_cyc / len(ph2_cyc)
 fl.next("Raw - time")
 fl.image(
     data.C.mean("nScans"))
