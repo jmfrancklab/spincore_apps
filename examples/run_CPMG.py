@@ -30,8 +30,8 @@ filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type'
 # {{{set phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph1_cyc = r_[0, 2, 1, 3, 2, 4, 3, 5]
-    ph2_cyc = [0, 0, 1, 1, 2, 2, 3, 3]
+    ph1_cyc = array([(j*2+k)%4 for k in range(4) for j in range(2)])
+    ph2_cyc = array([(k+1)%4 for k in range(4) for j in range(2)])
     nPhaseSteps = 8
 
 if not phase_cycling:
@@ -41,11 +41,9 @@ if not phase_cycling:
 # {{{symmetric tau
 marker = 1.0
 jumpto = 1.0
-x_us = 2500.0 #must be more than deadtime and more than deblanking time
-pad_start = x_us - config_dict['deadtime_us']
-pad_end = x_us - config_dict['deblank_us'] - marker - jumpto
+pad_end = config_dict['deadtime_us'] - config_dict['deblank_us'] - marker - jumpto
 twice_tau_echo_us = (  # the period between end of first 180 pulse and start of next
-    config_dict['deadtime_us'] + pad_start + config_dict["acq_time_ms"] * 1e3 + pad_end + marker + config_dict['deblank_us']
+    config_dict['deadtime_us'] + config_dict["acq_time_ms"] * 1e3 + pad_end + marker + config_dict['deblank_us']
 )
 config_dict["tau_us"] = twice_tau_echo_us / 2.0 + (
     2
@@ -65,20 +63,18 @@ data = generic(
         ppg_list = [
                 ("phase_reset", 1),
                 ("delay_TTL", config_dict['deblank_us']),
-                ("pulse_TTL", config_dict['p90_us'], "ph1", ph1_cyc),
+                ("pulse_TTL", config_dict['p90_us'], "ph_cyc", ph1_cyc),
                 ("delay", tau_us),
                 ("delay_TTL", config_dict['deblank_us']),
-                ("pulse_TTL", 2.0 * config_dict['p90_us'], "ph2", ph2_cyc),
+                ("pulse_TTL", 2.0 * config_dict['p90_us'], "ph_cyc", ph2_cyc),
                 ("delay", config_dict['deadtime_us']),
-                ("delay", pad_start),
                 ("acquire", config_dict['acq_time_ms']),
                 ("delay", pad_end),
                 ("delay",1.0), #matching the jumpto delay
                 ("marker", "echo_label", (config_dict['nEchoes'] - 1)), 
                 ("delay_TTL", config_dict['deblank_us']),
-                ("pulse_TTL", 2.0 * config_dict['p90_us'], 0.0),
+                ("pulse_TTL", 2.0 * config_dict['p90_us'], "ph_cyc",ph2_cyc),
                 ("delay", config_dict['deadtime_us']),
-                ("delay", pad_start_us),
                 ("acquire", config_dict['acq_time_ms']),
                 ("delay", pad_end),
                 ("jumpto", "echo_label"), 
