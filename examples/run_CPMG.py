@@ -10,7 +10,7 @@ from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp
-from SpinCore_pp.ppg import run_cpmg
+from SpinCore_pp.ppg import generic
 import os
 from datetime import datetime
 import h5py
@@ -41,10 +41,11 @@ if not phase_cycling:
 # {{{symmetric tau
 marker = 1.0
 jumpto = 1.0
+print(type(config_dict['acq_time_ms']))
+quit()
+
 pad_end = config_dict['deadtime_us'] - config_dict['deblank_us'] - marker - jumpto
-twice_tau_echo_us = (  # the period between end of first 180 pulse and start of next
-    config_dict['deadtime_us'] + config_dict["acq_time_ms"] * 1e3 + pad_end + marker + config_dict['deblank_us']
-)
+twice_tau_echo_us = (2 * config_dict['deadtime_us'])# the period between end of first 180 pulse and start of next
 config_dict["tau_us"] = twice_tau_echo_us / 2.0 + (
     2
     * config_dict["p90_us"]
@@ -93,8 +94,8 @@ data = generic(
 # }}}
 # {{{ chunk and save data
 data.chunk("t", ["ph1", "ph2", "tE", "t2"], [len(ph1_cyc), len(ph2_cyc), config_dict["nEchoes"], -1])
-data.setaxis("ph1", ph1_cyc / len(ph1_cyc)
-data.setaxis("ph2", ph2_cyc / len(ph2_cyc)
+data.setaxis("ph1", ph1_cyc / len(ph1_cyc))
+data.setaxis("ph2", ph2_cyc / len(ph2_cyc))
 fl.next("Raw - time")
 fl.image(
     data.C.mean("nScans"))
