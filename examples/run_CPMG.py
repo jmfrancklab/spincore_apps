@@ -18,7 +18,9 @@ import h5py
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+dw = 1/config_dict['SW_kHz']
+nPoints = int(config_dict["acq_time_ms"] / dw + 0.5))
+acq = dw*nPoints
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -41,9 +43,6 @@ if not phase_cycling:
 # {{{symmetric tau
 marker = 1.0
 jumpto = 1.0
-print(type(config_dict['acq_time_ms']))
-quit()
-
 pad_end = config_dict['deadtime_us'] - config_dict['deblank_us'] - marker - jumpto
 twice_tau_echo_us = (2 * config_dict['deadtime_us'])# the period between end of first 180 pulse and start of next
 config_dict["tau_us"] = twice_tau_echo_us / 2.0 + (
@@ -69,14 +68,14 @@ data = generic(
                 ("delay_TTL", config_dict['deblank_us']),
                 ("pulse_TTL", 2.0 * config_dict['p90_us'], "ph_cyc", ph2_cyc),
                 ("delay", config_dict['deadtime_us']),
-                ("acquire", config_dict['acq_time_ms']),
+                ("acquire", acq),
                 ("delay", pad_end),
                 ("delay",1.0), #matching the jumpto delay
                 ("marker", "echo_label", (config_dict['nEchoes'] - 1)), 
                 ("delay_TTL", config_dict['deblank_us']),
                 ("pulse_TTL", 2.0 * config_dict['p90_us'], "ph_cyc",ph2_cyc),
                 ("delay", config_dict['deadtime_us']),
-                ("acquire", config_dict['acq_time_ms']),
+                ("acquire", acq),
                 ("delay", pad_end),
                 ("jumpto", "echo_label"), 
                 ("delay", config_dict['repetition_us']),
