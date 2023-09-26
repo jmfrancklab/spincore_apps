@@ -34,7 +34,7 @@ phase_cycling = True
 if phase_cycling:
     ph1_cyc = array([(j*2+k)%4 for k in range(4) for j in range(2)])
     ph2_cyc = array([(k+1)%4 for k in range(4) for j in range(2)])
-    nPhaseSteps = 8
+    nPhaseSteps = len(ph1_cyc) + len(ph2_cyc)
 
 if not phase_cycling:
     ph1_cyc = 0.0
@@ -43,13 +43,11 @@ if not phase_cycling:
 # {{{symmetric tau
 marker = 1.0
 jumpto = 1.0
+tau_evol = 2*config_dict['p90_us']/pi #evolution during pulse -- see eq 6 of coherence paper
 pad_end = config_dict['deadtime_us'] - config_dict['deblank_us'] - marker - jumpto
 twice_tau_echo_us = (2 * config_dict['deadtime_us'])# the period between end of first 180 pulse and start of next
-config_dict["tau_us"] = twice_tau_echo_us / 2.0 + (
-    2
-    * config_dict["p90_us"]
-    / pi  # evolution during pulse -- see eq 6 of coherence paper
-)
+config_dict["tau_us"] = twice_tau_echo_us / 2.0 + tau_evol
+    / pi  + config_dict['deblank_us']
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
