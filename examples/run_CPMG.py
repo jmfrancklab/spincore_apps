@@ -18,9 +18,8 @@ import h5py
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-dw = 1/config_dict['SW_kHz']
-nPoints = int(config_dict["acq_time_ms"] / dw + 0.5))
-acq = dw*nPoints
+nPoints = int(config_dict['acq_time_ms'] * config_dict['SW_kHz'] + 0.5)
+config_dict['acq_time_ms'] = nPoints / config_dict['SW_kHz']
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -32,12 +31,16 @@ filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type'
 # {{{set phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph1_cyc = array([(j*2+k)%4 for k in range(4) for j in range(2)])
-    ph2_cyc = array([(k+1)%4 for k in range(4) for j in range(2)])
-    nPhaseSteps = len(ph1_cyc) + len(ph2_cyc)
-
+    Nph_overall = r_[0,1,2,3]
+    Nph_diff = r_[0,2]
+    ph1_cyc = array([(j+k)%4 for k in Nph_overall for j in Nph_diff])
+    ph2_cyc = array([(k+1)%4 for k in Nph_overall for j in Nph_diff])
+    nPhaseSteps = len(Nph_overall) * len(Nph_diff)
 if not phase_cycling:
     ph1_cyc = 0.0
+    ph2_cyc = 0.0
+    Nph_overall = r_[0]
+    Nph_diff = r_[0]
     nPhaseSteps = 1
 # }}}
 # {{{symmetric tau
@@ -45,12 +48,11 @@ marker = 1.0
 jumpto = 1.0
 tau_evol = 2*config_dict['p90_us']/pi #evolution during pulse -- see eq 6 of coherence paper
 pad_end = config_dict['deadtime_us'] - config_dict['deblank_us'] - marker - jumpto
-twice_tau_echo_us = (2 * config_dict['deadtime_us'])# the period between end of first 180 pulse and start of next
-config_dict["tau_us"] = twice_tau_echo_us / 2.0 + tau_evol
-    / pi  + config_dict['deblank_us']
+twice_tau_echo_us = config_dict['acq_time_ms'] + (2 * config_dict['deadtime_us'])# the period between end of first 180 pulse and start of next
+config_dict["tau_us"] = twice_tau_echo_us / 2.0 - tau_evol - config_dict['deblank_us']
 # }}}
 # {{{check total points
-total_pts = nPoints * nPhaseSteps
+total_pts = nPoints * nPhaseSteps * config_dict['nEchoes']
 assert total_pts < 2 ** 14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
@@ -59,6 +61,7 @@ assert total_pts < 2 ** 14, (
 # {{{run cpmg
 data = generic(
         ppg_list = [
+                ("marker","start",1),
                 ("phase_reset", 1),
                 ("delay_TTL", config_dict['deblank_us']),
                 ("pulse_TTL", config_dict['p90_us'], "ph_cyc", ph1_cyc),
@@ -90,19 +93,9 @@ data = generic(
     )
 # }}}
 # {{{ chunk and save data
-data.chunk("t", ["ph1", "ph2", "tE", "t2"], [len(ph1_cyc), len(ph2_cyc), config_dict["nEchoes"], -1])
-data.setaxis("ph1", ph1_cyc / len(ph1_cyc))
-data.setaxis("ph2", ph2_cyc / len(ph2_cyc))
-fl.next("Raw - time")
-fl.image(
-    data.C.mean("nScans"))
-data.reorder("t2", first=False)
-for_plot = data.C
-for_plot.ft('t2',shift=True)
-for_plot.ft(['ph1'], unitary = True)
-fl.next('FTed data')
-fl.image(for_plot.C.mean("nScans")
-)
+data.chunk("t", ["ph_overall", "ph_diff", "tE", "t2"], [len(Nph_overall), len(Nph_diff), config_dict["nEchoes"], nPoints])
+data.setaxis("ph_overall", Nph_overall / len(Nph_overall))
+data.setaxis("ph_diff", Nph_diff / len(Nph_diff))
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.set_prop("postproc_type", "spincore_CPMGv2")
 data.set_prop("acq_params", config_dict.asdict())
@@ -136,4 +129,14 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
+#{{{ Image raw data
+fl.next("Raw - time")
+fl.image(data)
+data.reorder("t2", first=False)
+for_plot = data.C
+for_plot.ft('t2',shift=True)
+for_plot.ft(['ph_overall','ph_diff'], unitary = True)
+fl.next('FTed data')
+fl.image(for_plot)
 fl.show()
+#}}}
