@@ -50,7 +50,7 @@ pad_end_us = config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_
 twice_tau_echo_us = config_dict["acq_time_ms"] + (
     2 * config_dict["deadtime_us"]
 )  # the period between end of first 180 pulse and start of next
-config_dict["tau_us"] = twice_tau_echo_us / 2.0 - tau_evol - config_dict["deblank_us"]
+config_dict["tau_us"] = twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
@@ -66,18 +66,18 @@ data = generic(
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", config_dict["p90_us"], "ph_cyc", ph1_cyc),
-        ("delay", tau_us),
+        ("delay", config_dict['tau_us']),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
-        ("acquire", acq),
+        ("acquire", config_dict['acq_time_ms']),
         ("delay", pad_end_us),
         ("delay", short_delay_us),  # matching the jumpto delay
         ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
-        ("acquire", acq),
+        ("acquire", config_dict['acq_time_ms']),
         ("delay", pad_end_us),
         ("jumpto", "echo_label"),
         ("delay", config_dict["repetition_us"]),
@@ -85,10 +85,11 @@ data = generic(
     ],
     nScans=config_dict["nScans"],
     indirect_idx=0,
-    indirect_len=len(config_dict["nEchoes"]),
+    indirect_len=config_dict["nEchoes"],
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
+    acq_time_ms = config_dict['acq_time_ms'],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )

@@ -10,7 +10,7 @@ from .. import (
 from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
-from numpy import r_
+from numpy import r_, prod
 from pyspecdata import strm
 import time
 import logging
@@ -24,6 +24,7 @@ def generic(
     adcOffset,
     carrierFreq_MHz,
     nPoints,
+    acq_time_ms,
     SW_kHz,
     indirect_fields=None,
     ph1_cyc=r_[0, 1, 2, 3],
@@ -101,15 +102,23 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-    # {{{ pull info about phase cycling and echos from the ppg_list
-    # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle
-    all_ppg_arrays = [j[3] for j in ppg_list if len(j)>3]
-    nPhaseSteps = prod([len(j) for j in all_ppg_arrays])
+    # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle and tuples containing marker and echo label are cycled by nEchoes
+    phcyc_lens = {}
+    for thiselem in ppg_list:
+        if len(thiselem) > 3:
+            phcyc_lens[thiselem[2]] = len(thiselem[3])
+        if len(thiselem)>2 and thiselem[0] == 'marker' and thiselem[1] == 'echo_label':  
+            nEchoes = thiselem[2]+1
+        else:
+            nEchoes = 1
+    nPhaseSteps_min = 1
+    ph_lens = list(phcyc_lens.values())
+    nPhaseSteps = prod(ph_lens)
     # }}}
-    # {{{ for this to work, the loop label for echoes must be called "echo_label"
-    nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0] == 'marker' and j[1] == 'echo_label']
-    # }}}
-    # }}}
+    print(type(nPoints))
+    print(type(nEchoes))
+    print(type(nPhaseSteps))
+    print(nPhaseSteps)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
         run_scans_time_list = [time.time()]
@@ -117,42 +126,69 @@ def generic(
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
-        check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
+        check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
         assert acq_time_ms == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
+        print("1")
         run_scans_time_list.append(time.time())
+        print("2")
         run_scans_names.append("prog")
+        print("3")
         spincore_load(ppg_list)
+        print("4")
         run_scans_time_list.append(time.time())
+        print("5")
         run_scans_names.append("stop ppg")
+        print("6")
         stop_ppg()
         run_scans_time_list.append(time.time())
         run_scans_names.append("run")
         runBoard()
+        print(type(data_length))
+        print(data_length)
+        print(type(nPoints))
+        print(nPoints)
+        print(nEchoes)
+        print(type(nEchoes))
+        print(type(nPhaseSteps))
+        print(nPhaseSteps)
+        quit()
+        print("DONE RUNNING BOARD")
         run_scans_time_list.append(time.time())
+        print("GOING TO APPEND GET DATA")
         run_scans_names.append("get data")
-        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps)
+        print("1")
+        raw_data = getData(data_length, nPoints, nEchoes, int(nPhaseSteps),"thisIsntFixedYet")
+        print("2")
         run_scans_time_list.append(time.time())
+        print("3")
         run_scans_names.append("shape data")
         data_array = []
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
+        print("WE MADE IT TO LINE 148")
         if ret_data is None:
             if indirect_fields is None:
+                print("INDIRECT FIELS IS NONE")
                 times_dtype = np.double
             else:
+                print("YOU HAVE INDIRECT FIELDS")
                 # {{{ dtype for structured array
                 times_dtype = np.dtype(
                     [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
                 )
                 # }}}
+            print("ONTO MYTIMES")    
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
+            print("MAKING THE TIME AXIS NOW")
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
+            print("SHAPING YOUR DATA")
             ret_data = psp.ndshape(
                 [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
             ).alloc(dtype=np.complex128)
+            print("SETTING YOUR AXES")
             ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
             ret_data.setaxis("nScans", r_[0:nScans])
