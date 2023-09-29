@@ -98,7 +98,7 @@ data.chunk(
     "t",
     ["nScans", "ph_overall", "ph_diff", "tE", "t2"],
     [
-        len(config_dict["nScans"]),
+        config_dict["nScans"],
         len(ph_overall),
         len(ph_diff),
         config_dict["nEchoes"],
@@ -106,8 +106,8 @@ data.chunk(
     ],
 )
 data.setaxis("nScans", r_[0 : len(config_dict["nScans"])])
-data.setaxis("ph_overall", ph_overall / len(ph_overall))
-data.setaxis("ph_diff", ph_diff / len(ph_diff))
+data.setaxis("ph_overall", ph_overall / 4)
+data.setaxis("ph_diff", ph_diff / 4)
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
 data.set_prop("postproc_type", "spincore_CPMGv2")
 data.set_prop("acq_params", config_dict.asdict())
@@ -151,5 +151,4 @@ with figlist_var() as fl:
     for_plot.ft(["ph_overall", "ph_diff"], unitary=True)
     fl.next("FTed data")
     fl.image(for_plot.mean("nScans"))
-    fl.show()
 # }}}
