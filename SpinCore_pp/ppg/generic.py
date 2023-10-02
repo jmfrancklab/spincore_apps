@@ -115,10 +115,6 @@ def generic(
     ph_lens = list(phcyc_lens.values())
     nPhaseSteps = prod(ph_lens)
     # }}}
-    print(type(nPoints))
-    print(type(nEchoes))
-    print(type(nPhaseSteps))
-    print(nPhaseSteps)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
         run_scans_time_list = [time.time()]
@@ -131,64 +127,37 @@ def generic(
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
-        print("1")
         run_scans_time_list.append(time.time())
-        print("2")
         run_scans_names.append("prog")
-        print("3")
         spincore_load(ppg_list)
-        print("4")
         run_scans_time_list.append(time.time())
-        print("5")
         run_scans_names.append("stop ppg")
-        print("6")
         stop_ppg()
         run_scans_time_list.append(time.time())
         run_scans_names.append("run")
         runBoard()
-        print(type(data_length))
-        print(data_length)
-        print(type(nPoints))
-        print(nPoints)
-        print(nEchoes)
-        print(type(nEchoes))
-        print(type(nPhaseSteps))
-        print(nPhaseSteps)
-        quit()
-        print("DONE RUNNING BOARD")
         run_scans_time_list.append(time.time())
-        print("GOING TO APPEND GET DATA")
         run_scans_names.append("get data")
-        print("1")
-        raw_data = getData(data_length, nPoints, nEchoes, int(nPhaseSteps),"thisIsntFixedYet")
-        print("2")
+        raw_data = getData(int(data_length), nPoints, nEchoes, int(nPhaseSteps),"thisIsntFixedYet")
         run_scans_time_list.append(time.time())
-        print("3")
         run_scans_names.append("shape data")
         data_array = []
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
-        print("WE MADE IT TO LINE 148")
         if ret_data is None:
             if indirect_fields is None:
-                print("INDIRECT FIELS IS NONE")
                 times_dtype = np.double
             else:
-                print("YOU HAVE INDIRECT FIELDS")
                 # {{{ dtype for structured array
                 times_dtype = np.dtype(
                     [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
                 )
                 # }}}
-            print("ONTO MYTIMES")    
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
-            print("MAKING THE TIME AXIS NOW")
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
-            print("SHAPING YOUR DATA")
             ret_data = psp.ndshape(
                 [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
             ).alloc(dtype=np.complex128)
-            print("SETTING YOUR AXES")
             ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
             ret_data.setaxis("nScans", r_[0:nScans])

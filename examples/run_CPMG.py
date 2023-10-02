@@ -97,16 +97,12 @@ data = generic(
 # {{{ chunk and save data
 data.chunk(
     "t",
-    ["nScans", "ph_overall", "ph_diff", "tE", "t2"],
+    ["ph_overall", "ph_diff", "t2"],
     [
-        config_dict["nScans"],
         len(ph_overall),
         len(ph_diff),
-        config_dict["nEchoes"],
-        nPoints,
-    ],
-)
-data.setaxis("nScans", r_[0 : len(config_dict["nScans"])])
+        -1])
+data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 data.setaxis("ph_overall", ph_overall / 4)
 data.setaxis("ph_diff", ph_diff / 4)
 data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
@@ -144,6 +140,7 @@ print(("Name of saved data", data.name()))
 config_dict.write()
 # {{{ Image raw data
 with figlist_var() as fl:
+    data.reorder(['nScans','ph_overall','ph_diff','indirect','t2'])
     fl.next("Raw - time")
     fl.image(data.mean("nScans"))
     data.reorder("t2", first=False)
