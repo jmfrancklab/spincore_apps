@@ -104,13 +104,15 @@ def generic(
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle and tuples containing marker and echo label are cycled by nEchoes
     phcyc_lens = {}
+    nEchoes = 1
     for thiselem in ppg_list:
+        print(len(thiselem))
         if len(thiselem) > 3:
             phcyc_lens[thiselem[2]] = len(thiselem[3])
         if len(thiselem)>2 and thiselem[0] == 'marker' and thiselem[1] == 'echo_label':  
+            print(thiselem)
             nEchoes = thiselem[2]+1
-        else:
-            nEchoes = 1
+            print(nEchoes)
     nPhaseSteps_min = 1
     ph_lens = list(phcyc_lens.values())
     nPhaseSteps = prod(ph_lens)
@@ -123,7 +125,9 @@ def generic(
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
         check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
-        assert acq_time_ms == check
+        print(check)
+        print(acq_time_ms)
+        assert round(acq_time_ms,1) == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
@@ -139,6 +143,7 @@ def generic(
         run_scans_time_list.append(time.time())
         run_scans_names.append("get data")
         raw_data = getData(int(data_length), nPoints, nEchoes, int(nPhaseSteps),"thisIsntFixedYet")
+        raw_data.astype(float)
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
         data_array = []
@@ -154,11 +159,11 @@ def generic(
                 )
                 # }}}
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
-            time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
+            time_axis = np.linspace(0.0,nEchoes*int(nPhaseSteps)*acq_time_ms*1e-3,int(dataPoints))#r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
-                [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
+                [len(data_array), nScans], ["t","nScans"]
             ).alloc(dtype=np.complex128)
-            ret_data.setaxis("indirect", mytimes)
+            #ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
             ret_data.setaxis("nScans", r_[0:nScans])
         elif indirect_idx == 0 and nScans_idx == 0:
@@ -167,7 +172,7 @@ def generic(
                 + str(ret_data)
                 + " and we're not currently running ppgs where this makes sense"
             )
-        ret_data["indirect", indirect_idx]["nScans", nScans_idx] = data_array
+        ret_data["nScans", nScans_idx] = data_array
         stopBoard()
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
