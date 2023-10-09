@@ -5,11 +5,11 @@ CPMG
 ..image:: CPMG_ppg.jpg
 
 This script will perform a standard CPMG experiment. 
-In order to form a symmetric echo, a padding time is added before 
-and after your tau. Both the initial ninety pulse and 
+In order to form a symmetric echo, a padding time is added  
+after your tau. Both the initial ninety pulse and 
 subsequent 180 pulses are phase cycled together,
 with a two step phase cycle on the ninety pulse (see
-:func: apply_cycles in SpinCore_pp.py)
+`:func: apply_cycles` in SpinCore_pp.py)
 """
 from pylab import *
 from pyspecdata import *
