@@ -47,7 +47,7 @@ tau_evol_us = (
     2 * config_dict["p90_us"] / pi
 )  # evolution during pulse -- see eq 6 of coherence paper
 pad_end_us = config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
-twice_tau_echo_us = config_dict["acq_time_ms"] + (
+twice_tau_echo_us = config_dict["acq_time_ms"]*1e3 + (
     2 * config_dict["deadtime_us"]
 )  # the period between end of first 180 pulse and start of next
 config_dict["tau_us"] = twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
@@ -61,38 +61,37 @@ assert total_pts < 2**14, (
 # }}}
 # {{{run cpmg
 data = generic(
-    ppg_list=[
-        ("marker", "start", 1),
-        ("phase_reset", 1),
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", config_dict["p90_us"], "ph_cyc", ph1_cyc),
-        ("delay", config_dict['tau_us']),
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
-        ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict['acq_time_ms']),
-        ("delay", pad_end_us),
-        ("delay", short_delay_us),  # matching the jumpto delay
-        ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
-        ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict['acq_time_ms']),
-        ("delay", pad_end_us),
-        ("jumpto", "echo_label"),
-        ("delay", config_dict["repetition_us"]),
-        ("jumpto", "start"),
-    ],
-    nScans=config_dict["nScans"],
-    indirect_idx=0,
-    indirect_len=config_dict["nEchoes"],
-    adcOffset=config_dict["adc_offset"],
-    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=nPoints,
-    acq_time_ms = config_dict['acq_time_ms'],
-    SW_kHz=config_dict["SW_kHz"],
-    ret_data=None,
-)
+        ppg_list=[
+            ("marker", "start", 1),
+            ("phase_reset", 1),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", config_dict["p90_us"], "ph_cyc", ph1_cyc),
+                ("delay", config_dict['tau_us']),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
+                ("delay", config_dict["deadtime_us"]),
+                ("acquire", config_dict['acq_time_ms']),
+                ("delay", pad_end_us),
+                ("delay", short_delay_us),  # matching the jumpto delay
+                ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
+                ("delay_TTL", config_dict["deblank_us"]),
+                ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
+                ("delay", config_dict["deadtime_us"]),
+                ("acquire", config_dict['acq_time_ms']),
+                ("delay", pad_end_us),
+                ("jumpto", "echo_label"),
+                ("delay", config_dict["repetition_us"]),
+                ("jumpto", "start"),
+        ],
+        nScans=config_dict["nScans"],
+        indirect_idx=0,
+        indirect_len=config_dict["nEchoes"],
+        adcOffset=config_dict["adc_offset"],
+        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+        nPoints=nPoints,
+        acq_time_ms = config_dict['acq_time_ms'],
+        SW_kHz=config_dict["SW_kHz"],
+        ret_data=None)
 # }}}
 # {{{ chunk and save data
 data.chunk(
@@ -140,13 +139,13 @@ print(("Name of saved data", data.name()))
 config_dict.write()
 # {{{ Image raw data
 with figlist_var() as fl:
-    data.reorder(['nScans','ph_overall','ph_diff','indirect','t2'])
+    data.squeeze()
     fl.next("Raw - time")
-    fl.image(data.mean("nScans"))
+    data.set_units('t2','s')
+    fl.image(data)
     data.reorder("t2", first=False)
-    for_plot = data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph_overall", "ph_diff"], unitary=True)
+    data.ft("t2", shift=True)
+    data.ft(["ph_overall", "ph_diff"], unitary=True)
     fl.next("FTed data")
-    fl.image(for_plot.mean("nScans"))
+    fl.image(data)
 # }}}
