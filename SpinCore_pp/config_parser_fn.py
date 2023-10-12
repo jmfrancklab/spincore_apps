@@ -130,6 +130,18 @@ class configuration(object):
             None,
             "the range over which the dip lock will be performed",
         ),
+        "min_dBm_step": (
+            float,
+            "odnp_params",
+            1.0,
+            "dBm increment for making the power list in ODNP and for T1(p). Depending on the power source this can be 0.1, 0.5, or 1.0",
+        ),
+        "guessed_phalf": (
+            float,
+            "sample_params",
+            0.2,
+            "estimated power for half saturation"
+        ),
         "adc_offset": (int, "acq_params", None, "SpinCore-specific ADC offset correction\nwe believe this is a DC offset, but are not positive"),
         "nScans": (int, "acq_params", 1, "number of scans"),
         "thermal_nScans": (
@@ -148,7 +160,7 @@ class configuration(object):
         "power_steps": (
             int,
             "odnp_params",
-            None,
+            14,
             "number of points collected in an enhancement experiment",
         ),
         "num_T1s": (
