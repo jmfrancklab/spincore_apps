@@ -27,6 +27,12 @@ class configuration(object):
             None,
             "acquisition time in milliseconds - we've found 1024.0 to work well",
         ),
+        "echo_acq_ms": (
+            float,
+            "acq_params",
+            None,
+            "Length of acquisition during stroboscopic echo acquisition, in milliseconds.  Keep this separate from acq_time_ms to avoid confusion, because there are many echo_acq_ms per transient, but only one acq_time_ms per transient.",
+        ),
         "carrierFreq_MHz": (
             float,
             "acq_params",
@@ -177,6 +183,12 @@ class configuration(object):
             "number of ODNP experiments that have been performed so far for that particular sample on that day",
         ),
         "echo_counter": (
+            int,
+            "file_names",
+            0,
+            "number of echo experiments performed for a particular sample that day- usually incremented when getting on resonance",
+        ),
+        "generic_echo_counter": (
             int,
             "file_names",
             0,

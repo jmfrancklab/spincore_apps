@@ -22,7 +22,9 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "generic_echo"
 config_dict["date"] = date
 config_dict["generic_echo_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+)
 # }}}
 # {{{set phase cycling
 phase_cycling = True
@@ -38,11 +40,15 @@ short_delay_us = 1.0
 tau_evol_us = (
     2 * config_dict["p90_us"] / pi
 )  # evolution during pulse -- see eq 6 of coherence paper
-pad_end_us = config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
-twice_tau_echo_us = config_dict["acq_time_ms"]*1e3 + (
+pad_end_us = (
+    config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
+)
+twice_tau_echo_us = config_dict["acq_time_ms"] * 1e3 + (
     2 * config_dict["deadtime_us"]
 )  # the period between end of first 180 pulse and start of next
-config_dict["tau_us"] = twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
+config_dict["tau_us"] = (
+    twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
+)
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
@@ -53,35 +59,32 @@ assert total_pts < 2**14, (
 # }}}
 # {{{run cpmg
 data = generic(
-        ppg_list=[
-            ("phase_reset", 1),
-            ("delay_TTL", deblank_us),
-            ("pulse_TTL", p90_us, "phcyc", ph1_cyc),
-            ("delay", tau_us),
-            ("delay_TTL", deblank_us),
-            ("pulse_TTL", 2.0 * p90_us, "phcyc", ph2_cyc),
-            ("delay", deadtime_us),
-            ("acquire", acq_time_ms),
-            ("delay", repetition_us),
-            ],
-        nScans=config_dict["nScans"],
-        indirect_idx=0,
-        indirect_len=config_dict["nEchoes"],
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        nPoints=nPoints,
-        acq_time_ms = config_dict['acq_time_ms'],
-        SW_kHz=config_dict["SW_kHz"],
-        ret_data=None)
+    ppg_list=[
+        ("phase_reset", 1),
+        ("delay_TTL", deblank_us),
+        ("pulse_TTL", p90_us, "phcyc", ph1_cyc),
+        ("delay", tau_us),
+        ("delay_TTL", deblank_us),
+        ("pulse_TTL", 2.0 * p90_us, "phcyc", ph2_cyc),
+        ("delay", deadtime_us),
+        ("acquire", acq_time_ms),
+        ("delay", repetition_us),
+    ],
+    nScans=config_dict["nScans"],
+    indirect_idx=0,
+    indirect_len=config_dict["nEchoes"],
+    adcOffset=config_dict["adc_offset"],
+    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+    nPoints=nPoints,
+    acq_time_ms=config_dict["acq_time_ms"],
+    SW_kHz=config_dict["SW_kHz"],
+    ret_data=None,
+)
 # }}}
 # {{{ chunk and save data
 data.chunk(
-    "t",
-    ["ph_overall", "ph_diff", "t2"],
-    [
-        len(ph_overall),
-        len(ph_diff),
-        -1])
+    "t", ["ph_overall", "ph_diff", "t2"], [len(ph_overall), len(ph_diff), -1]
+)
 data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 data.setaxis("ph_overall", ph_overall / 4)
 data.setaxis("ph_diff", ph_diff / 4)
@@ -122,7 +125,7 @@ config_dict.write()
 with figlist_var() as fl:
     data.squeeze()
     fl.next("Raw - time")
-    data.set_units('t2','s')
+    data.set_units("t2", "s")
     fl.image(data)
     data.reorder("t2", first=False)
     data.ft("t2", shift=True)
