@@ -1,7 +1,7 @@
 #from setuptools import setup
 import setuptools # I think this is needed for the following
-from numpy.distutils.core import Extension,setup
-from distutils.spawn import find_executable
+#from numpy.distutils.core import Extension,setup
+from setuptools import Extension, setup
 import os
 
 ext_modules = []
