@@ -1,13 +1,7 @@
 """ppg for obtaining performing shimming calibration
 =====================================================
-The following is used when the shims are replaced or moved in any way. When moved the calibration or settings for the z and y shims need to be recalculated for certainty. Here, the user can calculated the appropriate voltage setting for each shim for optimal signal
+The following is used when the shims are replaced or moved in any way. When moved the calibration or settings for the z and y shims need to be recalculated for certainty. Here, the user can calculate the appropriate voltage setting for each shim for optimal signal. Note: The XEPR_API server must be running for this script. Normally this script is run with 4 scans 
 """
-#{{{ Notes for use # To run this experiment, please open Xepr on the EPR computer, connect to # spectrometer, and enable XEPR API. Then, in a # separate terminal, run the program XEPR_API_server.py, and wait for it to # tell you 'I am listening' - then, you should be able to run this program from # the NMR computer to set the field etc.  # Note the booleans user_sets_Freq and
-# user_sets_Field allow you to run experiments as previously run in this lab.
-# If both values are set to True, this is the way we used to run them. If both
-# values are set to False, you specify what field you want, and the computer
-# will do the rest.
-#}}}
 from pylab import *
 from pyspecdata import *
 import os, sys
@@ -16,7 +10,6 @@ from datetime import datetime
 import numpy as np
 from Instruments.XEPR_eth import xepr
 from Instruments import HP6623A, prologix_connection
-fl = figlist_var()
 #{{{ Verify arguments compatible with board
 def verifyParams():
     if (nPoints > 16*1024 or nPoints < 1):
@@ -25,13 +18,13 @@ def verifyParams():
         quit()
     else:
         print("VERIFIED NUMBER OF POINTS.")
-    if (nScans < 1):
+    if (config_dict['nScans'] < 1):
         print("ERROR: THERE MUST BE AT LEAST 1 SCAN.")
         print("EXITING.")
         quit()
     else:
         print("VERIFIED NUMBER OF SCANS.")
-    if (p90 < 0.065):
+    if (config_dict['p90_us'] < 0.065):
         print("ERROR: PULSE TIME TOO SMALL.")
         print("EXITING.")
         quit()
@@ -45,54 +38,21 @@ def verifyParams():
         print("VERIFIED DELAY TIME.")
     return
 #}}}
-#{{{Parameters for sample - user should check and edit as needed
-output_name = 'NiSO4'
-node_name = 'shims_addr5_Z_yOpt'
-adcOffset = 32
-carrierFreq_MHz = 14.890000
-field = 3504.0
+target_directory = getDATADIR(exp_type"ODNP_NMR_comp/test_equipment")
+#{{{ importing acquisition parameters
+config_dict = SpinCore_pp.configuration("active.ini")
+nPoints = int(config_dict['acq_time_ms']*config_dict['SW_kHz']+0.5)
+#}}}
+#{{{filename
+date = datetime.now().strftime('%y%m%d')
+config_dict['date'] = date
+filename = f"{config_dict['date']}_{config_dict['chemical']}_shimming" + ".h5"
+#}}}
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-nScans = 4
-nEchoes = 1
-phase_cycling = True
-coherence_pathway = [('ph1',1),('ph2',-2)]
-date = datetime.now().strftime('%y%m%d')
-#{{{ note on timing
-# all times in microseconds
-# acq is in milliseconds
-#}}}
-p90 = 4.51
-deadtime = 10
-repetition = 1e6
-SW_kHz = 1.9
-acq_ms = 1024
-nPoints = int(acq_ms*SW_kHz+0.5)
-# rounding may need to be power of 2
-# have to try this out
-tau_adjust = 0
-deblank = 1.0
-tau = 2500. + deadtime
-pad = 0
-#}}}
-#The standard procedure is to manually se the field and frequency but this can later be updated when the config file branch is merged
-#{{{set field
-with xepr() as x:
-    true_B0 = x.set_field(field)
-print("My field in G is %f"%field)
-#}}}
-#{{{phase cycling steps
-if phase_cycling:
-    nPhaseSteps = 8
-if not phase_cycling:
-    nPhaseSteps = 1
-#}}}    
-#{{{ verify info is okay
-total_pts = nPoints*nPhaseSteps
-assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
-#}}}
+config_dict['tau_us'] = 2500. + config_dict['deadtime_us']
 #{{{set up voltage info for the test 
-data_length = 2*nPoints*nEchoes*nPhaseSteps
+data_length = 2*nPoints*config_dict['nEchoes']*nPhaseSteps
 voltage_array = r_[0.0:0.15:0.01]
 current_readings = ones_like(voltage_array)
 voltage_readings = ones_like(voltage_array)
@@ -101,6 +61,32 @@ test_ch = 3
 # channel that was previously investigated/has predetermined value that you want to set 
 # set_ch : (ch #, voltage setting)
 set_ch = [(2,0.1)]
+#}}}
+#}}}
+#{{{set field
+print("I'm assuming that you've tuned your probe to",
+        config_dict['carrierFreq_MHz'],
+        "since that's what's in your .ini file",
+        )
+Field = config_dict['carrierFreq_MHz']/config_dict['gamma_eff_MHz_G']
+print(
+        "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+        %Field
+        )
+with xepr() as x:
+    assert Field < 3700, "are you crazy??? field is too high!"
+    assert Field > 3300, "are you crazy?? field is too low!"
+    Field = x.set_field(Field)
+    print("field set to ",Field)
+#}}}
+#{{{phase cycling steps
+ph1_cyc = r_[0,1,2,3]
+ph2_cyc = r_[0,2]
+nPhaseSteps = 8
+#}}}    
+#{{{ Check total points
+total_pts = nPoints*nPhaseSteps
+assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 #}}}
 #{{{ Run actual ppg
 with prologix_connection() as p:
@@ -131,70 +117,53 @@ with prologix_connection() as p:
                         ('ch3',get_volt_ch3)]
                 acq_params['shim_readings'] = get_volt
             print("CURRENT READING IS: %f"%this_curr)
-            for x in range(nScans):
-                print(("*** *** *** SCAN NO. %d *** *** ***"%(x+1)))
-                print("\n*** *** ***\n")
-                print("CONFIGURING TRANSMITTER...")
-                SpinCore_pp.configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
-                print("\nTRANSMITTER CONFIGURED.")
-                print("***")
-                print("CONFIGURING RECEIVER...")
-                acq_ms = SpinCore_pp.configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
-                acq_params['acq_time_ms'] = acq_ms
-                print(("ACQUISITION TIME IS",acq_ms,"ms"))
+            for x in range(config_dict['nScans']):
+                SpinCore_pp.configureTX(config_dict['adc_offset'], config_dict['carrierFreq_MHz'], tx_phases, amplitude, nPoints)
+                config_dict['acq_time_ms'] = SpinCore_pp.configureRX(config_dict['SW_kHz'], nPoints, 1, config_dict['nEchoes'], nPhaseSteps)
                 verifyParams()
-                print("\nRECEIVER CONFIGURED.")
-                print("***")
-                print("\nINITIALIZING PROG BOARD...\n")
                 SpinCore_pp.init_ppg();
-                print("PROGRAMMING BOARD...")
-                print("\nLOADING PULSE PROG...\n")
                 if phase_cycling:
                     SpinCore_pp.load([
                         ('marker','start',1),
                         ('phase_reset',1),
-                        ('delay_TTL',deblank),
-                        ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
+                        ('delay_TTL',config_dict['deblank_us']),
+                        ('pulse_TTL',config_dict['p90_us'],'ph1',r_[0,1,2,3]),
                         ('delay',tau),
-                        ('delay_TTL',deblank),
-                        ('pulse_TTL',2.0*p90,'ph2',r_[0,2]),
-                        ('delay',deadtime),
-                        ('acquire',acq_ms),
-                        ('delay',repetition),
+                        ('delay_TTL',config_dict['deblank_us']),
+                        ('pulse_TTL',2.0*config_dict['p90_us'],'ph2',r_[0,2]),
+                        ('delay',config_dict['deadtime_us']),
+                        ('acquire',config_dict['acq_time_ms']),
+                        ('delay',config_dict['repetition_us']),
                         ('jumpto','start')
                         ])
                 if not phase_cycling:
                     SpinCore_pp.load([
                         ('marker','start',1),
                         ('phase_reset',1),
-                        ('delay_TTL',deblank),
-                        ('pulse_TTL',p90,0),
+                        ('delay_TTL',config_dict['deblank_us']),
+                        ('pulse_TTL',config_dict['p90_us'],0),
                         ('delay',tau),
-                        ('delay_TTL',deblank),
-                        ('pulse_TTL',2.0*p90,0),
-                        ('delay',deadtime),
-                        ('acquire',acq_ms),
-                        ('delay',repetition),
+                        ('delay_TTL',config_dict['deblank_us']),
+                        ('pulse_TTL',2.0*config_dict['p90_us'],0),
+                        ('delay',config_dict['deadtime_us']),
+                        ('acquire',config_dict['acq_time_ms']),
+                        ('delay',config_dict['repetition_us']),
                         ('jumpto','start')
                         ])
-                print("\nSTOPPING PROG BOARD...\n")
                 SpinCore_pp.stop_ppg();
-                print("\nRUNNING BOARD...\n")
                 SpinCore_pp.runBoard();
-                raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+                raw_data = SpinCore_pp.getData(data_length, nPoints, config_dict['nEchoes'], nPhaseSteps, output_name)
                 raw_data.astype(float)
                 data_array = []
                 data_array[::] = np.complex128(raw_data[0::2]+1j*raw_data[1::2])
-                print(("COMPLEX DATA ARRAY LENGTH:",np.shape(data_array)[0]))
-                print(("RAW DATA ARRAY LENGTH:",np.shape(raw_data)[0]))
                 dataPoints = float(np.shape(data_array)[0])
                 if index == 0 and x == 0:
-                    time_axis = np.linspace(0,nEchoes*nPhaseSteps*acq_ms*1e-3,int(dataPoints))
-                    shim_data = ndshape([len(data_array),nScans,len(current_readings)],['t','nScans','I']).alloc(dtype=complex128)
+                    time_axis = np.linspace(0,config_dict['nEchoes']*nPhaseSteps*config_dict['acq_time_ms']*1e-3,int(dataPoints))
+                    shim_data = ndshape([len(data_array),config_dict['nScans'],len(current_readings)],['t','nScans','I']).alloc(dtype=complex128)
                     shim_data.setaxis('t',time_axis).set_units('t','s')
-                    shim_data.setaxis('nScans',r_[0:nScans])
+                    shim_data.setaxis('nScans',r_[0:config_dict['nScans']])
                     shim_data.setaxis('I',current_readings).set_units('I','A')
-                    shim_data.name(node_name)
+                    shim_data.name("shims_addr5_Z_yOpt")
                     acq_params['voltage_setting'] = voltage_array
                     acq_params['voltage_reading'] = voltage_readings
                     acq_params['current_reading'] = current_readings
@@ -208,72 +177,43 @@ print("EXITING...")
 print("\n*** *** ***\n")
 #}}}
 #{{{save acquisition parameters
-acq_params = {j: eval(j) for j in dir() if j in [
-    "adcOffset",
-    "carrierFreq_MHz",
-    "amplitude",
-    "true_B0",
-    "nScans",
-    "nEchoes",
-    "p90_us",
-    "deadtime_us",
-    "repetition_us",
-    "SW_kHz",
-    "nPoints",
-    "deblank_us",
-    "tau_us",
-    "nPhaseSteps",
-    ]
-    }
-echo_data.set_prop("acq_params",acq_params)
+shim_data.set_prop("postproc_type","proc_Hahn_echoph")
+shim_data.set_prop("acq_params",config_dict.asdict())
+shim_data.name('shimming'+'_'+str(config_dict['echo_counter']))
 #}}}
 #{{{saving file
-save_file = True
-while save_file:
+nodename = shim_data.name()
+if os.path.exists(filename):
+    print('this file already exists so we will add a node to it!')
+    with h5py.File(os.path.normpath(os.path.join(target_directory,
+        f"{filename}"))) as fp:
+        if nodename in fp.keys():
+            print("this nodename already exists, lets delete it to overwrite")
+            del fp[nodename]
+    shim_data.hdf5_write(f'{filename}/{nodename}', directory = target_directory)
+else:
     try:
-        print("SAVING FILE IN TARGET DIRECTORY...")
-        shim_data.hdf5_write(date+'_'+output_name+'.h5',
-                directory=getDATADIR(exp_type='ODNP_NMR_comp/Echoes'))
-        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-        print(("Name of saved data",shim_data.name()))
-        print(("Units of saved data",shim_data.get_units('t')))
-        print(("Shape of saved data",ndshape(shim_data)))
-        save_file = False
-    except Exception as e:
-        print(e)
-        print("\nEXCEPTION ERROR.")
-        print("FILE MAY ALREADY EXIST IN TARGET DIRECTORY.")
-        print("WILL TRY CURRENT DIRECTORY LOCATION...")
-        output_name = input("ENTER NEW NAME FOR FILE (AT LEAST TWO CHARACTERS):")
-        if len(output_name) is not 0:
-            shim_data.hdf5_write(date+'_'+output_name+'.h5')
-            print("\n*** FILE SAVED WITH NEW NAME IN CURRENT DIRECTORY ***\n")
-            break
-        else:
-            print("\n*** *** ***")
-            print("UNACCEPTABLE NAME. EXITING WITHOUT SAVING DATA.")
-            print("*** *** ***\n")
-            break
+        shim_data.hdf5_write(filename,
+                directory=target_directory)
+    except:
+        print(f"I had problems writing to the correct file {filename}, so I'm going to try to save your file to temp.h5 in the current directory")
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 -- I'm removing it")
+            os.remove('temp.h5')
+        shim_data.hdf5_write('temp.h5')
+        print("if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!")
+print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
+print(("Name of saved data",shim_data.name()))
+config_dict.write()
 #}}}
 #{{{Plotting
 shim_data.set_units('t','data')
-print(ndshape(shim_data))
-print(" *** *** *** ")
-print("My field in G is %f"%true_B0)
-print("My frequency in MHz is",carrierFreq_MHz)
-print(" *** *** *** ")
-if not phase_cycling:
-    fl.next('raw data')
-    fl.image(shim_data)
-    data.ft('t',shift=True)
-    fl.next('ft')
-    fl.image(abs(shim_data), color='k', alpha=0.5)
-if phase_cycling:
-    shim_data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
-    shim_data.setaxis('ph2',r_[0.,2.]/4)
-    shim_data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
-    if nScans > 1:
-        shim_data.setaxis('nScans',r_[0:nScans])
+with figlist_var() as fl:
+    shim_data.chunk('t',['ph2','ph1','t2'],[len(ph2_cyc),len(ph1_cyc),-1])
+    shim_data.setaxis('ph2',ph2_cyc/4)
+    shim_data.setaxis('ph1',ph1_cyc/4)
+    if config_dict['nScans'] > 1:
+        shim_data.setaxis('nScans',r_[0:config_dict['nScans']])
     fl.next('image')
     shim_data.mean('nScans')
     fl.image(shim_data.C.setaxis('I','#'))
