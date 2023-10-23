@@ -6,33 +6,33 @@ from datetime import datetime
 fl = figlist_var()
 
 date = datetime.now().strftime('%y%m%d')
-output_name = 'TEMPOL_capProbe'
-node_name = 'CPMG_4step_6'
-adcOffset = 25
-carrierFreq_MHz = 14.895548
+output_name = 'CPMG_prep'
+node_name = 'CPMG_16step_1'
+adcOffset = 49
+carrierFreq_MHz = 14.894383
 tx_phases = r_[0.0,90.0,180.0,270.0]
 amplitude = 1.0
-p90 = 4.477
+p90 = 4.8
 deadtime = 10.0
-repetition = 12e6
+repetition = 1.34e6
 deblank = 1.0
 marker = 1.0
 
 SW_kHz = 2.0
-nPoints = 64
+nPoints = 16
 acq_time = nPoints/SW_kHz # ms
 
-tau_extra = 1000.0 # us, must be more than deadtime and more than deblank
+tau_extra = 2500.0 # us, must be more than deadtime and more than deblank
 pad_start = tau_extra - deadtime
 pad_end = tau_extra - deblank*2 # marker + deblank
 twice_tau = deblank + 2*p90 + deadtime + pad_start + acq_time*1e3 + pad_end + marker
 tau1 = twice_tau/2.0
 
-nScans = 16
+nScans = 1
 nEchoes = 64
 phase_cycling = True
 if phase_cycling:
-    nPhaseSteps = 4
+    nPhaseSteps = 16
 if not phase_cycling:
     nPhaseSteps = 1 
 #{{{ setting acq_params dictionary
@@ -81,14 +81,14 @@ for x in range(nScans):
                 ('pulse_TTL',p90,'ph1',r_[0,1,2,3]),
                 ('delay',tau1),
                 ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,0),
+                ('pulse_TTL',2.0*p90,'ph2',r_[0,1,2,3]),
                 ('delay',deadtime),
                 ('delay',pad_start),
                 ('acquire',acq_time),
                 ('delay',pad_end),
                 ('marker','echo_label',(nEchoes-1)), # 1 us delay
                 ('delay_TTL',deblank),
-                ('pulse_TTL',2.0*p90,0),
+                ('pulse_TTL',2.0*p90,'ph2',r_[0,1,2,3]),
                 ('delay',deadtime),
                 ('delay',pad_start),
                 ('acquire',acq_time),
@@ -125,7 +125,7 @@ for x in range(nScans):
     SpinCore_pp.stop_ppg();
     print("\nRUNNING BOARD...\n")
     SpinCore_pp.runBoard();
-    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps, output_name)
+    raw_data = SpinCore_pp.getData(data_length, nPoints, nEchoes, nPhaseSteps)
     raw_data.astype(float)
     data_array = []
     data_array[::] = complex128(raw_data[0::2]+1j*raw_data[1::2])
@@ -133,7 +133,7 @@ for x in range(nScans):
     print("RAW DATA ARRAY LENGTH:",shape(raw_data)[0])
     dataPoints = float(shape(data_array)[0])
     if x == 0:
-        time_axis = linspace(0.0,nEchoes*nPhaseSteps*acq_time*1e-3,dataPoints)
+        time_axis = linspace(0.0,int(nEchoes)*int(nPhaseSteps)*int(acq_time)*1e-3,int(dataPoints))
         data = ndshape([len(data_array),nScans],['t','nScans']).alloc(dtype=complex128)
         data.setaxis('t',time_axis).set_units('t','s')
         data.setaxis('nScans',r_[0:nScans])
@@ -209,4 +209,5 @@ if phase_cycling:
     fl.plot(s.real,alpha=0.4)
     fl.plot(s.imag,alpha=0.4)
 fl.show();quit()
+
 
