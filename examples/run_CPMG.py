@@ -107,7 +107,7 @@ data.chunk(
 data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 data.setaxis("ph_overall", ph_overall / 4)
 data.setaxis("ph_diff", ph_diff / 4)
-data.name(config_dict["type"] + "_" + config_dict["cpmg_counter"])
+data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
 data.set_prop("postproc_type", "spincore_CPMGv2")
 data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")

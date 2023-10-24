@@ -142,7 +142,7 @@ def generic(
         runBoard()
         run_scans_time_list.append(time.time())
         run_scans_names.append("get data")
-        raw_data = getData(int(data_length), nPoints, nEchoes, int(nPhaseSteps),"thisIsntFixedYet")
+        raw_data = getData(int(data_length), nPoints, nEchoes, int(nPhaseSteps))
         raw_data.astype(float)
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
