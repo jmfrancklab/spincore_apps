@@ -106,16 +106,16 @@ def generic(
     phcyc_lens = {}
     nEchoes = 1
     for thiselem in ppg_list:
-        print(len(thiselem))
         if len(thiselem) > 3:
             phcyc_lens[thiselem[2]] = len(thiselem[3])
         if len(thiselem)>2 and thiselem[0] == 'marker' and thiselem[1] == 'echo_label':  
-            print(thiselem)
             nEchoes = thiselem[2]+1
             print(nEchoes)
     nPhaseSteps_min = 1
     ph_lens = list(phcyc_lens.values())
     nPhaseSteps = prod(ph_lens)
+    print(nPhaseSteps)
+    print(nEchoes)
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
@@ -126,7 +126,6 @@ def generic(
         run_scans_names.append("configure Rx")
         check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
         print(check)
-        print(acq_time_ms)
         assert round(acq_time_ms,1) == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
@@ -150,15 +149,15 @@ def generic(
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
         if ret_data is None:
-            if indirect_fields is None:
-                times_dtype = np.double
-            else:
-                # {{{ dtype for structured array
-                times_dtype = np.dtype(
-                    [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
-                )
+            #if indirect_fields is None:
+            #    times_dtype = np.double
+            #else:
+            #    # {{{ dtype for structured array
+            #    times_dtype = np.dtype(
+            #        [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
+            #    )
                 # }}}
-            mytimes = np.zeros(indirect_len, dtype=times_dtype)
+            #mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = np.linspace(0.0,nEchoes*int(nPhaseSteps)*acq_time_ms*1e-3,int(dataPoints))#r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
                 [len(data_array), nScans], ["t","nScans"]
