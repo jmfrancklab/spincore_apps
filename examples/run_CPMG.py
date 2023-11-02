@@ -43,7 +43,6 @@ if phase_cycling:
     ph2_cyc = array([(k + 1) % 4 for k in ph_overall for j in ph_diff])
     nPhaseSteps = len(ph_overall) * len(ph_diff)
 # }}}
-nPhaseSteps = 16
 # {{{symmetric tau
 short_delay_us = 1.0
 tau_evol_us = (
@@ -71,17 +70,17 @@ data = generic(
     ppg_list=[
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", config_dict["p90_us"], "ph1",r_[0,1,2,3]),#_cyc", ph1_cyc),
+        ("pulse_TTL", config_dict["p90_us"], "ph_cyc", ph1_cyc),
         ("delay", config_dict["tau_us"]),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph2",r_[0,1,2,3]),#_cyc", ph2_cyc),
+        ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["acq_time_ms"]),
         ("delay", pad_end_us),
         ("delay", short_delay_us),  # matching the jumpto delay
         ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph2",r_[0,1,2,3]),#_cyc", ph2_cyc),
+        ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["acq_time_ms"]),
         ("delay", pad_end_us),
