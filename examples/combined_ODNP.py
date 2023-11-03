@@ -15,7 +15,7 @@ from pyspecdata import strm
 import os, sys, time
 import h5py
 import SpinCore_pp
-from SpinCore_pp.power_helper import gen_powerlist
+from SpinCore_pp.power_helper import Ep_spacing_from_phalf
 from SpinCore_pp.ppg import run_spin_echo, run_IR
 from Instruments import power_control
 from datetime import datetime
@@ -62,12 +62,20 @@ FIR_rep = 2*(1.0/(config_dict['concentration']*config_dict['krho_hot']+1.0/confi
 config_dict['FIR_rep'] = FIR_rep
 # }}}
 # {{{Power settings
-dB_settings = gen_powerlist(
-    config_dict["max_power"], config_dict["power_steps"] + 1, three_down=True
+dB_settings = Ep_spacing_from_phalf(
+    est_phalf = config_dict['guessed_phalf']/4,
+    max_power = config_dict["max_power"], 
+    p_steps = config_dict["power_steps"] + 1, 
+    min_dBm_step = config_dict['min_dBm_step'], 
+    three_down=True
 )
-T1_powers_dB = gen_powerlist(
-    config_dict["max_power"], config_dict["num_T1s"], three_down=False
-)
+T1_powers_dB =Ep_spacing_from_phalf(
+        est_phalf = config_dict['guessed_phalf']/4,
+        max_power = config_dict["max_power"],
+        p_steps =  config_dict["num_T1s"],
+        min_dBm_step = config_dict['min_dBm_step'], 
+        three_down=False
+) 
 T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
 logger.info("dB_settings", dB_settings)
 logger.info("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
@@ -103,52 +111,6 @@ if os.path.exists(filename):
 input(
     "B12 needs to be unplugged and turned off for the thermal! Don't have the power server running just yet"
 )
-# }}}
-# {{{Collect Thermals - serves as a control to compare the thermal of Ep to ensure no microwaves were leaking
-# call A to run spin echo
-control_thermal = run_spin_echo(
-    nScans=config_dict["thermal_nScans"],
-    indirect_idx=0,
-    indirect_len=1,
-    ph1_cyc=Ep_ph1_cyc,
-    adcOffset=config_dict["adc_offset"],
-    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=nPoints,
-    nEchoes=config_dict["nEchoes"],
-    p90_us=config_dict["p90_us"],
-    repetition_us=config_dict["repetition_us"],
-    tau_us=config_dict["tau_us"],
-    SW_kHz=config_dict["SW_kHz"],
-    ret_data=None,
-) 
-if config_dict["thermal_nScans"] > 1:
-    control_thermal.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
-if phase_cycling:
-    control_thermal.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
-    control_thermal.setaxis("ph1", Ep_ph1_cyc / 4)
-    control_thermal.reorder(["ph1", "nScans", "t2"])
-control_thermal.name("control_thermal")
-control_thermal.set_prop("postproc_type", Ep_postproc)
-control_thermal.set_prop("acq_params", config_dict.asdict())
-control_thermal.name("control_thermal")
-nodename = control_thermal.name()
-# {{{ on first write, if we can't access the directory, write to a temp file
-try:
-    control_thermal.hdf5_write(filename, directory=target_directory)
-except:
-    final_log.append(
-        f"I had problems writing to the correct file {filename}, so I'm going to try to save your file to temp_ctrl.h5 in the current directory"
-    )
-    if os.path.exists("temp_ctrl.h5"):
-        final_log.append("There is already a temp_ctrl.h5 -- I'm removing it")
-        os.remove("temp_ctrl.h5")
-        target_directory = os.path.getcwd()
-        filename = "temp_ctrl.h5"
-        DNP_data.hdf5_write(filename, directory=target_directory)
-        final_log.append("change the name accordingly once this is done running!")
-# }}}
-logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-logger.debug(strm("Name of saved data", control_thermal.name()))
 # }}}
 # {{{IR at no power
 #   this is outside the log, so to deal with this during processing, just check
@@ -218,27 +180,44 @@ with power_control() as p:
     p.mw_off()
     time.sleep(16.0) #give some time for the power source to "settle"
     p.start_log()
-    DNP_data = None # initially, there is no data, and run_spin_echo knows how to deal with this
-    #Run the actual thermal where the power log is recording. This will be your thermal for enhancement and can be compared to previous thermals if issues arise
-    for j in range(thermal_scans):
+    for j in range(config_dict['thermal_nscans']):
         DNP_ini_time = time.time()
-        # call B/C to run spin echo
-        DNP_data = run_spin_echo(
-            nScans=config_dict["nScans"],
-            indirect_idx=j,
-            indirect_len=len(powers) + thermal_scans,
-            adcOffset=config_dict["adc_offset"],
-            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=nPoints,
-            nEchoes=config_dict["nEchoes"],
-            ph1_cyc=Ep_ph1_cyc,
-            p90_us=config_dict["p90_us"],
-            repetition_us=config_dict["repetition_us"],
-            tau_us=config_dict["tau_us"],
-            SW_kHz=config_dict["SW_kHz"],
-            indirect_fields=("start_times", "stop_times"),
-            ret_data=DNP_data,
-        )
+        if j == 0:
+            DNP_data = run_spin_echo(
+                nScans=config_dict["nScans"],
+                indirect_idx=j,
+                indirect_len=len(powers) + config_dict['thermal_nScans'],
+                ph1_cyc=Ep_ph1_cyc,
+                adcOffset=config_dict["adc_offset"],
+                carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+                nPoints=nPoints,
+                nEchoes=config_dict["nEchoes"],
+                p90_us=config_dict["p90_us"],
+                repetition_us=config_dict["repetition_us"],
+                tau_us=config_dict["tau_us"],
+                SW_kHz=config_dict["SW_kHz"],
+                indirect_fields=("start_times", "stop_times"),
+                ret_data=None,
+            )  
+            DNP_thermal_done = time.time()
+            time_axis_coords = DNP_data.getaxis("indirect")
+        else:
+            DNP_data = run_spin_echo(
+                nScans=config_dict['nScans'],
+                indirect_idx=j,
+                indirect_len=len(powers) + config_dict['thermal_nScans'],
+                adcOffset=config_dict['adc_offset'],
+                carrierFreq_MHz=config_dict['carrierFreq_MHz'],
+                nPoints=nPoints,
+                nEchoes=config_dict['nEchoes'],
+                ph1_cyc=Ep_ph1_cyc,
+                p90_us=config_dict['p90_us'],
+                repetition_us=config_dict['repetition_us'],
+                tau_us=config_dict['tau_us'],
+                SW_kHz=config_dict['SW_kHz'],
+                indirect_fields=("start_times", "stop_times"),
+                ret_data=DNP_data,
+            )
         DNP_thermal_done = time.time()
         time_axis_coords[j]["start_times"] = DNP_ini_time
         time_axis_coords[j]["stop_times"] = DNP_thermal_done
@@ -249,10 +228,10 @@ with power_control() as p:
             "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], powers[j], "W)"
         )
         if j == 0:
-            retval = p.dip_lock(
-                config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
-                config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
-            )
+            retval_thermal = p.dip_lock(
+                config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
+                config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
+                )
         p.set_power(this_dB)
         for k in range(10):
             time.sleep(0.5)
@@ -305,13 +284,28 @@ with power_control() as p:
             os.remove("temp_ODNP.h5")
             DNP_data.hdf5_write(filename, directory=target_directory)
             final_log.append(
-                "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!"
+                "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!")
     logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-    logger.debug(strm("Name of saved data", echo_data.name()))
+    logger.debug(strm("Name of saved data", DNP_data.name()))
     # }}}
     # {{{run IR
+    last_dB_setting = 10
     for j, this_dB in enumerate(T1_powers_dB):
-        p.set_power(this_dB)
+        # {{{ make small steps in power if needed
+        if j == 0:
+            p.set_power(this_dB)
+        else:    
+            if this_dB - last_dB_setting > 3:
+                smallstep_dB = last_dB_setting + 2
+                while smallstep_dB + 2 < this_dB:
+                    print("SETTING THIS POWER %d"%smallstep_dB)
+                    p.set_power(smallstep_dB)
+                    smallstep_dB += 2
+                    last_dB_setting = this_dB
+                p.set_power(this_dB)
+        last_dB_setting = this_dB    
+
+        # }}}
         for k in range(10):
             time.sleep(0.5)
             # JF notes that the following works for powers going up, but not
@@ -323,7 +317,13 @@ with power_control() as p:
             if p.get_power_setting() >= this_dB:
                 break
         if p.get_power_setting() < this_dB:
-            raise ValueError("After 10 tries, the power has still not settled")
+            try:
+                for k in range(20):
+                    time.sleep(0.5)
+                    if p.get_power_setting() >= this_dB:
+                        break
+            except:        
+                raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         meter_power = p.get_power_setting()
         ini_time = time.time()
@@ -374,10 +374,6 @@ with power_control() as p:
         vd_data.hdf5_write(filename, directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
-    final_frq = p.dip_lock(
-        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-    )
     this_log = p.stop_log()
 # }}}
 config_dict.write()
