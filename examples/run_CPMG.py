@@ -43,7 +43,6 @@ if phase_cycling:
     ph2_cyc = array([(k + 1) % 4 for k in ph_overall for j in ph_diff])
     nPhaseSteps = len(ph_overall) * len(ph_diff)
 # }}}
-nPhaseSteps = 16
 # {{{symmetric tau
 short_delay_us = 1.0
 tau_evol_us = (
