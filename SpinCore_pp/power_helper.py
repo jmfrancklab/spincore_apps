@@ -24,7 +24,7 @@ def Ep_spacing_from_phalf(
     three_down=True,
     fl=None,
 ):
-    r"""Evenly spaced powers along the :math:`E(p)` curve, as though you
+    r"""Evenly space powers along the :math:`E(p)` curve, as though you
     took a string with evenly marked lengths, and laid it down on top of
     the curve.
 
