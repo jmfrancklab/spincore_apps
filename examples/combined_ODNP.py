@@ -15,7 +15,7 @@ from pyspecdata import strm
 import os, sys, time
 import h5py
 import SpinCore_pp
-from SpinCore_pp.power_helper import Ep_spacing_from_phalf
+from SpinCore_pp.power_helper import gen_powerlist, Ep_spacing_from_phalf
 from SpinCore_pp.ppg import run_spin_echo, run_IR
 from Instruments import power_control
 from datetime import datetime
@@ -63,19 +63,15 @@ config_dict['FIR_rep'] = FIR_rep
 # }}}
 # {{{Power settings
 dB_settings = Ep_spacing_from_phalf(
-    est_phalf = config_dict['guessed_phalf']/4,
+    est_phalf = config_dict['guessed_phalf'],
     max_power = config_dict["max_power"], 
-    p_steps = config_dict["power_steps"] + 1, 
-    min_dBm_step = config_dict['min_dBm_step'], 
+    config_dict["power_steps"] + 1, 
+    min_dBm_step = config_dict['min_dBm_step'],
     three_down=True
 )
-T1_powers_dB =Ep_spacing_from_phalf(
-        est_phalf = config_dict['guessed_phalf']/4,
-        max_power = config_dict["max_power"],
-        p_steps =  config_dict["num_T1s"],
-        min_dBm_step = config_dict['min_dBm_step'], 
-        three_down=False
-) 
+T1_powers_dB = gen_powerlist(
+    config_dict["max_power"], config_dict["num_T1s"], three_down=False
+)
 T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
 logger.info("dB_settings", dB_settings)
 logger.info("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
