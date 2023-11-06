@@ -323,7 +323,6 @@ with power_control() as p:
             if this_dB - last_dB_setting > 3:
                 smallstep_dB = last_dB_setting + 2
                 while smallstep_dB + 2 < this_dB:
-                    print("SETTING THIS POWER %d"%smallstep_dB)
                     p.set_power(smallstep_dB)
                     smallstep_dB += 2
                     last_dB_setting = this_dB
