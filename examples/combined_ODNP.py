@@ -253,9 +253,9 @@ with power_control() as p:
             "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], powers[j], "W)"
         )
         if j == 0:
-            retval_thermal = p.dip_lock(
-                config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-                config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
+            retval = p.dip_lock(
+                config_dict['uw_dip_center_GHz'] - config_dict['uw_dip_width_GHz'] / 2,
+                config_dict['uw_dip_center_GHz'] + config_dict['uw_dip_width_GHz'] / 2,
             )
         p.set_power(this_dB)
         for k in range(10):
