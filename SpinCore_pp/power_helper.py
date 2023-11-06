@@ -24,7 +24,7 @@ def Ep_spacing_from_phalf(
     three_down=True,
     fl=None,
 ):
-    r"""Evenly space powers long the :math:`E(p)` curve, as though you
+    r"""Evenly spaced powers along the :math:`E(p)` curve, as though you
     took a string with evenly marked lengths, and laid it down on top of
     the curve.
 
@@ -52,7 +52,7 @@ def Ep_spacing_from_phalf(
     est_phalf:      float
                     estimated power for half saturation
     sim_Emax:       float
-                    ONLY FOR PLOTTING PURPOSES. when fl is not None, this will generate an E(p) curve using this Emax but it is not used in the actual function.
+                    ONLY FOR PLOTTING PURPOSES. When fl is not None, this will generate an E(p) curve using this Emax but it is not used in the actual function.
     max_power:      float
                     maximum power that you will send to the sample (W)
     aspect_ratio:   float
