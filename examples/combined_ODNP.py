@@ -90,12 +90,12 @@ Ep_postproc = "spincore_ODNP_v3"
 total_points = len(Ep_ph1_cyc) * nPoints
 assert total_points < 2 ** 14, (
     "For Ep: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-    % total_points
+    % total_points, config_dict["acq_time_ms"] * 16384 / total_points
 )
 total_pts = len(IR_ph2_cyc) * len(IR_ph1_cyc) * nPoints
 assert total_pts < 2 ** 14, (
     "For IR: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-    % total_pts
+    % total_pts, config_dict["acq_time_ms"] * 16384 / total_pts
 )
 # }}}
 # {{{ check for file
