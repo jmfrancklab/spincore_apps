@@ -65,7 +65,7 @@ config_dict['FIR_rep'] = FIR_rep
 dB_settings = Ep_spacing_from_phalf(
     est_phalf = config_dict['guessed_phalf'],
     max_power = config_dict["max_power"], 
-    config_dict["power_steps"] + 1, 
+    p_steps = config_dict["power_steps"] + 1, 
     min_dBm_step = config_dict['min_dBm_step'],
     three_down=True
 )
@@ -90,7 +90,7 @@ Ep_postproc = "spincore_ODNP_v3"
 total_points = len(Ep_ph1_cyc) * nPoints
 assert total_points < 2 ** 14, (
     "For Ep: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-    % total_pts
+    % total_points
 )
 total_pts = len(IR_ph2_cyc) * len(IR_ph1_cyc) * nPoints
 assert total_pts < 2 ** 14, (
@@ -244,6 +244,8 @@ with power_control() as p:
             ret_data=DNP_data,
         )
         DNP_thermal_done = time.time()
+        if j == 0:
+            time_axis_coords = DNP_data.getaxis("indirect")
         time_axis_coords[j]["start_times"] = DNP_ini_time
         time_axis_coords[j]["stop_times"] = DNP_thermal_done
     power_settings_dBm = np.zeros_like(dB_settings)
@@ -311,7 +313,7 @@ with power_control() as p:
             final_log.append(
                 "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!"
     logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-    logger.debug(strm("Name of saved data", echo_data.name()))
+    logger.debug(strm("Name of saved data", DNP_data.name()))
     # }}}
     # {{{run IR
     for j, this_dB in enumerate(T1_powers_dB):
@@ -378,14 +380,10 @@ with power_control() as p:
         vd_data.hdf5_write(filename, directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
-    final_frq = p.dip_lock(
-        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-    )
     this_log = p.stop_log()
 # }}}
 config_dict.write()
-with h5py.File(os.path.join(target_directory, filename), "a") as f:
+with h5py.File(os.path.normpath(os.path.join(target_directory, filename)), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
 print('*'*30+'\n'+'\n'.join(final_log))
