@@ -65,7 +65,7 @@ config_dict['FIR_rep'] = FIR_rep
 dB_settings = Ep_spacing_from_phalf(
     est_phalf = config_dict['guessed_phalf'],
     max_power = config_dict["max_power"], 
-    p_steps = config_dict["power_steps"] + 1, 
+    p_steps = config_dict["power_steps"], 
     min_dBm_step = config_dict['min_dBm_step'],
     three_down=True
 )
