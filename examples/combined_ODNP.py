@@ -325,8 +325,8 @@ with power_control() as p:
             while smallstep_dB + 2 < this_dB:
                 p.set_power(smallstep_dB)
                 smallstep_dB += 2
-            p.set_power(this_dB)
-            last_dB_setting = this_dB    
+        p.set_power(this_dB)
+        last_dB_setting = this_dB    
         # }}}
         for k in range(10):
             time.sleep(0.5)
