@@ -70,7 +70,7 @@ dB_settings = Ep_spacing_from_phalf(
     three_down=True
 )
 T1_powers_dB = gen_powerlist(
-    config_dict["max_power"], config_dict["num_T1s"], three_down=False
+    config_dict["max_power"], config_dict["num_T1s"], min_dBm_step=config_dict["min_dBm_step"], three_down=False
 )
 T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
 logger.info("dB_settings", dB_settings)
@@ -324,8 +324,8 @@ with power_control() as p:
             while smallstep_dB + 2 < this_dB:
                 p.set_power(smallstep_dB)
                 smallstep_dB += 2
-            p.set_power(this_dB)
-            last_dB_setting = this_dB    
+        p.set_power(this_dB)
+        last_dB_setting = this_dB    
         # }}}
         for k in range(10):
             time.sleep(0.5)
