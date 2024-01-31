@@ -63,9 +63,4 @@ def prog_plen(desired_actual):
         coeffs[j] = c[j]
     # }}}
     retval = polyval(coeffs[::-1], desired_actual)
-    # {{{ Plot the calibration data with the users datapoint plotted on top
-    print(
-        "In order to get an actual pulse length of %d, you must tell SC to send a pulse length of %d"
-        % (desired_actual, retval)
-    )
     return retval

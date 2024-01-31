@@ -4,7 +4,7 @@ The programmed SpinCore pulse length does not match the actual output pulse leng
 """
 from pylab import *
 from pyspecdata import *
-#from SpinCore_pp.pulse_length_conv import prog_plen
+from SpinCore_pp.pulse_length_conv import prog_plen
 fl = figlist_var()
 desired_plen = r_[0:25:25j]
 prog_plen = prog_plen(desired_plen)
