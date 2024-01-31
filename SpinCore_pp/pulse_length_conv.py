@@ -1,14 +1,10 @@
-"""Calibrate the Pulse Lengths
-==============================
-Takes the desired pulse length and tells
-the user what pulse length should be programmed in 
-order to get the actual desired pulse length
-"""
 from pylab import *
 from pyspecdata import *
-
 def prog_plen(desired_actual):
     """
+    Takes the desired pulse length and tells
+    the user what pulse length should be programmed in 
+    order to get the actual desired pulse length
     Parameters
     ==========
     desired_actual: float
@@ -18,7 +14,7 @@ def prog_plen(desired_actual):
     retval: float
             The pulse length you tell spincore in order to get the desired actual.
     """
-    # {{{ list of programmed p90, actual p90 and actual 180
+    # {{{ list of programmed p90, actual p90 and actual 180 - used in generating the calibrated fit
     datapoints = [
         (1, 2.25869, 5.75412),
         (2, 5.78065, 16.6168),
@@ -43,7 +39,7 @@ def prog_plen(desired_actual):
         (12, 120.264, 286.884),
         (12.5, 126.251, 299.009),
     ]
-    # neat JF trick for storing these data points
+    # neat JF trick for organizing these data points
     prog90, act90, act180 = map(array, zip(*datapoints))
     # }}}
     plen_prog = r_[0, prog90, 2 * prog90]  # array of programmed pulse lengths
@@ -52,7 +48,7 @@ def prog_plen(desired_actual):
     )  # assume the longest pulse is about the correct length
     calibration_data = nddata(plen_prog, [-1], ["plen"]).setaxis(
         "plen", plen_actual
-    )  # programmed pulse lengths with the actual pulse
+    )  
     calibration_data.sort("plen")
     c = calibration_data.polyfit(
         "plen", order=10
@@ -62,5 +58,4 @@ def prog_plen(desired_actual):
     for j in range(len(c)):
         coeffs[j] = c[j]
     # }}}
-    retval = polyval(coeffs[::-1], desired_actual)
-    return retval
+    return polyval(coeffs[::-1],desired_actual)
