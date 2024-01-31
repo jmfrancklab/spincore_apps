@@ -6,7 +6,7 @@ finds what pulse length should be fed to SpinCore
 in order to get a pulse length with the actual
 desired pulse length.
 """
-from pylab import *
+import matplotlib.pyplot as plt
 from pyspecdata import *
 from SpinCore_pp.pulse_length_conv import prog_plen
 
