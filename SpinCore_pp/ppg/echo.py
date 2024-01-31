@@ -86,6 +86,12 @@ def run_spin_echo(
                     returned data from previous run or `None` for the first run.
     """
     assert nEchoes == 1, "you must only choose nEchoes=1"
+    desired_p90_us = p90_us
+    desired_p180_us = 2*p90_us
+    prog_p90_us = prog_plen(desired_p90_us)
+    prog_p180_us = prog_plen(desired_180_us)
+    print("You said you want an actual p90 of %d us and an actual p180 of %d"%(desired_p90_us,desired_p180_us))
+    print("So I am sending the SC a p90 time of %d and a p180 time of %d"%(prog_p90_us,prog_p180_us)
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
@@ -105,10 +111,10 @@ def run_spin_echo(
             [
                 ("phase_reset", 1),
                 ("delay_TTL", deblank_us),
-                ("pulse_TTL", p90_us, "ph1", ph1_cyc),
+                ("pulse_TTL", prog_p90_us, "ph1", ph1_cyc),
                 ("delay", tau_us),
                 ("delay_TTL", deblank_us),
-                ("pulse_TTL", 2.0 * p90_us, "ph2", ph2_cyc),
+                ("pulse_TTL", prog_p180_us, "ph2", ph2_cyc),
                 ("delay", deadtime_us),
                 ("acquire", acq_time_ms),
                 ("delay", repetition_us),
