@@ -15,6 +15,7 @@ from pyspecdata import strm
 import time
 import logging
 
+
 # {{{IR ppg
 def run_IR(
     nScans,
@@ -87,11 +88,13 @@ def run_IR(
                     returned data from previous run or `None` for the first run.
     """
     assert nEchoes == 1, "you must only choose nEchoes=1"
+    # take the desired p90 and p180
+    # (2*desired_p90) and convert to what needs to
+    # be programmed in order to get the desired
+    # times
     desired_p90_us = p90_us
     prog_p90_us = prog_plen(desired_p90_us)
-    prog_p180_us = prog_plen(2*desired_p90_us)
-    print("You said you want an actual p90 of %d us and an actual p180 of %d"%(desired_p90_us,2*desired_p90_us))
-    print("So I am sending the SC a p90 time of %d and a p180 time of %d"%(prog_p90_us,prog_p180_us)
+    prog_p180_us = prog_plen(2 * desired_p90_us)
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
@@ -176,4 +179,6 @@ def run_IR(
             )
         )
     return ret_data
+
+
 # }}}
