@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import r_
+from numpy import r_,vectorize,ones_like,log10
 import sympy as sp
 from scipy.integrate import quad
 import pyspecdata as psp
