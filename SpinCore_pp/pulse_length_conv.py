@@ -1,20 +1,25 @@
-from pylab import *
-from pyspecdata import *
+from pylab import array
+from numpy import zeros, polyval
+from pyspecdata import r_, nddata
+
+
 def prog_plen(desired_actual):
     """
-    Takes the desired pulse length and tells
-    the user what pulse length should be programmed in 
-    order to get the actual desired pulse length
+    Takes the desired pulse length and tells the
+    user what pulse length should be programmed in order to get the actual desired
+    pulse length
     Parameters
     ==========
     desired_actual: float
-                    the actual pulse length you wish the spincore to output, in us
+                    the actual pulse length you wish the spincore to output,
+                    in us
     Returns
     =======
     retval: float
             The pulse length you tell spincore in order to get the desired actual.
     """
-    # {{{ list of programmed p90, actual p90 and actual 180 - used in generating the calibrated fit
+    # {{{ list of programmed p90, actual p90 and actual 180 - used in
+    # generating the calibrated fit
     datapoints = [
         (1, 2.25869, 5.75412),
         (2, 5.78065, 16.6168),
@@ -43,19 +48,15 @@ def prog_plen(desired_actual):
     prog90, act90, act180 = map(array, zip(*datapoints))
     # }}}
     plen_prog = r_[0, prog90, 2 * prog90]  # array of programmed pulse lengths
-    plen_actual = (
-        r_[0, act90, act180] * 2 * prog90[-1] / act180[-1]
-    )  # assume the longest pulse is about the correct length
-    calibration_data = nddata(plen_prog, [-1], ["plen"]).setaxis(
-        "plen", plen_actual
-    )  
+    # assume the longest pulse is about the correct length
+    plen_actual = r_[0, act90, act180] * 2 * prog90[-1] / act180[-1]
+    calibration_data = nddata(plen_prog, [-1], ["plen"]).setaxis("plen", plen_actual)
     calibration_data.sort("plen")
-    c = calibration_data.polyfit(
-        "plen", order=10
-    )  # fit the programmed vs actual lengths to a polynomial
+    # fit the programmed vs actual lengths to a polynomial
+    c = calibration_data.polyfit("plen", order=10)
     # {{{ Make an array out of the fitting coefficients from the polyfit
-    coeffs = np.zeros(len(c))
+    coeffs = zeros(len(c))
     for j in range(len(c)):
         coeffs[j] = c[j]
     # }}}
-    return polyval(coeffs[::-1],desired_actual)
+    return polyval(coeffs[::-1], desired_actual)
