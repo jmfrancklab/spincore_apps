@@ -15,7 +15,7 @@ from pyspecdata import strm
 import os, sys, time
 import h5py
 import SpinCore_pp
-from SpinCore_pp.power_helper import gen_powerlist
+from SpinCore_pp.power_helper import gen_powerlist, Ep_spacing_from_phalf
 from SpinCore_pp.ppg import run_spin_echo, run_IR
 from Instruments import power_control
 from datetime import datetime
@@ -83,11 +83,15 @@ config_dict["tau_us"] = (
 )
 # }}}
 # {{{Power settings
-dB_settings = gen_powerlist(
-    config_dict["max_power"], config_dict["power_steps"] + 1, three_down=True
+dB_settings = Ep_spacing_from_phalf(
+    est_phalf = config_dict['guessed_phalf'],
+    max_power = config_dict["max_power"], 
+    p_steps = config_dict["power_steps"], 
+    min_dBm_step = config_dict['min_dBm_step'],
+    three_down=True
 )
 T1_powers_dB = gen_powerlist(
-    config_dict["max_power"], config_dict["num_T1s"], three_down=False
+    config_dict["max_power"], config_dict["num_T1s"], min_dBm_step=config_dict["min_dBm_step"], three_down=False
 )
 T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
 T2_node_names = ["CPMG_%ddBm" % j for j in T1_powers_dB]
@@ -109,17 +113,17 @@ cpmg_postproc = "spincore_CPMGv2"
 total_points = len(Ep_ph1_cyc) * nPoints
 assert total_points < 2 ** 14, (
     "For Ep: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-    % total_pts
+    % total_points, config_dict["acq_time_ms"] * 16384 / total_points
 )
 total_pts = len(IR_ph2_cyc) * len(IR_ph1_cyc) * nPoints
 assert total_pts < 2 ** 14, (
     "For IR: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-    % total_pts
+    % total_pts, config_dict["acq_time_ms"] * 16384 / total_pts
 )
 total_pts = len(cpmg_ph2_cyc) * len(cpmg_ph1_cyc) * nPoints
 assert total_pts < 2 ** 14, (
     "For cpmg: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-    % total_pts
+    % total_pts, config_dict["acq_time_ms"] * 16384 / total_pts
 )
 # }}}
 # {{{ check for file
@@ -323,7 +327,7 @@ with power_control() as p:
         DNP_data = run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j,
-            indirect_len=len(powers) + thermal_scans,
+            indirect_len=len(powers) + config_dict["thermal_scans"],
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
@@ -337,6 +341,8 @@ with power_control() as p:
             ret_data=DNP_data,
         )
         DNP_thermal_done = time.time()
+        if j == 0:
+            time_axis_coords = DNP_data.getaxis("indirect")
         time_axis_coords[j]["start_times"] = DNP_ini_time
         time_axis_coords[j]["stop_times"] = DNP_thermal_done
     power_settings_dBm = np.zeros_like(dB_settings)
@@ -404,7 +410,7 @@ with power_control() as p:
             final_log.append(
                 "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!")
     logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-    logger.debug(strm("Name of saved data", echo_data.name()))
+    logger.debug(strm("Name of saved data", DNP_data.name()))
     # }}}
     # {{{run IR/CPMG
     for j, this_dB in enumerate(T1_powers_dB):
@@ -425,8 +431,7 @@ with power_control() as p:
         meter_power = p.get_power_setting()
         ini_time = time.time()
         vd_data = None
-        cpmg_data = None
-        data = generic(
+        cpmg_data = generic(
             ppg_list=[
                 ("phase_reset", 1),
                 ("delay_TTL", config_dict["deblank_us"]),
@@ -539,15 +544,10 @@ with power_control() as p:
         vd_data.hdf5_write(filename, directory=target_directory)
         print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
         print(("Name of saved data", vd_data.name()))
-    final_frq = p.dip_lock(
-        config_dict["uw_dip_center_GHz"] - config_dict["uw_dip_width_GHz"] / 2,
-        config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
-    )
     this_log = p.stop_log()
 # }}}
 config_dict.write()
-with h5py.File(os.path.join(target_directory, filename), "a") as f:
+with h5py.File(os.path.normpath(os.path.join(target_directory, filename)), "a") as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
 print('*'*30+'\n'+'\n'.join(final_log))
-
