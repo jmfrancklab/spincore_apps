@@ -18,33 +18,55 @@ def Ep_spacing_from_phalf(
     est_phalf=0.2,
     sim_Emax=30,
     max_power=3.16,
-    aspect_ratio=1.618,
+    aspect_ratio=1.618,# golden ratio
     p_steps=20,
     min_dBm_step=1.0,
     three_down=True,
     fl=None,
 ):
-    """
-        Parameters
-        ==========
-        est_phalf:      float
-                        estimated power for half saturation
-        sim_Emax:       float
-                        ONLY FOR PLOTTING PURPOSES. when fl is not None, this will generate an E(p) curve using this Emax but it is not used in the actual function.
-        max_power:      float
-                        maximum power that you will send to the sample (W)
-        aspect_ratio:   float
-                        width of figure size/ height of figure size. Most likely you will not need to change this but if you want to make a different figure size aspect ratio this ensures the E(p) spacing is even within that figure
-        p_steps:        float
-                        number of power steps in the enhancement experiment
-        min_dBm_step:   float
-                        minimum stepsize that is allowed, in dBm
-        three_down:     boolean
-                        Do you want three evenly spaced powers on the way
-                        back down?
+    r"""Evenly space powers along the :math:`E(p)` curve, as though you
+    took a string with evenly marked lengths, and laid it down on top of
+    the curve.
+
+    This is essential to sampling the linear regime for samples that are
+    very easy to saturate.
+
+    To accomplish this, we use a guess for how :math:`E(p)` varies (we
+    call our guess
+    for the function :math:`f(p)` and then place lines evenly along the
+    length of the line, rather than in one dimension.  To do this, we
+    calculate
+    :math:`dl = \sqrt{dp^2 + df^2} = dp\sqrt{\left(\frac{dp}{dp}\right)^2+\left(\frac{df}{dp}\right)}=dp\sqrt{1+\frac{df}{dp}}`
+    and then integrate :math:`l(p) = \int_{p=0}^{p=p_{max}} dl`,
+    which gives the length along the curve (as though we placed a string along the curve).
+
+    Note that we very rarely plot so that our power axis and enhancement
+    axis are plotted with an equal aspect ratio,
+    so we use the max power, max enhancement, and aspect ratio to
+    determine the spacing of powers that fits the above description
+    *as plotted*.
+
+
+    Parameters
+    ==========
+    est_phalf:      float
+                    estimated power for half saturation
+    sim_Emax:       float
+                    ONLY FOR PLOTTING PURPOSES. When fl is not None, this will generate an E(p) curve using this Emax but it is not used in the actual function.
+    max_power:      float
+                    maximum power that you will send to the sample (W)
+    aspect_ratio:   float
+                    width of figure size/ height of figure size. Most likely you will not need to change this but if you want to make a different figure size aspect ratio this ensures the E(p) spacing is even within that figure
+    p_steps:        float
+                    number of power steps in the enhancement experiment
+    min_dBm_step:   float
+                    minimum stepsize that is allowed, in dBm
+    three_down:     boolean
+                    Do you want three evenly spaced powers on the way
+                    back down?
     Return
-        ======
-        List of evenly spaced powers (dBm) for generated a nicely spaced Ep curve for a specific sample based on the estimated p_half.
+    ======
+    List of evenly spaced powers (dBm) for generated a nicely spaced Ep curve for a specific sample based on the estimated p_half.
     """
     p_array = r_[0:max_power:200j]
     f = 1 - Emax * (p / (p + phalf))
