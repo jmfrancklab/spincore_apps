@@ -15,7 +15,6 @@ from pyspecdata import strm
 import time
 import logging
 
-
 # {{{IR ppg
 def run_IR(
     nScans,
@@ -178,6 +177,4 @@ def run_IR(
             )
         )
     return ret_data
-
-
 # }}}
