@@ -125,7 +125,7 @@ def generic(
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
-        #check that the configured RX is using an acqu_time_ms equal to our acq_time_ms
+        #check that the configured RX found an acq_time_ms equal to our acq_time_ms
         check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
         #there is some very small difference so we round to the first decimal 
         assert round(acq_time_ms,1) == check
