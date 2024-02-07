@@ -29,6 +29,7 @@ fl = figlist_var()
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)
 Ep_nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+config_dict["echo_acq_ms"] = nPoints / config_dict["SW_kHz"]
 thermal_scans = int(config_dict['thermal_nscans']) 
 # }}}
 # {{{create filename and save to config file
@@ -124,7 +125,7 @@ assert total_pts < 2 ** 14, (
 total_pts = len(cpmg_ph2_cyc) * len(cpmg_ph1_cyc) * nPoints
 assert total_pts < 2 ** 14, (
     "For cpmg: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-    % total_pts, config_dict["echo_acq_ms"] * 16384 / total_pts
+    % (total_pts, config_dict["echo_acq_ms"] * 16384 / total_pts)
 )
 # }}}
 # {{{ check for file
