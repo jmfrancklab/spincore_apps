@@ -27,7 +27,8 @@ target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)
+Ep_nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 thermal_scans = int(config_dict['thermal_nscans']) 
 # }}}
 # {{{create filename and save to config file
@@ -75,7 +76,7 @@ tau_evol_us = (
 pad_end_us = (
     config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
 )
-twice_tau_echo_us = config_dict["acq_time_ms"] * 1e3 + (
+twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
     2 * config_dict["deadtime_us"]
 )  # the period between end of first 180 pulse and start of next
 config_dict["tau_us"] = (
@@ -107,15 +108,15 @@ powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # {{{ these change if we change the way the data is saved
 IR_postproc = "spincore_IR_v1" # note that you have changed the way the data is saved, and so this should change likewise!!!!
 Ep_postproc = "spincore_ODNP_v3"
-cpmg_postproc = "spincore_CPMGv2"
+cpmg_postproc = "spincore_CPMG_v2"
 # }}}
 #{{{check total points
-total_points = len(Ep_ph1_cyc) * nPoints
+total_points = len(Ep_ph1_cyc) * Ep_nPoints
 assert total_points < 2 ** 14, (
     "For Ep: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % total_points, config_dict["acq_time_ms"] * 16384 / total_points
 )
-total_pts = len(IR_ph2_cyc) * len(IR_ph1_cyc) * nPoints
+total_pts = len(IR_ph2_cyc) * len(IR_ph1_cyc) * Ep_nPoints
 assert total_pts < 2 ** 14, (
     "For IR: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % total_pts, config_dict["acq_time_ms"] * 16384 / total_pts
@@ -123,7 +124,7 @@ assert total_pts < 2 ** 14, (
 total_pts = len(cpmg_ph2_cyc) * len(cpmg_ph1_cyc) * nPoints
 assert total_pts < 2 ** 14, (
     "For cpmg: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-    % total_pts, config_dict["acq_time_ms"] * 16384 / total_pts
+    % total_pts, config_dict["echo_acq_ms"] * 16384 / total_pts
 )
 # }}}
 # {{{ check for file
@@ -145,7 +146,7 @@ control_thermal = run_spin_echo(
     ph1_cyc=Ep_ph1_cyc,
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=nPoints,
+    nPoints=Ep_nPoints,
     nEchoes=1,
     p90_us=config_dict["p90_us"],
     repetition_us=config_dict["repetition_us"],
@@ -191,7 +192,7 @@ vd_data = None
 for vd_idx, vd in enumerate(vd_list_us):
     # call A to run_IR
     vd_data = run_IR(
-        nPoints=nPoints,
+        nPoints=Ep_nPoints,
         nEchoes= 1,
         indirect_idx=vd_idx,
         indirect_len=len(vd_list_us),
@@ -253,14 +254,14 @@ cpmg_data = generic(
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", cpmg_ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict["acq_time_ms"]),
+        ("acquire", config_dict["echo_acq_ms"]),
         ("delay", pad_end_us),
         ("delay", short_delay_us),  # matching the jumpto delay
         ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", cpmg_ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict["acq_time_ms"]),
+        ("acquire", config_dict["echo_acq_ms"]),
         ("delay", pad_end_us),
         ("jumpto", "echo_label"),
         ("delay", config_dict["repetition_us"]),
@@ -271,7 +272,7 @@ cpmg_data = generic(
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
-    acq_time_ms=config_dict["acq_time_ms"],
+    acq_time_ms=config_dict["echo_acq_ms"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=cpmg_data,
 )
@@ -327,7 +328,7 @@ with power_control() as p:
             indirect_len=len(powers) + thermal_scans,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=nPoints,
+            nPoints=Ep_nPoints,
             nEchoes=1,
             ph1_cyc=Ep_ph1_cyc,
             p90_us=config_dict["p90_us"],
@@ -371,7 +372,7 @@ with power_control() as p:
             indirect_len=len(powers) + thermal_scans,
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=nPoints,
+            nPoints=Ep_nPoints,
             nEchoes=1,
             ph1_cyc=Ep_ph1_cyc,
             p90_us=config_dict["p90_us"],
@@ -437,14 +438,14 @@ with power_control() as p:
                 ("delay_TTL", config_dict["deblank_us"]),
                 ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", cpmg_ph2_cyc),
                 ("delay", config_dict["deadtime_us"]),
-                ("acquire", config_dict["acq_time_ms"]),
+                ("acquire", config_dict["echo_acq_ms"]),
                 ("delay", pad_end_us),
                 ("delay", short_delay_us),  # matching the jumpto delay
                 ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
                 ("delay_TTL", config_dict["deblank_us"]),
                 ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", cpmg_ph2_cyc),
                 ("delay", config_dict["deadtime_us"]),
-                ("acquire", config_dict["acq_time_ms"]),
+                ("acquire", config_dict["echo_acq_ms"]),
                 ("delay", pad_end_us),
                 ("jumpto", "echo_label"),
                 ("delay", config_dict["repetition_us"]),
@@ -455,7 +456,7 @@ with power_control() as p:
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
-            acq_time_ms=config_dict["acq_time_ms"],
+            acq_time_ms=config_dict["echo_acq_ms"],
             SW_kHz=config_dict["SW_kHz"],
             ret_data=None,
         )
@@ -464,7 +465,7 @@ with power_control() as p:
         cpmg_data.set_prop("stop_time", time.time())
         cpmg_data.set_prop("start_time", ini_time)
         cpmg_data.set_prop("acq_params", config_dict.asdict())
-        cpmg_data.set_prop("postproc_type", IR_postproc)
+        cpmg_data.set_prop("postproc_type", cpmg_postproc)
         nodename = cpmg_data.name()
         # {{{ again, implement a file fallback
         with h5py.File(

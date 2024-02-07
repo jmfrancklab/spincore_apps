@@ -22,8 +22,8 @@ import h5py
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
-config_dict["acq_time_ms"] = nPoints / config_dict["SW_kHz"]
+nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)
+config_dict["echo_acq_ms"] = nPoints / config_dict["SW_kHz"]
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -51,7 +51,7 @@ tau_evol_us = (
 pad_end_us = (
     config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
 )
-twice_tau_echo_us = config_dict["acq_time_ms"] * 1e3 + (
+twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
     2 * config_dict["deadtime_us"]
 )  # the period between end of first 180 pulse and start of next
 config_dict["tau_us"] = (
@@ -61,8 +61,8 @@ config_dict["tau_us"] = (
 # {{{check total points
 total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
 #assert total_pts < 2**14, (
-#    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
-#    % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
+#    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the echo_acq_ms to %f"
+#    % (total_pts, config_dict["echo_acq_ms"] * 16384 / total_pts)
 #)
 # }}}
 # {{{run cpmg
@@ -75,14 +75,14 @@ data = generic(
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict["acq_time_ms"]),
+        ("acquire", config_dict["echo_acq_ms"]),
         ("delay", pad_end_us),
         ("delay", short_delay_us),  # matching the jumpto delay
         ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict["acq_time_ms"]),
+        ("acquire", config_dict["echo_acq_ms"]),
         ("delay", pad_end_us),
         ("jumpto", "echo_label"),
         ("delay", config_dict["repetition_us"]),
@@ -93,7 +93,7 @@ data = generic(
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
-    acq_time_ms=config_dict["acq_time_ms"],
+    acq_time_ms=config_dict["echo_acq_ms"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
