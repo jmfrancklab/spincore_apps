@@ -111,12 +111,9 @@ def generic(
             phcyc_lens[thiselem[2]] = len(thiselem[3])
         if len(thiselem)>2 and thiselem[0] == 'marker' and thiselem[1] == 'echo_label':  
             nEchoes = thiselem[2]+1
-            print(nEchoes)
     nPhaseSteps_min = 1
     ph_lens = list(phcyc_lens.values())
     nPhaseSteps = prod(ph_lens)
-    print(nPhaseSteps)
-    print(nEchoes)
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
