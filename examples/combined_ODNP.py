@@ -230,7 +230,7 @@ with power_control() as p:
         DNP_data = run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j,
-            indirect_len=len(powers) + config_dict["thermal_scans"],
+            indirect_len=len(powers) + config_dict['thermal_nScans'],
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
@@ -316,8 +316,17 @@ with power_control() as p:
     logger.debug(strm("Name of saved data", DNP_data.name()))
     # }}}
     # {{{run IR
+    last_dB_setting = 10
     for j, this_dB in enumerate(T1_powers_dB):
+        # {{{ make small steps in power if needed
+        if this_dB - last_dB_setting > 3:
+            smallstep_dB = last_dB_setting + 2
+            while smallstep_dB + 2 < this_dB:
+                p.set_power(smallstep_dB)
+                smallstep_dB += 2
         p.set_power(this_dB)
+        last_dB_setting = this_dB    
+        # }}}
         for k in range(10):
             time.sleep(0.5)
             # JF notes that the following works for powers going up, but not

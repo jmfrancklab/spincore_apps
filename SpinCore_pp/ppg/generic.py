@@ -102,6 +102,7 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
+    # {{{ pull info about phase cycling and echos from the ppg_list
     # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle and tuples containing marker and echo label are cycled by nEchoes
     phcyc_lens = {}
     nEchoes = 1
@@ -125,7 +126,6 @@ def generic(
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
         check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
-        print(check)
         assert round(acq_time_ms,1) == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
@@ -149,20 +149,11 @@ def generic(
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
         if ret_data is None:
-            #if indirect_fields is None:
-            #    times_dtype = np.double
-            #else:
-            #    # {{{ dtype for structured array
-            #    times_dtype = np.dtype(
-            #        [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
-            #    )
                 # }}}
-            #mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = np.linspace(0.0,nEchoes*int(nPhaseSteps)*acq_time_ms*1e-3,int(dataPoints))#r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
                 [len(data_array), nScans], ["t","nScans"]
             ).alloc(dtype=np.complex128)
-            #ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
             ret_data.setaxis("nScans", r_[0:nScans])
         elif indirect_idx == 0 and nScans_idx == 0:

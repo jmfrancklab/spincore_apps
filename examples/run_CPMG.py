@@ -30,9 +30,7 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 # {{{set phase cycling
 phase_cycling = True
@@ -59,11 +57,11 @@ config_dict["tau_us"] = (
 )
 # }}}
 # {{{check total points
-total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
-#assert total_pts < 2**14, (
-#    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the echo_acq_ms to %f"
-#    % (total_pts, config_dict["echo_acq_ms"] * 16384 / total_pts)
-#)
+total_pts = nPoints * nPhaseSteps
+assert total_pts < 2 ** 14, (
+    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the echo_acq_ms to %f"
+    % (total_pts, config_dict["echo_acq_ms"] * 16384 / total_pts)
+)
 # }}}
 # {{{run cpmg
 data = generic(
@@ -99,12 +97,17 @@ data = generic(
 )
 # }}}
 # {{{ chunk and save data
-#data.chunk(
-#    "t", ["ph_overall", "ph_diff", "t2"], [len(ph_overall), len(ph_diff), -1]
-#)
+data.chunk(
+    "t", 
+    ["ph_overall", "ph_diff", "nEcho", "t2"], 
+    [len(ph_overall), len(ph_diff),int(config_dict['nEchoes']), 
+        -1]).labels({
+            "ph_overall":r_[0:len(ph_overall)],
+            "ph_diff":r_[0:len(ph_diff)],
+            "nEcho":r_[0:int(config_dict['nEchoes'])]+1,
+                }
+            )
 data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-#data.setaxis("ph_overall", ph_overall / 4)
-#data.setaxis("ph_diff", ph_diff / 4)
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
 data.set_prop("postproc_type", "spincore_CPMGv2")
 data.set_prop("acq_params", config_dict.asdict())
@@ -139,14 +142,14 @@ print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
 # {{{ Image raw data
-#with figlist_var() as fl:
-#    data.squeeze()
-#    fl.next("Raw - time")
-#    data.set_units("t2", "s")
-#    fl.image(data)
-#    data.reorder("t2", first=False)
-#    data.ft("t2", shift=True)
-#    data.ft(["ph_overall", "ph_diff"], unitary=True)
-#    fl.next("FTed data")
-#    fl.image(data)
+with figlist_var() as fl:
+    data.squeeze()
+    fl.next("Raw - time")
+    data.set_units("t2", "s")
+    fl.image(data)
+    data.reorder("t2", first=False)
+    data.ft("t2", shift=True)
+    data.ft(["ph_overall", "ph_diff"], unitary=True)
+    fl.next("FTed data")
+    fl.image(data)
 # }}}
