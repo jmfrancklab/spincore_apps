@@ -22,15 +22,15 @@ from datetime import datetime
 
 final_log = []
 
-#logger = init_logging(level="debug")
+logger = init_logging(level="info")
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/ODNP")
-fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)
-Ep_nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
-config_dict["echo_acq_ms"] = nPoints / config_dict["SW_kHz"]
-thermal_scans = int(config_dict['thermal_nscans']) 
+#cpmg nPoints will be different from Ep and IR
+cpmg_nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)
+nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+#echo window for CPMG
+config_dict["echo_acq_ms"] = cpmg_nPoints / config_dict["SW_kHz"]
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -112,19 +112,19 @@ Ep_postproc = "spincore_ODNP_v3"
 cpmg_postproc = "spincore_CPMG_v2"
 # }}}
 #{{{check total points
-total_points = len(Ep_ph1_cyc) * Ep_nPoints
+total_points = len(Ep_ph1_cyc) * nPoints
 assert total_points < 2 ** 14, (
     "For Ep: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % total_points, config_dict["acq_time_ms"] * 16384 / total_points
 )
-total_pts = len(IR_ph2_cyc) * len(IR_ph1_cyc) * Ep_nPoints
+total_pts = len(IR_ph2_cyc) * len(IR_ph1_cyc) * nPoints
 assert total_pts < 2 ** 14, (
     "For IR: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % total_pts, config_dict["acq_time_ms"] * 16384 / total_pts
 )
-total_pts = len(cpmg_ph2_cyc) * len(cpmg_ph1_cyc) * nPoints
+total_pts = len(cpmg_ph2_cyc) * len(cpmg_ph1_cyc) * cpmg_nPoints
 assert total_pts < 2 ** 14, (
-    "For cpmg: You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
+    "For cpmg: You are trying to acquire %d points (too many points) -- either change SW or acq time so cpmg_nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["echo_acq_ms"] * 16384 / total_pts)
 )
 # }}}
@@ -139,15 +139,14 @@ input(
 )
 # }}}
 # {{{Collect Thermals - serves as a control to compare the thermal of Ep to ensure no microwaves were leaking
-# call A to run spin echo
 control_thermal = run_spin_echo(
-    nScans=config_dict["thermal_nScans"],
+    nScans=int(config_dict["thermal_nScans"]),
     indirect_idx=0,
     indirect_len=1,
     ph1_cyc=Ep_ph1_cyc,
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=Ep_nPoints,
+    nPoints=nPoints,
     nEchoes=1,
     p90_us=config_dict["p90_us"],
     repetition_us=config_dict["repetition_us"],
@@ -155,8 +154,7 @@ control_thermal = run_spin_echo(
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 ) 
-if config_dict["thermal_nScans"] > 1:
-    control_thermal.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
+control_thermal.setaxis("nScans", r_[0 : int(config_dict["thermal_nScans"])])
 if phase_cycling:
     control_thermal.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
     control_thermal.setaxis("ph1", Ep_ph1_cyc / 4)
@@ -181,8 +179,6 @@ except:
         DNP_data.hdf5_write(filename, directory=target_directory)
         final_log.append("change the name accordingly once this is done running!")
 # }}}
-#logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-#logger.debug(strm("Name of saved data", control_thermal.name()))
 # }}}
 # {{{IR at no power
 #   this is outside the log, so to deal with this during processing, just check
@@ -191,16 +187,15 @@ except:
 ini_time = time.time()
 vd_data = None
 for vd_idx, vd in enumerate(vd_list_us):
-    # call A to run_IR
     vd_data = run_IR(
-        nPoints=Ep_nPoints,
+        nPoints=nPoints,
         nEchoes= 1,
         indirect_idx=vd_idx,
         indirect_len=len(vd_list_us),
         ph1_cyc=IR_ph1_cyc,
         ph2_cyc=IR_ph2_cyc,
         vd=vd,
-        nScans=config_dict["thermal_nScans"],
+        nScans=int(config_dict["thermal_nScans"]),
         adcOffset=config_dict["adc_offset"],
         carrierFreq_MHz=config_dict["carrierFreq_MHz"],
         p90_us=config_dict["p90_us"],
@@ -215,7 +210,7 @@ if phase_cycling:
     vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
     vd_data.setaxis("ph2", IR_ph2_cyc / 4)
-vd_data.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
+vd_data.setaxis("nScans", r_[0 : int(config_dict["thermal_nScans"])])
 vd_data.name("FIR_noPower")
 vd_data.set_prop("stop_time", time.time())
 vd_data.set_prop("start_time", ini_time)
@@ -236,16 +231,12 @@ with h5py.File(
 # hdf5_write should be outside the h5py.File with block, since it opens the file itself
 vd_data.hdf5_write(filename, directory=target_directory)
 # }}}
-logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-logger.debug(strm("Name of saved data", vd_data.name()))
 # }}}
 # {{{cpmg at no power
 #   this is outside the log, so to deal with this during processing, just check
 #   if the start and stop time are outside the log (greater than last time of
 #   the time axis, or smaller than the first)
 ini_time = time.time()
-print("ABOUT TO COLLECT CPMG DATA")
-cpmg_data = None
 cpmg_data = generic(
     ppg_list=[
         ("phase_reset", 1),
@@ -272,22 +263,18 @@ cpmg_data = generic(
     indirect_len=config_dict["nEchoes"],
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-    nPoints=nPoints,
+    nPoints=cpmg_nPoints,
     acq_time_ms=config_dict["echo_acq_ms"],
     SW_kHz=config_dict["SW_kHz"],
-    ret_data=cpmg_data,
+    ret_data=None
 )
-print("I MADE THE DATA!")
 cpmg_data.setaxis("nScans", r_[0:config_dict["nScans"]])
-print("THE AXIS NSCANS IS SET")
 cpmg_data.name("CPMG_noPower")
-print("NAMED")
 cpmg_data.set_prop("stop_time", time.time())
 cpmg_data.set_prop("start_time", ini_time)
 cpmg_data.set_prop("acq_params", config_dict.asdict())
 cpmg_data.set_prop("postproc_type", cpmg_postproc)
 nodename = cpmg_data.name()
-print("RIGHT BEFORE SAVING")
 # {{{ again, implement a file fallback
 with h5py.File(
     os.path.normpath(os.path.join(target_directory, f"{filename}"))
@@ -302,8 +289,6 @@ with h5py.File(
 # hdf5_write should be outside the h5py.File with block, since it opens the file itself
 cpmg_data.hdf5_write(filename, directory=target_directory)
 # }}}
-logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-logger.debug(strm("Name of saved data", cpmg_data.name()))
 # }}}
 # {{{run enhancement
 input("Now plug the B12 back in and start up the FLInst power control server so we can continue!")
@@ -316,20 +301,19 @@ with power_control() as p:
         config_dict["uw_dip_center_GHz"] + config_dict["uw_dip_width_GHz"] / 2,
     )
     p.mw_off()
-    time.sleep(16.0) #give some time for the power source to "settle"
+    time.sleep(10.0) #give some time for the power source to "settle"
     p.start_log()
     DNP_data = None # initially, there is no data, and run_spin_echo knows how to deal with this
     #Run the actual thermal where the power log is recording. This will be your thermal for enhancement and can be compared to previous thermals if issues arise
-    for j in range(thermal_scans):
+    for j in range(int(config_dict['thermal_scans'])):
         DNP_ini_time = time.time()
-        # call B/C to run spin echo
         DNP_data = run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j,
-            indirect_len=len(powers) + thermal_scans,
+            indirect_len=len(powers) + int(config_dict['thermal_scans']),
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=Ep_nPoints,
+            nPoints=nPoints,
             nEchoes=1,
             ph1_cyc=Ep_ph1_cyc,
             p90_us=config_dict["p90_us"],
@@ -364,16 +348,15 @@ with power_control() as p:
             raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
-        time_axis_coords[j + thermal_scans]["start_times"] = time.time()
-        # call D to run spin echo
+        time_axis_coords[j + int(config_dict['thermal_scans'])]["start_times"] = time.time()
         #Now that the thermal is collected we increment our powers and collect our data at each power
         run_spin_echo(
             nScans=config_dict["nScans"],
-            indirect_idx=j + thermal_scans,
-            indirect_len=len(powers) + thermal_scans,
+            indirect_idx=j + int(config_dict['thermal_scans']),
+            indirect_len=len(powers) + int(config_dict['thermal_scans']),
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=Ep_nPoints,
+            nPoints=nPoints,
             nEchoes=1,
             ph1_cyc=Ep_ph1_cyc,
             p90_us=config_dict["p90_us"],
@@ -383,11 +366,11 @@ with power_control() as p:
             indirect_fields=("start_times", "stop_times"),
             ret_data=DNP_data,
         )
-        time_axis_coords[j + thermal_scans]["stop_times"] = time.time()
+        time_axis_coords[j + int(config_dict['thermal_scans'])]["stop_times"] = time.time()
     DNP_data.set_prop("stop_time", time.time())
     DNP_data.set_prop("postproc_type", "spincore_ODNP_v4")
     DNP_data.set_prop("acq_params", config_dict.asdict())
-    DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+    DNP_data.setaxis("nScans", r_[0 : int(config_dict["nScans"])])
     if phase_cycling:
         DNP_data.chunk("t", ["ph1", "t2"], [len(Ep_ph1_cyc), -1])
         DNP_data.setaxis("ph1", Ep_ph1_cyc / 4)
@@ -408,8 +391,6 @@ with power_control() as p:
             DNP_data.hdf5_write(filename, directory=target_directory)
             final_log.append(
                 "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!")
-    logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-    logger.debug(strm("Name of saved data", DNP_data.name()))
     # }}}
     # {{{run IR/CPMG
     for j, this_dB in enumerate(T1_powers_dB):
@@ -429,7 +410,6 @@ with power_control() as p:
         time.sleep(5)
         meter_power = p.get_power_setting()
         ini_time = time.time()
-        vd_data = None
         cpmg_data = generic(
             ppg_list=[
                 ("phase_reset", 1),
@@ -456,12 +436,12 @@ with power_control() as p:
             indirect_len=config_dict["nEchoes"],
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=nPoints,
+            nPoints=cpmg_nPoints,
             acq_time_ms=config_dict["echo_acq_ms"],
             SW_kHz=config_dict["SW_kHz"],
             ret_data=None,
         )
-        cpmg_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+        cpmg_data.setaxis("nScans", r_[0 : int(config_dict["nScans"])])
         cpmg_data.name(T2_node_names[j])
         cpmg_data.set_prop("stop_time", time.time())
         cpmg_data.set_prop("start_time", ini_time)
@@ -472,7 +452,7 @@ with power_control() as p:
         with h5py.File(
             os.path.normpath(os.path.join(target_directory, f"{filename}"))
             ) as fp:
-            tempcounter =1
+            tempcounter = 1
             orig_nodename = nodename
             while nodename in fp.keys():
                 nodename = "%s_temp_cpmg_%d"%(orig_nodename,tempcounter)
@@ -485,11 +465,9 @@ with power_control() as p:
         # hdf5_write should be outside the h5py.File with block, since it opens the file itself
         cpmg_data.hdf5_write(filename, directory=target_directory)
         # }}}
-        logger.debug("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-        logger.debug(strm("Name of saved data", cpmg_data.name()))
         # }}}
+        vd_data = None
         for vd_idx, vd in enumerate(vd_list_us):
-            # call B to run_IR
             vd_data = run_IR(
                 nPoints=nPoints,
                 nEchoes=1,
@@ -517,7 +495,7 @@ with power_control() as p:
             vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph2_cyc), len(IR_ph1_cyc), -1])
             vd_data.setaxis("ph1", IR_ph1_cyc / 4)
             vd_data.setaxis("ph2", IR_ph2_cyc / 4)
-        vd_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+        vd_data.setaxis("nScans", r_[0 : int(config_dict["nScans"])])
         vd_data.name(T1_node_names[j])
         nodename = vd_data.name()
         with h5py.File(
@@ -532,8 +510,6 @@ with power_control() as p:
                 tempcounter += 1
         # hdf5_write should be outside the h5py.File with block, since it opens the file itself
         vd_data.hdf5_write(filename, directory=target_directory)
-        print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-        print(("Name of saved data", vd_data.name()))
     this_log = p.stop_log()
 # }}}
 config_dict.write()
