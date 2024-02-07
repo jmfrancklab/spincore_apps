@@ -27,13 +27,9 @@ filename = (
 )
 # }}}
 # {{{set phase cycling
-phase_cycling = True
-if phase_cycling:
-    ph_overall = r_[0, 1, 2, 3]
-    ph_diff = r_[0, 2]
-    ph1_cyc = array([(j + k) % 4 for k in ph_overall for j in ph_diff])
-    ph2_cyc = array([(k + 1) % 4 for k in ph_overall for j in ph_diff])
-    nPhaseSteps = len(ph_overall) * len(ph_diff)
+ph1_cyc = r_[0, 1, 2, 3]
+ph2_cyc = r_[0]
+nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
 # }}}
 
 # {{{check total points
@@ -43,22 +39,22 @@ assert total_pts < 2**14, (
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
-# {{{run cpmg
+# {{{run echo
 data = generic(
     ppg_list=[
         ("phase_reset", 1),
         ("delay_TTL", config_dict['deblank_us']),
-        ("pulse_TTL", config_dict['p90_us'], "phcyc", ph1_cyc),
+        ("pulse_TTL", config_dict['p90_us'], "ph1", ph1_cyc), 
         ("delay", config_dict['tau_us']),
         ("delay_TTL", config_dict['deblank_us']),
-        ("pulse_TTL", 2.0 * config_dict['p90_us'], "phcyc", ph2_cyc),
+        ("pulse_TTL", 2.0 * config_dict['p90_us'], "ph2", ph2_cyc), 
         ("delay", config_dict['deadtime_us']),
         ("acquire", config_dict['acq_time_ms']),
         ("delay", config_dict['repetition_us']),
     ],
     nScans=config_dict["nScans"],
     indirect_idx=0,
-    indirect_len=config_dict["nEchoes"],
+    indirect_len=1,
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
@@ -69,15 +65,13 @@ data = generic(
 # }}}
 # {{{ chunk and save data
 data.chunk(
-    "t", ["ph_overall", "ph_diff", "t2"], [len(ph_overall), len(ph_diff), -1]
+    "t", ["ph1", "t2"], [len(ph1_cyc), -1]
 )
 data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-data.setaxis("ph_overall", ph_overall / 4)
-data.setaxis("ph_diff", ph_diff / 4)
-data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
-data.set_prop("postproc_type", "spincore_CPMGv2")
+data.setaxis("ph1", ph1_cyc / 4)
+data.name(config_dict["type"] + "_" + str(config_dict["generic_echo_counter"]))
 data.set_prop("acq_params", config_dict.asdict())
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
 nodename = data.name()
 if os.path.exists(f"{filename_out}"):
@@ -86,23 +80,23 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_cpmg")
-            data.name("temp_cpmg")
-            nodename = "temp_cpmg"
+            print("this nodename already exists, so I will call it temp_echo")
+            data.name("temp_echo")
+            nodename = "temp_echo"
     data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_cpmg.h5 in the current h5 file"
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_echo.h5 in the current h5 file"
         )
-        if os.path.exists("temp_cpmg.h5"):
-            print("there is a temp_cpmg.h5 already! -- I'm removing it")
-            os.remove("temp_cpmg.h5")
-            data.hdf5_write("temp_cpmg.h5")
+        if os.path.exists("temp_echo.h5"):
+            print("there is a temp_echo.h5 already! -- I'm removing it")
+            os.remove("temp_echo.h5")
+            data.hdf5_write("temp_echo.h5")
             print(
-                "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
+                "if I got this far, that probably worked -- be sure to move/rename temp_echo.h5 to the correct name!!"
             )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
@@ -115,7 +109,7 @@ with figlist_var() as fl:
     fl.image(data)
     data.reorder("t2", first=False)
     data.ft("t2", shift=True)
-    data.ft(["ph_overall", "ph_diff"], unitary=True)
+    data.ft(["ph1"], unitary=True)
     fl.next("FTed data")
     fl.image(data)
 # }}}

@@ -105,15 +105,18 @@ def generic(
     # {{{ pull info about phase cycling and echos from the ppg_list
     # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle and tuples containing marker and echo label are cycled by nEchoes
     phcyc_lens = {}
-    nEchoes = 1
+    nEchoes = 1 #assume nEchoes is 1 before going through the ppg list
     for thiselem in ppg_list:
-        if len(thiselem) > 3:
-            phcyc_lens[thiselem[2]] = len(thiselem[3])
+        if len(thiselem) > 3: #tuples with more than 3 are phase cycling commands
+            phcyc_lens[thiselem[2]] = len(thiselem[3]) #set the name of the ph and length
         if len(thiselem)>2 and thiselem[0] == 'marker' and thiselem[1] == 'echo_label':  
+            # if there is a tuple that calls marker AND echo label we assume this is a cpmg or
+            # ppg with multiple echoes so we reset the nEchoes to the value indicated in the 
+            # ppg list
             nEchoes = thiselem[2]+1
-    nPhaseSteps_min = 1
-    ph_lens = list(phcyc_lens.values())
-    nPhaseSteps = prod(ph_lens)
+    ph_lens = list(phcyc_lens.values()) #list of phase cycling lengths
+    nPhaseSteps = prod(ph_lens) #total number of phase steps in ppg
+    # }}}
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
@@ -122,7 +125,9 @@ def generic(
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
+        #check that the configured RX is using an acqu_time_ms equal to our acq_time_ms
         check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
+        #there is some very small difference so we round to the first decimal 
         assert round(acq_time_ms,1) == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
@@ -142,12 +147,12 @@ def generic(
         raw_data.astype(float)
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
+        # {{{ create returned data
         data_array = []
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
         if ret_data is None:
-                # }}}
-            time_axis = np.linspace(0.0,nEchoes*int(nPhaseSteps)*acq_time_ms*1e-3,int(dataPoints))#r_[0:dataPoints] / (SW_kHz * 1e3)
+            time_axis = np.linspace(0.0,nEchoes*int(nPhaseSteps)*acq_time_ms*1e-3,int(dataPoints))
             ret_data = psp.ndshape(
                 [len(data_array), nScans], ["t","nScans"]
             ).alloc(dtype=np.complex128)
