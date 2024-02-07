@@ -10,7 +10,7 @@ from .. import (
 from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
-from numpy import r_
+from numpy import r_, prod
 from pyspecdata import strm
 import time
 import logging
@@ -24,6 +24,7 @@ def generic(
     adcOffset,
     carrierFreq_MHz,
     nPoints,
+    acq_time_ms,
     SW_kHz,
     indirect_fields=None,
     ph1_cyc=r_[0, 1, 2, 3],
@@ -101,14 +102,20 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-    # {{{ pull info about phase cycling and echos from the ppg_list
-    # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle
-    all_ppg_arrays = [j[3] for j in ppg_list if len(j)>3]
-    nPhaseSteps = prod([len(j) for j in all_ppg_arrays])
-    # }}}
-    # {{{ for this to work, the loop label for echoes must be called "echo_label"
-    nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0] == 'marker' and j[1] == 'echo_label']
-    # }}}
+    # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle and tuples containing marker and echo label are cycled by nEchoes
+    phcyc_lens = {}
+    nEchoes = 1
+    for thiselem in ppg_list:
+        print(len(thiselem))
+        if len(thiselem) > 3:
+            phcyc_lens[thiselem[2]] = len(thiselem[3])
+        if len(thiselem)>2 and thiselem[0] == 'marker' and thiselem[1] == 'echo_label':  
+            print(thiselem)
+            nEchoes = thiselem[2]+1
+            print(nEchoes)
+    nPhaseSteps_min = 1
+    ph_lens = list(phcyc_lens.values())
+    nPhaseSteps = prod(ph_lens)
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
@@ -117,8 +124,10 @@ def generic(
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
-        check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
-        assert acq_time_ms == check
+        check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
+        print(check)
+        print(acq_time_ms)
+        assert round(acq_time_ms,1) == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
@@ -133,7 +142,8 @@ def generic(
         runBoard()
         run_scans_time_list.append(time.time())
         run_scans_names.append("get data")
-        raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps)
+        raw_data = getData(int(data_length), nPoints, nEchoes, int(nPhaseSteps),"thisIsntFixedYet")
+        raw_data.astype(float)
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
         data_array = []
@@ -149,11 +159,11 @@ def generic(
                 )
                 # }}}
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
-            time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
+            time_axis = np.linspace(0.0,nEchoes*int(nPhaseSteps)*acq_time_ms*1e-3,int(dataPoints))#r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
-                [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
+                [len(data_array), nScans], ["t","nScans"]
             ).alloc(dtype=np.complex128)
-            ret_data.setaxis("indirect", mytimes)
+            #ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
             ret_data.setaxis("nScans", r_[0:nScans])
         elif indirect_idx == 0 and nScans_idx == 0:
@@ -162,7 +172,7 @@ def generic(
                 + str(ret_data)
                 + " and we're not currently running ppgs where this makes sense"
             )
-        ret_data["indirect", indirect_idx]["nScans", nScans_idx] = data_array
+        ret_data["nScans", nScans_idx] = data_array
         stopBoard()
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
