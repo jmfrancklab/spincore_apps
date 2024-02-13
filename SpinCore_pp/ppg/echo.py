@@ -8,6 +8,7 @@ from .. import (
     stopBoard,
 )
 from .. import load as spincore_load
+from .. import prog_plen
 import pyspecdata as psp
 import numpy as np
 from numpy import r_
@@ -92,6 +93,7 @@ def run_spin_echo(
     # times
     prog_p90_us = prog_plen(p90_us)
     prog_p180_us = prog_plen(2 * p90_us)
+    print(prog_p90_us)
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
