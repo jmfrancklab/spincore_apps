@@ -153,6 +153,7 @@ control_thermal = run_spin_echo(
     repetition_us=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
+    deadtime_us = config_dict['deadtime_us'],
     ret_data=None,
 ) 
 if config_dict["thermal_nScans"] > 1:
@@ -205,6 +206,7 @@ for vd_idx, vd in enumerate(vd_list_us):
         carrierFreq_MHz=config_dict["carrierFreq_MHz"],
         p90_us=config_dict["p90_us"],
         tau_us=config_dict["tau_us"],
+        deadtime_us = config_dict['deadtime_us'],
         repetition_us=FIR_rep,
         SW_kHz=config_dict["SW_kHz"],
         ret_data=vd_data,
@@ -334,6 +336,7 @@ with power_control() as p:
             ph1_cyc=Ep_ph1_cyc,
             p90_us=config_dict["p90_us"],
             repetition_us=config_dict["repetition_us"],
+            deadtime_us = config_dict['deadtime_us'],
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
             indirect_fields=("start_times", "stop_times"),
@@ -378,6 +381,7 @@ with power_control() as p:
             ph1_cyc=Ep_ph1_cyc,
             p90_us=config_dict["p90_us"],
             repetition_us=config_dict["repetition_us"],
+            deadtime_us = config_dict['deadtime_us'],
             tau_us=config_dict["tau_us"],
             SW_kHz=config_dict["SW_kHz"],
             indirect_fields=("start_times", "stop_times"),
@@ -491,7 +495,7 @@ with power_control() as p:
         for vd_idx, vd in enumerate(vd_list_us):
             # call B to run_IR
             vd_data = run_IR(
-                nPoints=nPoints,
+                nPoints=Ep_nPoints,
                 nEchoes=1,
                 indirect_idx=vd_idx,
                 indirect_len=len(vd_list_us),
@@ -502,6 +506,7 @@ with power_control() as p:
                 adcOffset=config_dict["adc_offset"],
                 carrierFreq_MHz=config_dict["carrierFreq_MHz"],
                 p90_us=config_dict["p90_us"],
+                deadtime_us = config_dict['deadtime_us'],
                 tau_us=config_dict["tau_us"],
                 repetition_us=FIR_rep,
                 SW_kHz=config_dict["SW_kHz"],
@@ -536,8 +541,8 @@ with power_control() as p:
         print(("Name of saved data", vd_data.name()))
     this_log = p.stop_log()
 # }}}
-config_dict.write()
-with h5py.File(os.path.normpath(os.path.join(target_directory, filename)), "a") as f:
-    log_grp = f.create_group("log")
-    hdf_save_dict_to_group(log_grp, this_log.__getstate__())
-print('*'*30+'\n'+'\n'.join(final_log))
+    config_dict.write()
+    with h5py.File(os.path.normpath(os.path.join(target_directory, filename)), "a") as f:
+        log_grp = f.create_group("log")
+        hdf_save_dict_to_group(log_grp, this_log.__getstate__())
+    print('*'*30+'\n'+'\n'.join(final_log))

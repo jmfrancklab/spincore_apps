@@ -57,6 +57,7 @@ twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
 config_dict["tau_us"] = (
     twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
 )
+
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]

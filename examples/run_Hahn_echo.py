@@ -91,14 +91,13 @@ if phase_cycling:
     echo_data.set_units("t2", "s")
     fl.next("Raw - time")
     fl.image(
-        echo_data.C.mean("nScans"))
+        echo_data)
     echo_data.reorder("t2", first=False)
     for_plot = echo_data.C
     for_plot.ft('t2',shift=True)
     for_plot.ft(['ph1'], unitary = True)
     fl.next('FTed data')
-    fl.image(for_plot.C.mean("nScans")
-    )
+    fl.image(for_plot)
 else:
     if config_dict["nScans"] > 1:
         echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
