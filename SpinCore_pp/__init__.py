@@ -11,8 +11,8 @@ from .SpinCore_pp import (
     stopBoard,
     tune,
     adc_offset,
-    prog_plen
 )
+from .pulse_length_conv import prog_plen
 from .config_parser_fn import configuration
 from .calc_vdlist import vdlist_from_relaxivities, return_vdlist
 from .process_first_arg import process_args
