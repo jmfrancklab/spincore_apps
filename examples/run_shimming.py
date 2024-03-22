@@ -27,7 +27,6 @@ config_dict["tau_us"] = (
 date = datetime.now().strftime("%y%m%d")
 config_dict["date"] = date
 filename = f"{config_dict['date']}_{config_dict['chemical']}_shimming" + ".h5"
-file_nodename = "shimming_" + str(config_dict["echo_counter"])
 # }}}
 # {{{phase cycling steps
 ph1_cyc = r_[0, 1, 2, 3]
@@ -36,6 +35,7 @@ nPhaseSteps = 8
 # }}}
 # channel that is currently being investigated
 test_ch = 3
+file_nodename = "shimming_ch" + str(test_ch) 
 # channel that was previously investigated/has predetermined value that you want to set
 # set_ch : (ch #, voltage setting)
 set_ch = [(2, 0.1)]
