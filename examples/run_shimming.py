@@ -1,11 +1,16 @@
 """ppg for obtaining performing shimming calibration
 =====================================================
-The following is used when the shims are replaced or moved in any way. When moved the calibration or settings for the z and y shims need to be recalculated for certainty. Here, the user can calculate the appropriate voltage setting for each shim for optimal signal. Note: The XEPR_API server must be running for this script. Normally this script is run with 4 scans 
+The following is used when the shims are replaced or moved in any way. When
+moved the calibration or settings for the z and y shims need to be recalculated
+for certainty. Here, the user can calculate the appropriate voltage setting for
+each shim for optimal signal. Note: The XEPR_API server must be running for
+this script. Normally this script is run with 4 scans 
 """
-from pylab import *
-from pyspecdata import *
-import os, sys
+from pylab import ones_like, shape
+from pyspecdata import getDATADIR, r_, figlist_var
+import os, h5py
 import SpinCore_pp
+from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
 from Instruments import HP6623A, prologix_connection
@@ -14,31 +19,31 @@ target_directory = getDATADIR(exp_type="ODNP_NMR_comp/test_equipment")
 # {{{ importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+config_dict["tau_us"] = (
+    2500.0 + config_dict["deadtime_us"]
+)  # optimal tau for NiSO4 sample used by AB
 # }}}
 # {{{filename
 date = datetime.now().strftime("%y%m%d")
 config_dict["date"] = date
 filename = f"{config_dict['date']}_{config_dict['chemical']}_shimming" + ".h5"
+file_nodename = "shimming_" + str(config_dict["echo_counter"])
 # }}}
-config_dict["tau_us"] = (
-    2500.0 + config_dict["deadtime_us"]
-)  # optimal tau for NiSO4 sample used by AB
 # {{{phase cycling steps
 ph1_cyc = r_[0, 1, 2, 3]
 ph2_cyc = r_[0, 2]
 nPhaseSteps = 8
 # }}}
-# {{{set up voltage info for the test
-data_length = 2 * nPoints * config_dict["nEchoes"] * nPhaseSteps
-voltage_array = r_[0.0:0.15:0.01]
-current_readings = ones_like(voltage_array)
-voltage_readings = ones_like(voltage_array)
 # channel that is currently being investigated
 test_ch = 3
 # channel that was previously investigated/has predetermined value that you want to set
 # set_ch : (ch #, voltage setting)
 set_ch = [(2, 0.1)]
-# }}}
+# {{{set up voltage info for the test
+data_length = 2 * nPoints * config_dict["nEchoes"] * nPhaseSteps
+voltage_array = r_[0.0:0.15:0.01]
+current_readings = ones_like(voltage_array)
+voltage_readings = ones_like(voltage_array)
 # }}}
 # {{{set field
 print(
@@ -55,7 +60,6 @@ with xepr() as x:
     assert Field < 3700, "are you crazy??? field is too high!"
     assert Field > 3300, "are you crazy?? field is too low!"
     Field = x.set_field(Field)
-    print("field set to ", Field)
 # }}}
 # {{{ Check total points
 total_pts = nPoints * nPhaseSteps
@@ -130,10 +134,15 @@ with prologix_connection() as p:
 # }}}
 # {{{save acquisition parameters
 shim_data.set_prop("acq_params", config_dict.asdict())
-shim_data.name("shimming" + "_" + str(config_dict["echo_counter"]))
+# }}}
+# {{{ chunk and set axes
+shim_data.set_units("t", "s")
+shim_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph2_cyc), len(ph1_cyc), -1])
+shim_data.setaxis("ph2", ph2_cyc / 4)
+shim_data.setaxis("ph1", ph1_cyc / 4)
 # }}}
 # {{{saving file
-nodename = shim_data.name()
+nodename = shim_data.name(file_nodename)
 if os.path.exists(filename):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
@@ -162,15 +171,11 @@ print(("Name of saved data", shim_data.name()))
 config_dict.write()
 # }}}
 # {{{Plotting
-shim_data.set_units("t", "s")
-shim_data.chunk("t", ["ph2", "ph1", "t2"], [len(ph2_cyc), len(ph1_cyc), -1])
 I_axis = []
 for indir_val in range(shape(shim_data.getaxis("indirect"))[0]):
-    I_axis.append(s.getaxis("indirect")[indire_val][1])
+    I_axis.append(shim_data.getaxis("indirect")[indir_val][1])
 shim_data.setaxis("indirect", I_axis)
 shim_data.rename("indirect", "I")
-shim_data.setaxis("ph2", ph2_cyc / 4)
-shim_data.setaxis("ph1", ph1_cyc / 4)
 if config_dict["nScans"] > 1:
     shim_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 with figlist_var() as fl:
