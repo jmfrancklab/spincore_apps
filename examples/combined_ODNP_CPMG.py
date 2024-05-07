@@ -96,7 +96,7 @@ T1_powers_dB = gen_powerlist(
     config_dict["max_power"], config_dict["num_T1s"], min_dBm_step=config_dict["min_dBm_step"], three_down=False
 )
 T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
-T2_node_names = ["CPMG_%ddBm" % j for j in T1_powers_dB]
+T2_node_names = ["CPMG_%0.1fdBm" % j for j in T1_powers_dB]
 #logger.info("dB_settings", dB_settings)
 #logger.info("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 #logger.info("T1_powers_dB", T1_powers_dB)

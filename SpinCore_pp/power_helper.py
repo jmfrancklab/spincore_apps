@@ -141,13 +141,13 @@ def gen_powerlist(max_power, steps, min_dBm_step=0.5, three_down=False):
 
     def det_allowed(lin_steps):
         powers = r_[0 : max_power : 1j * lin_steps][1:]
-        vectorize(powers)
-        rdB_settings = ones_like(powers)
+        np.vectorize(powers)
+        rdB_settings = np.ones_like(powers)
         for x in range(len(powers)):
             rdB_settings[x] = (
-                round(10 * (log10(powers[x]) + 3.0) / min_dBm_step) * min_dBm_step
+                round(10 * (np.log10(powers[x]) + 3.0) / min_dBm_step) * min_dBm_step
             )  # round to nearest min_dBm_step
-        return unique(rdB_settings)
+        return np.unique(rdB_settings)
 
     dB_settings = det_allowed(lin_steps)
     while len(dB_settings) < steps - 1:
