@@ -96,7 +96,7 @@ T1_powers_dB = gen_powerlist(
     config_dict["max_power"], config_dict["num_T1s"], min_dBm_step=config_dict["min_dBm_step"], three_down=False
 )
 T1_node_names = ["FIR_%ddBm" % j for j in T1_powers_dB]
-T2_node_names = ["CPMG_%0.1fdBm" % j for j in T1_powers_dB]
+T2_node_names = ["CPMG_%dfdBm" % j for j in T1_powers_dB]
 #logger.info("dB_settings", dB_settings)
 #logger.info("correspond to powers in Watts", 10 ** (dB_settings / 10.0 - 3))
 #logger.info("T1_powers_dB", T1_powers_dB)
@@ -268,6 +268,13 @@ cpmg_data = generic(
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None
 )
+cpmg_data.chunk("t", ["ph_overall", "ph_diff", "nEcho", "t2"], 
+        [len(cpmg_ph_overall), len(cpmg_ph_diff),int(config_dict['nEchoes']), 
+            -1]).labels({
+                "ph_overall":r_[0:len(cpmg_ph_overall)],
+                "ph_diff":r_[0:len(cpmg_ph_diff)],
+                "nEcho":r_[0:int(config_dict['nEchoes'])]+1,}
+                )
 cpmg_data.setaxis("nScans", r_[0:config_dict["nScans"]])
 cpmg_data.name("CPMG_noPower")
 cpmg_data.set_prop("stop_time", time.time())
@@ -305,12 +312,12 @@ with power_control() as p:
     p.start_log()
     DNP_data = None # initially, there is no data, and run_spin_echo knows how to deal with this
     #Run the actual thermal where the power log is recording. This will be your thermal for enhancement and can be compared to previous thermals if issues arise
-    for j in range(int(config_dict['thermal_scans'])):
+    for j in range(int(config_dict['thermal_nScans'])):
         DNP_ini_time = time.time()
         DNP_data = run_spin_echo(
             nScans=config_dict["nScans"],
             indirect_idx=j,
-            indirect_len=len(powers) + int(config_dict['thermal_scans']),
+            indirect_len=len(powers) + int(config_dict['thermal_nScans']),
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
@@ -348,12 +355,12 @@ with power_control() as p:
             raise ValueError("After 10 tries, the power has still not settled")
         time.sleep(5)
         power_settings_dBm[j] = p.get_power_setting()
-        time_axis_coords[j + int(config_dict['thermal_scans'])]["start_times"] = time.time()
+        time_axis_coords[j + int(config_dict['thermal_nScans'])]["start_times"] = time.time()
         #Now that the thermal is collected we increment our powers and collect our data at each power
         run_spin_echo(
             nScans=config_dict["nScans"],
-            indirect_idx=j + int(config_dict['thermal_scans']),
-            indirect_len=len(powers) + int(config_dict['thermal_scans']),
+            indirect_idx=j + int(config_dict['thermal_nScans']),
+            indirect_len=len(powers) + int(config_dict['thermal_nScans']),
             adcOffset=config_dict["adc_offset"],
             carrierFreq_MHz=config_dict["carrierFreq_MHz"],
             nPoints=nPoints,
@@ -366,7 +373,7 @@ with power_control() as p:
             indirect_fields=("start_times", "stop_times"),
             ret_data=DNP_data,
         )
-        time_axis_coords[j + int(config_dict['thermal_scans'])]["stop_times"] = time.time()
+        time_axis_coords[j + int(config_dict['thermal_nScans'])]["stop_times"] = time.time()
     DNP_data.set_prop("stop_time", time.time())
     DNP_data.set_prop("postproc_type", "spincore_ODNP_v4")
     DNP_data.set_prop("acq_params", config_dict.asdict())
@@ -441,6 +448,13 @@ with power_control() as p:
             SW_kHz=config_dict["SW_kHz"],
             ret_data=None,
         )
+        cpmg_data.chunk("t", ["ph_overall", "ph_diff", "nEcho", "t2"], 
+                [len(cpmg_ph_overall), len(cpmg_ph_diff),int(config_dict['nEchoes']), 
+                    -1]).labels({
+                        "ph_overall":r_[0:len(cpmg_ph_overall)],
+                        "ph_diff":r_[0:len(cpmg_ph_diff)],
+                        "nEcho":r_[0:int(config_dict['nEchoes'])]+1,}
+                        )
         cpmg_data.setaxis("nScans", r_[0 : int(config_dict["nScans"])])
         cpmg_data.name(T2_node_names[j])
         cpmg_data.set_prop("stop_time", time.time())
@@ -458,7 +472,7 @@ with power_control() as p:
                 nodename = "%s_temp_cpmg_%d"%(orig_nodename,tempcounter)
                 final_log.append("this nodename already exists, so I will call it {nodename}")
                 final_log.append(
-                    f"I had problems writing to the correct file {filename} so I'm going to try to save this node as temp_cpmg_noPower"
+                    f"I had problems writing to the correct file {filename} so I'm going to try to save this node as temp_cpmg_%d"%tempcounter
                 )
                 cpmg_data.name(nodename)
                 tempcounter += 1
@@ -505,7 +519,7 @@ with power_control() as p:
             orig_nodename = nodename
             while nodename in fp.keys():
                 nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
-                final_log.append("this nodename already exists, so I will call it {nodename}")
+                final_log.append("this nodename already exists, so I will call it {nodename}_{tempounter}_temp")
                 vd_data.name(nodename)
                 tempcounter += 1
         # hdf5_write should be outside the h5py.File with block, since it opens the file itself
