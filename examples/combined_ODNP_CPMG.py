@@ -15,6 +15,7 @@ from pyspecdata import strm
 import os, sys, time
 import h5py
 import SpinCore_pp
+from SpinCore_pp import prog_plen
 from SpinCore_pp.power_helper import gen_powerlist, Ep_spacing_from_phalf
 from SpinCore_pp.ppg import run_spin_echo, run_IR,generic
 from Instruments import power_control
