@@ -15,6 +15,7 @@ from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp
+from SpinCore_pp import prog_plen
 from SpinCore_pp.ppg import generic
 import os
 from datetime import datetime
@@ -42,9 +43,11 @@ if phase_cycling:
     nPhaseSteps = len(ph_overall) * len(ph_diff)
 # }}}
 # {{{symmetric tau
+prog_p90_us = prog_plen(config_dict['p90_us'])
+prog_p180_us = prog_plen(2*config_dict['p90_us'])
 short_delay_us = 1.0
 tau_evol_us = (
-    2 * config_dict["p90_us"] / pi
+    prog_p180_us / pi
 )  # evolution during pulse -- see eq 6 of coherence paper
 pad_end_us = (
     config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
@@ -68,17 +71,17 @@ data = generic(
     ppg_list=[
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", config_dict["p90_us"], "ph_cyc", ph1_cyc),
+        ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
         ("delay", config_dict["tau_us"]),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
+        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
         ("delay", pad_end_us),
         ("delay", short_delay_us),  # matching the jumpto delay
         ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", 2.0 * config_dict["p90_us"], "ph_cyc", ph2_cyc),
+        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
         ("delay", pad_end_us),
@@ -107,7 +110,8 @@ data.chunk(
             "nEcho":r_[0:int(config_dict['nEchoes'])]+1,
                 }
             )
-data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+data.setaxis("ph_overall", ph_overalll/4)
+data.setaxis("ph_diff", ph_diff/4)
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
 data.set_prop("postproc_type", "spincore_CPMGv2")
 data.set_prop("acq_params", config_dict.asdict())
