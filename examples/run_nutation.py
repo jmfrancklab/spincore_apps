@@ -63,6 +63,7 @@ nutation_data = run_spin_echo(
     tau_us = config_dict["tau_us"],
     SW_kHz = config_dict["SW_kHz"],
     indirect_fields = ("p_90", "index"),
+    amplitude =config_dict["amplitude"],
     ret_data = None,
 )
 mytimes = nutation_data.getaxis("indirect")
@@ -84,6 +85,7 @@ for index, val in enumerate(p90_range_us[1:]):
         tau_us = config_dict["tau_us"],
         SW_kHz = config_dict["SW_kHz"],
         indirect_fields = ("p_90", "index"),
+        amplitude =config_dict["amplitude"],
         ret_data = nutation_data,
     )
     mytimes[j+1]["p_90"] = p90_val

@@ -116,6 +116,7 @@ def generic(
             nEchoes = thiselem[2]+1
     ph_lens = list(phcyc_lens.values()) #list of phase cycling lengths
     nPhaseSteps = prod(ph_lens) #total number of phase steps in ppg
+    print(nEchoes)
     # }}}
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
@@ -128,6 +129,7 @@ def generic(
         #check that the configured RX found an acq_time_ms equal to our acq_time_ms
         check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
         #there is some very small difference so we round to the first decimal 
+        print(check)
         assert round(acq_time_ms,1) == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
