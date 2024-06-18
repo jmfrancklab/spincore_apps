@@ -13,8 +13,8 @@ fl = figlist_var()
 #{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)
-config_dict['echo_acq_ms'] = nPoints/config_dict['SW_kHz']
 target_directory = getDATADIR(exp_type = 'ODNP_NMR_comp/Echoes')
+config_dict['echo_acq_ms'] = nPoints/config_dict['SW_kHz']
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
