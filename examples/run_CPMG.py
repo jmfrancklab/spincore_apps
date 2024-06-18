@@ -1,16 +1,4 @@
-"""
-CPMG
-====
-
-..image:: CPMG_ppg.jpg
-
-This script will perform a standard CPMG experiment. 
-In order to form a symmetric echo, a padding time is added  
-after your tau. Both the initial ninety pulse and 
-subsequent 180 pulses are phase cycled together,
-with a two step phase cycle on the ninety pulse (see
-`:func: apply_cycles` in SpinCore_pp.py)
-"""
+# loop over echoes
 from pylab import *
 from pyspecdata import *
 from numpy import *
@@ -20,31 +8,51 @@ from SpinCore_pp.ppg import generic
 import os
 from datetime import datetime
 import h5py
-
-# {{{importing acquisition parameters
+from Instruments.XEPR_eth import xepr
+fl = figlist_var()
+#{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)
-config_dict["echo_acq_ms"] = nPoints / config_dict["SW_kHz"]
+target_directory = getDATADIR(exp_type = 'ODNP_NMR_comp/Echoes')
+config_dict['echo_acq_ms'] = nPoints/config_dict['SW_kHz']
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 # }}}
-# {{{set phase cycling
+#{{{let computer set field
+print("I'm assuming that you've tuned your probe to",
+        config_dict['carrierFreq_MHz'],
+        "since that's what's in your .ini file",
+        )
+Field = config_dict['carrierFreq_MHz']/config_dict['gamma_eff_MHz_G']
+print(
+        "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+        %Field
+        )
+with xepr() as x:
+    assert Field < 3700, "are you crazy??? field is too high!"
+    assert Field > 3300, "are you crazy?? field is too low!"
+    Field = x.set_field(Field)
+    print("field set to ",Field)
+#}}}
+#{{{set phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph_overall = r_[0, 1, 2, 3]
-    ph_diff = r_[0, 2]
+    ph_overall = r_[0,1,2,3]
+    ph_diff = r_[0,2]
     ph1_cyc = array([(j + k) % 4 for k in ph_overall for j in ph_diff])
     ph2_cyc = array([(k + 1) % 4 for k in ph_overall for j in ph_diff])
     nPhaseSteps = len(ph_overall) * len(ph_diff)
-# }}}
-# {{{symmetric tau
+if not phase_cycling:
+    nPhaseSteps = 1
+# }}}    
 prog_p90_us = prog_plen(config_dict['p90_us'])
 prog_p180_us = prog_plen(2*config_dict['p90_us'])
+# {{{symmetric tau
 short_delay_us = 1.0
 tau_evol_us = (
     prog_p180_us / pi
@@ -58,15 +66,13 @@ twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
 config_dict["tau_us"] = (
     twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
 )
+
 # }}}
 # {{{check total points
-total_pts = nPoints * nPhaseSteps
-assert total_pts < 2 ** 14, (
-    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the echo_acq_ms to %f"
-    % (total_pts, config_dict["echo_acq_ms"] * 16384 / total_pts)
-)
+total_pts = nPoints * nPhaseSteps# * config_dict['nEchoes']
+assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
 # }}}
-# {{{run cpmg
+# {{{basic phasecycling
 data = generic(
     ppg_list=[
         ("phase_reset", 1),
@@ -77,15 +83,15 @@ data = generic(
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
+        ("delay",pad_end_us),
+        ("delay",short_delay_us),
+        ("marker","echo_label",(config_dict['nEchoes']-1)),
+        ("delay_TTL",config_dict['deblank_us']),
+        ("pulse_TTL", prog_p180_us,'ph_cyc',ph2_cyc),
+        ("delay",config_dict['deadtime_us']),
+        ("acquire",config_dict['echo_acq_ms']),
         ("delay", pad_end_us),
-        ("delay", short_delay_us),  # matching the jumpto delay
-        ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
-        ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict["echo_acq_ms"]),
-        ("delay", pad_end_us),
-        ("jumpto", "echo_label"),
+        ("jumpto","echo_label"),
         ("delay", config_dict["repetition_us"]),
     ],
     nScans=config_dict["nScans"],
@@ -98,24 +104,23 @@ data = generic(
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
-# }}}
-# {{{ chunk and save data
+## {{{ chunk and save data
+data.set_prop('postproc_type','proc_Hahn_echoph')
+data.set_prop("acq_params", config_dict.asdict())
+data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
 data.chunk(
     "t", 
     ["ph_overall", "ph_diff", "nEcho", "t2"], 
-    [len(ph_overall), len(ph_diff),int(config_dict['nEchoes']), 
-        -1]).labels({
-            "ph_overall":r_[0:len(ph_overall)],
-            "ph_diff":r_[0:len(ph_diff)],
-            "nEcho":r_[0:int(config_dict['nEchoes'])]+1,
-                }
-            )
-data.setaxis("ph_overall", ph_overalll/4)
-data.setaxis("ph_diff", ph_diff/4)
-data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
-data.set_prop("postproc_type", "spincore_CPMGv2")
-data.set_prop("acq_params", config_dict.asdict())
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/CPMG")
+    [len(ph_overall),len(ph_diff),int(config_dict['nEchoes']),-1])
+data.labels({"nEcho":r_[0:int(config_dict['nEchoes'])],
+    "ph_overall":r_[0:len(ph_overall)],
+    "ph_diff":r_[0:len(ph_diff)]
+    }
+    )
+data.setaxis('ph_overall',ph_overall/4)
+data.setaxis('ph_diff',ph_diff/4)
+# }}}
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
 nodename = data.name()
 if os.path.exists(f"{filename_out}"):
@@ -145,15 +150,4 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
-# {{{ Image raw data
-with figlist_var() as fl:
-    data.squeeze()
-    fl.next("Raw - time")
-    data.set_units("t2", "s")
-    fl.image(data)
-    data.reorder("t2", first=False)
-    data.ft("t2", shift=True)
-    data.ft(["ph_overall", "ph_diff"], unitary=True)
-    fl.next("FTed data")
-    fl.image(data)
-# }}}
+
