@@ -50,25 +50,8 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 # }}}    
-# {{{symmetric tau
 prog_p90_us = prog_plen(config_dict['p90_us'])
 prog_p180_us = prog_plen(2*config_dict['p90_us'])
-short_delay_us = 1.0
-tau_evol_us = (
-    prog_p180_us / pi
-)  # evolution during pulse -- see eq 6 of coherence paper
-pad_end_us = (
-    config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
-)
-twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
-    2 * config_dict["deadtime_us"]
-)  # the period between end of first 180 pulse and start of next
-config_dict["tau_us"] = (
-    twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
-)
-
-print("using a tau of:",config_dict['tau_us'])
-# }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps# * config_dict['nEchoes']
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
