@@ -168,6 +168,7 @@ def generic(
         stopBoard()
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
+        # }}}
         logging.debug(strm("stored scan", nScans_idx, "for indirect_idx", indirect_idx))
         logging.debug(strm("checkpoints:", this_array - this_array[0]))
         logging.debug(
