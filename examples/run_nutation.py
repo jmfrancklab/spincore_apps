@@ -25,9 +25,7 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "nutation"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 # {{{set phase cycling
 phase_cycling = True
@@ -105,9 +103,7 @@ else:
     for_plot.ft("t2", shift=True)
     fl.next("FTed data")
     fl.image(for_plot)
-nutation_data.name(
-    config_dict["type"] + "_" + str(config_dict["echo_counter"])
-)
+nutation_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 nutation_data.set_prop("postproc_type", "spincore_nutation_v1")
 nutation_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
@@ -119,9 +115,7 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print(
-                "this nodename already exists, so I will call it temp_nutation"
-            )
+            print("this nodename already exists, so I will call it temp_nutation")
             nutation_data.name("temp_nutation")
             nodename = "temp_nutation"
         nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
