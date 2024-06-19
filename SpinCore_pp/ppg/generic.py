@@ -105,7 +105,7 @@ def generic(
     # {{{ pull info about phase cycling and echos from the ppg_list
     # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle
     all_ppg_arrays = [j[3] for j in ppg_list if len(j)>3]
-    nPhaseSteps = prod([len(j) for j in all_ppg_arrays]) #total number of phase steps in ppg
+    nPhaseSteps = prod([len(j) for j in all_ppg_arrays])
     # }}}
     # {{{ for this to work, the loop label for echoes must be called "echo_label"
     nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0] == 'marker' and j[1] == 'echo_label']
@@ -118,9 +118,8 @@ def generic(
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
-        check = round(configureRX(SW_kHz, nPoints, nScans, nEchoes, int(nPhaseSteps)),1)
-        #there is some very small difference so we round to the first decimal 
-        assert round(acq_time_ms,1) == check
+        check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
+        assert acq_time_ms == check
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
