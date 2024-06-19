@@ -1,4 +1,10 @@
-# loop over echoes
+"""
+CPMG
+====
+This script will perform a standard CPMG experiment. 
+In order to form a symmetric echo, a padding time is added before 
+and after your tau through a series of delays. 
+"""
 from pylab import *
 from pyspecdata import *
 from numpy import *
