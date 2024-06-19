@@ -1,4 +1,4 @@
-# loop over echoes
+# Use echo acq time instead of acq_time_ms
 from pylab import *
 from pyspecdata import *
 from numpy import *
@@ -13,12 +13,12 @@ fl = figlist_var()
 #{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)
-config_dict['echo_acq_ms'] = nPoints/config_dict['SW_kHz']
 target_directory = getDATADIR(exp_type = 'ODNP_NMR_comp/Echoes')
+config_dict['echo_acq_ms'] = nPoints/config_dict['SW_kHz']
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
-config_dict["type"] = "CPMG"
+config_dict["type"] = "echo"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
@@ -50,25 +50,8 @@ if phase_cycling:
 if not phase_cycling:
     nPhaseSteps = 1
 # }}}    
-# {{{symmetric tau
 prog_p90_us = prog_plen(config_dict['p90_us'])
 prog_p180_us = prog_plen(2*config_dict['p90_us'])
-short_delay_us = 1.0
-tau_evol_us = (
-    prog_p180_us / pi
-)  # evolution during pulse -- see eq 6 of coherence paper
-pad_end_us = (
-    config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
-)
-twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
-    2 * config_dict["deadtime_us"]
-)  # the period between end of first 180 pulse and start of next
-config_dict["tau_us"] = (
-    twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
-)
-
-print("using a tau of:",config_dict['tau_us'])
-# }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps# * config_dict['nEchoes']
 assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
@@ -84,15 +67,6 @@ data = generic(
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
-        ("delay",pad_end_us),
-        ("delay",short_delay_us),
-        ("marker","echo_label",(config_dict['nEchoes']-1)),
-        ("delay_TTL",config_dict['deblank_us']),
-        ("pulse_TTL", prog_p180_us,'ph_cyc',ph2_cyc),
-        ("delay",config_dict['deadtime_us']),
-        ("acquire",config_dict['echo_acq_ms']),
-        ("delay", pad_end_us),
-        ("jumpto","echo_label"),
         ("delay", config_dict["repetition_us"]),
     ],
     nScans=config_dict["nScans"],
