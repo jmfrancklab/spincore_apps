@@ -7,11 +7,7 @@ from SpinCore_pp.ppg import generic
 import os
 from datetime import datetime
 import h5py
-from SpinCore_pp.ppg import run_spin_echo
-from datetime import datetime
 from Instruments.XEPR_eth import xepr
-from Instruments import power_control
-fl = figlist_var()
 #{{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
