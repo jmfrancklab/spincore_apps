@@ -188,12 +188,6 @@ class configuration(object):
             0,
             "number of echo experiments performed for a particular sample that day- usually incremented when getting on resonance",
         ),
-        "generic_echo_counter": (
-            int,
-            "file_names",
-            0,
-            "number of echo experiments performed for a particular sample that day- usually incremented when getting on resonance",
-        ),
         "cpmg_counter": (
             int,
             "file_names",
