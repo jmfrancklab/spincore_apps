@@ -8,48 +8,55 @@ import os
 from datetime import datetime
 import h5py
 from Instruments.XEPR_eth import xepr
-#{{{importing acquisition parameters
+
+# {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
-target_directory = getDATADIR(exp_type = 'ODNP_NMR_comp/Echoes')
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "echo"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
+)
 # }}}
-#{{{let computer set field
-print("I'm assuming that you've tuned your probe to",
-        config_dict['carrierFreq_MHz'],
-        "since that's what's in your .ini file",
-        )
-Field = config_dict['carrierFreq_MHz']/config_dict['gamma_eff_MHz_G']
+# {{{let computer set field
 print(
-        "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
-        %Field
-        )
+    "I'm assuming that you've tuned your probe to",
+    config_dict["carrierFreq_MHz"],
+    "since that's what's in your .ini file",
+)
+Field = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+print(
+    "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+    % Field
+)
 with xepr() as x:
     assert Field < 3700, "are you crazy??? field is too high!"
     assert Field > 3300, "are you crazy?? field is too low!"
     Field = x.set_field(Field)
-    print("field set to ",Field)
-#}}}
-#{{{set phase cycling
+    print("field set to ", Field)
+# }}}
+# {{{set phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph1_cyc = r_[0,1,2,3]
+    ph1_cyc = r_[0, 1, 2, 3]
     ph2_cyc = r_[0]
     nPhaseSteps = len(ph1_cyc)
 if not phase_cycling:
     nPhaseSteps = 1
-# }}}    
-prog_p90_us = prog_plen(config_dict['p90_us'])
-prog_p180_us = prog_plen(2*config_dict['p90_us'])
+# }}}
+prog_p90_us = prog_plen(config_dict["p90_us"])
+prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # {{{check total points
-total_pts = nPoints * nPhaseSteps# * config_dict['nEchoes']
-assert total_pts < 2**14, "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"%total_pts
+total_pts = nPoints * nPhaseSteps  # * config_dict['nEchoes']
+assert total_pts < 2**14, (
+    "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
+    % total_pts
+)
 # }}}
 # {{{basic phasecycling
 data = generic(
@@ -75,15 +82,12 @@ data = generic(
     ret_data=None,
 )
 ## {{{ chunk and save data
-data.set_prop('postproc_type','proc_Hahn_echoph')
+data.set_prop("postproc_type", "proc_Hahn_echoph")
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
-data.set_prop('postproc_type','proc_Hahn_echoph')
-data.chunk(
-    "t", 
-    ["ph1", "t2"], 
-    [4,-1])
-data.setaxis('ph1',r_[0.,1.,2.,3.]/4)
+data.set_prop("postproc_type", "proc_Hahn_echoph")
+data.chunk("t", ["ph1", "t2"], [4, -1])
+data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
 # }}}
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
@@ -115,4 +119,3 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
-
