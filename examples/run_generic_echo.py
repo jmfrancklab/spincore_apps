@@ -13,6 +13,7 @@ from Instruments.XEPR_eth import xepr
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
+config_dict["acq_time_ms"] = nPoints / config_dict["SW_kHz"]
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -58,7 +59,6 @@ assert total_pts < 2**14, (
     % total_pts
 )
 # }}}
-# {{{basic phasecycling
 data = generic(
     ppg_list=[
         ("phase_reset", 1),
@@ -85,9 +85,9 @@ data = generic(
 data.set_prop("postproc_type", "proc_Hahn_echoph")
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
-data.set_prop("postproc_type", "proc_Hahn_echoph")
 data.chunk("t", ["ph1", "t2"], [4, -1])
-data.setaxis("ph1", r_[0.0, 1.0, 2.0, 3.0] / 4)
+data.labels({"ph1": r_[0 : len(ph1_cyc)]})
+data.setaxis("ph1", ph1_cyc / 4)
 # }}}
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
@@ -112,10 +112,10 @@ else:
         if os.path.exists("temp_cpmg.h5"):
             print("there is a temp_cpmg.h5 already! -- I'm removing it")
             os.remove("temp_cpmg.h5")
-            data.hdf5_write("temp_cpmg.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
-            )
+        data.hdf5_write("temp_cpmg.h5")
+        print(
+            "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
+        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
