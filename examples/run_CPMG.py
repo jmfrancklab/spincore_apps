@@ -149,10 +149,10 @@ else:
         if os.path.exists("temp_cpmg.h5"):
             print("there is a temp_cpmg.h5 already! -- I'm removing it")
             os.remove("temp_cpmg.h5")
-            data.hdf5_write("temp_cpmg.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
-            )
+        data.hdf5_write("temp_cpmg.h5")
+        print(
+            "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
+        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
