@@ -60,26 +60,26 @@ with xepr() as x:
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2 ** 14, (
+assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
 # {{{acquire echo
 echo_data = run_spin_echo(
-    nScans = config_dict["nScans"],
-    indirect_idx = 0,
-    indirect_len = 1,
-    ph1_cyc = ph1_cyc,
-    adcOffset = config_dict["adc_offset"],
-    carrierFreq_MHz = config_dict["carrierFreq_MHz"],
-    nPoints = nPoints,
-    nEchoes = config_dict["nEchoes"],
-    p90_us = config_dict["p90_us"],
-    repetition_us = config_dict["repetition_us"],
-    tau_us = config_dict["tau_us"],
-    SW_kHz = config_dict["SW_kHz"],
-    ret_data = None,
+    nScans=config_dict["nScans"],
+    indirect_idx=0,
+    indirect_len=1,
+    ph1_cyc=ph1_cyc,
+    adcOffset=config_dict["adc_offset"],
+    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+    nPoints=nPoints,
+    nEchoes=config_dict["nEchoes"],
+    p90_us=config_dict["p90_us"],
+    repetition_us=config_dict["repetition_us"],
+    tau_us=config_dict["tau_us"],
+    SW_kHz=config_dict["SW_kHz"],
+    ret_data=None,
 )
 # }}}
 # {{{ chunk and save data
