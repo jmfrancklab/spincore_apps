@@ -66,6 +66,8 @@ twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
 config_dict["tau_us"] = (
     twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
 )
+print("tau is")
+print(config_dict['tau_us'])
 
 # }}}
 # {{{check total points
@@ -143,10 +145,10 @@ else:
         if os.path.exists("temp_cpmg.h5"):
             print("there is a temp_cpmg.h5 already! -- I'm removing it")
             os.remove("temp_cpmg.h5")
-            data.hdf5_write("temp_cpmg.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
-            )
+        data.hdf5_write("temp_cpmg.h5")
+        print(
+            "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
+        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
