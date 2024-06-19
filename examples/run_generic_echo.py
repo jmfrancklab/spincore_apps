@@ -44,9 +44,11 @@ with xepr() as x:
 # {{{set phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph1_cyc = r_[0, 1, 2, 3]
-    ph2_cyc = r_[0]
-    nPhaseSteps = len(ph1_cyc)
+    ph_overall = r_[0, 1, 2, 3]
+    ph_diff = r_[0, 2]
+    ph1_cyc = array([(j + k) % 4 for k in ph_overall for j in ph_diff])
+    ph2_cyc = array([(k + 1) % 4 for k in ph_overall for j in ph_diff])
+    nPhaseSteps = len(ph_overall) * len(ph_diff)
 if not phase_cycling:
     nPhaseSteps = 1
 # }}}
@@ -63,10 +65,10 @@ data = generic(
     ppg_list=[
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p90_us, "ph1", ph1_cyc),
+        ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
         ("delay", config_dict["tau_us"]),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p180_us, "ph2", ph2_cyc),
+        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["acq_time_ms"]),
         ("delay", config_dict["repetition_us"]),
@@ -82,12 +84,22 @@ data = generic(
     ret_data=None,
 )
 ## {{{ chunk and save data
-data.set_prop("postproc_type", "proc_Hahn_echoph")
+data.set_prop("postproc_type", "proc_Hahn_echoph_v1")
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
-data.chunk("t", ["ph1", "t2"], [4, -1])
-data.labels({"ph1": r_[0 : len(ph1_cyc)]})
-data.setaxis("ph1", ph1_cyc / 4)
+data.chunk(
+    "t",
+    ["ph_overall", "ph_diff", "t2"], 
+    [len(ph_overall), len(ph_diff), -1]
+)
+data.labels(
+    {
+        "ph_overall": r_[0 : len(ph_overall)],
+        "ph_diff":r_[0:len(ph_diff)
+    }
+)
+data.setaxis("ph_overall", ph_overall / 4)
+data.setaxis("ph_diff",ph_diff / 4)
 # }}}
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
