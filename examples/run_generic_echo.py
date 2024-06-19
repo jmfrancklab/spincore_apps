@@ -78,6 +78,7 @@ data = generic(
 data.set_prop('postproc_type','proc_Hahn_echoph')
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
+data.set_prop('postproc_type','proc_Hahn_echoph')
 data.chunk(
     "t", 
     ["ph1", "t2"], 
