@@ -51,24 +51,24 @@ assert total_pts < 2**14, (
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
-nutation_data = run_spin_echo(
-    nScans = config_dict["nScans"],
-    indirect_idx = 0,
-    indirect_len = len(p90_range_us),
-    ph1_cyc = ph1_cyc,
-    adcOffset = config_dict["adc_offset"],
-    carrierFreq_MHz = config_dict["carrierFreq_MHz"],
-    nPoints = nPoints,
-    nEchoes = config_dict["nEchoes"],
-    p90_us = p90_range_us[0],
-    repetition_us = config_dict["repetition_us"],
-    tau_us = config_dict["tau_us"],
-    SW_kHz = config_dict["SW_kHz"],
-    indirect_fields = ("p_90", "index"),
-    amplitude =config_dict["amplitude"],
-    ret_data = None,
-)
-mytimes = nutation_data.getaxis("indirect")
+nutation_data = None
+for idx, p90_us in enumerate(p90_range_us):
+    run_spin_echo(
+        nScans=config_dict["nScans"],
+        indirect_idx=idx,
+        indirect_len=len(p90_range_us),
+        ph1_cyc=ph1_cyc,
+        amplitude=config_dict["amplitude"],
+        adcOffset=config_dict["adc_offset"],
+        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+        nPoints=nPoints,
+        nEchoes=config_dict["nEchoes"],
+        p90_us=p90_us,
+        repetition_us=config_dict["repetition_us"],
+        tau_us=config_dict["tau_us"],
+        SW_kHz=config_dict["SW_kHz"],
+        indirect_fields=("p_90", "index"),
+        ret_data=nutation_data,
     )
 # {{{ for some reason, axis coordinates were
 #     given as a structured array with p90
