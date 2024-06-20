@@ -112,7 +112,8 @@ else:
     fl.next("FTed data")
     fl.image(for_plot)
 echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
+echo_data.set_prop("postproc_type", "spincore_SE_v1")
+echo_data.set_prop("coherence_pathway", {"ph1":+1})
 echo_data.set_prop("acq_params", config_dict.asdict())
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
