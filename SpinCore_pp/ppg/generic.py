@@ -10,7 +10,7 @@ from .. import (
 from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
-from numpy import r_
+from numpy import r_,isclose
 from pyspecdata import strm
 import time
 import logging
@@ -106,8 +106,7 @@ def generic(
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     # {{{ pull info about phase cycling and echos from the ppg_list
-    all_ppg_arrays = [j[3] for j in ppg_list if len(j)>3]
-    nPhaseSteps = prod([len(j) for j in all_ppg_arrays])
+    nPhaseSteps = int(np.prod(list(dict([(j[2],len(j[3])) for j in ppg_list if len(j)>3]).values())))
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
@@ -117,7 +116,7 @@ def generic(
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
         check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
-        assert acq_time_ms == check
+        assert isclose(check,acq_time_ms), f"you are trying to set the acquisition time to {acq_time_ms}, but configureRX returns {check}"
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()

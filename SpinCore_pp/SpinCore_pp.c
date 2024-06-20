@@ -68,8 +68,11 @@ double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, uns
                 &dec_amount
                 ));
     double actual_SW = (adcFrequency_MHz * 1e6) / (double) dec_amount;
-    double acq_time = nPoints / actual_SW * 1000.0;
+    double acq_time = ((double) nPoints) / ((double) actual_SW) * ((double) 1e3);
     int nSegments = nEchoes*nPhaseSteps;
+    // following line is for debug only -- don't commit
+    printf("DEBUG: You tried to set the SW to %0.3f kHz, and the closest allowed value is %0.3f kHz which differ by %g kHz, based on dec_amount %d\n",SW_kHz,actual_SW/1e3,SW_kHz-actual_SW/1e3,dec_amount);
+    printf("DEBUG: I calculated this from an SW of %0.3f and nPoints %d \n",SW_kHz,nPoints);
     if(abs(actual_SW - 1e3*SW_kHz) > 1.0){
         printf("Error: You tried to set the SW to %0.3f kHz, but the closest allowed value is %0.3f kHz\n",SW_kHz,actual_SW/1e3);
         ERROR_CATCH(999);
