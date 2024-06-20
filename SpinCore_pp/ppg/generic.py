@@ -24,6 +24,7 @@ def generic(
     adcOffset,
     carrierFreq_MHz,
     nPoints,
+    nEchoes,
     acq_time_ms,
     SW_kHz,
     indirect_fields=None,
@@ -102,14 +103,6 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-    # {{{ calculate nEchoes from ppg list
-    nEchoes = 1
-    for j in ppg_list:
-        if len(j)>2 and j[0]=='marker' and j[1] == 'echo_label':
-            nEchoes = j[2] + 1
-    if len(j)>2 and j[0] == 'marker' and j[1] == 'echo_label' for j in ppg_list:
-        nEchoes = j[2]+1 for j in ppg_list
-    # }}}    
     # {{{ pull info about phase cycling and echos from the ppg_list
     nPhaseSteps = int(np.prod(list(dict([(j[2],len(j[3])) for j in ppg_list if len(j)>3]).values())))
     # }}}
