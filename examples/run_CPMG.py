@@ -19,6 +19,7 @@ from Instruments.XEPR_eth import xepr
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
+config_dict["SW_kHz"] = 75e6/round(75e6/config_dict["SW_kHz"]/1e3)/1e3
 nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)  # per echo
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 config_dict["echo_acq_ms"] = nPoints / config_dict["SW_kHz"]
@@ -64,23 +65,14 @@ prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # {{{calculate symmetric tau by dividing 2tau by 2
 marker_us = 1.0
-tau_evol_us = 2*prog_p90_us / pi  # evolution during pulse -- see eq 6 of coherence paper
-pad_end_us = config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
-twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
-    2 * config_dict["deadtime_us"]
-)  # the period between end of first 180 pulse and start of next
-config_dict["tau_us"] = (
-    twice_tau_echo_us / 2.0 - tau_evol_us
-)
+config_dict["tau_us"] = (2*config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms'])/2
 assert (config_dict['tau_us'] > prog_p180_us/pi + marker_us + config_dict['deblank_us'])
 assert (config_dict['deadtime_us'] > config_dict['deblank_us'] + 2*marker_us)
 assert (
         2 * config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms'] ==
         2*config_dict['tau_us'])
 print(
-        "If you are measuring on a scope, the time from the start (or end) of
-        one 180 pulse to the next should be %0.1f
-        μs"%(2*config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms']+prog_p180_us))
+        "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"%(2*config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms']+prog_p180_us))
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps  # * config_dict['nEchoes']

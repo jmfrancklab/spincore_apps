@@ -11,6 +11,7 @@ from Instruments.XEPR_eth import xepr
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
+config_dict["SW_kHz"] = 75e6/round(75e6/config_dict["SW_kHz"]/1e3)/1e3
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 config_dict["acq_time_ms"] = nPoints / config_dict["SW_kHz"]
@@ -94,9 +95,9 @@ data.chunk(
     [len(ph_overall), len(ph_diff), -1]
 )
 data.labels(
-    {
-        "ph_overall": r_[0 : len(ph_overall)],
-        "ph_diff":r_[0:len(ph_diff)
+        {
+            "ph_overall": r_[0 : len(ph_overall)],
+            "ph_diff":r_[0:len(ph_diff)]
     }
 )
 data.setaxis("ph_overall", ph_overall / 4)

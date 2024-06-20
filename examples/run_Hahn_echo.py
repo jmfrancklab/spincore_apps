@@ -21,6 +21,7 @@ import h5py
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
+config_dict["SW_kHz"] = 75e6/round(75e6/config_dict["SW_kHz"]/1e3)/1e3
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 # }}}
 # {{{create filename and save to config file
@@ -147,12 +148,15 @@ config_dict.write()
 if phase_cycling:
     echo_data.ft('t2',shift=True)
     fl.next('image - ft')
-    fl.image(echo_data.C.mean('nScans'))
+    fl.image(echo_data)
     fl.next('image - ft, coherence')
     echo_data.ft(['ph1'])
-    fl.image(echo_data.C.mean('nScans'))
+    fl.image(echo_data)
     fl.next('data plot')
-    data_slice = echo_data['ph1',1].C.mean('nScans')
+    if 'nScans' in echo_data.dimlabels:
+        data_slice = echo_data['ph1',1].mean('nScans')
+    else:
+        data_slice = echo_data['ph1',1]
     fl.plot(data_slice, alpha=0.5)
     fl.plot(data_slice.imag, alpha=0.5)
     fl.plot(abs(data_slice), color='k', alpha=0.5)
@@ -161,7 +165,11 @@ else:
     fl.plot(echo_data)
     echo_data.ft('t',shift=True)
     fl.next('ft')
-    fl.plot(echo_data.real)
-    fl.plot(echo_data.imag)
-    fl.plot(abs(echo_data),color='k',alpha=0.5)
+    if 'nScans' in echo_data.dimlabels:
+        data_slice = echo_data.mean('nScans')
+    else:
+        data_slice = echo_data['ph1',1]
+    fl.plot(data_slice.real)
+    fl.plot(data_slice.imag)
+    fl.plot(abs(data_slice),color='k',alpha=0.5)
 fl.show()
