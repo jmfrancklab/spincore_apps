@@ -119,6 +119,7 @@ data = generic(
 data.set_prop("postproc_type", "proc_CPMG_v2")
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
+print(ndshape(data))
 data.chunk(
     "t",
     ["ph_overall", "ph_diff", "nEcho", "t2"],

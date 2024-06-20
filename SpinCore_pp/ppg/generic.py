@@ -87,6 +87,8 @@ def generic(
                         carrier frequency to be set in MHz
     nPoints:        int
                     number of points for the data
+    nEchoes:        int
+                    Number of echoes to be acquired
     SW_kHz:         float
                     spectral width of the data. Minimum = 1.9
     indirect_fields: tuple (pair) of str or (default) None
@@ -103,6 +105,10 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
+    if "echo_label" in ppg_list:
+        nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0]=='marker' and j[1]=='echo_label']
+    else:
+        nEchoes = 1
     # {{{ pull info about phase cycling and echos from the ppg_list
     nPhaseSteps = int(np.prod(list(dict([(j[2],len(j[3])) for j in ppg_list if len(j)>3]).values())))
     # }}}
@@ -148,7 +154,7 @@ def generic(
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
-                [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
+                [len(time_axis),nScans,indirect_len], ["t2","nScans","indirect"]
             ).alloc(dtype=np.complex128)
             ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
