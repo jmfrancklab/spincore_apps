@@ -21,7 +21,8 @@ from Instruments.XEPR_eth import xepr
 config_dict = SpinCore_pp.configuration("active.ini")
 config_dict["SW_kHz"] = 75e6/round(75e6/config_dict["SW_kHz"]/1e3)/1e3
 nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)  # per echo
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
+my_exp_type = "ODNP_NMR_comp/Echoes"
+target_directory = getDATADIR(exp_type=my_exp_type)
 config_dict["echo_acq_ms"] = nPoints / config_dict["SW_kHz"]
 # }}}
 # {{{create filename and save to config file
@@ -53,11 +54,11 @@ with xepr() as x:
 # {{{set phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph_overall = r_[0, 1, 2, 3]
+    ph2 = r_[0, 1, 2, 3]
     ph_diff = r_[0, 2]
-    ph1_cyc = array([(j + k) % 4 for k in ph_overall for j in ph_diff])
-    ph2_cyc = array([(k + 1) % 4 for k in ph_overall for j in ph_diff])
-    nPhaseSteps = len(ph_overall) * len(ph_diff)
+    ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
+    ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
+    nPhaseSteps = len(ph2) * len(ph_diff)
 if not phase_cycling:
     nPhaseSteps = 1
 # }}}
@@ -115,23 +116,23 @@ data = generic(
     ret_data=None,
 )
 ## {{{ chunk and save data
-data.set_prop("postproc_type", "proc_CPMG_v2")
+data.set_prop("postproc_type", "spincore_diffph_SE_v1")
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
 print(ndshape(data))
 data.chunk(
     "t",
-    ["ph_overall", "ph_diff", "nEcho", "t2"],
-    [len(ph_overall), len(ph_diff), int(config_dict["nEchoes"]), -1],
+    ["ph2", "ph_diff", "nEcho", "t2"],
+    [len(ph2), len(ph_diff), int(config_dict["nEchoes"]), -1],
 )
 data.labels(
     {
         "nEcho": r_[0 : int(config_dict["nEchoes"])],
-        "ph_overall": r_[0 : len(ph_overall)],
+        "ph2": r_[0 : len(ph2)],
         "ph_diff": r_[0 : len(ph_diff)],
     }
 )
-data.setaxis("ph_overall", ph_overall / 4)
+data.setaxis("ph2", ph2 / 4)
 data.setaxis("ph_diff", ph_diff / 4)
 # }}}
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
@@ -164,3 +165,4 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
+print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
