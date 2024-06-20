@@ -75,7 +75,7 @@ print(
         "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"%(2*config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms']+prog_p180_us))
 # }}}
 # {{{check total points
-total_pts = nPoints * nPhaseSteps  # * config_dict['nEchoes']
+total_pts = nPoints * nPhaseSteps * config_dict['nEchoes']
 assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
     % total_pts
@@ -106,11 +106,10 @@ data = generic(
     ],
     nScans=config_dict["nScans"],
     indirect_idx=0,
-    indirect_len=config_dict["nEchoes"],
+    indirect_len=1,
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
-    nEchoes = config_dict['nEchoes'],
     acq_time_ms=config_dict["echo_acq_ms"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,

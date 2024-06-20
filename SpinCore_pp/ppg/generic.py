@@ -24,7 +24,6 @@ def generic(
     adcOffset,
     carrierFreq_MHz,
     nPoints,
-    nEchoes,
     acq_time_ms,
     SW_kHz,
     indirect_fields=None,
@@ -87,8 +86,6 @@ def generic(
                         carrier frequency to be set in MHz
     nPoints:        int
                     number of points for the data
-    nEchoes:        int
-                    Number of echoes to be acquired
     SW_kHz:         float
                     spectral width of the data. Minimum = 1.9
     indirect_fields: tuple (pair) of str or (default) None
@@ -105,10 +102,13 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-    if "echo_label" in ppg_list:
-        nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0]=='marker' and j[1]=='echo_label']
-    else:
+    nEchoes = [j[2] for j in ppg_list if len(j)>2 and j[0]=='marker' and j[1]=='echo_label']
+    if len(nEchoes) == 1:
+        nEchoes = nEchoes[0]
+    elif len(nEchoes) == 0:
         nEchoes = 1
+    else:
+        raise ValueError(f"You seem to have {len(nEchoes)} lines in your ppg list that refer to a marker called 'echo_label'.  Therefore, I can't figure out how many echoes are in the pulse sequence!")
     # {{{ pull info about phase cycling and echos from the ppg_list
     nPhaseSteps = int(np.prod(list(dict([(j[2],len(j[3])) for j in ppg_list if len(j)>3]).values())))
     # }}}
@@ -154,7 +154,8 @@ def generic(
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
-                [len(time_axis),nScans,indirect_len], ["t2","nScans","indirect"]
+                [len(time_axis),nScans,indirect_len], ["t","nScans","indirect"]
+                # note that "t" is a dimension that ends up getting split into phase cycle steps and possibly echoes as well
             ).alloc(dtype=np.complex128)
             ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")

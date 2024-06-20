@@ -8,6 +8,11 @@ import os
 from datetime import datetime
 import h5py
 from Instruments.XEPR_eth import xepr
+import sys
+
+adjust_field = True
+if len(sys.argv) == 2 and sys.argv[1] == "stayput":
+    adjust_field = False
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -25,23 +30,24 @@ filename = (
     f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 )
 # }}}
-# {{{let computer set field
-print(
-    "I'm assuming that you've tuned your probe to",
-    config_dict["carrierFreq_MHz"],
-    "since that's what's in your .ini file",
-)
-Field = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
-print(
-    "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
-    % Field
-)
-with xepr() as x:
-    assert Field < 3700, "are you crazy??? field is too high!"
-    assert Field > 3300, "are you crazy?? field is too low!"
-    Field = x.set_field(Field)
-    print("field set to ", Field)
-# }}}
+if adjust_field:
+    # {{{let computer set field
+    print(
+        "I'm assuming that you've tuned your probe to",
+        config_dict["carrierFreq_MHz"],
+        "since that's what's in your .ini file",
+    )
+    Field = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+    print(
+        "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+        % Field
+    )
+    with xepr() as x:
+        assert Field < 3700, "are you crazy??? field is too high!"
+        assert Field > 3300, "are you crazy?? field is too low!"
+        Field = x.set_field(Field)
+        print("field set to ", Field)
+    # }}}
 # {{{set phase cycling
 phase_cycling = True
 if phase_cycling:
@@ -76,11 +82,10 @@ data = generic(
     ],
     nScans=config_dict["nScans"],
     indirect_idx=0,
-    indirect_len=config_dict["nEchoes"],
+    indirect_len=1,
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
-    nEchoes = 1,
     acq_time_ms=config_dict["acq_time_ms"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
@@ -94,16 +99,10 @@ data.chunk(
     ["ph_overall", "ph_diff", "t2"], 
     [len(ph_overall), len(ph_diff), -1]
 )
-data.labels(
-        {
-            "ph_overall": r_[0 : len(ph_overall)],
-            "ph_diff":r_[0:len(ph_diff)]
-    }
-)
-data.setaxis("ph_overall", ph_overall / 4)
-data.setaxis("ph_diff",ph_diff / 4)
+data.setaxis("ph_overall", ph_overall / 4).setaxis("ph_diff",ph_diff / 4)
 # }}}
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
+my_exp_type = "ODNP_NMR_comp/Echoes"
+target_directory = getDATADIR(exp_type=my_exp_type)
 filename_out = filename + ".h5"
 nodename = data.name()
 if os.path.exists(f"{filename_out}"):
@@ -131,5 +130,5 @@ else:
             "if I got this far, that probably worked -- be sure to move/rename temp_generic_echo.h5 to the correct name!!"
         )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data", data.name()))
+print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
 config_dict.write()
