@@ -24,6 +24,7 @@ def generic(
     adcOffset,
     carrierFreq_MHz,
     nPoints,
+    nEchoes,
     acq_time_ms,
     SW_kHz,
     indirect_fields=None,
@@ -86,6 +87,8 @@ def generic(
                         carrier frequency to be set in MHz
     nPoints:        int
                     number of points for the data
+    nEchoes:        int
+                    Number of echoes to be acquired
     SW_kHz:         float
                     spectral width of the data. Minimum = 1.9
     indirect_fields: tuple (pair) of str or (default) None
@@ -103,13 +106,8 @@ def generic(
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     # {{{ pull info about phase cycling and echos from the ppg_list
-    # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle
     all_ppg_arrays = [j[3] for j in ppg_list if len(j)>3]
     nPhaseSteps = prod([len(j) for j in all_ppg_arrays])
-    # }}}
-    # {{{ for this to work, the loop label for echoes must be called "echo_label"
-    nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0] == 'marker' and j[1] == 'echo_label']
-    # }}}
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
@@ -124,11 +122,8 @@ def generic(
         run_scans_names.append("init")
         init_ppg()
         run_scans_time_list.append(time.time())
-        print("1")
         run_scans_names.append("prog")
-        print("2")
         spincore_load(ppg_list)
-        print("3")
         run_scans_time_list.append(time.time())
         run_scans_names.append("stop ppg")
         stop_ppg()

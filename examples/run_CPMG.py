@@ -62,19 +62,25 @@ if not phase_cycling:
 # }}}
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
-# {{{symmetric tau
-short_delay_us = 1.0
-tau_evol_us = prog_p180_us / pi  # evolution during pulse -- see eq 6 of coherence paper
+# {{{calculate symmetric tau by dividing 2tau by 2
+marker_us = 1.0
+tau_evol_us = 2*prog_p90_us / pi  # evolution during pulse -- see eq 6 of coherence paper
 pad_end_us = config_dict["deadtime_us"] - config_dict["deblank_us"] - 2 * short_delay_us
 twice_tau_echo_us = config_dict["echo_acq_ms"] * 1e3 + (
     2 * config_dict["deadtime_us"]
 )  # the period between end of first 180 pulse and start of next
 config_dict["tau_us"] = (
-    twice_tau_echo_us / 2.0 - tau_evol_us - config_dict["deblank_us"]
+    twice_tau_echo_us / 2.0 - tau_evol_us
 )
-print("tau is")
-print(config_dict['tau_us'])
-
+assert (config_dict['tau_us'] > prog_p180_us/pi + marker_us + config_dict['deblank_us'])
+assert (config_dict['deadtime_us'] > config_dict['deblank_us'] + 2*marker_us)
+assert (
+        2 * config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms'] ==
+        2*config_dict['tau_us'])
+print(
+        "If you are measuring on a scope, the time from the start (or end) of
+        one 180 pulse to the next should be %0.1f
+        μs"%(2*config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms']+prog_p180_us))
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps  # * config_dict['nEchoes']
@@ -88,19 +94,21 @@ data = generic(
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
-        ("delay", config_dict["tau_us"]),
+        ("delay", 
+            config_dict["tau_us"]
+            - 2 * prog_p90_us / pi
+            -marker_us
+            -config_dict['deblank_us']),
+        ("marker", "echo_label", config_dict["nEchoes"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
-        ("delay", pad_end_us),
-        ("delay", short_delay_us),
-        ("marker", "echo_label", (config_dict["nEchoes"] - 1)),
-        ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
-        ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict["echo_acq_ms"]),
-        ("delay", pad_end_us),
+        ("delay", 
+            config_dict['deadtime_us']
+            -2* marker_us
+            - config_dict['deblank_us']
+            ),
         ("jumpto", "echo_label"),
         ("delay", config_dict["repetition_us"]),
     ],
@@ -110,6 +118,7 @@ data = generic(
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
+    nEchoes = config_dict['nEchoes'],
     acq_time_ms=config_dict["echo_acq_ms"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,

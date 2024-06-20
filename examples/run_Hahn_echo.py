@@ -12,13 +12,12 @@ the NMR computer to set the field etc.
 from pylab import *
 from pyspecdata import *
 import os
-from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
 import SpinCore_pp
-import h5py
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
-from Instruments import power_control
+import h5py
+
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -50,9 +49,9 @@ print(
 )
 Field = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
-        "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
-        %Field
-        )
+    "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+    % Field
+)
 with xepr() as x:
     assert Field < 3700, "are you crazy??? field is too high!"
     assert Field > 3300, "are you crazy?? field is too low!"
@@ -68,19 +67,19 @@ assert total_pts < 2**14, (
 # }}}
 # {{{acquire echo
 echo_data = run_spin_echo(
-    nScans = config_dict["nScans"],
-    indirect_idx = 0,
-    indirect_len = 1,
-    ph1_cyc = ph1_cyc,
-    adcOffset = config_dict["adc_offset"],
-    carrierFreq_MHz = config_dict["carrierFreq_MHz"],
-    nPoints = nPoints,
-    nEchoes = config_dict["nEchoes"],
-    p90_us = config_dict["p90_us"],
-    repetition_us = config_dict["repetition_us"],
-    tau_us = config_dict["tau_us"],
-    SW_kHz = config_dict["SW_kHz"],
-    ret_data = None,
+    nScans=config_dict["nScans"],
+    indirect_idx=0,
+    indirect_len=1,
+    ph1_cyc=ph1_cyc,
+    adcOffset=config_dict["adc_offset"],
+    carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+    nPoints=nPoints,
+    nEchoes=config_dict["nEchoes"],
+    p90_us=config_dict["p90_us"],
+    repetition_us=config_dict["repetition_us"],
+    tau_us=config_dict["tau_us"],
+    SW_kHz=config_dict["SW_kHz"],
+    ret_data=None,
 )
 # }}}
 # {{{ chunk and save data
@@ -93,26 +92,23 @@ if phase_cycling:
     echo_data.squeeze()
     echo_data.set_units("t2", "s")
     fl.next("Raw - time")
-    fl.image(
-        echo_data)
+    fl.image(echo_data)
     echo_data.reorder("t2", first=False)
     for_plot = echo_data.C
-    for_plot.ft('t2',shift=True)
-    for_plot.ft(['ph1'], unitary = True)
-    fl.next('FTed data')
-    fl.image(for_plot
-    )
+    for_plot.ft("t2", shift=True)
+    for_plot.ft(["ph1"], unitary=True)
+    fl.next("FTed data")
+    fl.image(for_plot)
 else:
     if config_dict["nScans"] > 1:
         echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     echo_data.rename("t", "t2")
     fl.next("Raw - time")
-    fl.image(
-        echo_data)
+    fl.image(echo_data)
     echo_data.reorder("t2", first=False)
     for_plot = echo_data.C
-    for_plot.ft('t2',shift=True)
-    fl.next('FTed data')
+    for_plot.ft("t2", shift=True)
+    fl.next("FTed data")
     fl.image(for_plot)
 echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
@@ -120,31 +116,30 @@ echo_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
 nodename = echo_data.name()
-if os.path.exists(filename + ".h5"):
+if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp")
-            echo_data.name("temp")
-            nodename = "temp"
+            print("this nodename already exists, so I will call it temp_echo")
+            echo_data.name("temp_echo")
+            nodename = "temp_echo"
     echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current directory"
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_echo.h5 in the current directory"
         )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 already! -- I'm removing it")
-            os.remove("temp.h5")
-            echo_data.hdf5_write("temp.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-            )
-
+        if os.path.exists("temp_echo.h5"):
+            print("there is a temp_echo.h5 already! -- I'm removing it")
+            os.remove("temp_echo.h5")
+        echo_data.hdf5_write("temp_echo.h5")
+        print(
+            "if I got this far, that probably worked -- be sure to move/rename temp_echo.h5 to the correct name!!"
+        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data",echo_data.name()))
 print(("Shape of saved data",ndshape(echo_data)))
