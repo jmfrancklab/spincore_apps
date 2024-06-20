@@ -105,6 +105,10 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
+    if "echo_label" in ppg_list:
+        nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0]=='marker' and j[1]=='echo_label']
+    else:
+        nEchoes = 1
     # {{{ pull info about phase cycling and echos from the ppg_list
     nPhaseSteps = int(np.prod(list(dict([(j[2],len(j[3])) for j in ppg_list if len(j)>3]).values())))
     # }}}
