@@ -269,6 +269,7 @@ int runBoard()
             done = 1; }
         else if(current_scan != last_scan) {
         last_scan = current_scan;
+        printf("(SPINCORE): scan %d done",last_scan);
         }
         }
     return 0;

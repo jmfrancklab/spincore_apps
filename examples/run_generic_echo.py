@@ -51,11 +51,11 @@ if adjust_field:
 # {{{set phase cycling
 phase_cycling = True
 if phase_cycling:
-    ph_overall = r_[0, 1, 2, 3]
+    ph2 = r_[0, 1, 2, 3]
     ph_diff = r_[0, 2]
-    ph1_cyc = array([(j + k) % 4 for k in ph_overall for j in ph_diff])
-    ph2_cyc = array([(k + 1) % 4 for k in ph_overall for j in ph_diff])
-    nPhaseSteps = len(ph_overall) * len(ph_diff)
+    ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
+    ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
+    nPhaseSteps = len(ph2) * len(ph_diff)
 if not phase_cycling:
     nPhaseSteps = 1
 # }}}
@@ -91,15 +91,16 @@ data = generic(
     ret_data=None,
 )
 ## {{{ chunk and save data
-data.set_prop("postproc_type", "proc_Hahn_echoph_v1")
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
 data.chunk(
     "t",
-    ["ph_overall", "ph_diff", "t2"], 
-    [len(ph_overall), len(ph_diff), -1]
+    ["ph2", "ph_diff", "t2"], 
+    [len(ph2), len(ph_diff), -1]
 )
-data.setaxis("ph_overall", ph_overall / 4).setaxis("ph_diff",ph_diff / 4)
+data.setaxis("ph2", ph2 / 4).setaxis("ph_diff",ph_diff / 4)
+data.set_prop("postproc_type", "spincore_diffph_SE_v1")
+data.set_prop("coherence_pathway", {"ph_overall":-1,"ph1":+1})
 # }}}
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
