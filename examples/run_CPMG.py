@@ -67,7 +67,7 @@ prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # {{{calculate symmetric tau by dividing 2tau by 2
 marker_us = 1.0
 config_dict["tau_us"] = (2*config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms'])/2
-assert (config_dict['tau_us'] > prog_p180_us/pi + marker_us + config_dict['deblank_us'])
+assert (config_dict['tau_us'] > 2*prog_p90_us/pi + marker_us + config_dict['deblank_us'])
 assert (config_dict['deadtime_us'] > config_dict['deblank_us'] + 2*marker_us)
 assert (
         2 * config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms'] ==
