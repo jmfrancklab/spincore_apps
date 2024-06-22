@@ -75,7 +75,7 @@ echo_data = run_spin_echo(
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
-    nEchoes=config_dict["nEchoes"],
+    nEchoes=1,
     p90_us=config_dict["p90_us"],
     repetition_us=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
@@ -112,9 +112,11 @@ else:
     fl.next("FTed data")
     fl.image(for_plot)
 echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
+echo_data.set_prop("postproc_type", "spincore_SE_v1")
+echo_data.set_prop("coherence_pathway", {"ph1":+1})
 echo_data.set_prop("acq_params", config_dict.asdict())
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
+my_exp_type = "ODNP_NMR_comp/Echoes"
+target_directory = getDATADIR(exp_type=my_exp_type)
 filename_out = filename + ".h5"
 nodename = echo_data.name()
 if os.path.exists(f"{filename_out}"):
@@ -142,7 +144,7 @@ else:
             "if I got this far, that probably worked -- be sure to move/rename temp_echo.h5 to the correct name!!"
         )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data",echo_data.name()))
+print("saved data to (node, file, exp_type):", echo_data.name(), filename_out, my_exp_type)
 print(("Shape of saved data",ndshape(echo_data)))
 config_dict.write()
 if phase_cycling:
