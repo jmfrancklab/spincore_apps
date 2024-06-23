@@ -21,7 +21,7 @@ import h5py
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict["SW_kHz"] = 75e6/round(75e6/config_dict["SW_kHz"]/1e3)/1e3
+config_dict["SW_kHz"] = 75e6 / round(75e6 / config_dict["SW_kHz"] / 1e3) / 1e3
 nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
 # }}}
 # {{{create filename and save to config file
@@ -113,7 +113,7 @@ else:
     fl.image(for_plot)
 echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
 echo_data.set_prop("postproc_type", "spincore_SE_v1")
-echo_data.set_prop("coherence_pathway", {"ph1":+1})
+echo_data.set_prop("coherence_pathway", {"ph1": +1})
 echo_data.set_prop("acq_params", config_dict.asdict())
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
@@ -144,34 +144,39 @@ else:
             "if I got this far, that probably worked -- be sure to move/rename temp_echo.h5 to the correct name!!"
         )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print("saved data to (node, file, exp_type):", echo_data.name(), filename_out, my_exp_type)
-print(("Shape of saved data",ndshape(echo_data)))
+print(
+    "saved data to (node, file, exp_type):",
+    echo_data.name(),
+    filename_out,
+    my_exp_type,
+)
+print(("Shape of saved data", ndshape(echo_data)))
 config_dict.write()
 if phase_cycling:
-    echo_data.ft('t2',shift=True)
-    fl.next('image - ft')
+    echo_data.ft("t2", shift=True)
+    fl.next("image - ft")
     fl.image(echo_data)
-    fl.next('image - ft, coherence')
-    echo_data.ft(['ph1'])
+    fl.next("image - ft, coherence")
+    echo_data.ft(["ph1"])
     fl.image(echo_data)
-    fl.next('data plot')
-    if 'nScans' in echo_data.dimlabels:
-        data_slice = echo_data['ph1',1].mean('nScans')
+    fl.next("data plot")
+    if "nScans" in echo_data.dimlabels:
+        data_slice = echo_data["ph1", 1].mean("nScans")
     else:
-        data_slice = echo_data['ph1',1]
+        data_slice = echo_data["ph1", 1]
     fl.plot(data_slice, alpha=0.5)
     fl.plot(data_slice.imag, alpha=0.5)
-    fl.plot(abs(data_slice), color='k', alpha=0.5)
+    fl.plot(abs(data_slice), color="k", alpha=0.5)
 else:
-    fl.next('raw data')
+    fl.next("raw data")
     fl.plot(echo_data)
-    echo_data.ft('t',shift=True)
-    fl.next('ft')
-    if 'nScans' in echo_data.dimlabels:
-        data_slice = echo_data.mean('nScans')
+    echo_data.ft("t", shift=True)
+    fl.next("ft")
+    if "nScans" in echo_data.dimlabels:
+        data_slice = echo_data.mean("nScans")
     else:
-        data_slice = echo_data['ph1',1]
+        data_slice = echo_data["ph1", 1]
     fl.plot(data_slice.real)
     fl.plot(data_slice.imag)
-    fl.plot(abs(data_slice),color='k',alpha=0.5)
+    fl.plot(abs(data_slice), color="k", alpha=0.5)
 fl.show()

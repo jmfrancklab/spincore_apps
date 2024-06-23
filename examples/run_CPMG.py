@@ -19,8 +19,10 @@ from Instruments.XEPR_eth import xepr
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict["SW_kHz"] = 75e6/round(75e6/config_dict["SW_kHz"]/1e3)/1e3
-nPoints = int(config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5)  # per echo
+config_dict["SW_kHz"] = 75e6 / round(75e6 / config_dict["SW_kHz"] / 1e3) / 1e3
+nPoints = int(
+    config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5
+)  # per echo
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 config_dict["echo_acq_ms"] = nPoints / config_dict["SW_kHz"]
@@ -30,9 +32,7 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 # }}}
 # {{{let computer set field
 print(
@@ -66,17 +66,29 @@ prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # {{{calculate symmetric tau by dividing 2tau by 2
 marker_us = 1.0
-config_dict["tau_us"] = (2*config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms'])/2
-assert (config_dict['tau_us'] > 2*prog_p90_us/pi + marker_us + config_dict['deblank_us'])
-assert (config_dict['deadtime_us'] > config_dict['deblank_us'] + 2*marker_us)
+config_dict["tau_us"] = (
+    2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
+) / 2
 assert (
-        2 * config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms'] ==
-        2*config_dict['tau_us'])
+    config_dict["tau_us"]
+    > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
+)
+assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
+assert (
+    2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
+    == 2 * config_dict["tau_us"]
+)
 print(
-        "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"%(2*config_dict['deadtime_us']+1e3*config_dict['echo_acq_ms']+prog_p180_us))
+    "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
+    % (
+        2 * config_dict["deadtime_us"]
+        + 1e3 * config_dict["echo_acq_ms"]
+        + prog_p180_us
+    )
+)
 # }}}
 # {{{check total points
-total_pts = nPoints * nPhaseSteps * config_dict['nEchoes']
+total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
 assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
     % total_pts
@@ -87,21 +99,24 @@ data = generic(
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
-        ("delay", 
+        (
+            "delay",
             config_dict["tau_us"]
             - 2 * prog_p90_us / pi
-            -marker_us
-            -config_dict['deblank_us']),
+            - marker_us
+            - config_dict["deblank_us"],
+        ),
         ("marker", "echo_label", config_dict["nEchoes"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
-        ("delay", 
-            config_dict['deadtime_us']
-            -2* marker_us
-            - config_dict['deblank_us']
-            ),
+        (
+            "delay",
+            config_dict["deadtime_us"]
+            - 2 * marker_us
+            - config_dict["deblank_us"],
+        ),
         ("jumpto", "echo_label"),
         ("delay", config_dict["repetition_us"]),
     ],
@@ -165,4 +180,9 @@ else:
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(("Name of saved data", data.name()))
 config_dict.write()
-print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
+print(
+    "saved data to (node, file, exp_type):",
+    data.name(),
+    filename_out,
+    my_exp_type,
+)
