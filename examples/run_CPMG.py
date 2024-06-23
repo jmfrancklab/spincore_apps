@@ -64,7 +64,7 @@ if not phase_cycling:
 # }}}
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
-# {{{calculate symmetric tau by dividing 2tau by 2
+# {{{ calculate symmetric tau by dividing 2tau by 2
 marker_us = 1.0
 config_dict["tau_us"] = (
     2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
@@ -86,12 +86,27 @@ print(
         + prog_p180_us
     )
 )
+assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
+assert (
+    2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
+    == 2 * config_dict["tau_us"]
+)
+print(
+    "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
+    % (
+        2 * config_dict["deadtime_us"]
+        + 1e3 * config_dict["echo_acq_ms"]
+        + prog_p180_us
+    )
+)
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
 assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
     % total_pts
+)
+# }}}
 )
 # }}}
 data = generic(
