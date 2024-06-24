@@ -22,6 +22,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
 nPoints, config_dict['SW_kHz'], config_dict['echo_acq_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['echo_acq_ms'])
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
+assert os.path.exists(target_directory)
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -31,8 +32,6 @@ config_dict["cpmg_counter"] += 1
 filename = (
     f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 )
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
-assert os.path.exists(target_directory)
 # }}}
 # {{{let computer set field
 print(
@@ -121,6 +120,7 @@ data = generic(
 )
 ## {{{ chunk and save data
 data.set_prop("postproc_type", "spincore_diffph_SE_v1")
+data.set_prop("coherence_pathway", {"ph_overall":-1,"ph1":+1})
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
 data.chunk(
@@ -165,7 +165,7 @@ else:
             "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
         )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data", data.name()))
+print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
 config_dict.write()
 print(
     "saved data to (node, file, exp_type):",

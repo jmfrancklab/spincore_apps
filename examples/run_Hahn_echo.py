@@ -23,22 +23,18 @@ fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['acq_time_ms'])
+my_exp_type = "ODNP_NMR_comp/Echoes"
+target_directory = getDATADIR(exp_type=my_exp_type)
+assert os.path.exists(target_directory)
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "echo"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
-# }}}
-# {{{set phase cycling
-phase_cycling = True
-if phase_cycling:
-    ph1_cyc = r_[0, 1, 2, 3]
-    nPhaseSteps = 4
-if not phase_cycling:
-    ph1_cyc = 0.0
-    nPhaseSteps = 1
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+)
 # }}}
 # {{{let computer set field
 print(
@@ -46,16 +42,20 @@ print(
     config_dict["carrierFreq_MHz"],
     "since that's what's in your .ini file",
 )
-Field = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
     "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
-    % Field
+    % field_G
 )
 with xepr() as x:
-    assert Field < 3700, "are you crazy??? field is too high!"
-    assert Field > 3300, "are you crazy?? field is too low!"
-    Field = x.set_field(Field)
-    print("field set to ", Field)
+    assert field_G < 3700, "are you crazy??? field is too high!"
+    assert field_G > 3300, "are you crazy?? field is too low!"
+    field_G = x.set_field(field_G)
+    print("field set to ", field_G)
+# }}}
+# {{{set phase cycling
+ph1_cyc = r_[0, 1, 2, 3]
+nPhaseSteps = 4
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
@@ -64,8 +64,7 @@ assert total_pts < 2**14, (
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
-# {{{acquire echo
-echo_data = run_spin_echo(
+data = run_spin_echo(
     nScans=config_dict["nScans"],
     indirect_idx=0,
     indirect_len=1,
@@ -80,43 +79,27 @@ echo_data = run_spin_echo(
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
-# }}}
-# {{{ chunk and save data
-if phase_cycling:
-    echo_data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
-    echo_data.setaxis("ph1", ph1_cyc / 4)
-    if config_dict["nScans"] > 1:
-        echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    echo_data.reorder(["ph1", "nScans", "t2"])
-    echo_data.squeeze()
-    echo_data.set_units("t2", "s")
-    fl.next("Raw - time")
-    fl.image(echo_data)
-    echo_data.reorder("t2", first=False)
-    for_plot = echo_data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary=True)
-    fl.next("FTed data")
-    fl.image(for_plot)
-else:
-    if config_dict["nScans"] > 1:
-        echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    echo_data.rename("t", "t2")
-    fl.next("Raw - time")
-    fl.image(echo_data)
-    echo_data.reorder("t2", first=False)
-    for_plot = echo_data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
-    fl.image(for_plot)
-echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-echo_data.set_prop("postproc_type", "spincore_SE_v1")
-echo_data.set_prop("coherence_pathway", {"ph1": +1})
-echo_data.set_prop("acq_params", config_dict.asdict())
-my_exp_type = "ODNP_NMR_comp/Echoes"
-target_directory = getDATADIR(exp_type=my_exp_type)
+## {{{ chunk and save data
+data.set_prop("postproc_type", "spincore_SE_v1")
+data.set_prop("coherence_pathway", {"ph1": +1})
+data.set_prop("acq_params", config_dict.asdict())
+data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
+data.chunk(
+    "t",
+    ["ph1", "t2"], 
+    [len(ph1_cyc), -1]
+)
+data.labels(
+    {
+        "ph1": r_[0 : len(ph1_cyc)]
+    }
+)
+data.setaxis("ph1", ph1_cyc / 4)
+if config_dict["nScans"] > 1:
+    echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+echo_data.reorder(["ph1", "nScans", "t2"])
 filename_out = filename + ".h5"
-nodename = echo_data.name()
+nodename = data.name()
 if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
@@ -124,12 +107,12 @@ if os.path.exists(f"{filename_out}"):
     ) as fp:
         if nodename in fp.keys():
             print("this nodename already exists, so I will call it temp_echo")
-            echo_data.name("temp_echo")
+            data.name("temp_echo")
             nodename = "temp_echo"
-    echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
-        echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
+        data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
             f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_echo.h5 in the current directory"
@@ -137,44 +120,25 @@ else:
         if os.path.exists("temp_echo.h5"):
             print("there is a temp_echo.h5 already! -- I'm removing it")
             os.remove("temp_echo.h5")
-        echo_data.hdf5_write("temp_echo.h5")
+        data.hdf5_write("temp_echo.h5")
         print(
             "if I got this far, that probably worked -- be sure to move/rename temp_echo.h5 to the correct name!!"
         )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(
-    "saved data to (node, file, exp_type):",
-    echo_data.name(),
-    filename_out,
-    my_exp_type,
-)
-print(("Shape of saved data", ndshape(echo_data)))
+print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
 config_dict.write()
-if phase_cycling:
-    echo_data.ft("t2", shift=True)
-    fl.next("image - ft")
-    fl.image(echo_data)
-    fl.next("image - ft, coherence")
-    echo_data.ft(["ph1"])
-    fl.image(echo_data)
-    fl.next("data plot")
-    if "nScans" in echo_data.dimlabels:
-        data_slice = echo_data["ph1", 1].mean("nScans")
-    else:
-        data_slice = echo_data["ph1", 1]
-    fl.plot(data_slice, alpha=0.5)
-    fl.plot(data_slice.imag, alpha=0.5)
-    fl.plot(abs(data_slice), color="k", alpha=0.5)
+data.ft("t2", shift=True)
+fl.next("image - ft")
+fl.image(data)
+fl.next("image - ft, coherence")
+data.ft("ph1")
+fl.image(data)
+fl.next("data plot")
+if "nScans" in data.dimlabels:
+    data_slice = data["ph1", 1].mean("nScans")
 else:
-    fl.next("raw data")
-    fl.plot(echo_data)
-    echo_data.ft("t", shift=True)
-    fl.next("ft")
-    if "nScans" in echo_data.dimlabels:
-        data_slice = echo_data.mean("nScans")
-    else:
-        data_slice = echo_data["ph1", 1]
-    fl.plot(data_slice.real)
-    fl.plot(data_slice.imag)
-    fl.plot(abs(data_slice), color="k", alpha=0.5)
+    data_slice = data["ph1", 1]
+fl.plot(data_slice, alpha=0.5)
+fl.plot(data_slice.imag, alpha=0.5)
+fl.plot(abs(data_slice), color="k", alpha=0.5)
 fl.show()
