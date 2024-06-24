@@ -74,23 +74,6 @@ assert (
     > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
 )
 assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
-assert (
-    2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
-    == 2 * config_dict["tau_us"]
-)
-print(
-    "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
-    % (
-        2 * config_dict["deadtime_us"]
-        + 1e3 * config_dict["echo_acq_ms"]
-        + prog_p180_us
-    )
-)
-assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
-assert (
-    2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
-    == 2 * config_dict["tau_us"]
-)
 print(
     "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
     % (
@@ -105,8 +88,6 @@ total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
 assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
     % total_pts
-)
-# }}}
 )
 # }}}
 data = generic(
