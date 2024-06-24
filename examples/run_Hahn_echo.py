@@ -22,7 +22,7 @@ import h5py
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['acq_time_ms'])
+nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(SW_kHz = config_dict['SW_kHz'], acq_time_ms = config_dict['acq_time_ms'])
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -96,8 +96,8 @@ data.labels(
 )
 data.setaxis("ph1", ph1_cyc / 4)
 if config_dict["nScans"] > 1:
-    echo_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-echo_data.reorder(["ph1", "nScans", "t2"])
+    data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+data.reorder(["ph1", "nScans", "t2"])
 filename_out = filename + ".h5"
 nodename = data.name()
 if os.path.exists(f"{filename_out}"):
