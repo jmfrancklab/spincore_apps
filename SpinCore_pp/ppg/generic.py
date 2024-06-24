@@ -10,7 +10,7 @@ from .. import (
 from .. import load as spincore_load
 import pyspecdata as psp
 import numpy as np
-from numpy import r_,isclose
+from numpy import r_
 from pyspecdata import strm
 import time
 import logging
@@ -120,7 +120,7 @@ def generic(
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
         check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
-        assert isclose(check,acq_time_ms), f"you are trying to set the acquisition time to {acq_time_ms}, but configureRX returns {check}"
+        assert np.isclose(check,acq_time_ms), f"you are trying to set the acquisition time to {acq_time_ms}, but configureRX returns {check}"
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
