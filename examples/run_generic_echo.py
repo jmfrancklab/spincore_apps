@@ -120,29 +120,13 @@ if os.path.exists(f"{filename_out}"):
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_cpmg")
-            # PR COMMENT: this is objectively not a good solution.  You
-            # should rather increment the counter and re-determine the
-            # node name.  I actually thought we may have a ppg that does
-            # this already.
-            data.name("temp_generic_echo")
-            nodename = "temp_generic_echo"
+        tempcounter = 1
+        orig_nodename = nodename
+        while nodename in fp.keys():
+            nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+            data.name(nodename)
+            tempcounter += 1
     data.hdf5_write(f"{filename_out}", directory=target_directory)
-else:
-    try:
-        data.hdf5_write(f"{filename_out}", directory=target_directory)
-    except:
-        print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current h5 file"
-        )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 already! -- I'm removing it")
-            os.remove("temp.h5")
-        data.hdf5_write("temp.h5")
-        print(
-            "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
     "saved data to (node, file, exp_type):",

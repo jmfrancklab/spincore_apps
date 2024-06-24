@@ -105,25 +105,13 @@ if os.path.exists(f"{filename_out}"):
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_echo")
-            data.name("temp_echo")
-            nodename = "temp_echo"
+        tempcounter = 1
+        orig_nodename = nodename
+        while nodename in fp.keys():
+            nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+            data.name(nodename)
+            tempcounter += 1
     data.hdf5_write(f"{filename_out}", directory=target_directory)
-else:
-    try:
-        data.hdf5_write(f"{filename_out}", directory=target_directory)
-    except:
-        print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_echo.h5 in the current directory"
-        )
-        if os.path.exists("temp_echo.h5"):
-            print("there is a temp_echo.h5 already! -- I'm removing it")
-            os.remove("temp_echo.h5")
-        data.hdf5_write("temp_echo.h5")
-        print(
-            "if I got this far, that probably worked -- be sure to move/rename temp_echo.h5 to the correct name!!"
-        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
 config_dict.write()
