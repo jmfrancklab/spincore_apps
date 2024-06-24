@@ -153,6 +153,7 @@ data.chunk(
     ["ph2", "ph_diff", "nEcho", "t2"],
     [len(ph2), len(ph_diff), int(config_dict["nEchoes"]), -1],
 )
+# PR COMMENT: you are setting the axes multiple times
 data.labels(
     {
         "nEcho": r_[0 : int(config_dict["nEchoes"])],
