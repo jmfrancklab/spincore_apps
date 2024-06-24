@@ -66,19 +66,19 @@ nutation_data = run_spin_echo(
         deadtime_us = config_dict['deadtime_us'],
         nScans=config_dict['nScans'], 
         indirect_idx = 0, 
-        indirect_len = len(p90_range), 
-        adcOffset = config_dict['adcOffset'],
+        indirect_len = len(p90_range_us), 
+        adcOffset = config_dict['adc_offset'],
         carrierFreq_MHz = config_dict['carrierFreq_MHz'], 
         nPoints = nPoints,
         nEchoes=config_dict['nEchoes'], 
-        p90_us = p90_range[0], 
+        p90_us = p90_range_us[0], 
         repetition_us = config_dict['repetition_us'],
         tau_us = config_dict['tau_us'], 
         SW_kHz = config_dict['SW_kHz'], 
         indirect_fields = None, 
         ret_data = None)
 mytimes = nutation_data.getaxis('indirect')
-mytimes[0] = p90_range[0]
+mytimes[0] = p90_range_us[0]
 for idx, p90_us in enumerate(p90_range_us[1:]):
     nutation_data = run_spin_echo(
             deadtime_us = config_dict['deadtime_us'],
@@ -97,14 +97,6 @@ for idx, p90_us in enumerate(p90_range_us[1:]):
             ret_data=nutation_data,
         )
     mytimes[idx+1] = p90_us
-# {{{ for some reason, axis coordinates were
-#     given as a structured array with p90
-#     and index fields, so I'm staying
-#     consistent
-mytimes = nutation_data.getaxis("indirect")
-mytimes["p_90"][:] = p90_range_us
-mytimes["index"][:] = arange(len(p90_range_us))
-# }}}
 # {{{ chunk and save data
 nutation_data.set_prop("postproc_type", "spincore_nutation_v4")
 nutation_data.set_prop("coherence_pathway", {"ph1": +1})
