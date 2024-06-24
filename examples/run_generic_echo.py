@@ -16,7 +16,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict,nPoints = get_integer_sampling_intervals(config_dict) 
+nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['acq_time_ms'])
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 # }}}
 # {{{create filename and save to config file

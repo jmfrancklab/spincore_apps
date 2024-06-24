@@ -19,7 +19,7 @@ from Instruments.XEPR_eth import xepr
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict, nPoints = get_integer_sampling_intervals(config_dict, use_echo_acq=True)
+nPoints, config_dict['SW_kHz'], config_dict['echo_acq_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['echo_acq_ms'])
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 # }}}

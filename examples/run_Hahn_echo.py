@@ -22,7 +22,7 @@ import h5py
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict, nPoints = get_integer_sampling_intervals(config_dict)
+nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['acq_time_ms'])
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
