@@ -17,9 +17,24 @@ from datetime import datetime
 import h5py
 from Instruments.XEPR_eth import xepr
 
+# {{{ command-line option to leave the field untouched (if you set it once, why set it again)
+# PR COMMENT: I added this here, as well
+import sys
+
+adjust_field = True
+if len(sys.argv) == 2 and sys.argv[1] == "stayput":
+    adjust_field = False
+# }}}
+
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints, config_dict['SW_kHz'], config_dict['echo_acq_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['echo_acq_ms'])
+(
+    nPoints,
+    config_dict["SW_kHz"],
+    config_dict["echo_acq_ms"],
+) = get_integer_sampling_intervals(
+    config_dict["SW_kHz"], config_dict["echo_acq_ms"]
+)
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -29,26 +44,26 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 # }}}
 # {{{let computer set field
-print(
-    "I'm assuming that you've tuned your probe to",
-    config_dict["carrierFreq_MHz"],
-    "since that's what's in your .ini file",
-)
-field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
-print(
-    "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
-    % field_G
-)
-with xepr() as x:
-    assert field_G < 3700, "are you crazy??? field is too high!"
-    assert field_G > 3300, "are you crazy?? field is too low!"
-    field_G = x.set_field(field_G)
-    print("field set to ", field_G)
+if adjust_field:
+    # PR COMMENT: copied conditional to go with the option
+    print(
+        "I'm assuming that you've tuned your probe to",
+        config_dict["carrierFreq_MHz"],
+        "since that's what's in your .ini file",
+    )
+    field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+    print(
+        "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+        % field_G
+    )
+    with xepr() as x:
+        assert field_G < 3700, "are you crazy??? field is too high!"
+        assert field_G > 3300, "are you crazy?? field is too low!"
+        field_G = x.set_field(field_G)
+        print("field set to ", field_G)
 # }}}
 # {{{set phase cycling
 ph2 = r_[0, 1, 2, 3]
@@ -65,12 +80,17 @@ config_dict["tau_us"] = (
     2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
 ) / 2
 assert (
-    config_dict["tau_us"] > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
+    config_dict["tau_us"]
+    > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
 )
 assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
 print(
     "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
-    % (2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"] + prog_p180_us)
+    % (
+        2 * config_dict["deadtime_us"]
+        + 1e3 * config_dict["echo_acq_ms"]
+        + prog_p180_us
+    )
 )
 # }}}
 # {{{check total points
@@ -92,6 +112,7 @@ data = generic(
             - marker_us
             - config_dict["deblank_us"],
         ),
+        # PR COMMENT:  you're missing my comments that talk about how tau_us is defined
         ("marker", "echo_label", config_dict["nEchoes"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
@@ -99,7 +120,9 @@ data = generic(
         ("acquire", config_dict["echo_acq_ms"]),
         (
             "delay",
-            config_dict["deadtime_us"] - 2 * marker_us - config_dict["deblank_us"],
+            config_dict["deadtime_us"]
+            - 2 * marker_us
+            - config_dict["deblank_us"],
         ),
         ("jumpto", "echo_label"),
         # In the line above I assume this takes marker_us to execute
@@ -120,14 +143,17 @@ data = generic(
 )
 ## {{{ chunk and save data
 data.set_prop("postproc_type", "spincore_diffph_SE_v1")
-data.set_prop("coherence_pathway", {"ph_overall":-1,"ph1":+1})
+data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
+# PR COMMENT: def of nodename was objectively convoluted -- I fix
+nodename = config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
+data.name(nodename)
 data.chunk(
     "t",
     ["ph2", "ph_diff", "nEcho", "t2"],
     [len(ph2), len(ph_diff), int(config_dict["nEchoes"]), -1],
 )
+# PR COMMENT: you are setting the axes multiple times
 data.labels(
     {
         "nEcho": r_[0 : int(config_dict["nEchoes"])],
@@ -139,7 +165,6 @@ data.setaxis("ph2", ph2 / 4)
 data.setaxis("ph_diff", ph_diff / 4)
 # }}}
 filename_out = filename + ".h5"
-nodename = data.name()
 if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
@@ -147,6 +172,10 @@ if os.path.exists(f"{filename_out}"):
     ) as fp:
         if nodename in fp.keys():
             print("this nodename already exists, so I will call it temp_cpmg")
+            # PR COMMENT: this is objectively not a good solution.  You
+            # should rather increment the counter and re-determine the
+            # node name.  I actually thought we may have a ppg that does
+            # this already.
             data.name("temp_cpmg")
             nodename = "temp_cpmg"
     data.hdf5_write(f"{filename_out}", directory=target_directory)
@@ -155,21 +184,20 @@ else:
         data.hdf5_write(f"{filename_out}", directory=target_directory)
     except:
         print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_cpmg.h5 in the current h5 file"
+            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current h5 file"
         )
-        if os.path.exists("temp_cpmg.h5"):
-            print("there is a temp_cpmg.h5 already! -- I'm removing it")
-            os.remove("temp_cpmg.h5")
-        data.hdf5_write("temp_cpmg.h5")
+        if os.path.exists("temp.h5"):
+            print("there is a temp.h5 already! -- I'm removing it")
+            os.remove("temp.h5")
+        data.hdf5_write("temp.h5")
         print(
-            "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
+            "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
         )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
-config_dict.write()
 print(
     "saved data to (node, file, exp_type):",
     data.name(),
     filename_out,
     my_exp_type,
 )
+config_dict.write()
