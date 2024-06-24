@@ -16,7 +16,13 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(SW_kHz = config_dict['SW_kHz'], acq_time_ms = config_dict['acq_time_ms'])
+(
+    nPoints,
+    config_dict["SW_kHz"],
+    config_dict["acq_time_ms"],
+) = get_integer_sampling_intervals(
+    SW_kHz=config_dict["SW_kHz"], acq_time_ms=config_dict["acq_time_ms"]
+)
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -26,9 +32,7 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "echo"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 # }}}
 # {{{let computer set field
 if adjust_field:
@@ -69,10 +73,7 @@ data = generic(
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
-        (
-            "delay",
-            config_dict["tau_us"]
-        ),
+        ("delay", config_dict["tau_us"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
@@ -91,14 +92,10 @@ data = generic(
 )
 ## {{{ chunk and save data
 data.set_prop("postproc_type", "spincore_diffph_SE_v1")
-data.set_prop("coherence_pathway", {"ph_overall":-1,"ph1":+1})
+data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
-data.chunk(
-    "t",
-    ["ph2", "ph_diff", "t2"], 
-    [len(ph2), len(ph_diff), -1]
-)
+data.chunk("t", ["ph2", "ph_diff", "t2"], [len(ph2), len(ph_diff), -1])
 data.setaxis("ph2", ph2 / 4)
 data.setaxis("ph_diff", ph_diff / 4)
 # }}}
@@ -110,7 +107,9 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_generic_echo")
+            print(
+                "this nodename already exists, so I will call it temp_generic_echo"
+            )
             data.name("temp_generic_echo")
             nodename = "temp_generic_echo"
     data.hdf5_write(f"{filename_out}", directory=target_directory)
@@ -122,12 +121,19 @@ else:
             f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_generic_echo.h5 in the current h5 file"
         )
         if os.path.exists("temp_generic_echo.h5"):
-            print("there is a temp_generic_echo.h5 already! -- I'm removing it")
+            print(
+                "there is a temp_generic_echo.h5 already! -- I'm removing it"
+            )
             os.remove("temp_generic_echo.h5")
         data.hdf5_write("temp_generic_echo.h5")
         print(
             "if I got this far, that probably worked -- be sure to move/rename temp_generic_echo.h5 to the correct name!!"
         )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
+print(
+    "saved data to (node, file, exp_type):",
+    data.name(),
+    filename_out,
+    my_exp_type,
+)
 config_dict.write()

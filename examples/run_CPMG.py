@@ -19,7 +19,13 @@ from Instruments.XEPR_eth import xepr
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints, config_dict['SW_kHz'], config_dict['echo_acq_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['echo_acq_ms'])
+(
+    nPoints,
+    config_dict["SW_kHz"],
+    config_dict["echo_acq_ms"],
+) = get_integer_sampling_intervals(
+    config_dict["SW_kHz"], config_dict["echo_acq_ms"]
+)
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -29,9 +35,7 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 # }}}
 # {{{let computer set field
 print(
@@ -65,12 +69,17 @@ config_dict["tau_us"] = (
     2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
 ) / 2
 assert (
-    config_dict["tau_us"] > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
+    config_dict["tau_us"]
+    > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
 )
 assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
 print(
     "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
-    % (2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"] + prog_p180_us)
+    % (
+        2 * config_dict["deadtime_us"]
+        + 1e3 * config_dict["echo_acq_ms"]
+        + prog_p180_us
+    )
 )
 # }}}
 # {{{check total points
@@ -99,7 +108,9 @@ data = generic(
         ("acquire", config_dict["echo_acq_ms"]),
         (
             "delay",
-            config_dict["deadtime_us"] - 2 * marker_us - config_dict["deblank_us"],
+            config_dict["deadtime_us"]
+            - 2 * marker_us
+            - config_dict["deblank_us"],
         ),
         ("jumpto", "echo_label"),
         # In the line above I assume this takes marker_us to execute
@@ -120,7 +131,7 @@ data = generic(
 )
 ## {{{ chunk and save data
 data.set_prop("postproc_type", "spincore_diffph_SE_v1")
-data.set_prop("coherence_pathway", {"ph_overall":-1,"ph1":+1})
+data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
 data.chunk(
@@ -165,7 +176,12 @@ else:
             "if I got this far, that probably worked -- be sure to move/rename temp_cpmg.h5 to the correct name!!"
         )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
+print(
+    "saved data to (node, file, exp_type):",
+    data.name(),
+    filename_out,
+    my_exp_type,
+)
 config_dict.write()
 print(
     "saved data to (node, file, exp_type):",
