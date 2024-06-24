@@ -26,4 +26,4 @@ def get_integer_sampling_intervals(config_dict, use_echo_acq=False):
         nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
         config_dict["acq_time_ms"] = nPoints / config_dict["SW_kHz"]
     config_dict.write()
-    return config_dict
+    return config_dict, nPoints

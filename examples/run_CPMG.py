@@ -10,7 +10,7 @@ from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp
-from SpinCore_pp import prog_plen,get_integer_sampling_intervals
+from SpinCore_pp import prog_plen, get_integer_sampling_intervals
 from SpinCore_pp.ppg import generic
 import os
 from datetime import datetime
@@ -19,7 +19,7 @@ from Instruments.XEPR_eth import xepr
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict = get_integer_sampling_intervals(config_dict)
+config_dict, nPoints = get_integer_sampling_intervals(config_dict, use_echo_acq=True)
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 # }}}
@@ -28,7 +28,9 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
+)
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 assert os.path.exists(target_directory)
 # }}}
@@ -68,17 +70,12 @@ config_dict["tau_us"] = (
     2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
 ) / 2
 assert (
-    config_dict["tau_us"]
-    > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
+    config_dict["tau_us"] > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
 )
 assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
 print(
     "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
-    % (
-        2 * config_dict["deadtime_us"]
-        + 1e3 * config_dict["echo_acq_ms"]
-        + prog_p180_us
-    )
+    % (2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"] + prog_p180_us)
 )
 # }}}
 # {{{check total points
@@ -107,9 +104,7 @@ data = generic(
         ("acquire", config_dict["echo_acq_ms"]),
         (
             "delay",
-            config_dict["deadtime_us"]
-            - 2 * marker_us
-            - config_dict["deblank_us"],
+            config_dict["deadtime_us"] - 2 * marker_us - config_dict["deblank_us"],
         ),
         ("jumpto", "echo_label"),
         # In the line above I assume this takes marker_us to execute

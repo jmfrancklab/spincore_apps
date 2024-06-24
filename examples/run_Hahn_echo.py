@@ -13,6 +13,7 @@ from pylab import *
 from pyspecdata import *
 import os
 import SpinCore_pp
+from SpinCore_pp import get_integer_sampling_intervals
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
@@ -21,17 +22,14 @@ import h5py
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict["SW_kHz"] = 75e6 / round(75e6 / config_dict["SW_kHz"] / 1e3) / 1e3
-nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+config_dict, nPoints = get_integer_sampling_intervals(config_dict)
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "echo"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 # {{{set phase cycling
 phase_cycling = True
