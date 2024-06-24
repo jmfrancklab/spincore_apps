@@ -33,6 +33,8 @@ config_dict["type"] = "CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
+target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
+assert os.path.exists(target_directory)
 # }}}
 # {{{let computer set field
 print(
@@ -114,6 +116,10 @@ data = generic(
             - config_dict["deblank_us"],
         ),
         ("jumpto", "echo_label"),
+        # In the line above I assume this takes marker_us to execute
+        # The way to be sure of this would be to capture on a scope and
+        # measure from one 180 to the next (or actually several, since
+        # this error would be cumulative
         ("delay", config_dict["repetition_us"]),
     ],
     nScans=config_dict["nScans"],
@@ -146,7 +152,6 @@ data.labels(
 data.setaxis("ph2", ph2 / 4)
 data.setaxis("ph_diff", ph_diff / 4)
 # }}}
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"
 nodename = data.name()
 if os.path.exists(f"{filename_out}"):
