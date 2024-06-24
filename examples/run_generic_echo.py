@@ -1,13 +1,13 @@
 from pylab import *
 from pyspecdata import *
+import os
 from numpy import *
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals
 from SpinCore_pp.ppg import generic
-import os
 from datetime import datetime
-import h5py
 from Instruments.XEPR_eth import xepr
+import h5py
 import sys
 
 adjust_field = True
@@ -16,7 +16,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['acq_time_ms'])
+nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(SW_kHz = config_dict['SW_kHz'], acq_time_ms = config_dict['acq_time_ms'])
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -98,12 +98,6 @@ data.chunk(
     "t",
     ["ph2", "ph_diff", "t2"], 
     [len(ph2), len(ph_diff), -1]
-)
-data.labels(
-    {
-        "ph2": r_[0 : len(ph2)],
-        "ph_diff": r_[0 : len(ph_diff)],
-    }
 )
 data.setaxis("ph2", ph2 / 4)
 data.setaxis("ph_diff", ph_diff / 4)
