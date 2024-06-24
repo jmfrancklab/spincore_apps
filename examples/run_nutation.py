@@ -19,29 +19,40 @@ fl = figlist_var()
 p90_range_us = linspace(1.0, 10.0, 20, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict, nPoints = get_integer_sampling_intervals(config_dict)
+nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['acq_time_ms'])
+my_exp_type = "ODNP_NMR_comp/nutation"
+target_directory = getDATADIR(exp_type=my_exp_type)
+assert os.path.exists(target_directory)
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "nutation"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+)
+# }}}
+# {{{let computer set field
+print(
+    "I'm assuming that you've tuned your probe to:,
+    config_dict["carrierFreq_MHz"],
+    "since that's what's in your .ini file",
+)
+field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+print(
+    "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+    % field_G
+)
+with xepr() as x:
+    assert field_G < 3700, "are you crazy??? field is too high!"
+    assert field_G > 3300, "are you crazy?? field is too low!"
+    field_G = x.set_field(field_G)
+    print("field set to ", field_G)
 # }}}
 # {{{set phase cycling
-phase_cycling = True
-if phase_cycling:
-    ph1_cyc = r_[0, 1, 2, 3]
-    nPhaseSteps = 4
-if not phase_cycling:
-    ph1_cyc = 0.0
-    nPhaseSteps = 1
-# }}}
-# {{{ Edit here to set the actual field
-B0 = (
-    config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
-)  # Determine this from Field Sweep
-thisB0 = xepr().set_field(B0)
+ph1_cyc = r_[0, 1, 2, 3]
+nPhaseSteps = 4
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
@@ -77,37 +88,25 @@ mytimes = nutation_data.getaxis("indirect")
 mytimes["p_90"][:] = p90_range_us
 mytimes["index"][:] = arange(len(p90_range_us))
 # }}}
-if phase_cycling:
-    nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
-    nutation_data.setaxis("ph1", ph1_cyc)
-    if config_dict["nScans"] > 1:
-        nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    nutation_data.reorder(["ph1", "nScans", "t2"])
-    nutation_data.squeeze()
-    nutation_data.set_units("t2", "s")
-    fl.next("Raw - time")
-    fl.image(nutation_data.C.mean("nScans"))
-    nutation_data.reorder("t2", first=False)
-    for_plot = nutation_data.C
-    for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary=True)
-    fl.next("FTed data")
-    fl.image(for_plot.C.mean("nScans"))
-else:
-    if config_dict["nScans"] > 1:
-        nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    nutation_data.rename("t", "t2")
-    fl.next("Raw - time")
-    fl.image(nutation_data.C.mean("nScans"))
-    nutation_data.reorder("t2", first=False)
-    for_plot = nutation_data.C
-    for_plot.ft("t2", shift=True)
-    fl.next("FTed data")
-    fl.image(for_plot)
-nutation_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
+# {{{ chunk and save data
 nutation_data.set_prop("postproc_type", "spincore_nutation_v1")
+nutation_data.set_prop("coherence_pathway", {"ph1": +1})
 nutation_data.set_prop("acq_params", config_dict.asdict())
-target_directory = getDATADIR(exp_type="ODNP_NMR_comp/nutation")
+nutation_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
+nutation_data.chunk(
+        "t", 
+        ["ph1", "t2"], 
+        [4, -1]
+)
+nutation_data.labels(
+    {
+        "ph1": r_[0 : len(ph1_cyc)]
+    }
+)
+nutation_data.setaxis("ph1", ph1_cyc / 4)
+if config_dict["nScans"] > 1:
+    nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+nutation_data.reorder(["ph1", "nScans", "t2"])
 filename_out = filename + ".h5"
 nodename = nutation_data.name()
 if os.path.exists(f"{filename_out}"):
@@ -119,7 +118,7 @@ if os.path.exists(f"{filename_out}"):
             print("this nodename already exists, so I will call it temp_nutation")
             nutation_data.name("temp_nutation")
             nodename = "temp_nutation"
-        nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
+    nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
 else:
     try:
         nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
@@ -130,11 +129,17 @@ else:
         if os.path.exists("temp_nutation.h5"):
             print("there is a temp_nutation.h5 already! -- I'm removing it")
             os.remove("temp_nutation.h5")
-            nutation_data.hdf5_write("temp_nutation.h5")
-            print(
-                "if I got this far, that probably worked -- be sure to move/rename temp_nutation.h5 to the correct name!!"
-            )
+        nutation_data.hdf5_write("temp_nutation.h5")
+        print(
+            "if I got this far, that probably worked -- be sure to move/rename temp_nutation.h5 to the correct name!!"
+        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(("Name of saved data", nutation_data.name()))
+print("saved data to (node, file, exp_type):", nutation_data.name(), filename_out, my_exp_type)
 config_dict.write()
+nutation_data.ft("t2", shift=True)
+fl.next("image - ft")
+fl.image(nutation_data)
+fl.next("image - ft, coherence")
+nutation_data.ft("ph1")
+fl.image(nutation_data)
 fl.show()
