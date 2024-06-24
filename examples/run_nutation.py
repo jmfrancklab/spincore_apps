@@ -9,6 +9,7 @@ that we are able to see when the signal rotates through 90 to
 from pyspecdata import *
 import os
 import SpinCore_pp
+from SpinCore_pp import get_integer_sampling_intervals
 from Instruments.XEPR_eth import xepr
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
@@ -18,7 +19,7 @@ fl = figlist_var()
 p90_range_us = linspace(1.0, 10.0, 20, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
+config_dict, nPoints = get_integer_sampling_intervals(config_dict)
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
