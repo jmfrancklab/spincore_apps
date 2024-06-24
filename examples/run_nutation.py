@@ -124,25 +124,13 @@ if os.path.exists(f"{filename_out}"):
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_nutation")
-            nutation_data.name("temp_nutation")
-            nodename = "temp_nutation"
-    nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
-else:
-    try:
-        nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
-    except:
-        print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_nutation.h5 in the current directory"
-        )
-        if os.path.exists("temp_nutation.h5"):
-            print("there is a temp_nutation.h5 already! -- I'm removing it")
-            os.remove("temp_nutation.h5")
-        nutation_data.hdf5_write("temp_nutation.h5")
-        print(
-            "if I got this far, that probably worked -- be sure to move/rename temp_nutation.h5 to the correct name!!"
-        )
+        tempcounter = 1
+        orig_nodename = nodename
+        while nodename in fp.keys():
+            nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+            data.name(nodename)
+            tempcounter += 1
+    data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print("saved data to (node, file, exp_type):", nutation_data.name(), filename_out, my_exp_type)
 config_dict.write()

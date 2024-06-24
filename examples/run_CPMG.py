@@ -5,6 +5,8 @@ CPMG
 This script will perform a standard CPMG experiment. 
 In order to form a symmetric echo, a padding time is added before 
 and after your tau through a series of delays. 
+If you wish to keep the field as is without adjustment, follow
+the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
 from pylab import *
 from pyspecdata import *
@@ -12,20 +14,34 @@ from numpy import *
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals
 from SpinCore_pp.ppg import generic
-import os
+import os, sys
 from datetime import datetime
 import h5py
 from Instruments.XEPR_eth import xepr
 
 # {{{ command-line option to leave the field untouched (if you set it once, why set it again)
-# PR COMMENT: I added this here, as well
-import sys
-
 adjust_field = True
 if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
-
+# {{{let computer set field
+if adjust_field:
+    print(
+        "I'm assuming that you've tuned your probe to",
+        config_dict["carrierFreq_MHz"],
+        "since that's what's in your .ini file",
+    )
+    field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+    print(
+        "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
+        % field_G
+    )
+    with xepr() as x:
+        assert field_G < 3700, "are you crazy??? field is too high!"
+        assert field_G > 3300, "are you crazy?? field is too low!"
+        field_G = x.set_field(field_G)
+        print("field set to ", field_G)
+# }}}
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -46,25 +62,6 @@ config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 # }}}
-# {{{let computer set field
-if adjust_field:
-    # PR COMMENT: copied conditional to go with the option
-    print(
-        "I'm assuming that you've tuned your probe to",
-        config_dict["carrierFreq_MHz"],
-        "since that's what's in your .ini file",
-    )
-    field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
-    print(
-        "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
-        % field_G
-    )
-    with xepr() as x:
-        assert field_G < 3700, "are you crazy??? field is too high!"
-        assert field_G > 3300, "are you crazy?? field is too low!"
-        field_G = x.set_field(field_G)
-        print("field set to ", field_G)
-# }}}
 # {{{set phase cycling
 ph2 = r_[0, 1, 2, 3]
 ph_diff = r_[0, 2]
@@ -75,7 +72,10 @@ nPhaseSteps = len(ph2) * len(ph_diff)
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # {{{ calculate symmetric tau by dividing 2tau by 2
-marker_us = 1.0
+# note that here the tau_us is defined as the evolution time from
+# the start of excitation (*during the pulse*) through to the 
+# start of the 180 pulse
+marker_us = 1.0 #the marker takes 1 us
 config_dict["tau_us"] = (
     2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
 ) / 2
@@ -112,7 +112,9 @@ data = generic(
             - marker_us
             - config_dict["deblank_us"],
         ),
-        # PR COMMENT:  you're missing my comments that talk about how tau_us is defined
+# note that here the tau_us is defined as the evolution time from
+# the start of excitation (*during the pulse*) through to the 
+# start of the 180 pulse
         ("marker", "echo_label", config_dict["nEchoes"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
@@ -145,7 +147,6 @@ data = generic(
 data.set_prop("postproc_type", "spincore_diffph_SE_v1")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-# PR COMMENT: def of nodename was objectively convoluted -- I fix
 nodename = config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
 data.name(nodename)
 data.chunk(
@@ -161,29 +162,13 @@ if os.path.exists(f"{filename_out}"):
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
-        if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_cpmg")
-            # PR COMMENT: this is objectively not a good solution.  You
-            # should rather increment the counter and re-determine the
-            # node name.  I actually thought we may have a ppg that does
-            # this already.
-            data.name("temp_cpmg")
-            nodename = "temp_cpmg"
+        tempcounter = 1
+        orig_nodename = nodename
+        while nodename in fp.keys():
+            nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+            data.name(nodename)
+            tempcounter += 1
     data.hdf5_write(f"{filename_out}", directory=target_directory)
-else:
-    try:
-        data.hdf5_write(f"{filename_out}", directory=target_directory)
-    except:
-        print(
-            f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp.h5 in the current h5 file"
-        )
-        if os.path.exists("temp.h5"):
-            print("there is a temp.h5 already! -- I'm removing it")
-            os.remove("temp.h5")
-        data.hdf5_write("temp.h5")
-        print(
-            "if I got this far, that probably worked -- be sure to move/rename temp.h5 to the correct name!!"
-        )
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
     "saved data to (node, file, exp_type):",

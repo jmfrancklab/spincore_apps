@@ -13,11 +13,11 @@ def get_integer_sampling_intervals(SW_kHz, acq_time_ms):
     nPoints:        float
                     number of points per transient
     actual_SW_kHz:  float   
-                    The actual SW SpinCore will use based on the maximum
-                    digitization rate.
+                    The rounded integral decimation the the SpinCore will use for
+                    the SW.
     acq_time_ms:    float
                     calculated acquisition time per transient based on the 
-                    calculated nPoints and actual SW that the SpinCore will use
+                    integral number of samples from the rounded integral decimation.
     """
     actual_SW_kHz = 75e6 / round(75e6 / SW_kHz / 1e3) / 1e3
     nPoints = int(acq_time_ms * actual_SW_kHz + 0.5)
