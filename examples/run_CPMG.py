@@ -52,15 +52,11 @@ with xepr() as x:
     print("field set to ", field_G)
 # }}}
 # {{{set phase cycling
-phase_cycling = True
-if phase_cycling:
-    ph2 = r_[0, 1, 2, 3]
-    ph_diff = r_[0, 2]
-    ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
-    ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
-    nPhaseSteps = len(ph2) * len(ph_diff)
-if not phase_cycling:
-    nPhaseSteps = 1
+ph2 = r_[0, 1, 2, 3]
+ph_diff = r_[0, 2]
+ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
+ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
+nPhaseSteps = len(ph2) * len(ph_diff)
 # }}}
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
@@ -127,7 +123,6 @@ data = generic(
 data.set_prop("postproc_type", "spincore_diffph_SE_v1")
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["cpmg_counter"]))
-print(ndshape(data))
 data.chunk(
     "t",
     ["ph2", "ph_diff", "nEcho", "t2"],
