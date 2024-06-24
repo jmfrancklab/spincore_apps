@@ -154,7 +154,7 @@ def generic(
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
-                [len(time_axis),nScans,indirect_len], ["t","nScans","indirect"]
+                [indirect_len,nScans,len(time_axis)], ["indirect","nScans","t"]
                 # note that "t" is a dimension that ends up getting split into phase cycle steps and possibly echoes as well
             ).alloc(dtype=np.complex128)
             ret_data.setaxis("indirect", mytimes)
