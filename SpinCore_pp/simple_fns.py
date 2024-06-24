@@ -22,4 +22,4 @@ def get_integer_sampling_intervals(SW_kHz, acq_time_ms):
     actual_SW_kHz = 75e6 / round(75e6 / SW_kHz / 1e3) / 1e3
     nPoints = int(acq_time_ms * actual_SW_kHz + 0.5)
     new_acq_time_ms = nPoints / actual_SW_kHz
-    return nPoints, actual_SW_kHz, acq_time_ms
+    return nPoints, actual_SW_kHz, new_acq_time_ms

@@ -13,10 +13,11 @@ from SpinCore_pp import get_integer_sampling_intervals
 from Instruments.XEPR_eth import xepr
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
+from numpy import linspace, arange
 import h5py
 
 fl = figlist_var()
-p90_range_us = linspace(1.0, 10.0, 20, endpoint=False)
+p90_range_us = linspace(1.0, 10.0, 5, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['acq_time_ms'])
@@ -35,7 +36,7 @@ filename = (
 # }}}
 # {{{let computer set field
 print(
-    "I'm assuming that you've tuned your probe to:,
+    "I'm assuming that you've tuned your probe to:",
     config_dict["carrierFreq_MHz"],
     "since that's what's in your .ini file",
 )
@@ -61,25 +62,41 @@ assert total_pts < 2**14, (
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
-nutation_data = None
-for idx, p90_us in enumerate(p90_range_us):
-    run_spin_echo(
-        nScans=config_dict["nScans"],
-        indirect_idx=idx,
-        indirect_len=len(p90_range_us),
-        ph1_cyc=ph1_cyc,
-        amplitude=config_dict["amplitude"],
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        nPoints=nPoints,
-        nEchoes=config_dict["nEchoes"],
-        p90_us=p90_us,
-        repetition_us=config_dict["repetition_us"],
-        tau_us=config_dict["tau_us"],
-        SW_kHz=config_dict["SW_kHz"],
-        indirect_fields=("p_90", "index"),
-        ret_data=nutation_data,
-    )
+nutation_data = run_spin_echo(
+        deadtime_us = config_dict['deadtime_us'],
+        nScans=config_dict['nScans'], 
+        indirect_idx = 0, 
+        indirect_len = len(p90_range), 
+        adcOffset = config_dict['adcOffset'],
+        carrierFreq_MHz = config_dict['carrierFreq_MHz'], 
+        nPoints = nPoints,
+        nEchoes=config_dict['nEchoes'], 
+        p90_us = p90_range[0], 
+        repetition_us = config_dict['repetition_us'],
+        tau_us = config_dict['tau_us'], 
+        SW_kHz = config_dict['SW_kHz'], 
+        indirect_fields = None, 
+        ret_data = None)
+mytimes = nutation_data.getaxis('indirect')
+mytimes[0] = p90_range[0]
+for idx, p90_us in enumerate(p90_range_us[1:]):
+    nutation_data = run_spin_echo(
+            deadtime_us = config_dict['deadtime_us'],
+            nScans=config_dict["nScans"],
+            indirect_idx=idx+1,
+            indirect_len=len(p90_range_us),
+            amplitude = config_dict['amplitude'],
+            adcOffset=config_dict["adc_offset"],
+            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+            nPoints=nPoints,
+            nEchoes=config_dict["nEchoes"],
+            p90_us=p90_us,
+            repetition_us=config_dict["repetition_us"],
+            tau_us=config_dict["tau_us"],
+            SW_kHz=config_dict["SW_kHz"],
+            ret_data=nutation_data,
+        )
+    mytimes[idx+1] = p90_us
 # {{{ for some reason, axis coordinates were
 #     given as a structured array with p90
 #     and index fields, so I'm staying
@@ -89,7 +106,7 @@ mytimes["p_90"][:] = p90_range_us
 mytimes["index"][:] = arange(len(p90_range_us))
 # }}}
 # {{{ chunk and save data
-nutation_data.set_prop("postproc_type", "spincore_nutation_v1")
+nutation_data.set_prop("postproc_type", "spincore_nutation_v4")
 nutation_data.set_prop("coherence_pathway", {"ph1": +1})
 nutation_data.set_prop("acq_params", config_dict.asdict())
 nutation_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
@@ -103,6 +120,7 @@ nutation_data.labels(
         "ph1": r_[0 : len(ph1_cyc)]
     }
 )
+nutation_data.setaxis('indirect',p90_range_us)
 nutation_data.setaxis("ph1", ph1_cyc / 4)
 if config_dict["nScans"] > 1:
     nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
