@@ -112,6 +112,9 @@ data = generic(
             - marker_us
             - config_dict["deblank_us"],
         ),
+# note that here the tau_us is defined as the evolution time from
+# the start of excitation (*during the pulse*) through to the 
+# start of the 180 pulse
         ("marker", "echo_label", config_dict["nEchoes"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
