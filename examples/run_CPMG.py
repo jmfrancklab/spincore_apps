@@ -153,16 +153,7 @@ data.chunk(
     ["ph2", "ph_diff", "nEcho", "t2"],
     [len(ph2), len(ph_diff), int(config_dict["nEchoes"]), -1],
 )
-# PR COMMENT: you are setting the axes multiple times
-data.labels(
-    {
-        "nEcho": r_[0 : int(config_dict["nEchoes"])],
-        "ph2": r_[0 : len(ph2)],
-        "ph_diff": r_[0 : len(ph_diff)],
-    }
-)
-data.setaxis("ph2", ph2 / 4)
-data.setaxis("ph_diff", ph_diff / 4)
+data.setaxis('nEcho',r_[0:int(config_dict['nEchoes'])]).setaxis("ph2", ph2 / 4).setaxis("ph_diff", ph_diff / 4)
 # }}}
 filename_out = filename + ".h5"
 if os.path.exists(f"{filename_out}"):

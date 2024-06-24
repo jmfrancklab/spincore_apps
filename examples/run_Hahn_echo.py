@@ -89,14 +89,7 @@ data.chunk(
     ["ph1", "t2"], 
     [len(ph1_cyc), -1]
 )
-data.labels(
-    {
-        "ph1": r_[0 : len(ph1_cyc)]
-    }
-)
 data.setaxis("ph1", ph1_cyc / 4)
-if config_dict["nScans"] > 1:
-    data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 data.reorder(["ph1", "nScans", "t2"])
 filename_out = filename + ".h5"
 nodename = data.name()
