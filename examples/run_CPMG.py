@@ -10,7 +10,7 @@ from pylab import *
 from pyspecdata import *
 from numpy import *
 import SpinCore_pp
-from SpinCore_pp import prog_plen
+from SpinCore_pp import prog_plen,get_integer_sampling_intervals
 from SpinCore_pp.ppg import generic
 import os
 from datetime import datetime
@@ -19,13 +19,9 @@ from Instruments.XEPR_eth import xepr
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-config_dict["SW_kHz"] = 75e6 / round(75e6 / config_dict["SW_kHz"] / 1e3) / 1e3
-nPoints = int(
-    config_dict["echo_acq_ms"] * config_dict["SW_kHz"] + 0.5
-)  # per echo
+config_dict = get_integer_sampling_intervals(config_dict)
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
-config_dict["echo_acq_ms"] = nPoints / config_dict["SW_kHz"]
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
