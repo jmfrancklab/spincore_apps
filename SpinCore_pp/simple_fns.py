@@ -4,18 +4,18 @@ def get_integer_sampling_intervals(config_dict, use_echo_acq=False):
     rate and use that value to calculate the number of points
     Parameters
     ==========
-    SW:     float
-            desired spectral width in kHz
-    acq_time_ms:    float
-                    acquisition time for pulse sequence in ms
+    config_dict:     dict
+                    configuration file containing all parameters for the experiment
+                    and sample.
+    use_echo_acq:   bool
+                    if true will use the echo_acq_ms in calculating the nPoints (per echo)
     Returns
     =======
-    actual_SW:  float
-                The calculated spectral width (in kHz) that the SpinCore
-                will use based on a digitization rate of 75 MHz
-    nPoints:    float
-                calculated number of points per transient based on the
-                acquisition time and spectral width
+    config_dict:    dict
+                    edited configuration file containing the actual SW the SpinCore will
+                    use as well as the calculated number of points (per echo when applicable)
+                    as well as the proper acquisition time based on the number of points and
+                    spectral width
     """
     assert config_dict is not None, "You need to feed me the configuration file!"
     config_dict["SW_kHz"] = 75e6 / round(75e6 / config_dict["SW_kHz"] / 1e3) / 1e3
@@ -25,7 +25,5 @@ def get_integer_sampling_intervals(config_dict, use_echo_acq=False):
     else:
         nPoints = int(config_dict["acq_time_ms"] * config_dict["SW_kHz"] + 0.5)
         config_dict["acq_time_ms"] = nPoints / config_dict["SW_kHz"]
+    config_dict.write()
     return config_dict
-    config_dict
-
-    return actual_SW, nPoints
