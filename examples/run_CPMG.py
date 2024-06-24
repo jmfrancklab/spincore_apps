@@ -40,16 +40,16 @@ print(
     config_dict["carrierFreq_MHz"],
     "since that's what's in your .ini file",
 )
-Field = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
+field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
     "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
-    % Field
+    % field_G
 )
 with xepr() as x:
-    assert Field < 3700, "are you crazy??? field is too high!"
-    assert Field > 3300, "are you crazy?? field is too low!"
-    Field = x.set_field(Field)
-    print("field set to ", Field)
+    assert field_G < 3700, "are you crazy??? field is too high!"
+    assert field_G > 3300, "are you crazy?? field is too low!"
+    field_G = x.set_field(field_G)
+    print("field set to ", field_G)
 # }}}
 # {{{set phase cycling
 phase_cycling = True
