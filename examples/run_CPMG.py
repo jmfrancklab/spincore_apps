@@ -25,9 +25,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
     nPoints,
     config_dict["SW_kHz"],
     config_dict["echo_acq_ms"],
-) = get_integer_sampling_intervals(
-    config_dict["SW_kHz"], config_dict["echo_acq_ms"]
-)
+) = get_integer_sampling_intervals(config_dict["SW_kHz"], config_dict["echo_acq_ms"])
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -60,7 +58,9 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
 config_dict["date"] = date
 config_dict["cpmg_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
+)
 # }}}
 # {{{set phase cycling
 ph2 = r_[0, 1, 2, 3]
@@ -73,24 +73,19 @@ prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # {{{ calculate symmetric tau by dividing 2tau by 2
 # note that here the tau_us is defined as the evolution time from
-# the start of excitation (*during the pulse*) through to the 
+# the start of excitation (*during the pulse*) through to the
 # start of the 180 pulse
-marker_us = 1.0 #the marker takes 1 us
+marker_us = 1.0  # the marker takes 1 us
 config_dict["tau_us"] = (
     2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
 ) / 2
 assert (
-    config_dict["tau_us"]
-    > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
+    config_dict["tau_us"] > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
 )
 assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
 print(
     "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
-    % (
-        2 * config_dict["deadtime_us"]
-        + 1e3 * config_dict["echo_acq_ms"]
-        + prog_p180_us
-    )
+    % (2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"] + prog_p180_us)
 )
 # }}}
 # {{{check total points
@@ -112,9 +107,9 @@ data = generic(
             - marker_us
             - config_dict["deblank_us"],
         ),
-# note that here the tau_us is defined as the evolution time from
-# the start of excitation (*during the pulse*) through to the 
-# start of the 180 pulse
+        # note that here the tau_us is defined as the evolution time from
+        # the start of excitation (*during the pulse*) through to the
+        # start of the 180 pulse
         ("marker", "echo_label", config_dict["nEchoes"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
@@ -122,9 +117,7 @@ data = generic(
         ("acquire", config_dict["echo_acq_ms"]),
         (
             "delay",
-            config_dict["deadtime_us"]
-            - 2 * marker_us
-            - config_dict["deblank_us"],
+            config_dict["deadtime_us"] - 2 * marker_us - config_dict["deblank_us"],
         ),
         ("jumpto", "echo_label"),
         # In the line above I assume this takes marker_us to execute
@@ -154,7 +147,9 @@ data.chunk(
     ["ph2", "ph_diff", "nEcho", "t2"],
     [len(ph2), len(ph_diff), int(config_dict["nEchoes"]), -1],
 )
-data.setaxis('nEcho',r_[0:int(config_dict['nEchoes'])]).setaxis("ph2", ph2 / 4).setaxis("ph_diff", ph_diff / 4)
+data.setaxis("nEcho", r_[0 : int(config_dict["nEchoes"])]).setaxis(
+    "ph2", ph2 / 4
+).setaxis("ph_diff", ph_diff / 4)
 # }}}
 filename_out = filename + ".h5"
 if os.path.exists(f"{filename_out}"):
@@ -165,7 +160,7 @@ if os.path.exists(f"{filename_out}"):
         tempcounter = 1
         orig_nodename = nodename
         while nodename in fp.keys():
-            nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+            nodename = "%s_temp_%d" % (orig_nodename, tempcounter)
             data.name(nodename)
             tempcounter += 1
 data.hdf5_write(f"{filename_out}", directory=target_directory)
