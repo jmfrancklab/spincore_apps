@@ -20,7 +20,11 @@ fl = figlist_var()
 p90_range_us = linspace(1.0, 10.0, 5, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(config_dict['SW_kHz'], config_dict['acq_time_ms'])
+(
+    nPoints,
+    config_dict["SW_kHz"],
+    config_dict["acq_time_ms"],
+) = get_integer_sampling_intervals(config_dict["SW_kHz"], config_dict["acq_time_ms"])
 my_exp_type = "ODNP_NMR_comp/nutation"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -30,9 +34,7 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "nutation"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 # {{{let computer set field
 print(
@@ -62,57 +64,32 @@ assert total_pts < 2**14, (
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
-nutation_data = run_spin_echo(
-        deadtime_us = config_dict['deadtime_us'],
-        nScans=config_dict['nScans'], 
-        indirect_idx = 0, 
-        indirect_len = len(p90_range_us), 
-        adcOffset = config_dict['adc_offset'],
-        carrierFreq_MHz = config_dict['carrierFreq_MHz'], 
-        nPoints = nPoints,
-        nEchoes=config_dict['nEchoes'], 
-        p90_us = p90_range_us[0], 
-        repetition_us = config_dict['repetition_us'],
-        tau_us = config_dict['tau_us'], 
-        SW_kHz = config_dict['SW_kHz'], 
-        indirect_fields = None, 
-        ret_data = None)
-mytimes = nutation_data.getaxis('indirect')
-mytimes[0] = p90_range_us[0]
-for idx, p90_us in enumerate(p90_range_us[1:]):
+nutation_data = None
+for idx, p90_us in enumerate(p90_range_us):
     nutation_data = run_spin_echo(
-            deadtime_us = config_dict['deadtime_us'],
-            nScans=config_dict["nScans"],
-            indirect_idx=idx+1,
-            indirect_len=len(p90_range_us),
-            amplitude = config_dict['amplitude'],
-            adcOffset=config_dict["adc_offset"],
-            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-            nPoints=nPoints,
-            nEchoes=config_dict["nEchoes"],
-            p90_us=p90_us,
-            repetition_us=config_dict["repetition_us"],
-            tau_us=config_dict["tau_us"],
-            SW_kHz=config_dict["SW_kHz"],
-            ret_data=nutation_data,
-        )
-    mytimes[idx+1] = p90_us
+        deadtime_us=config_dict["deadtime_us"],
+        nScans=config_dict["nScans"],
+        indirect_idx=idx,
+        indirect_len=len(p90_range_us),
+        amplitude=config_dict["amplitude"],
+        adcOffset=config_dict["adc_offset"],
+        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+        nPoints=nPoints,
+        nEchoes=config_dict["nEchoes"],
+        p90_us=p90_us,
+        repetition_us=config_dict["repetition_us"],
+        tau_us=config_dict["tau_us"],
+        SW_kHz=config_dict["SW_kHz"],
+        ret_data=nutation_data,
+    )
+nutation_data.setaxis("indirect", p90_range_us * 1e6).set_units("indirect", "s")
 # {{{ chunk and save data
 nutation_data.set_prop("postproc_type", "spincore_nutation_v4")
 nutation_data.set_prop("coherence_pathway", {"ph1": +1})
 nutation_data.set_prop("acq_params", config_dict.asdict())
 nutation_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-nutation_data.chunk(
-        "t", 
-        ["ph1", "t2"], 
-        [4, -1]
-)
-nutation_data.labels(
-    {
-        "ph1": r_[0 : len(ph1_cyc)]
-    }
-)
-nutation_data.setaxis('indirect',p90_range_us)
+nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
+nutation_data.labels({"ph1": r_[0 : len(ph1_cyc)]})
 nutation_data.setaxis("ph1", ph1_cyc / 4)
 if config_dict["nScans"] > 1:
     nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
@@ -127,12 +104,17 @@ if os.path.exists(f"{filename_out}"):
         tempcounter = 1
         orig_nodename = nodename
         while nodename in fp.keys():
-            nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+            nodename = "%s_temp_%d" % (orig_nodename, tempcounter)
             data.name(nodename)
             tempcounter += 1
     data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print("saved data to (node, file, exp_type):", nutation_data.name(), filename_out, my_exp_type)
+print(
+    "saved data to (node, file, exp_type):",
+    nutation_data.name(),
+    filename_out,
+    my_exp_type,
+)
 config_dict.write()
 nutation_data.ft("t2", shift=True)
 fl.next("image - ft")
