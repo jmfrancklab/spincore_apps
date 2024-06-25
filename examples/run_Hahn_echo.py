@@ -40,6 +40,13 @@ config_dict["date"] = date
 config_dict["echo_counter"] += 1
 filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
+# {{{set phase cycling
+# default phase cycling of run_spin_echo is to use a 4 step on the 90 pulse
+# so this is here just for setting the chunked axis later and calculating the
+# total points
+ph1_cyc = r_[0, 1, 2, 3]
+nPhaseSteps = 4
+# }}}
 # {{{let computer set field
 print(
     "I'm assuming that you've tuned your probe to",
@@ -56,13 +63,6 @@ with xepr() as x:
     assert field_G > 3300, "are you crazy?? field is too low!"
     field_G = x.set_field(field_G)
     print("field set to ", field_G)
-# }}}
-# {{{set phase cycling
-# default phase cycling of run_spin_echo is to use a 4 step on the 90 pulse
-# so this is here just for setting the chunked axis later and calculating the
-# total points
-ph1_cyc = r_[0, 1, 2, 3]
-nPhaseSteps = 4
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
@@ -89,11 +89,6 @@ echo_data = run_spin_echo(
 )
 # }}}
 # {{{ chunk and save data
-echo_data.set_prop("postproc_type", "spincore_SE_v1")
-echo_data.set_prop("coherence_pathway", {"ph1": +1})
-echo_data.set_prop("acq_params", config_dict.asdict())
-nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
-echo_data.name(nodename)
 echo_data.chunk(
     "t", 
     ["ph1", "t2"], 
@@ -101,6 +96,11 @@ echo_data.chunk(
 )
 echo_data.setaxis("ph1", ph1_cyc / 4)
 echo_data.reorder(["ph1", "nScans", "t2"])
+echo_data.set_prop("postproc_type", "spincore_SE_v1")
+echo_data.set_prop("coherence_pathway", {"ph1": +1})
+echo_data.set_prop("acq_params", config_dict.asdict())
+nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
+echo_data.name(nodename)
 filename_out = filename + ".h5"
 if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
