@@ -87,7 +87,7 @@ for idx, p90_us in enumerate(p90_range_us):
         SW_kHz=config_dict["SW_kHz"],
         ret_data=nutation_data,
     )
-nutation_data.setaxis("indirect", p90_range_us * 1e6).set_units("indirect", "s")
+nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units("indirect", "s")
 # {{{ chunk and save data
 nutation_data.set_prop("postproc_type", "spincore_nutation_v4")
 nutation_data.set_prop("coherence_pathway", {"ph1": +1})
