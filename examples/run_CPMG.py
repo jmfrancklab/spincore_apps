@@ -87,6 +87,7 @@ print(
     "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
     % (2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"] + prog_p180_us)
 )
+print(config_dict['tau_us'])
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]

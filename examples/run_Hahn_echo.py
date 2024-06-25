@@ -87,12 +87,16 @@ data = run_spin_echo(
 data.set_prop("postproc_type", "spincore_SE_v1")
 data.set_prop("coherence_pathway", {"ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
+nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
+data.name(nodename)
+data.chunk(
+    "t", 
+    ["ph1", "t2"], 
+    [len(ph1_cyc), -1],
+)
 data.setaxis("ph1", ph1_cyc / 4)
 data.reorder(["ph1", "nScans", "t2"])
 filename_out = filename + ".h5"
-nodename = data.name()
 if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
     with h5py.File(
@@ -106,20 +110,26 @@ if os.path.exists(f"{filename_out}"):
             tempcounter += 1
 data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
+print(
+    "saved data to (node, file, exp_type):", 
+    data.name(), 
+    filename_out, 
+    my_exp_type,
+)
 config_dict.write()
+# }}}
 data.ft("t2", shift=True)
-fl.next("image - ft")
-fl.image(data)
-fl.next("image - ft, coherence")
-data.ft("ph1")
-fl.image(data)
-fl.next("data plot")
-if "nScans" in data.dimlabels:
-    data_slice = data["ph1", 1].mean("nScans")
-else:
-    data_slice = data["ph1", 1]
-fl.plot(data_slice, alpha=0.5)
-fl.plot(data_slice.imag, alpha=0.5)
-fl.plot(abs(data_slice), color="k", alpha=0.5)
-fl.show()
+with figlist_var() as fl:
+    fl.next("image - ft")
+    fl.image(data)
+    fl.next("image - ft, coherence")
+    data.ft("ph1")
+    fl.image(data)
+    fl.next("data plot")
+    if "nScans" in data.dimlabels:
+        data_slice = data["ph1", 1].mean("nScans")
+    else:
+        data_slice = data["ph1", 1]
+    fl.plot(data_slice, alpha=0.5)
+    fl.plot(data_slice.imag, alpha=0.5)
+    fl.plot(abs(data_slice), color="k", alpha=0.5)
