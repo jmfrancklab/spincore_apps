@@ -19,6 +19,19 @@ from datetime import datetime
 import h5py
 from Instruments.XEPR_eth import xepr
 
+# {{{importing acquisition parameters
+config_dict = SpinCore_pp.configuration("active.ini")
+(
+    nPoints,
+    config_dict["SW_kHz"],
+    config_dict["echo_acq_ms"],
+) = get_integer_sampling_intervals(
+    config_dict["SW_kHz"], config_dict["echo_acq_ms"]
+)
+my_exp_type = "ODNP_NMR_comp/Echoes"
+target_directory = getDATADIR(exp_type=my_exp_type)
+assert os.path.exists(target_directory)
+# }}}
 # {{{ command-line option to leave the field untouched (if you set it once, why set it again)
 adjust_field = True
 if len(sys.argv) == 2 and sys.argv[1] == "stayput":
@@ -41,19 +54,6 @@ if adjust_field:
         assert field_G > 3300, "are you crazy?? field is too low!"
         field_G = x.set_field(field_G)
         print("field set to ", field_G)
-# }}}
-# {{{importing acquisition parameters
-config_dict = SpinCore_pp.configuration("active.ini")
-(
-    nPoints,
-    config_dict["SW_kHz"],
-    config_dict["echo_acq_ms"],
-) = get_integer_sampling_intervals(
-    config_dict["SW_kHz"], config_dict["echo_acq_ms"]
-)
-my_exp_type = "ODNP_NMR_comp/Echoes"
-target_directory = getDATADIR(exp_type=my_exp_type)
-assert os.path.exists(target_directory)
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
@@ -168,7 +168,7 @@ if os.path.exists(f"{filename_out}"):
             nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
             data.name(nodename)
             tempcounter += 1
-    data.hdf5_write(f"{filename_out}", directory=target_directory)
+data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
     "saved data to (node, file, exp_type):",

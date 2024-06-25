@@ -104,7 +104,7 @@ if os.path.exists(f"{filename_out}"):
             nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
             data.name(nodename)
             tempcounter += 1
-    data.hdf5_write(f"{filename_out}", directory=target_directory)
+data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print("saved data to (node, file, exp_type):", data.name(), filename_out, my_exp_type)
 config_dict.write()
