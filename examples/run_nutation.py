@@ -17,7 +17,7 @@ from numpy import linspace, arange
 import h5py
 
 fl = figlist_var()
-p90_range_us = linspace(1.0, 10.0, 5, endpoint=False)
+p90_range_us = linspace(1.0, 10.0, 20, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -105,9 +105,9 @@ if os.path.exists(f"{filename_out}"):
         orig_nodename = nodename
         while nodename in fp.keys():
             nodename = "%s_temp_%d" % (orig_nodename, tempcounter)
-            data.name(nodename)
+            nutation_data.name(nodename)
             tempcounter += 1
-    data.hdf5_write(f"{filename_out}", directory=target_directory)
+nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
     "saved data to (node, file, exp_type):",
