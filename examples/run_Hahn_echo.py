@@ -22,7 +22,13 @@ import h5py
 fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
-nPoints, config_dict['SW_kHz'], config_dict['acq_time_ms'] = get_integer_sampling_intervals(SW_kHz = config_dict['SW_kHz'], acq_time_ms = config_dict['acq_time_ms'])
+(
+    nPoints,
+    config_dict["SW_kHz"],
+    config_dict["acq_time_ms"],
+) = get_integer_sampling_intervals(
+    SW_kHz=config_dict["SW_kHz"], acq_time_ms=config_dict["acq_time_ms"]
+)
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -32,9 +38,7 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "echo"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
-)
+filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
 # }}}
 # {{{let computer set field
 print(
@@ -84,11 +88,7 @@ data.set_prop("postproc_type", "spincore_SE_v1")
 data.set_prop("coherence_pathway", {"ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
 data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-data.chunk(
-    "t",
-    ["ph1", "t2"], 
-    [len(ph1_cyc), -1]
-)
+data.chunk("t", ["ph1", "t2"], [len(ph1_cyc), -1])
 data.setaxis("ph1", ph1_cyc / 4)
 data.reorder(["ph1", "nScans", "t2"])
 filename_out = filename + ".h5"
@@ -101,7 +101,7 @@ if os.path.exists(f"{filename_out}"):
         tempcounter = 1
         orig_nodename = nodename
         while nodename in fp.keys():
-            nodename = "%s_temp_%d"%(orig_nodename,tempcounter)
+            nodename = "%s_temp_%d" % (orig_nodename, tempcounter)
             data.name(nodename)
             tempcounter += 1
 data.hdf5_write(f"{filename_out}", directory=target_directory)
