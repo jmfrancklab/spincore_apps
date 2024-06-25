@@ -54,6 +54,9 @@ with xepr() as x:
     print("field set to ", field_G)
 # }}}
 # {{{set phase cycling
+# the default phase cycling for run_spin_echo is to use a 4 step
+# phase cycle on the 90 pulse so below is only used for setting the
+# axis later and calculating the total number of points
 ph1_cyc = r_[0, 1, 2, 3]
 nPhaseSteps = 4
 # }}}
@@ -65,6 +68,8 @@ assert total_pts < 2**14, (
 )
 # }}}
 nutation_data = None
+# Just loop over the 90 times and set the indirect axis at the
+# end just like how we perform and save IR data
 for idx, p90_us in enumerate(p90_range_us):
     nutation_data = run_spin_echo(
         deadtime_us=config_dict["deadtime_us"],
@@ -82,7 +87,7 @@ for idx, p90_us in enumerate(p90_range_us):
         SW_kHz=config_dict["SW_kHz"],
         ret_data=nutation_data,
     )
-nutation_data.setaxis("indirect", p90_range_us * 1e6).set_units("indirect", "s")
+nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units("indirect", "s")
 # {{{ chunk and save data
 nutation_data.set_prop("postproc_type", "spincore_nutation_v4")
 nutation_data.set_prop("coherence_pathway", {"ph1": +1})
@@ -117,10 +122,3 @@ print(
     my_exp_type,
 )
 config_dict.write()
-nutation_data.ft("t2", shift=True)
-fl.next("image - ft")
-fl.image(nutation_data)
-fl.next("image - ft, coherence")
-nutation_data.ft("ph1")
-fl.image(nutation_data)
-fl.show()
