@@ -10,14 +10,14 @@ the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
 from pylab import *
 from pyspecdata import *
+import os, sys
 from numpy import *
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals
 from SpinCore_pp.ppg import generic
-import os, sys
 from datetime import datetime
-import h5py
 from Instruments.XEPR_eth import xepr
+import h5py
 
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -25,7 +25,9 @@ config_dict = SpinCore_pp.configuration("active.ini")
     nPoints,
     config_dict["SW_kHz"],
     config_dict["echo_acq_ms"],
-) = get_integer_sampling_intervals(config_dict["SW_kHz"], config_dict["echo_acq_ms"])
+) = get_integer_sampling_intervals(
+    SW_kHz=config_dict["SW_kHz"], acq_time_ms=config_dict["echo_acq_ms"]
+)
 my_exp_type = "ODNP_NMR_comp/Echoes"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
@@ -35,7 +37,7 @@ adjust_field = True
 if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
-# {{{let computer set field
+# {{{ let computer set field
 if adjust_field:
     print(
         "I'm assuming that you've tuned your probe to",
@@ -69,6 +71,10 @@ ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
 ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
 nPhaseSteps = len(ph2) * len(ph_diff)
 # }}}
+# we need to make sure we calibrate our pulse lengths so that the
+# 180 pulse is actually 2x the 90 pulse as seen on the scope - to do
+# so we use the prog_plen function - note this is done inside run_spin_echo
+# in a similar fashion
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # {{{ calculate symmetric tau by dividing 2tau by 2
@@ -87,7 +93,6 @@ print(
     "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
     % (2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"] + prog_p180_us)
 )
-print(config_dict['tau_us'])
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
@@ -96,6 +101,7 @@ assert total_pts < 2**14, (
     % total_pts
 )
 # }}}
+# {{{ acquire CPMG
 data = generic(
     ppg_list=[
         ("phase_reset", 1),
@@ -137,21 +143,19 @@ data = generic(
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
-## {{{ chunk and save data
-data.set_prop("postproc_type", "spincore_diffph_SE_v1")
-data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
-data.set_prop("acq_params", config_dict.asdict())
-nodename = config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
-data.name(nodename)
+# }}}
+# {{{ chunk and save data
 data.chunk(
     "t",
     ["ph2", "ph_diff", "nEcho", "t2"],
     [len(ph2), len(ph_diff), int(config_dict["nEchoes"]), -1],
 )
-data.setaxis("nEcho", r_[0 : int(config_dict["nEchoes"])]).setaxis(
-    "ph2", ph2 / 4
-).setaxis("ph_diff", ph_diff / 4)
-# }}}
+data.setaxis("nEcho", r_[0 : int(config_dict["nEchoes"])]).setaxis("ph2", ph2 / 4).setaxis("ph_diff", ph_diff / 4)
+data.set_prop("postproc_type", "spincore_diffph_SE_v1")
+data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
+data.set_prop("acq_params", config_dict.asdict())
+nodename = config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
+data.name(nodename)
 filename_out = filename + ".h5"
 if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
@@ -173,3 +177,4 @@ print(
     my_exp_type,
 )
 config_dict.write()
+# }}}
