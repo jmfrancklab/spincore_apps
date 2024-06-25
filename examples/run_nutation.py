@@ -54,7 +54,7 @@ with xepr() as x:
     print("field set to ", field_G)
 # }}}
 # {{{set phase cycling
-# the default phase cycling for run_spin_echo is to use a 4 step 
+# the default phase cycling for run_spin_echo is to use a 4 step
 # phase cycle on the 90 pulse so below is only used for setting the
 # axis later and calculating the total number of points
 ph1_cyc = r_[0, 1, 2, 3]
