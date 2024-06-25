@@ -72,9 +72,9 @@ nPhaseSteps = len(ph2) * len(ph_diff)
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # Unlike CPMG, here, tau is not defined as the evolution time from the start of
-# excitation through to the start of the 180 - rather we are just running
-# a normal Hahn echo sequence where tau must be longer than the evolution of 
-# the pulse and the deblanking time
+# excitation through to the start of the 180 - rather it is the estimated time
+# it takes for FID to decay to zero and should at least be longer than the
+# evolution of the pulse and the deblanking time
 assert config_dict["tau_us"] > 2 * prog_p90_us / pi + config_dict["deblank_us"]
 # Additionally, note that because we are only doing one 180 pulse we do
 # not bother with a symmetric echo as we can make timing corrections in
@@ -92,10 +92,10 @@ data = generic(
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
         ("delay", config_dict["tau_us"]),
-        # Unlike CPMG, here, tau is not defined as the evolution time from
-        # the start of excitation through to the start of the 180 - rather
-        # we are just running a normal Hahn echo sequence where tau must
-        # be longer than the evolution of the pulse and the deblanking
+        # Unlike CPMG, here, tau is not defined as the evolution time from the
+        # start of excitation through to the start of the 180 - rather it is
+        # the estimated time it takes for FID to decay to zero and should at
+        # least be longer than the evolution of the pulse and the deblanking
         # time
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
