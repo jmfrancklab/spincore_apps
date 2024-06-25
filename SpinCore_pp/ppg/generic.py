@@ -15,6 +15,7 @@ from pyspecdata import strm
 import time
 import logging
 
+
 # {{{spin echo ppg
 def generic(
     ppg_list,
@@ -102,15 +103,25 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
-    nEchoes = [j[2] for j in ppg_list if len(j)>2 and j[0]=='marker' and j[1]=='echo_label']
+    nEchoes = [
+        j[2]
+        for j in ppg_list
+        if len(j) > 2 and j[0] == "marker" and j[1] == "echo_label"
+    ]
     if len(nEchoes) == 1:
         nEchoes = nEchoes[0]
     elif len(nEchoes) == 0:
         nEchoes = 1
     else:
-        raise ValueError(f"You seem to have {len(nEchoes)} lines in your ppg list that refer to a marker called 'echo_label'.  Therefore, I can't figure out how many echoes are in the pulse sequence!")
+        raise ValueError(
+            f"You seem to have {len(nEchoes)} lines in your ppg list that refer to a marker called 'echo_label'.  Therefore, I can't figure out how many echoes are in the pulse sequence!"
+        )
     # {{{ pull info about phase cycling and echos from the ppg_list
-    nPhaseSteps = int(np.prod(list(dict([(j[2],len(j[3])) for j in ppg_list if len(j)>3]).values())))
+    nPhaseSteps = int(
+        np.prod(
+            list(dict([(j[2], len(j[3])) for j in ppg_list if len(j) > 3]).values())
+        )
+    )
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
@@ -120,7 +131,9 @@ def generic(
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
         check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
-        assert np.isclose(check,acq_time_ms), f"you are trying to set the acquisition time to {acq_time_ms}, but configureRX returns {check}"
+        assert np.isclose(
+            check, acq_time_ms
+        ), f"you are trying to set the acquisition time to {acq_time_ms}, but configureRX returns {check}"
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
@@ -154,7 +167,8 @@ def generic(
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
-                [indirect_len,nScans,len(time_axis)], ["indirect","nScans","t"]
+                [indirect_len, nScans, len(time_axis)],
+                ["indirect", "nScans", "t"]
                 # note that "t" is a dimension that ends up getting split into phase cycle steps and possibly echoes as well
             ).alloc(dtype=np.complex128)
             ret_data.setaxis("indirect", mytimes)
