@@ -19,7 +19,6 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 import h5py
 
-fl = figlist_var()
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
