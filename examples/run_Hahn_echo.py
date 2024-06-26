@@ -114,6 +114,13 @@ if os.path.exists(f"{filename_out}"):
 echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
+    "Your *current* γ_eff (MHz/G) should be ",
+    config_dict["gamma_eff_MHz_G"],
+    " - (Δν*1e-6/",
+    field_G,
+    "), where Δν is your resonance offset",
+)
+print(
     "saved data to (node, file, exp_type):",
     echo_data.name(),
     filename_out,
