@@ -59,31 +59,31 @@ if adjust_field:
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "echo"
 config_dict["date"] = date
-config_dict["cpmg_counter"] += 1
+config_dict["echo_counter"] += 1
 filename = (
     f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 )
 # }}}
 # {{{set phase cycling
+# NOTE: The overall phase and the 90-180 phase difference are phase cycled
+# in a nested way
 ph2 = r_[0, 1, 2, 3]
 ph_diff = r_[0, 2]
 ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
 ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
 nPhaseSteps = len(ph2) * len(ph_diff)
 # }}}
-# we need to make sure we calibrate our pulse lengths so that the
-# 180 pulse is actually 2x the 90 pulse as seen on the scope - to do
-# so we use the prog_plen function - note this is done inside run_spin_echo
-# in a similar fashion
+# {{{ calibrate pulse lengths
+# NOTE: This is done inside the run_spin_echo rather than in the example
+# but to keep the generic function more robust we do it outside of the ppg
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
-# Unlike CPMG, here, tau is the estimated time it takes for FID to decay to
-# zero and should at least be longer than the evolution of the pulse and the
-# deblanking time
+# }}}
+# NOTE: Unlike CPMG, here, tau is the estimated time it takes for FID to
+# decay to zero
 assert config_dict["tau_us"] > 2 * prog_p90_us / pi + config_dict["deblank_us"]
-# Additionally, note that because we are only doing one 180 pulse we do
-# not bother with a symmetric echo as we can make timing corrections in
-# post processing
+# Because we are only doing one 180 pulse we do not bother with a
+# symmetric echo as we can make timing corrections in post processing
 # {{{check total points
 total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
 assert total_pts < 2**14, (
@@ -98,9 +98,8 @@ data = generic(
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
         ("delay", config_dict["tau_us"]),
-        # Unlike CPMG, here, tau is the estimated time it takes for FID to
-        # decay to zero and should at least be longer than the evolution of the
-        # pulse and the deblanking time
+        # NOTE: Unlike CPMG, here, tau is the estimated time it takes for FID to
+        # decay to zero
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),

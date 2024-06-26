@@ -4,7 +4,7 @@ CPMG
 
 This script will perform a standard CPMG experiment. 
 In order to form a symmetric echo, a padding time is added before 
-and after your tau through a series of delays. 
+and after your tau through a series of delays.
 If you wish to keep the field as is without adjustment, follow
 the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
@@ -28,7 +28,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
 ) = get_integer_sampling_intervals(
     SW_kHz=config_dict["SW_kHz"], acq_time_ms=config_dict["echo_acq_ms"]
 )
-my_exp_type = "ODNP_NMR_comp/Echoes"
+my_exp_type = "ODNP_NMR_comp/CPMG"
 target_directory = getDATADIR(exp_type=my_exp_type)
 assert os.path.exists(target_directory)
 # }}}
@@ -65,22 +65,23 @@ filename = (
 )
 # }}}
 # {{{set phase cycling
+# NOTE: The overall phase and the 90-180 phase difference are phase cycled
+# in a nested way
 ph2 = r_[0, 1, 2, 3]
 ph_diff = r_[0, 2]
 ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
 ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
 nPhaseSteps = len(ph2) * len(ph_diff)
 # }}}
-# we need to make sure we calibrate our pulse lengths so that the
-# 180 pulse is actually 2x the 90 pulse as seen on the scope - to do
-# so we use the prog_plen function - note this is done inside run_spin_echo
-# in a similar fashion
+# {{{ calibrate pulse lengths
+# NOTE: This is done inside the run_spin_echo rather than in the example
+# but to keep the generic function more robust we do it outside of the ppg
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
-# {{{ calculate symmetric tau by dividing 2tau by 2
-# note that here the tau_us is defined as the evolution time from
-# the start of excitation (*during the pulse*) through to the
-# start of the 180 pulse
+# }}}
+# {{{ calculate symmetric tau
+# NOTE: here the tau_us is defined as the evolution time from the start of
+# excitation (*during the pulse*) through to the start of the 180 pulse
 marker_us = 1.0  # the marker takes 1 us
 config_dict["tau_us"] = (
     2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
@@ -102,6 +103,7 @@ assert total_pts < 2**14, (
 )
 # }}}
 # {{{ acquire CPMG
+# NOTE: Number of segments is nEchoes * nPhaseSteps
 data = generic(
     ppg_list=[
         ("phase_reset", 1),
@@ -114,9 +116,10 @@ data = generic(
             - marker_us
             - config_dict["deblank_us"],
         ),
-        # note that here the tau_us is defined as the evolution time from
-        # the start of excitation (*during the pulse*) through to the
-        # start of the 180 pulse
+        # NOTE: here the tau_us is defined as
+        # the evolution time from the start of
+        # excitation (*during the pulse*) through
+        # to the start of the 180 pulse
         ("marker", "echo_label", config_dict["nEchoes"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
@@ -127,10 +130,12 @@ data = generic(
             config_dict["deadtime_us"] - 2 * marker_us - config_dict["deblank_us"],
         ),
         ("jumpto", "echo_label"),
-        # In the line above I assume this takes marker_us to execute
-        # The way to be sure of this would be to capture on a scope and
-        # measure from one 180 to the next (or actually several, since
-        # this error would be cumulative
+        # In the line above I assume this takes
+        # marker_us to execute The way to be sure
+        # of this would be to capture on a scope
+        # and measure from one 180 to the next (or
+        # actually several, since this error would
+        # be cumulative
         ("delay", config_dict["repetition_us"]),
     ],
     nScans=config_dict["nScans"],
@@ -150,7 +155,9 @@ data.chunk(
     ["ph2", "ph_diff", "nEcho", "t2"],
     [len(ph2), len(ph_diff), int(config_dict["nEchoes"]), -1],
 )
-data.setaxis("nEcho", r_[0 : int(config_dict["nEchoes"])]).setaxis("ph2", ph2 / 4).setaxis("ph_diff", ph_diff / 4)
+data.setaxis("nEcho", r_[0 : int(config_dict["nEchoes"])]).setaxis(
+    "ph2", ph2 / 4
+).setaxis("ph_diff", ph_diff / 4)
 data.set_prop("postproc_type", "spincore_diffph_SE_v1")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
