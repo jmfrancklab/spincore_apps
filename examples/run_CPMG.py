@@ -26,7 +26,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["SW_kHz"],
     config_dict["echo_acq_ms"],
 ) = get_integer_sampling_intervals(
-    SW_kHz=config_dict["SW_kHz"], acq_time_ms=config_dict["echo_acq_ms"]
+    SW_kHz=config_dict["SW_kHz"], time_per_segment_ms=config_dict["echo_acq_ms"]
 )
 my_exp_type = "ODNP_NMR_comp/CPMG"
 target_directory = getDATADIR(exp_type=my_exp_type)
