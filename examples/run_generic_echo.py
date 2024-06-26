@@ -69,6 +69,7 @@ filename = (
 # in a nested way
 ph2 = r_[0, 1, 2, 3]
 ph_diff = r_[0, 2]
+# the following puts ph_diff on the inside, which I would not have expected
 ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
 ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
 nPhaseSteps = len(ph2) * len(ph_diff)
