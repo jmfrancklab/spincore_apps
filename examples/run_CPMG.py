@@ -173,7 +173,7 @@ if os.path.exists(f"{filename_out}"):
         while nodename in fp.keys():
             nodename = config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
             data.name(nodename)
-            config_dict['cpmg_counter'] += 1
+            config_dict["cpmg_counter"] += 1
 data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
