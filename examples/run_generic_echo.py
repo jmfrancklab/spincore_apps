@@ -118,6 +118,7 @@ data = generic(
     nScans=config_dict["nScans"],
     indirect_idx=0,
     indirect_len=1,
+    amplitude=config_dict["amplitude"],
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
