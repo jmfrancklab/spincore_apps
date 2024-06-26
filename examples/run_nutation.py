@@ -104,7 +104,6 @@ if os.path.exists(f"{filename_out}"):
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
-        orig_nodename = nodename
         while nodename in fp.keys():
             nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
             nutation_data.name(nodename)
