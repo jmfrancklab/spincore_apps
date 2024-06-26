@@ -18,7 +18,6 @@ def get_integer_sampling_intervals(SW_kHz, acq_time_ms):
     acq_time_ms: float
         Calculated acquisition time per transient based on the integral number
         of samples from the rounded integral decimation.
-
     """
     actual_SW_kHz = 75e6 / round(75e6 / SW_kHz / 1e3) / 1e3
     nPoints = int(acq_time_ms * actual_SW_kHz + 0.5)

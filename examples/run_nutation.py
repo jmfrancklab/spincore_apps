@@ -26,14 +26,18 @@ config_dict = SpinCore_pp.configuration("active.ini")
     nPoints,
     config_dict["SW_kHz"],
     config_dict["acq_time_ms"],
-) = get_integer_sampling_intervals(config_dict["SW_kHz"], config_dict["acq_time_ms"])
+) = get_integer_sampling_intervals(
+    config_dict["SW_kHz"], config_dict["acq_time_ms"]
+)
 # }}}
 # {{{create filename and save to config file
 date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "nutation"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+)
 # }}}
 # {{{set phase cycling
 ph1_cyc = r_[0, 1, 2, 3]
@@ -84,7 +88,9 @@ for idx, p90_us in enumerate(p90_range_us):
         SW_kHz=config_dict["SW_kHz"],
         ret_data=nutation_data,
     )
-nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units("indirect", "s")
+nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units(
+    "indirect", "s"
+)
 # {{{ chunk and save data
 nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
 nutation_data.setaxis("ph1", ph1_cyc / 4)
@@ -105,7 +111,9 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         while nodename in fp.keys():
-            nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
+            nodename = (
+                config_dict["type"] + "_" + str(config_dict["echo_counter"])
+            )
             nutation_data.name(nodename)
             config_dict["echo_counter"] += 1
 nutation_data.hdf5_write(f"{filename_out}", directory=target_directory)
