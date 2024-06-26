@@ -29,8 +29,16 @@ config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["SW_kHz"],
     config_dict["acq_time_ms"],
 ) = get_integer_sampling_intervals(
-    SW_kHz=config_dict["SW_kHz"], time_per_segment_ms=config_dict["acq_time_ms"]
+    SW_kHz=config_dict["SW_kHz"],
+    time_per_segment_ms=config_dict["acq_time_ms"],
 )
+# }}}
+# {{{create filename and save to config file
+date = datetime.now().strftime("%y%m%d")
+config_dict["type"] = "echo"
+config_dict["date"] = date
+config_dict["echo_counter"] += 1
+filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 # }}}
 # {{{ command-line option to leave the field untouched (if you set it once, why set it again)
 adjust_field = True
@@ -55,15 +63,6 @@ if adjust_field:
         field_G = x.set_field(field_G)
         print("field set to ", field_G)
 # }}}
-# {{{create filename and save to config file
-date = datetime.now().strftime("%y%m%d")
-config_dict["type"] = "echo"
-config_dict["date"] = date
-config_dict["echo_counter"] += 1
-filename = (
-    f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
-)
-# }}}
 # {{{set phase cycling
 # NOTE: The overall phase and the 90-180 phase difference are phase cycled
 # in a nested way
@@ -80,13 +79,15 @@ nPhaseSteps = len(ph2) * len(ph_diff)
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # }}}
-# NOTE: Unlike CPMG, here, tau is the estimated time it takes for FID to
-# decay to zero
+# Unlike CPMG, here, we are free to choose τ to be
+# whatever we want it to be.  Typically (when not
+# comparing directly to time-domain signal in first
+# echo of CPMG), we use 3.5 ms,
+# which is enough to use Hermitian symmetry, but not so
+# much that we suffer from T₂ decay.
 assert config_dict["tau_us"] > 2 * prog_p90_us / pi + config_dict["deblank_us"]
-# Because we are only doing one 180 pulse we do not bother with a
-# symmetric echo as we can make timing corrections in post processing
 # {{{check total points
-total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
+total_pts = nPoints * nPhaseSteps
 assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
     % total_pts
@@ -98,9 +99,16 @@ data = generic(
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
-        ("delay", config_dict["tau_us"]),
-        # NOTE: Unlike CPMG, here, tau is the estimated time it takes for FID to
-        # decay to zero
+        (
+            "delay",
+            config_dict["tau_us"]
+            - 2 * prog_p90_us / pi
+            - config_dict["deblank_us"],
+        ),
+        # NOTE: here the tau_us is defined as
+        # the evolution time from the start of
+        # excitation (*during the pulse*) through
+        # to the start of the 180 pulse
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
@@ -137,7 +145,9 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         while nodename in fp.keys():
-            nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
+            nodename = (
+                config_dict["type"] + "_" + str(config_dict["echo_counter"])
+            )
             data.name(nodename)
             config_dict["echo_counter"] += 1
 data.hdf5_write(f"{filename_out}", directory=target_directory)

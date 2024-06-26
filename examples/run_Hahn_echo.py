@@ -29,7 +29,8 @@ config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["SW_kHz"],
     config_dict["acq_time_ms"],
 ) = get_integer_sampling_intervals(
-    SW_kHz=config_dict["SW_kHz"], time_per_segment_ms=config_dict["acq_time_ms"]
+    SW_kHz=config_dict["SW_kHz"],
+    time_per_segment_ms=config_dict["acq_time_ms"],
 )
 # }}}
 # {{{create filename and save to config file
@@ -37,7 +38,9 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "echo"
 config_dict["date"] = date
 config_dict["echo_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+)
 # }}}
 # {{{set phase cycling
 # default phase cycling of run_spin_echo is to use a 4 step on the 90 pulse
@@ -46,12 +49,12 @@ filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type'
 ph1_cyc = r_[0, 1, 2, 3]
 nPhaseSteps = 4
 # }}}
-# {{{let computer set field
 input(
     "I'm assuming that you've tuned your probe to",
     config_dict["carrierFreq_MHz"],
     "since that's what's in your .ini file. Hit enter if this is true",
 )
+# {{{ let computer set field
 field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
     "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
@@ -71,7 +74,7 @@ assert total_pts < 2**14, (
 )
 # }}}
 # {{{ acquire echo
-echo_data = run_spin_echo(
+data = run_spin_echo(
     nScans=config_dict["nScans"],
     indirect_idx=0,
     indirect_len=1,
@@ -88,18 +91,18 @@ echo_data = run_spin_echo(
 )
 # }}}
 # {{{ chunk and save data
-echo_data.chunk(
+data.chunk(
     "t",
     ["ph1", "t2"],
     [len(ph1_cyc), -1],
 )
-echo_data.setaxis("ph1", ph1_cyc / 4)
-echo_data.reorder(["ph1", "nScans", "t2"])
-echo_data.set_prop("postproc_type", "spincore_SE_v1")
-echo_data.set_prop("coherence_pathway", {"ph1": +1})
-echo_data.set_prop("acq_params", config_dict.asdict())
+data.setaxis("ph1", ph1_cyc / 4)
+data.reorder(["ph1", "nScans", "t2"])
+data.set_prop("postproc_type", "spincore_SE_v1")
+data.set_prop("coherence_pathway", {"ph1": +1})
+data.set_prop("acq_params", config_dict.asdict())
 nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
-echo_data.name(nodename)
+data.name(nodename)
 filename_out = filename + ".h5"
 if os.path.exists(f"{filename_out}"):
     print("this file already exists so we will add a node to it!")
@@ -107,10 +110,12 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         while nodename in fp.keys():
-            nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
+            nodename = (
+                config_dict["type"] + "_" + str(config_dict["echo_counter"])
+            )
             data.name(nodename)
             config_dict["echo_counter"] += 1
-echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
+data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
     "Your *current* γ_eff (MHz/G) should be ",
@@ -121,14 +126,20 @@ print(
 )
 print(
     "saved data to (node, file, exp_type):",
-    echo_data.name(),
+    data.name(),
     filename_out,
     my_exp_type,
 )
 config_dict.write()
 # }}}
 subprocess.call(
-    ["python", "examples/proc_raw.py", echo_data.name(), filename_out, my_exp_type],
+    [
+        "python",
+        "examples/proc_raw.py",
+        data.name(),
+        filename_out,
+        my_exp_type,
+    ],
     cwd=r"C:\git\proc_scripts",
     shell=True,
 )

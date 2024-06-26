@@ -7,14 +7,24 @@ class configuration(object):
     # whether or not we can assume a default value
     registered_params = {
         "amplitude": (float, "acq_params", None, "amplitude of the pulse"),
-        "deadtime_us": (float, "acq_params", None, "mandatory delay after the pulse -- allows receivers to recover"),
+        "deadtime_us": (
+            float,
+            "acq_params",
+            None,
+            "mandatory delay after the pulse -- allows receivers to recover",
+        ),
         "tau_us": (
             float,
             "acq_params",
             None,
             "extra delay added between 90° and 180° pulse -- note this is not the same as τ_echo!\nsee eq 6 of coherence paper",
         ),
-        "deblank_us": (float, "acq_params", None, "type between the deblank TTL pulse and the actual pulse itself"),
+        "deblank_us": (
+            float,
+            "acq_params",
+            None,
+            "type between the deblank TTL pulse and the actual pulse itself",
+        ),
         "SW_kHz": (
             float,
             "acq_params",
@@ -51,7 +61,12 @@ class configuration(object):
             None,
             "Fraction of max T₁ bounds to stop vdlist at.\n \n Weiss recommends 0.75, which only gives 5% recovery -- we choose 2.0,\n since it gives 73% recovery, and that makes us feel better",
         ),
-        "p90_us": (float, "acq_params", None, "90 time of the probe in microseconds.\nUsed to determine 90° 180°, etc pulses"),
+        "p90_us": (
+            float,
+            "acq_params",
+            None,
+            "90 time of the probe in microseconds.\nUsed to determine 90° 180°, etc pulses",
+        ),
         "gamma_eff_MHz_G": (
             float,
             "acq_params",
@@ -76,11 +91,11 @@ class configuration(object):
             None,
             "concentration of spin label in the sample in M",
         ),
-        "FIR_rep":(
-                float,
-                "odnp_params",
-                None,
-                "Repetition delay for fast inversion recovery as defined by Weiss-this is calculated in the combined ODNP ppg"
+        "FIR_rep": (
+            float,
+            "odnp_params",
+            None,
+            "Repetition delay for fast inversion recovery as defined by Weiss-this is calculated in the combined ODNP ppg",
         ),
         "krho_cold": (
             float,
@@ -146,9 +161,14 @@ class configuration(object):
             float,
             "sample_params",
             0.2,
-            "estimated power for half saturation"
+            "estimated power for half saturation",
         ),
-        "adc_offset": (int, "acq_params", None, "SpinCore-specific ADC offset correction\nwe believe this is a DC offset, but are not positive"),
+        "adc_offset": (
+            int,
+            "acq_params",
+            None,
+            "SpinCore-specific ADC offset correction\nwe believe this is a DC offset, but are not positive",
+        ),
         "nScans": (int, "acq_params", 1, "number of scans"),
         "thermal_nScans": (
             int,
@@ -156,7 +176,12 @@ class configuration(object):
             1,
             "number of thermal scans - useful for no power datasets with low signal",
         ),
-        "nEchoes": (int, "acq_params", None, "number of echoes - 1, aside from CPMG, where it can be any desired number"),
+        "nEchoes": (
+            int,
+            "acq_params",
+            None,
+            "number of echoes - 1, aside from CPMG, where it can be any desired number",
+        ),
         "IR_steps": (
             int,
             "acq_params",
@@ -213,7 +238,12 @@ class configuration(object):
             None,
             "name specific to the sample - your data set will be named: date_chemical_type",
         ),
-        "type": (str, "file_names", None, "type of experiment being performed"),
+        "type": (
+            str,
+            "file_names",
+            None,
+            "type of experiment being performed",
+        ),
     }
 
     def __init__(self, filename):
@@ -257,22 +287,29 @@ class configuration(object):
         else:
             key = self._case_insensitive_keys[key.lower()]
             converter, section, default, _ = self.registered_params[key]
-            self._params[key] = converter(value)  # check that it's the right type
+            self._params[key] = converter(
+                value
+            )  # check that it's the right type
             self.configobj.set(section, key.lower(), str(self._params[key]))
+
     def __str__(self):
-        retval = ['-'*50]
+        retval = ["-" * 50]
         allkeys = [j for j in self._params.keys()]
-        idx = sorted(range(len(allkeys)), key=lambda x: allkeys.__getitem__(x).lower())
+        idx = sorted(
+            range(len(allkeys)), key=lambda x: allkeys.__getitem__(x).lower()
+        )
         allkeys_sorted = [allkeys[j] for j in idx]
         for key in allkeys_sorted:
-            converter, section, default, description = self.registered_params[key]
-            description = description.split('\n')
-            description = ['\t'+j for j in description]
-            description = '\n'.join(description)
+            converter, section, default, description = self.registered_params[
+                key
+            ]
+            description = description.split("\n")
+            description = ["\t" + j for j in description]
+            description = "\n".join(description)
             value = self.__getitem__(key)
             retval.append(f"{key} {value} (in [{section}])\n{description}")
-        retval.append('-'*50)
-        return '\n'.join(retval)
+        retval.append("-" * 50)
+        return "\n".join(retval)
 
     def keys(self):
         return self._params.keys()
