@@ -113,7 +113,7 @@ data = generic(
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
-    acq_time_ms=config_dict["acq_time_ms"],
+    time_per_segment_ms=config_dict["acq_time_ms"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
