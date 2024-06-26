@@ -65,9 +65,9 @@ assert total_pts < 2**14, (
 )
 # }}}
 nutation_data = None
-# Just loop over the 90 times and set the indirect axis at the
-# end just like how we perform and save IR data
 for idx, p90_us in enumerate(p90_range_us):
+    # Just loop over the 90 times and set the indirect axis at the end
+    # just like how we perform and save IR data
     nutation_data = run_spin_echo(
         deadtime_us=config_dict["deadtime_us"],
         nScans=config_dict["nScans"],
