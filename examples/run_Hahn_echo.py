@@ -11,7 +11,7 @@ the NMR computer to set the field etc.
 
 from pylab import *
 from pyspecdata import *
-import os
+import subprocess, os
 import SpinCore_pp
 from SpinCore_pp import get_integer_sampling_intervals
 from SpinCore_pp.ppg import run_spin_echo
@@ -108,9 +108,9 @@ if os.path.exists(f"{filename_out}"):
     ) as fp:
         orig_nodename = nodename
         while nodename in fp.keys():
-            nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"]) 
+            nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
             data.name(nodename)
-            config_dict['echo_counter'] += 1
+            config_dict["echo_counter"] += 1
 echo_data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
@@ -128,18 +128,8 @@ print(
 )
 config_dict.write()
 # }}}
-echo_data.ft("t2", shift=True)
-with figlist_var() as fl:
-    fl.next("image - ft")
-    fl.image(echo_data)
-    fl.next("image - ft, coherence")
-    echo_data.ft("ph1")
-    fl.image(echo_data)
-    fl.next("data plot")
-    if "nScans" in echo_data.dimlabels:
-        data_slice = echo_data["ph1", 1].mean("nScans")
-    else:
-        data_slice = echo_data["ph1", 1]
-    fl.plot(data_slice, alpha=0.5)
-    fl.plot(data_slice.imag, alpha=0.5)
-    fl.plot(abs(data_slice), color="k", alpha=0.5)
+subprocess.call(
+    ["python", "examples/proc_raw.py", echo_data.name(), filename_out, my_exp_type],
+    cwd=r"C:\git\proc_scripts",
+    shell=True,
+)
