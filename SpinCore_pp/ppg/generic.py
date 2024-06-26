@@ -25,7 +25,7 @@ def generic(
     adcOffset,
     carrierFreq_MHz,
     nPoints,
-    acq_time_ms,
+    time_per_segment_ms,
     SW_kHz,
     indirect_fields=None,
     ph1_cyc=r_[0, 1, 2, 3],
@@ -119,7 +119,11 @@ def generic(
         )
     nPhaseSteps = int(
         np.prod(
-            list(dict([(j[2], len(j[3])) for j in ppg_list if len(j) > 3]).values())
+            list(
+                dict(
+                    [(j[2], len(j[3])) for j in ppg_list if len(j) > 3]
+                ).values()
+            )
         )
     )
     # }}}
@@ -130,10 +134,12 @@ def generic(
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
-        check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
+        # in the following, nScans is set to 1, because we never average
+        # on the board -- doing this only messes up the amplitude
+        check = configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
         assert np.isclose(
-            check, acq_time_ms
-        ), f"you are trying to set the acquisition time to {acq_time_ms}, but configureRX returns {check}"
+            check, time_per_segment_ms
+        ), f"you are trying to set the acquisition time to {time_per_segment_ms}, but configureRX returns {check}"
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
@@ -161,7 +167,10 @@ def generic(
             else:
                 # {{{ dtype for structured array
                 times_dtype = np.dtype(
-                    [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
+                    [
+                        (indirect_fields[0], np.double),
+                        (indirect_fields[1], np.double),
+                    ]
                 )
                 # }}}
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
@@ -185,7 +194,9 @@ def generic(
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
         # }}}
-        logging.debug(strm("stored scan", nScans_idx, "for indirect_idx", indirect_idx))
+        logging.debug(
+            strm("stored scan", nScans_idx, "for indirect_idx", indirect_idx)
+        )
         logging.debug(strm("checkpoints:", this_array - this_array[0]))
         logging.debug(
             strm(

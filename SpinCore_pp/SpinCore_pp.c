@@ -68,7 +68,7 @@ double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, uns
                 &dec_amount
                 ));
     double actual_SW = (adcFrequency_MHz * 1e6) / (double) dec_amount;
-    double acq_time = ((double) nPoints) / ((double) actual_SW) * ((double) 1e3);
+    double time_per_segment_ms = ((double) nPoints) / ((double) actual_SW) * ((double) 1e3);
     int nSegments = nEchoes*nPhaseSteps;
     if(abs(actual_SW - 1e3*SW_kHz) > 1.0){
         printf("Error: You tried to set the SW to %0.3f kHz, but the closest allowed value is %0.3f kHz\n",SW_kHz,actual_SW/1e3);
@@ -78,7 +78,7 @@ double configureRX(double SW_kHz, unsigned int nPoints, unsigned int nScans, uns
         printf("WARNING: TRYING TO ACQUIRE TOO MANY POINTS THAN BOARD CAN STORE.\n");
     }
     ERROR_CATCH( spmri_set_num_segments(nSegments));
-    return acq_time;
+    return time_per_segment_ms;
 }
 
 int init_ppg(){
