@@ -103,6 +103,7 @@ def generic(
                     returned data from previous run or `None` for the first run.
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
+    # {{{ pull info about phase cycling and echos from the ppg_list
     nEchoes = [
         j[2]
         for j in ppg_list
@@ -116,7 +117,6 @@ def generic(
         raise ValueError(
             f"You seem to have {len(nEchoes)} lines in your ppg list that refer to a marker called 'echo_label'.  Therefore, I can't figure out how many echoes are in the pulse sequence!"
         )
-    # {{{ pull info about phase cycling and echos from the ppg_list
     nPhaseSteps = int(
         np.prod(
             list(dict([(j[2], len(j[3])) for j in ppg_list if len(j) > 3]).values())
