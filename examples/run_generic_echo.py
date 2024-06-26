@@ -125,7 +125,7 @@ data.chunk(
     [len(ph2), len(ph_diff), -1],
 )
 data.setaxis("ph2", ph2 / 4).setaxis("ph_diff", ph_diff / 4)
-data.set_prop("postproc_type", "spincore_diffph_SE_v1")
+data.set_prop("postproc_type", "spincore_diffph_SE_v2")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
 nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
