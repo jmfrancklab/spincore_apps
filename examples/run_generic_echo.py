@@ -128,7 +128,7 @@ data.setaxis("ph2", ph2 / 4).setaxis("ph_diff", ph_diff / 4)
 data.set_prop("postproc_type", "spincore_diffph_SE_v1")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-nodename = config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
+nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
 data.name(nodename)
 filename_out = filename + ".h5"
 if os.path.exists(f"{filename_out}"):
@@ -136,12 +136,11 @@ if os.path.exists(f"{filename_out}"):
     with h5py.File(
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
-        tempcounter = 1
         orig_nodename = nodename
         while nodename in fp.keys():
-            nodename = "%s_temp_%d" % (orig_nodename, tempcounter)
+            nodename = config_dict["type"] + "_" + str(config_dict["echo_counter"])
             data.name(nodename)
-            tempcounter += 1
+            config_dict['echo_counter'] += 1
 data.hdf5_write(f"{filename_out}", directory=target_directory)
 print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 print(
