@@ -19,6 +19,9 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 import h5py
 
+my_exp_type = "ODNP_NMR_comp/Echoes"
+target_directory = getDATADIR(exp_type=my_exp_type)
+assert os.path.exists(target_directory)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -28,9 +31,6 @@ config_dict = SpinCore_pp.configuration("active.ini")
 ) = get_integer_sampling_intervals(
     SW_kHz=config_dict["SW_kHz"], time_per_segment_ms=config_dict["acq_time_ms"]
 )
-my_exp_type = "ODNP_NMR_comp/Echoes"
-target_directory = getDATADIR(exp_type=my_exp_type)
-assert os.path.exists(target_directory)
 # }}}
 # {{{ command-line option to leave the field untouched (if you set it once, why set it again)
 adjust_field = True
