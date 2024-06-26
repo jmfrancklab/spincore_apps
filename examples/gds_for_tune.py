@@ -34,6 +34,7 @@ print(
 )
 
 print("")
+# CH1 of the scope is busted so we are now using CH2 and CH3 instead
 input(
     "Please note I'm going to assume the control is hooked up to CH2 of the GDS and the reflection is hooked up to CH3 of the GDS... (press enter to continue)"
 )
@@ -47,6 +48,8 @@ print("done printing available instruments")
 
 def grab_waveforms(g):
     # {{{ capture a "successful" waveform
+    # CH1 of the scope is busted so we are now using CH2 and CH3 instead
+    # to maintain the master/original copy I don't change the variable names
     ch1 = g.waveform(ch=2)
     ch2 = g.waveform(ch=3)
     success = False
