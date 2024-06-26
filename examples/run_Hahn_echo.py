@@ -47,10 +47,10 @@ ph1_cyc = r_[0, 1, 2, 3]
 nPhaseSteps = 4
 # }}}
 # {{{let computer set field
-print(
+input(
     "I'm assuming that you've tuned your probe to",
     config_dict["carrierFreq_MHz"],
-    "since that's what's in your .ini file",
+    "since that's what's in your .ini file. Hit enter if this is true",
 )
 field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
