@@ -1,11 +1,11 @@
 import h5py
 import os
-from pyspecdata import *
+import pyspecdata as psp
 import pyspecProcScripts
 import subprocess
 
 
-def save_data(dataset, my_exp_type, config_dict, counter_type):
+def save_data(dataset, target_directory, config_dict, counter_type):
     """save data to an h5 file with appropriately labeled nodename and performs
     rough processing
 
@@ -25,7 +25,6 @@ def save_data(dataset, my_exp_type, config_dict, counter_type):
     config_dict: dict
         the updated config dict after appropriately incrementing the counter
     """
-    target_directory = getDATADIR(exp_type=my_exp_type)
     # {{{ create filename
     filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
     # }}}
@@ -45,26 +44,18 @@ def save_data(dataset, my_exp_type, config_dict, counter_type):
                     + str(config_dict["%s_counter" % counter_type])
                 )
             dataset.name(nodename)
-    dataset.hdf5_write(f"{filename_out}", directory=target_directory)
+    dataset.psp.hdf5_write(f"{filename_out}", directory=target_directory)
     print("\n** FILE SAVED IN TARGET DIRECTORY ***\n")
     print(
         "saved data to (node, file, exp_type):",
         dataset.name(),
         filename_out,
-        my_exp_type,
+        target_directory,
     )
-    subprocess.call(
-        " ".join(
-            [
-                "python ",
-                os.path.join(
-                    os.path.split(os.path.split(pyspecProcSripts.__file__)[0])[0],
-                    "examples",
-                    "proc_raw.py",
-                ),
-                "%s %s %s" % (dataset.name(), filename_out, my_exp_type),
-            ],
-            shell=True,
-        )
-    )
+    env = os.environ
+    subprocess.call((" ".join(["python",os.path.join(
+        os.path.split(os.path.split(pyspecProcScripts.__file__)[0])[0],
+        "examples", "proc_raw.py"),
+        data.name(),filename_out, my_exp_type])),
+        env=env)
     return config_dict
