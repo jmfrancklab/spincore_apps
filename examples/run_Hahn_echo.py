@@ -11,6 +11,7 @@ the NMR computer to set the field etc.
 
 from pylab import *
 from pyspecdata import *
+import pyspecProcScripts
 import subprocess, os
 import SpinCore_pp
 from SpinCore_pp import get_integer_sampling_intervals
@@ -134,14 +135,10 @@ print(
 )
 config_dict.write()
 # }}}
-subprocess.call(
-    [
-        python,
-        "examples/proc_raw.py",
-        data.name(),
-        filename_out,
-        my_exp_type,
-    ],
-    cwd=r"C:\git\proc_scripts",
-    shell=True,
-)
+env = os.environ
+subprocess.call("which python",shell=True)
+subprocess.call((" ".join(["python",os.path.join(
+    os.path.split(os.path.split(pyspecProcScripts.__file__)[0])[0],
+    "examples", "proc_raw.py"),
+    data.name(),filename_out, my_exp_type])),
+    env=env)
