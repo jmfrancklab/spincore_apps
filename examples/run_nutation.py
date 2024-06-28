@@ -24,7 +24,9 @@ config_dict = SpinCore_pp.configuration("active.ini")
     nPoints,
     config_dict["SW_kHz"],
     config_dict["acq_time_ms"],
-) = get_integer_sampling_intervals(config_dict["SW_kHz"], config_dict["acq_time_ms"])
+) = get_integer_sampling_intervals(
+    config_dict["SW_kHz"], config_dict["acq_time_ms"]
+    )
 # }}}
 # {{{add file saving parameters to config dict
 config_dict["type"] = "nutation"
@@ -81,7 +83,7 @@ for idx, p90_us in enumerate(p90_range_us):
     )
 nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units(
     "indirect", "s"
-    )
+)
 # {{{ chunk and save data
 nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
 nutation_data.setaxis("ph1", ph1_cyc / 4)
