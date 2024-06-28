@@ -1,8 +1,8 @@
 import h5py
 import os
-import pyspecdata as psp
-import pyspecProcScripts
+import pyspecdata as psd
 import subprocess
+import pyspecProcSripts
 
 
 def save_data(dataset, target_directory, config_dict, counter_type):
@@ -25,10 +25,15 @@ def save_data(dataset, target_directory, config_dict, counter_type):
     config_dict: dict
         the updated config dict after appropriately incrementing the counter
     """
+    target_directory = psd.getDATADIR(exp_type=my_exp_type)
     # {{{ create filename
     filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
     # }}}
-    nodename = config_dict["type"] + "_" + str(config_dict["%s_counter" % counter_type])
+    nodename = (
+        config_dict["type"]
+        + "_"
+        + str(config_dict["%s_counter" % counter_type])
+    )
     dataset.name(nodename)
     filename_out = filename + ".h5"
     if os.path.exists(f"{filename_out}"):
@@ -56,6 +61,6 @@ def save_data(dataset, target_directory, config_dict, counter_type):
     subprocess.call((" ".join(["python",os.path.join(
         os.path.split(os.path.split(pyspecProcScripts.__file__)[0])[0],
         "examples", "proc_raw.py"),
-        data.name(),filename_out, my_exp_type])),
+        data.name(),filename_out, target_directory])),
         env=env)
     return config_dict
