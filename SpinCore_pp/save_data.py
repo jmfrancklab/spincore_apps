@@ -5,7 +5,7 @@ import pyspecProcScripts
 import subprocess
 
 
-def save_data(dataset, target_directory, config_dict, counter_type):
+def save_data(dataset, my_exp_type, config_dict, counter_type):
     """save data to an h5 file with appropriately labeled nodename and performs
     rough processing
 
@@ -13,7 +13,7 @@ def save_data(dataset, target_directory, config_dict, counter_type):
     ==========
     dataset: nddata
         acquired data in nddata format
-    target_directory: str
+    my_exp_type: str
         directory on the share drive you want to save to
     config_dict: dict
         config_dict pulled from the active.ini file
@@ -25,6 +25,7 @@ def save_data(dataset, target_directory, config_dict, counter_type):
     config_dict: dict
         the updated config dict after appropriately incrementing the counter
     """
+    target_directory = psd.getDATADIR(exp_type = my_exp_type)
     # {{{ create filename
     filename_out = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"+".h5"
     # }}}
@@ -45,7 +46,6 @@ def save_data(dataset, target_directory, config_dict, counter_type):
             dataset.name(nodename)
     dataset.hdf5_write(f"{filename_out}", directory=target_directory)
     print("\n** FILE SAVED IN TARGET DIRECTORY ***\n")
-    my_exp_type = '/'.join([os.path.split(os.path.split(os.path.split(target_directory)[0])[0])[1], os.path.split(os.path.split(target_directory)[0])[1]]) 
     print(
         "saved data to (node, file, exp_type):",
         dataset.name(),
