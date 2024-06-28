@@ -11,6 +11,7 @@ the NMR computer to set the field etc.
 
 from pylab import *
 from pyspecdata import *
+import pyspecProcScripts
 import subprocess, os
 import SpinCore_pp
 from SpinCore_pp import get_integer_sampling_intervals
@@ -30,7 +31,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["acq_time_ms"],
 ) = get_integer_sampling_intervals(
     SW_kHz=config_dict["SW_kHz"],
-    time_per_segment_ms=config_dict["acq_time_ms"],
+    acq_time_ms=config_dict["acq_time_ms"],
 )
 # }}}
 # {{{create filename and save to config file
@@ -53,7 +54,7 @@ input(
     "I'm assuming that you've tuned your probe to",
     config_dict["carrierFreq_MHz"],
     "since that's what's in your .ini file. Hit enter if this is true",
-)
+    )
 # {{{ let computer set field
 field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
@@ -132,14 +133,10 @@ print(
 )
 config_dict.write()
 # }}}
-subprocess.call(
-    [
-        "python",
-        "examples/proc_raw.py",
-        data.name(),
-        filename_out,
-        my_exp_type,
-    ],
-    cwd=r"C:\git\proc_scripts",
-    shell=True,
-)
+env = os.environ
+subprocess.call("which python",shell=True)
+subprocess.call((" ".join(["python",os.path.join(
+    os.path.split(os.path.split(pyspecProcScripts.__file__)[0])[0],
+    "examples", "proc_raw.py"),
+    data.name(),filename_out, my_exp_type])),
+    env=env)
