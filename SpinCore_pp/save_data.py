@@ -26,11 +26,10 @@ def save_data(dataset, target_directory, config_dict, counter_type):
         the updated config dict after appropriately incrementing the counter
     """
     # {{{ create filename
-    filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+    filename_out = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"+".h5"
     # }}}
     nodename = config_dict["type"] + "_" + str(config_dict["%s_counter" % counter_type])
     dataset.name(nodename)
-    filename_out = filename + ".h5"
     if os.path.exists(f"{target_directory}{filename_out}"):
         print("this file already exists so we will add a node to it!")
         with h5py.File(
