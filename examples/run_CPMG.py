@@ -19,7 +19,8 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/CPMG"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
+target_directory = getDATADIR(exp_type=my_exp_type)
+assert os.path.exists(target_directory)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -42,9 +43,8 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to",
-    config_dict["carrierFreq_MHz"],
-    "since that's what's in your .ini file. Hit enter if this is true",
+    "I'm assuming that you've tuned your probe to %d since that's what's in your .ini file. Hit enter if this is true"
+    % config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field
 if adjust_field:
@@ -83,17 +83,12 @@ config_dict["tau_us"] = (
     2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
 ) / 2
 assert (
-    config_dict["tau_us"]
-    > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
+    config_dict["tau_us"] > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
 )
 assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
 print(
     "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
-    % (
-        2 * config_dict["deadtime_us"]
-        + 1e3 * config_dict["echo_acq_ms"]
-        + prog_p180_us
-    )
+    % (2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"] + prog_p180_us)
 )
 # }}}
 # {{{check total points
@@ -128,9 +123,7 @@ data = generic(
         ("acquire", config_dict["echo_acq_ms"]),
         (
             "delay",
-            config_dict["deadtime_us"]
-            - 2 * marker_us
-            - config_dict["deblank_us"],
+            config_dict["deadtime_us"] - 2 * marker_us - config_dict["deblank_us"],
         ),
         ("jumpto", "echo_label"),
         # In the line above I assume this takes
@@ -158,12 +151,12 @@ data.chunk(
     ["ph2", "ph_diff", "nEcho", "t2"],
     [len(ph2), len(ph_diff), config_dict["nEchoes"], -1],
 )
-data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
-    "ph2", ph2 / 4
-).setaxis("ph_diff", ph_diff / 4)
+data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis("ph2", ph2 / 4).setaxis(
+    "ph_diff", ph_diff / 4
+)
 data.set_prop("postproc_type", "spincore_diffph_SE_v2")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-config_dict = save_data(data, my_exp_type, config_dict, "cpmg")
+config_dict = save_data(data, target_directory, config_dict, "cpmg")
 config_dict.write()
 # }}}

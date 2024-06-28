@@ -16,7 +16,7 @@ from datetime import datetime
 from numpy import linspace, arange
 
 my_exp_type = "ODNP_NMR_comp/nutation"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
+target_directory = getDATADIR(exp_type=my_exp_type)
 p90_range_us = linspace(1.0, 10.0, 20, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -24,9 +24,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
     nPoints,
     config_dict["SW_kHz"],
     config_dict["acq_time_ms"],
-) = get_integer_sampling_intervals(
-    config_dict["SW_kHz"], config_dict["acq_time_ms"]
-    )
+) = get_integer_sampling_intervals(config_dict["SW_kHz"], config_dict["acq_time_ms"])
 # }}}
 # {{{add file saving parameters to config dict
 config_dict["type"] = "nutation"
@@ -37,12 +35,11 @@ config_dict["echo_counter"] += 1
 ph1_cyc = r_[0, 1, 2, 3]
 nPhaseSteps = 4
 # }}}
-# {{{let computer set field
 input(
-    "I'm assuming that you've tuned your probe to:",
-    config_dict["carrierFreq_MHz"],
-    "since that's what's in your .ini file.  Hit enter if this is true",
+    "I'm assuming that you've tuned your probe to %d since that's what's in your .ini file. Hit enter if this is true"
+    % config_dict["carrierFreq_MHz"]
 )
+# {{{let computer set field
 field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
     "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
@@ -82,9 +79,7 @@ for idx, p90_us in enumerate(p90_range_us):
         SW_kHz=config_dict["SW_kHz"],
         ret_data=nutation_data,
     )
-nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units(
-    "indirect", "s"
-    )
+nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units("indirect", "s")
 # {{{ chunk and save data
 nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
 nutation_data.setaxis("ph1", ph1_cyc / 4)
@@ -95,5 +90,5 @@ nutation_data.set_units("t2", "s")
 nutation_data.set_prop("postproc_type", "spincore_nutation_v4")
 nutation_data.set_prop("coherence_pathway", {"ph1": +1})
 nutation_data.set_prop("acq_params", config_dict.asdict())
-config_dict = save_data(data, my_exp_type, config_dict, "echo")
+config_dict = save_data(data, target_directory, config_dict, "echo")
 config_dict.write()

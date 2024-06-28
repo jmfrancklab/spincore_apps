@@ -8,6 +8,7 @@ phase cycled in a nested way similar to run_CPMG.py. If you wish to keep
 the field as is without adjustment follow the 'py run_generic_echo.py'
 command with 'stayput' (e.g. 'py run_generic_echo.py stayput')
 """
+
 from pylab import *
 from pyspecdata import *
 import os, sys
@@ -19,7 +20,8 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/Echoes"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
+target_directory = getDATADIR(exp_type=my_exp_type)
+assert os.path.exists(target_directory)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -42,9 +44,8 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to",
-    config_dict["carrierFreq_MHz"],
-    "since that's what's in your .ini file. Hit enter if this is true",
+    "I'm assuming that you've tuned your probe to %d since that's what's in your .ini file. Hit enter if this is true"
+    % config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field
 if adjust_field:
@@ -97,9 +98,7 @@ data = generic(
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
         (
             "delay",
-            config_dict["tau_us"]
-            - 2 * prog_p90_us / pi
-            - config_dict["deblank_us"],
+            config_dict["tau_us"] - 2 * prog_p90_us / pi - config_dict["deblank_us"],
         ),
         # NOTE: here the tau_us is defined as
         # the evolution time from the start of
@@ -132,6 +131,6 @@ data.setaxis("ph2", ph2 / 4).setaxis("ph_diff", ph_diff / 4)
 data.set_prop("postproc_type", "spincore_diffph_SE_v2")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-config_dict = save_data(data, my_exp_type, config_dict, "echo")
+config_dict = save_data(data, target_directory, config_dict, "echo")
 config_dict.write()
 # }}}

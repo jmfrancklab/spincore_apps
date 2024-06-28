@@ -1,8 +1,8 @@
 import h5py
 import os
 import pyspecdata as psd
+import pyspecProcScripts
 import subprocess
-import pyspecProcSripts
 
 
 def save_data(dataset, target_directory, config_dict, counter_type):
@@ -25,18 +25,13 @@ def save_data(dataset, target_directory, config_dict, counter_type):
     config_dict: dict
         the updated config dict after appropriately incrementing the counter
     """
-    target_directory = psd.getDATADIR(exp_type=my_exp_type)
     # {{{ create filename
     filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
     # }}}
-    nodename = (
-        config_dict["type"]
-        + "_"
-        + str(config_dict["%s_counter" % counter_type])
-    )
+    nodename = config_dict["type"] + "_" + str(config_dict["%s_counter" % counter_type])
     dataset.name(nodename)
     filename_out = filename + ".h5"
-    if os.path.exists(f"{filename_out}"):
+    if os.path.exists(f"{target_directory}{filename_out}"):
         print("this file already exists so we will add a node to it!")
         with h5py.File(
             os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
@@ -49,18 +44,33 @@ def save_data(dataset, target_directory, config_dict, counter_type):
                     + str(config_dict["%s_counter" % counter_type])
                 )
             dataset.name(nodename)
-    dataset.psp.hdf5_write(f"{filename_out}", directory=target_directory)
+    dataset.hdf5_write(f"{filename_out}", directory=target_directory)
     print("\n** FILE SAVED IN TARGET DIRECTORY ***\n")
+    target_directory_parts = target_directory.split("\\")
+    my_exp_type = "/".join((target_directory_parts[-3], target_directory_parts[-2]))
     print(
         "saved data to (node, file, exp_type):",
         dataset.name(),
         filename_out,
-        target_directory,
+        my_exp_type,
     )
     env = os.environ
-    subprocess.call((" ".join(["python",os.path.join(
-        os.path.split(os.path.split(pyspecProcScripts.__file__)[0])[0],
-        "examples", "proc_raw.py"),
-        data.name(),filename_out, target_directory])),
-        env=env)
+    subprocess.call(
+        (
+            " ".join(
+                [
+                    "python",
+                    os.path.join(
+                        os.path.split(os.path.split(pyspecProcScripts.__file__)[0])[0],
+                        "examples",
+                        "proc_raw.py",
+                    ),
+                    dataset.name(),
+                    filename_out,
+                    my_exp_type,
+                ]
+            )
+        ),
+        env=env,
+    )
     return config_dict
