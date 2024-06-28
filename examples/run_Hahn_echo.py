@@ -30,7 +30,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["acq_time_ms"],
 ) = get_integer_sampling_intervals(
     SW_kHz=config_dict["SW_kHz"],
-    time_per_segment_ms=config_dict["acq_time_ms"],
+    acq_time_ms=config_dict["acq_time_ms"],
 )
 # }}}
 # {{{create filename and save to config file
@@ -49,11 +49,12 @@ filename = (
 ph1_cyc = r_[0, 1, 2, 3]
 nPhaseSteps = 4
 # }}}
-input(
+print(
     "I'm assuming that you've tuned your probe to",
     config_dict["carrierFreq_MHz"],
-    "since that's what's in your .ini file. Hit enter if this is true",
+    "since that's what's in your .ini file."
 )
+input("Hit enter if this is true")
 # {{{ let computer set field
 field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
@@ -84,6 +85,7 @@ data = run_spin_echo(
     nPoints=nPoints,
     nEchoes=1,  # you should never be running a hahn echo with >1 echo
     p90_us=config_dict["p90_us"],
+    amplitude=config_dict["amplitude"],
     repetition_us=config_dict["repetition_us"],
     tau_us=config_dict["tau_us"],
     SW_kHz=config_dict["SW_kHz"],
@@ -134,7 +136,7 @@ config_dict.write()
 # }}}
 subprocess.call(
     [
-        "python",
+        python,
         "examples/proc_raw.py",
         data.name(),
         filename_out,

@@ -16,3 +16,6 @@ SpinCore_pp/data_files.log
 *ppg*.py
 2D_MRI.py
 tags
+*.*~
+*.log
+*.csv
