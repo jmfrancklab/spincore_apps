@@ -98,7 +98,9 @@ data = generic(
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
         (
             "delay",
-            config_dict["tau_us"] - 2 * prog_p90_us / pi - config_dict["deblank_us"],
+            config_dict["tau_us"]
+            - 2 * prog_p90_us / pi
+            - config_dict["deblank_us"],
         ),
         # NOTE: here the tau_us is defined as
         # the evolution time from the start of

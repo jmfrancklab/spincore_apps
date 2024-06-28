@@ -35,11 +35,11 @@ config_dict["echo_counter"] += 1
 ph1_cyc = r_[0, 1, 2, 3]
 nPhaseSteps = 4
 # }}}
+# {{{let computer set field
 input(
     "I'm assuming that you've tuned your probe to %d since that's what's in your .ini file. Hit enter if this is true"
     % config_dict["carrierFreq_MHz"]
 )
-# {{{let computer set field
 field_G = config_dict["carrierFreq_MHz"] / config_dict["gamma_eff_MHz_G"]
 print(
     "Based on that, and the gamma_eff_MHz_G you have in your .ini file, I'm setting the field to %f"
@@ -79,7 +79,9 @@ for idx, p90_us in enumerate(p90_range_us):
         SW_kHz=config_dict["SW_kHz"],
         ret_data=nutation_data,
     )
-nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units("indirect", "s")
+nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units(
+    "indirect", "s"
+    )
 # {{{ chunk and save data
 nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
 nutation_data.setaxis("ph1", ph1_cyc / 4)
