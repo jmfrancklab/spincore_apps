@@ -45,7 +45,7 @@ ph1_cyc = r_[0, 1, 2, 3]
 nPhaseSteps = 4
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to %d since that's what's in your .ini file. Hit enter if this is true"
+    "I'm assuming that you've tuned your probe to %f since that's what's in your .ini file. Hit enter if this is true"
     % config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field

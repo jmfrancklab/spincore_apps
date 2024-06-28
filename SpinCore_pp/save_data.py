@@ -45,8 +45,7 @@ def save_data(dataset, target_directory, config_dict, counter_type):
             dataset.name(nodename)
     dataset.hdf5_write(f"{filename_out}", directory=target_directory)
     print("\n** FILE SAVED IN TARGET DIRECTORY ***\n")
-    target_directory_parts = target_directory.split("\\")
-    my_exp_type = "/".join((target_directory_parts[-3], target_directory_parts[-2]))
+    my_exp_type = '/'.join([os.path.split(os.path.split(os.path.split(target_directory)[0])[0])[1], os.path.split(os.path.split(target_directory)[0])[1]]) 
     print(
         "saved data to (node, file, exp_type):",
         dataset.name(),
