@@ -16,7 +16,7 @@ from datetime import datetime
 from numpy import linspace, arange
 
 my_exp_type = "ODNP_NMR_comp/nutation"
-target_directory = getDATADIR(exp_type=my_exp_type)
+assert os.path.exists(getDATADIR(exp_type=my_exp_type))
 p90_range_us = linspace(1.0, 10.0, 20, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
@@ -94,5 +94,5 @@ nutation_data.set_units("t2", "s")
 nutation_data.set_prop("postproc_type", "spincore_nutation_v4")
 nutation_data.set_prop("coherence_pathway", {"ph1": +1})
 nutation_data.set_prop("acq_params", config_dict.asdict())
-config_dict = save_data(data, target_directory, config_dict, "echo")
+config_dict = save_data(data, my_exp_type, config_dict, "echo")
 config_dict.write()

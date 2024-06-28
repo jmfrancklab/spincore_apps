@@ -19,8 +19,7 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/Echoes"
-target_directory = getDATADIR(exp_type=my_exp_type)
-assert os.path.exists(target_directory)
+assert os.path.exists(getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -95,7 +94,7 @@ data.reorder(["ph1", "nScans", "t2"])
 data.set_prop("postproc_type", "spincore_SE_v1")
 data.set_prop("coherence_pathway", {"ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-config_dict = save_data(data, target_directory, config_dict, "echo")
+config_dict = save_data(data, my_exp_type, config_dict, "echo")
 print(
     "Your *current* γ_eff (MHz/G) should be ",
     config_dict["gamma_eff_MHz_G"],

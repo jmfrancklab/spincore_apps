@@ -19,8 +19,7 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/CPMG"
-target_directory = getDATADIR(exp_type=my_exp_type)
-assert os.path.exists(target_directory)
+assert os.path.exists(getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -165,6 +164,6 @@ data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
 data.set_prop("postproc_type", "spincore_diffph_SE_v2")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-config_dict = save_data(data, target_directory, config_dict, "cpmg")
+config_dict = save_data(data, my_exp_type, config_dict, "cpmg")
 config_dict.write()
 # }}}
