@@ -13,7 +13,7 @@ def save_data(dataset, target_directory, config_dict, counter_type):
     ==========
     dataset: nddata
         acquired data in nddata format
-    my_exp_type: str
+    target_directory: str
         directory on the share drive you want to save to
     config_dict: dict
         config_dict pulled from the active.ini file
