@@ -38,5 +38,6 @@ jobs:
             flake8 --max-line-length=88 --ignore=E231,E501,E225,E226,E261,E306,E293,W293,E741,W291,E265,E302,E305,E203,W503 $CHANGED_FILES
           else
             echo "No Python files were changed."
+          fi
         env:
           CHANGED_FILES: ${{ env.CHANGED_FILES }}
