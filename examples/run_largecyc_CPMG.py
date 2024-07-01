@@ -140,7 +140,7 @@ data = generic(
         ),
         ("delay", marker_us),  # placeholder for marker
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p180_us, "ph_cyc", ph3_cyc),
+        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
         (
@@ -189,14 +189,18 @@ data = generic(
 # {{{ chunk and save data
 data.chunk(
     "t",
-    ["ph2", "ph_diff", "nEcho", "t2"],
+    ["ph1","ph2","ph_overall", "nEcho", "t2"],
     [len(ph2), len(ph_diff), config_dict["nEchoes"], -1],
 )
 data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
     "ph2", ph2 / 4
 ).setaxis("ph_diff", ph_diff / 4)
 data.set_prop("postproc_type", "spincore_diffph_SE_v2")
-data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
+data.set_prop("coherence_pathway", {'ph1': 1,
+                                    'ph2': -2,
+                                    'ph_overall':-1,
+                                    }
+              )
 data.set_prop("acq_params", config_dict.asdict())
 nodename = config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
 data.name(nodename)
