@@ -60,11 +60,11 @@ assert total_pts < 2**14, (
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
 # }}}
-nutation_data = None
+data = None
 for idx, p90_us in enumerate(p90_range_us):
     # Just loop over the 90 times and set the indirect axis at the end
     # just like how we perform and save IR data
-    nutation_data = run_spin_echo(
+    data = run_spin_echo(
         deadtime_us=config_dict["deadtime_us"],
         nScans=config_dict["nScans"],
         indirect_idx=idx,
@@ -79,20 +79,20 @@ for idx, p90_us in enumerate(p90_range_us):
         repetition_us=config_dict["repetition_us"],
         tau_us=config_dict["tau_us"],
         SW_kHz=config_dict["SW_kHz"],
-        ret_data=nutation_data,
+        ret_data=data,
     )
-nutation_data.setaxis("indirect", p90_range_us * 1e-6).set_units(
+data.setaxis("indirect", p90_range_us * 1e-6).set_units(
     "indirect", "s"
 )
 # {{{ chunk and save data
-nutation_data.chunk("t", ["ph1", "t2"], [4, -1])
-nutation_data.setaxis("ph1", ph1_cyc / 4)
+data.chunk("t", ["ph1", "t2"], [4, -1])
+data.setaxis("ph1", ph1_cyc / 4)
 if config_dict["nScans"] > 1:
-    nutation_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-nutation_data.reorder(["ph1", "nScans", "t2"])
-nutation_data.set_units("t2", "s")
-nutation_data.set_prop("postproc_type", "spincore_nutation_v4")
-nutation_data.set_prop("coherence_pathway", {"ph1": +1})
-nutation_data.set_prop("acq_params", config_dict.asdict())
-config_dict = save_data(nutation_data, my_exp_type, config_dict, "echo")
+    data.setaxis("nScans", r_[0 : config_dict["nScans"]])
+data.reorder(["ph1", "nScans", "t2"])
+data.set_units("t2", "s")
+data.set_prop("postproc_type", "spincore_nutation_v4")
+data.set_prop("coherence_pathway", {"ph1": +1})
+data.set_prop("acq_params", config_dict.asdict())
+config_dict = save_data(data, my_exp_type, config_dict, "echo")
 config_dict.write()
