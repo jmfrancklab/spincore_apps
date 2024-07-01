@@ -8,11 +8,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          node-version: '20.x'
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.6.0
         with:
           python-version: '3.x' # Specify the Python version
+          node-version: '20.x'
 
       - name: Install dependencies
         run: |
