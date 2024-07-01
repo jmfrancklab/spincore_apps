@@ -27,15 +27,13 @@ from pyspecdata import *
 import os, sys
 from numpy import *
 import SpinCore_pp
-from SpinCore_pp import prog_plen, get_integer_sampling_intervals
+from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
-import h5py
 
 my_exp_type = "ODNP_NMR_comp/CPMG"
-target_directory = getDATADIR(exp_type=my_exp_type)
-assert os.path.exists(target_directory)
+assert os.path.exists(getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -48,11 +46,9 @@ config_dict = SpinCore_pp.configuration("active.ini")
 )
 # }}}
 # {{{create filename and save to config file
-date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "CPMG"
-config_dict["date"] = date
+config_dict["date"] = datetime.now().strftime("%y%m%d")
 config_dict["cpmg_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_generic_{config_dict['type']}"
 # }}}
 # {{{ command-line option to leave the field untouched (if you set it once, why set it again)
 adjust_field = True
@@ -60,9 +56,9 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to",
-    config_dict["carrierFreq_MHz"],
-    "since that's what's in your .ini file. Hit enter if this is true",
+    "I'm assuming that you've tuned your probe to %f since that's what's
+    in your .ini file. Hit enter if this is true" %
+    config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field
 if adjust_field:
@@ -202,27 +198,6 @@ data.set_prop("coherence_pathway", {'ph1': 1,
                                     }
               )
 data.set_prop("acq_params", config_dict.asdict())
-nodename = config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
-data.name(nodename)
-filename_out = filename + ".h5"
-if os.path.exists(f"{filename_out}"):
-    print("this file already exists so we will add a node to it!")
-    with h5py.File(
-        os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
-    ) as fp:
-        while nodename in fp.keys():
-            nodename = (
-                config_dict["type"] + "_" + str(config_dict["cpmg_counter"])
-            )
-            data.name(nodename)
-            config_dict["cpmg_counter"] += 1
-data.hdf5_write(f"{filename_out}", directory=target_directory)
-print("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
-print(
-    "saved data to (node, file, exp_type):",
-    data.name(),
-    filename_out,
-    my_exp_type,
-)
+config_dict = save_data(data, my_exp_type, config_dict, "cpmg")
 config_dict.write()
 # }}}
