@@ -6,18 +6,19 @@ A standard echo where the 90 time is varied so
 that we are able to see when the signal rotates through 90 to 
 180 degrees.
 """
-from pyspecdata import *
+import pyspecdata as psd
 import os
 import SpinCore_pp
 from SpinCore_pp import get_integer_sampling_intervals, save_data
 from Instruments.XEPR_eth import xepr
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
-from numpy import linspace, arange
+import numpy as np
+from numpy import r_
 
 my_exp_type = "ODNP_NMR_comp/nutation"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
-p90_range_us = linspace(1.0, 10.0, 20, endpoint=False)
+assert os.path.exists(psd.getDATADIR(exp_type=my_exp_type))
+p90_range_us = np.linspace(1.0, 10.0, 20, endpoint=False)
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -26,7 +27,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
     config_dict["acq_time_ms"],
 ) = get_integer_sampling_intervals(
     config_dict["SW_kHz"], config_dict["acq_time_ms"]
-    )
+)
 # }}}
 # {{{add file saving parameters to config dict
 config_dict["type"] = "nutation"
@@ -81,9 +82,7 @@ for idx, p90_us in enumerate(p90_range_us):
         SW_kHz=config_dict["SW_kHz"],
         ret_data=data,
     )
-data.setaxis("indirect", p90_range_us * 1e-6).set_units(
-    "indirect", "s"
-)
+data.setaxis("indirect", p90_range_us * 1e-6).set_units("indirect", "s")
 # {{{ chunk and save data
 data.chunk("t", ["ph1", "t2"], [4, -1])
 data.setaxis("ph1", ph1_cyc / 4)
