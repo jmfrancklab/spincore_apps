@@ -195,7 +195,7 @@ data.chunk(
 data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
     "ph2", ph2 / 4
 ).setaxis("ph_diff", ph_diff / 4)
-data.set_prop("postproc_type", "spincore_diffph_SE_v2")
+data.set_prop("postproc_type", "spincore_generalproc_v1")
 data.set_prop("coherence_pathway", {'ph1': 1,
                                     'ph2': -2,
                                     'ph_overall':-1,
