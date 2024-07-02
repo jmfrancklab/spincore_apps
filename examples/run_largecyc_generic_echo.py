@@ -14,10 +14,10 @@ we will just name l m and n these by the coherence pathways that they label:
 
 """
 
-from pylab import *
-from pyspecdata import *
-import os, sys
-from numpy import *
+from pyspecdata import r_, getDATADIR
+import os
+import sys
+from numpy import array, pi
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
