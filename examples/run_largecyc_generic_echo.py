@@ -3,21 +3,24 @@ Spin Echo
 =========
 
 This script will perform a standard generic echo experiment,
-but will perform a full four-step cycle on the first pulse (to discriminate
-between all potential coherence pathways), as well as independently cycle the 180 pulse. The phase
-argument is like this:
+but will perform a full four-step cycle on the first pulse,
+as well as independently cycle the 180 pulse.
+The phase argument is like this:
+
 (Δp₁)(m)  + (Δp₁+Δp₂)(n) = (Δp₁)(m+n) + (Δp₂)(m)
-we will just name l m and n these by the coherence pathways that they label:
+
+we will just name l m and n these by the coherence pathways that they
+label:
 :m: ph1
 :n: ph_overall
 (diff this against `run_generic_echo.py`)
-
 """
 
-from pyspecdata import r_, getDATADIR
+import pyspecdata as psd
 import os
 import sys
-from numpy import array, pi
+import numpy as np
+from numpy import pi, r_
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
@@ -25,7 +28,7 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/Echoes"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
+assert os.path.exists(psd.getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -65,13 +68,12 @@ if adjust_field:
         print("field set to ", field_G)
 # }}}
 # {{{set phase cycling
-# NOTE: The overall phase and the 90-180 phase difference are phase cycled
-# in a nested way
+#    (Δp₁)(m)  + (Δp₁+Δp₂)(n) = (Δp₁)(m+n) + (Δp₂)(m)
 ph1 = r_[0, 1, 2, 3]
 ph_overall = r_[0, 1, 2, 3]
 # the following puts ph_diff on the inside, which I would not have expected
-ph1_cyc = array([(m + n) % 4 for m in ph1 for n in ph_overall])
-ph2_cyc = array([(n) % 4 for m in ph1 for n in ph_overall])
+ph1_cyc = np.array([(m + n) % 4 for m in ph1 for n in ph_overall])
+ph2_cyc = np.array([(n) % 4 for m in ph1 for n in ph_overall])
 nPhaseSteps = len(ph1) * len(ph_overall)
 # }}}
 # {{{ calibrate pulse lengths
@@ -102,7 +104,9 @@ data = generic(
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
         (
             "delay",
-            config_dict["tau_us"] - 2 * prog_p90_us / pi - config_dict["deblank_us"],
+            config_dict["tau_us"]
+            - 2 * prog_p90_us / pi
+            - config_dict["deblank_us"],
         ),
         # NOTE: here the tau_us is defined as
         # the evolution time from the start of
