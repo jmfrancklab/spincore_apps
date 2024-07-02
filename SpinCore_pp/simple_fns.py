@@ -7,7 +7,7 @@ def get_integer_sampling_intervals(SW_kHz, time_per_segment_ms):
     SW_kHz: float
         Desired SW in kHz
     time_per_segment_ms: float
-        Time per transient in ms
+        Time per segment in ms
 
     Returns
     =======

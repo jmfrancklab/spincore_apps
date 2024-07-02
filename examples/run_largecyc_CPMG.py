@@ -22,10 +22,11 @@ and after your tau through a series of delays.
 If you wish to keep the field as is without adjustment, follow
 the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
-import pyspecdata as psd
+
+from pyspecdata import getDATADIR
 import os
 import sys
-from numpy import array, pi, r_
+from numpy import pi, r_, array
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
@@ -33,7 +34,7 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/CPMG"
-assert os.path.exists(psd.getDATADIR(exp_type=my_exp_type))
+assert os.path.exists(getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -45,7 +46,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
     time_per_segment_ms=config_dict["echo_acq_ms"],
 )
 # }}}
-# {{{create filename and save to config file
+# {{{add file saving parameters to config dict
 config_dict["type"] = "CPMG"
 config_dict["date"] = datetime.now().strftime("%y%m%d")
 config_dict["cpmg_counter"] += 1
@@ -56,8 +57,8 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to %f since that's what's in your .ini file. Hit enter if this is true" %
-    config_dict["carrierFreq_MHz"]
+    "I'm assuming that you've tuned your probe to %f since that's what's in your .ini file. Hit enter if this is true"
+    % config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field
 if adjust_field:
@@ -184,18 +185,21 @@ data = generic(
 # {{{ chunk and save data
 data.chunk(
     "t",
-    ["ph1","ph2","ph_overall", "nEcho", "t2"],
+    ["ph1", "ph2", "ph_overall", "nEcho", "t2"],
     [len(ph1), len(ph2), len(ph_overall), config_dict["nEchoes"], -1],
 )
 data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
     "ph1", ph1 / 4
-).setaxis("ph2",ph2).setaxis("ph_overall", ph_overall / 4)
+).setaxis("ph2", ph2 / 4).setaxis("ph_overall", ph_overall / 4)
 data.set_prop("postproc_type", "spincore_generalproc_v1")
-data.set_prop("coherence_pathway", {'ph1': 1,
-                                    'ph2': -2,
-                                    'ph_overall':-1,
-                                    }
-              )
+data.set_prop(
+    "coherence_pathway",
+    {
+        "ph1": 1,
+        "ph2": -2,
+        "ph_overall": -1,
+    },
+)
 data.set_prop("acq_params", config_dict.asdict())
 config_dict = save_data(data, my_exp_type, config_dict, "cpmg")
 config_dict.write()
