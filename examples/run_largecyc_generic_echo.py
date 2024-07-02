@@ -19,7 +19,8 @@ label:
 import pyspecdata as psd
 import os
 import sys
-from numpy import pi, r_, array
+from numpy import pi, r_
+import numpy as np
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
@@ -71,8 +72,8 @@ if adjust_field:
 ph1 = r_[0, 1, 2, 3]
 ph_overall = r_[0, 1, 2, 3]
 # the following puts ph_diff on the inside, which I would not have expected
-ph1_cyc = array([(m + n) % 4 for m in ph1 for n in ph_overall])
-ph2_cyc = array([(n) % 4 for m in ph1 for n in ph_overall])
+ph1_cyc = np.array([(m + n) % 4 for m in ph1 for n in ph_overall])
+ph2_cyc = np.array([(n) % 4 for m in ph1 for n in ph_overall])
 nPhaseSteps = len(ph1) * len(ph_overall)
 # }}}
 # {{{ calibrate pulse lengths
