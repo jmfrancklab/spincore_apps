@@ -7,6 +7,16 @@ required. Note that the overall phase and the 90-180 phase difference are
 phase cycled in a nested way similar to run_CPMG.py. If you wish to keep
 the field as is without adjustment follow the 'py run_generic_echo.py'
 command with 'stayput' (e.g. 'py run_generic_echo.py stayput')
+
+This script will perform a standard CPMG experiment,
+but will perform a full four-step cycle on the first pulse (to discriminate
+between CP and CPMG), as well as independently cycle the first 180.  The phase
+argument is like this (where Δp₃ is the change from the *second* 180 onwards):
+(Δp₁)(m)  + (Δp₁+Δp₂)(n) = (Δp₁)(m+n) + (Δp₂)(m)
+we will just name l m and n these by the coherence pathways that they label:
+:m: ph1
+:n: ph_overall
+(diff this against `run_generic_echo.py`)
 """
 
 from pylab import *
