@@ -8,10 +8,10 @@ phase cycled in a nested way similar to run_CPMG.py. If you wish to keep
 the field as is without adjustment follow the 'py run_generic_echo.py'
 command with 'stayput' (e.g. 'py run_generic_echo.py stayput')
 
-This script will perform a standard CPMG experiment,
+This script will perform a standard generic echo experiment,
 but will perform a full four-step cycle on the first pulse (to discriminate
-between CP and CPMG), as well as independently cycle the first 180.  The phase
-argument is like this (where Δp₃ is the change from the *second* 180 onwards):
+between all potential coherence pathways), as well as independently cycle the 180 pulse. The phase
+argument is like this:
 (Δp₁)(m)  + (Δp₁+Δp₂)(n) = (Δp₁)(m+n) + (Δp₂)(m)
 we will just name l m and n these by the coherence pathways that they label:
 :m: ph1
@@ -107,9 +107,7 @@ data = generic(
         ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
         (
             "delay",
-            config_dict["tau_us"]
-            - 2 * prog_p90_us / pi
-            - config_dict["deblank_us"],
+            config_dict["tau_us"] - 2 * prog_p90_us / pi - config_dict["deblank_us"],
         ),
         # NOTE: here the tau_us is defined as
         # the evolution time from the start of
