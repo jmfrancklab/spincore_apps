@@ -185,11 +185,11 @@ data = generic(
 data.chunk(
     "t",
     ["ph1","ph2","ph_overall", "nEcho", "t2"],
-    [len(ph1_cyc), len(ph2_cyc), len(ph3_cyc), config_dict["nEchoes"], -1],
+    [len(ph1), len(ph2), len(ph_overall), config_dict["nEchoes"], -1],
 )
 data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
-    "ph1", ph1_cyc / 4
-).setaxis("ph2",ph2_cyc).setaxis("ph_overall", ph3_cyc / 4)
+    "ph1", ph1 / 4
+).setaxis("ph2",ph2).setaxis("ph_overall", ph_overall / 4)
 data.set_prop("postproc_type", "spincore_generalproc_v1")
 data.set_prop("coherence_pathway", {'ph1': 1,
                                     'ph2': -2,
