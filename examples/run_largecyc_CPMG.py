@@ -22,10 +22,12 @@ and after your tau through a series of delays.
 If you wish to keep the field as is without adjustment, follow
 the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
-from pyspecdata import getDATADIR,r_
+
+import pyspecdata as psd
 import os
 import sys
-from numpy import array, pi
+from numpy import pi, r_
+import numpy as np
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
@@ -33,7 +35,7 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/CPMG"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
+assert os.path.exists(psd.getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -56,8 +58,8 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to %f since that's what's in your .ini file. Hit enter if this is true" %
-    config_dict["carrierFreq_MHz"]
+    "I'm assuming that you've tuned your probe to %f since that's what's in your .ini file. Hit enter if this is true"
+    % config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field
 if adjust_field:
@@ -80,9 +82,9 @@ ph1 = r_[0, 1, 2, 3]
 ph2 = r_[0, 1, 2, 3]
 ph_overall = r_[0, 1, 2, 3]
 # the following puts ph1 on the outside, which I would not have expected
-ph1_cyc = array([(l + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
-ph2_cyc = array([(m + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
-ph3_cyc = array([(n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+ph1_cyc = np.array([(l + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+ph2_cyc = np.array([(m + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+ph3_cyc = np.array([(n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
 nPhaseSteps = 4**3
 # }}}
 # {{{ calibrate pulse lengths
@@ -184,18 +186,21 @@ data = generic(
 # {{{ chunk and save data
 data.chunk(
     "t",
-    ["ph1","ph2","ph_overall", "nEcho", "t2"],
+    ["ph1", "ph2", "ph_overall", "nEcho", "t2"],
     [len(ph1), len(ph2), len(ph_overall), config_dict["nEchoes"], -1],
 )
 data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
     "ph1", ph1 / 4
-).setaxis("ph2",ph2).setaxis("ph_overall", ph_overall / 4)
+).setaxis("ph2", ph2).setaxis("ph_overall", ph_overall / 4)
 data.set_prop("postproc_type", "spincore_generalproc_v1")
-data.set_prop("coherence_pathway", {'ph1': 1,
-                                    'ph2': -2,
-                                    'ph_overall':-1,
-                                    }
-              )
+data.set_prop(
+    "coherence_pathway",
+    {
+        "ph1": 1,
+        "ph2": -2,
+        "ph_overall": -1,
+    },
+)
 data.set_prop("acq_params", config_dict.asdict())
 config_dict = save_data(data, my_exp_type, config_dict, "cpmg")
 config_dict.write()
