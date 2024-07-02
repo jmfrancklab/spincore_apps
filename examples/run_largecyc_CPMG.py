@@ -22,9 +22,9 @@ and after your tau through a series of delays.
 If you wish to keep the field as is without adjustment, follow
 the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
-from pylab import *
 from pyspecdata import getDATADIR,r_
-import os, sys
+import os
+import sys
 from numpy import array, pi
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
