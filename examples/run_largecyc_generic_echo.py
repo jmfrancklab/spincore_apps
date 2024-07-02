@@ -72,12 +72,12 @@ if adjust_field:
 # {{{set phase cycling
 # NOTE: The overall phase and the 90-180 phase difference are phase cycled
 # in a nested way
-ph2 = r_[0, 1, 2, 3]
-ph_diff = r_[0, 1, 2, 3]
+ph1 = r_[0, 1, 2, 3]
+ph_overall = r_[0, 1, 2, 3]
 # the following puts ph_diff on the inside, which I would not have expected
-ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
-ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
-nPhaseSteps = len(ph2) * len(ph_diff)
+ph1_cyc = array([(m + n) % 4 for m in ph1 for n in ph_overall])
+ph2_cyc = array([(n) % 4 for m in ph1 for n in ph_overall])
+nPhaseSteps = len(ph1) * len(ph_overall)
 # }}}
 # {{{ calibrate pulse lengths
 # NOTE: This is done inside the run_spin_echo rather than in the example
@@ -135,11 +135,11 @@ data = generic(
 # {{{ chunk and save data
 data.chunk(
     "t",
-    ["ph2", "ph_diff", "t2"],
-    [len(ph2), len(ph_diff), -1],
+    ["ph1", "ph_overall", "t2"],
+    [len(ph1), len(ph_overall), -1],
 )
-data.setaxis("ph2", ph2 / 4).setaxis("ph_diff", ph_diff / 4)
-data.set_prop("postproc_type", "spincore_diffph_SE_v2")
+data.setaxis("ph1", ph1 / 4).setaxis("ph_overall", ph_overall / 4)
+data.set_prop("postproc_type", "spincore_generalproc_v1")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
 config_dict = save_data(data, my_exp_type, config_dict, "echo")
