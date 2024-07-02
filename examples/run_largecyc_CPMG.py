@@ -22,10 +22,10 @@ and after your tau through a series of delays.
 If you wish to keep the field as is without adjustment, follow
 the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
-from pylab import *
-from pyspecdata import *
-import os, sys
-from numpy import *
+from pyspecdata import getDATADIR,r_
+import os
+import sys
+from numpy import array, pi
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
@@ -56,8 +56,7 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to %f since that's what's
-    in your .ini file. Hit enter if this is true" %
+    "I'm assuming that you've tuned your probe to %f since that's what's in your .ini file. Hit enter if this is true" %
     config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field
@@ -186,11 +185,11 @@ data = generic(
 data.chunk(
     "t",
     ["ph1","ph2","ph_overall", "nEcho", "t2"],
-    [len(ph2), len(ph_diff), config_dict["nEchoes"], -1],
+    [len(ph1), len(ph2), len(ph_overall), config_dict["nEchoes"], -1],
 )
 data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
-    "ph2", ph2 / 4
-).setaxis("ph_diff", ph_diff / 4)
+    "ph1", ph1 / 4
+).setaxis("ph2",ph2).setaxis("ph_overall", ph_overall / 4)
 data.set_prop("postproc_type", "spincore_generalproc_v1")
 data.set_prop("coherence_pathway", {'ph1': 1,
                                     'ph2': -2,

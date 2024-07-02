@@ -113,9 +113,9 @@ def generic(
         j[2]
         for j in ppg_list
         if len(j) > 2 and j[0] == "marker" and j[1] == "echo_label"
-    ] + manual_echoes
+    ]
     if len(nEchoes) == 1:
-        nEchoes = nEchoes[0]
+        nEchoes = nEchoes[0] + manual_echoes
     elif len(nEchoes) == 0:
         nEchoes = 1
     else:
