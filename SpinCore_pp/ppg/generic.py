@@ -16,7 +16,6 @@ import time
 import logging
 
 
-# {{{spin echo ppg
 def generic(
     ppg_list,
     nScans,
@@ -32,6 +31,7 @@ def generic(
     ph2_cyc=r_[0],
     ret_data=None,
     amplitude=1.0,
+    manual_echoes=0,
 ):
     """run nScans and slot them into the indirect_idx index of ret_data -- assume
     that the first time this is run, it will be run with ret_data=None and that
@@ -101,6 +101,11 @@ def generic(
                     This parameter is only used when `ret_data` is set to `None`.
     ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
+    manual_echoes:  int default 0
+        The number of echoes that are present outside the loop.  (*e.g.*
+        you might want to do this if they are phase cycled separately,
+        *etc.*, but they need to be included in the total number of
+        echoes).
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     # {{{ pull info about phase cycling and echos from the ppg_list
@@ -108,7 +113,7 @@ def generic(
         j[2]
         for j in ppg_list
         if len(j) > 2 and j[0] == "marker" and j[1] == "echo_label"
-    ]
+    ] + manual_echoes
     if len(nEchoes) == 1:
         nEchoes = nEchoes[0]
     elif len(nEchoes) == 0:
