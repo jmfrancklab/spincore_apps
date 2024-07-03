@@ -22,11 +22,11 @@ and after your tau through a series of delays.
 If you wish to keep the field as is without adjustment, follow
 the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
-
-from pyspecdata import getDATADIR
+import pyspecdata as psd
 import os
 import sys
-from numpy import pi, r_, array
+import np
+from numpy import pi, r_
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
@@ -34,7 +34,7 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/CPMG"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
+assert os.path.exists(psd.getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -81,9 +81,9 @@ ph1 = r_[0, 1, 2, 3]
 ph2 = r_[0, 1, 2, 3]
 ph_overall = r_[0, 1, 2, 3]
 # the following puts ph1 on the outside, which I would not have expected
-ph1_cyc = array([(l + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
-ph2_cyc = array([(m + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
-ph3_cyc = array([(n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+ph1_cyc = np.array([(l + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+ph2_cyc = np.array([(m + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+ph3_cyc = np.array([(n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
 nPhaseSteps = 4**3
 # }}}
 # {{{ calibrate pulse lengths
