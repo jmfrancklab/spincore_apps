@@ -72,8 +72,8 @@ nPhaseSteps = len(ph2) * len(ph_diff)
 # {{{ calibrate pulse lengths
 # NOTE: This is done inside the run_spin_echo rather than in the example
 # but to keep the generic function more robust we do it outside of the ppg
-prog_p90_us = prog_plen(config_dict["p90_us"])
-prog_p180_us = prog_plen(2 * config_dict["p90_us"])
+config_dict["prog_p90_us"] = prog_plen(config_dict["p90_us"])
+config_dict["prog_p180_us"] = prog_plen(2 * config_dict["p90_us"])
 # }}}
 # Unlike CPMG, here, we are free to choose τ to be
 # whatever we want it to be.  Typically (when not
@@ -81,7 +81,7 @@ prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # echo of CPMG), we use 3.5 ms,
 # which is enough to use Hermitian symmetry, but not so
 # much that we suffer from T₂ decay.
-assert config_dict["tau_us"] > 2 * prog_p90_us / pi + config_dict["deblank_us"]
+assert config_dict["tau_us"] > 2 * config_dict["prog_p90_us"] / pi + config_dict["deblank_us"]
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
 assert total_pts < 2**14, (
@@ -94,11 +94,11 @@ data = generic(
     ppg_list=[
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
+        ("pulse_TTL", config_dict["prog_p90_us"], "ph_cyc", ph1_cyc),
         (
             "delay",
             config_dict["tau_us"]
-            - 2 * prog_p90_us / pi
+            - 2 * config_dict["prog_p90_us"] / pi
             - config_dict["deblank_us"],
         ),
         # NOTE: here the tau_us is defined as
@@ -106,7 +106,7 @@ data = generic(
         # excitation (*during the pulse*) through
         # to the start of the 180 pulse
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
+        ("pulse_TTL", config_dict["prog_p180_us"], "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["acq_time_ms"]),
         ("delay", config_dict["repetition_us"]),

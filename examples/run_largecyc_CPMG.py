@@ -89,8 +89,8 @@ nPhaseSteps = 4**3
 # {{{ calibrate pulse lengths
 # NOTE: This is done inside the run_spin_echo rather than in the example
 # but to keep the generic function more robust we do it outside of the ppg
-prog_p90_us = prog_plen(config_dict["p90_us"])
-prog_p180_us = prog_plen(2 * config_dict["p90_us"])
+config_dict["prog_p90_us"] = prog_plen(config_dict["p90_us"])
+config_dict["prog_p180_us"] = prog_plen(2 * config_dict["p90_us"])
 # }}}
 # {{{ calculate symmetric tau
 # NOTE: here the tau_us is defined as the evolution time from the start of
@@ -101,7 +101,7 @@ config_dict["tau_us"] = (
 ) / 2
 assert (
     config_dict["tau_us"]
-    > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
+    > 2 * config_dict["prog_p90_us"] / pi + marker_us + config_dict["deblank_us"]
 )
 assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
 print(
@@ -109,7 +109,7 @@ print(
     % (
         2 * config_dict["deadtime_us"]
         + 1e3 * config_dict["echo_acq_ms"]
-        + prog_p180_us
+        + config_dict["prog_p180_us"]
     )
 )
 # }}}
@@ -126,17 +126,17 @@ data = generic(
     ppg_list=[
         ("phase_reset", 1),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p90_us, "ph_cyc", ph1_cyc),
+        ("pulse_TTL", config_dict["prog_p90_us"], "ph_cyc", ph1_cyc),
         (
             "delay",
             config_dict["tau_us"]
-            - 2 * prog_p90_us / pi
+            - 2 * config_dict["prog_p90_us"] / pi
             - marker_us
             - config_dict["deblank_us"],
         ),
         ("delay", marker_us),  # placeholder for marker
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
+        ("pulse_TTL", config_dict["prog_p180_us"], "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
         (
@@ -152,7 +152,7 @@ data = generic(
         # to the start of the 180 pulse
         ("marker", "echo_label", config_dict["nEchoes"] - 1),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p180_us, "ph_cyc", ph3_cyc),
+        ("pulse_TTL", config_dict["prog_p180_us"], "ph_cyc", ph3_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
         (

@@ -67,6 +67,18 @@ class configuration(object):
             None,
             "90 time of the probe in microseconds.\nUsed to determine 90° 180°, etc pulses",
         ),
+        "prog_p90_us": (
+            float,
+            "acq_params",
+            None,
+            "90 time of the pulse, as programmed",
+        ),
+        "prog_p180_us": (
+            float,
+            "acq_params",
+            None,
+            "180 time of the pulse, as programmed",
+        ),
         "gamma_eff_MHz_G": (
             float,
             "acq_params",
