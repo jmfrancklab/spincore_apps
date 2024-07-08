@@ -165,7 +165,7 @@ except Exception:
         os.remove("temp_ctrl.h5")
         target_directory = os.path.getcwd()
         filename = "temp_ctrl.h5"
-        DNP_data.hdf5_write(filename, directory=target_directory)
+        control_thermal.hdf5_write(filename, directory=target_directory)
         final_log.append("change the name accordingly once this is done running!")
 # }}}
 logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
