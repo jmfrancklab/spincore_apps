@@ -11,7 +11,7 @@ import numpy as np
 from numpy import r_
 import pyspecdata as psd
 from pyspecdata.file_saving.hdf_save_dict_to_group import hdf_save_dict_to_group
-from pyspecdata import strm, DNP_data
+from pyspecdata import strm
 import os
 import sys
 import time
@@ -167,7 +167,6 @@ except Exception:
         filename = "temp_ctrl.h5"
         DNP_data.hdf5_write(filename, directory=target_directory)
         final_log.append("change the name accordingly once this is done running!")
-    raise    
 # }}}
 logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
 logger.debug(strm("Name of saved data", control_thermal.name()))
@@ -334,7 +333,6 @@ with power_control() as p:
             final_log.append(
                 "if I got this far, that probably worked -- be sure to move/rename temp_ODNP.h5 to the correct name!!"
             )
-        raise    
     logger.info("\n*** FILE SAVED IN TARGET DIRECTORY ***\n")
     logger.debug(strm("Name of saved data", DNP_data.name()))
     # }}}
