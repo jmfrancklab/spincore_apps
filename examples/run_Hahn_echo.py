@@ -72,6 +72,7 @@ data = run_spin_echo(
     indirect_idx=0,
     indirect_len=1,
     ph1_cyc=ph1_cyc,
+    amplitude=config_dict["amplitude"],
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
