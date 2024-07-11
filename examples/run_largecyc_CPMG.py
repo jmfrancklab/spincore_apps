@@ -1,17 +1,32 @@
 """
-CPMG
-====
+CPMG with large phase cycle
+============================
 
-This script will perform a standard CPMG experiment. 
+This script will perform a standard CPMG experiment,
+but will perform a full four-step cycle on the first pulse (to discriminate
+between CP and CPMG), as well as independently cycle the first 180.  The phase
+argument is like this (where Δp₃ is the change from the *second* 180 onwards):
+
+Δp₁ l + (Δp₂)(m) + (Δp₁+Δp₂+Δp₃)(n) = (Δp₁)(l+n) + (Δp₂)(m+n) + (Δp₃)(n)
+
+we will just name l m and n these by the coherence pathways that they label:
+
+:l: ph1
+:m: ph2
+:n: ph_overall
+
+(diff this against `run_CPMG.py`)
+
 In order to form a symmetric echo, a padding time is added before 
 and after your tau through a series of delays.
 If you wish to keep the field as is without adjustment, follow
 the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
 """
-from pylab import *
-from pyspecdata import *
-import os, sys
-from numpy import *
+import pyspecdata as psd
+import os
+import sys
+import np
+from numpy import pi, r_
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
@@ -19,7 +34,7 @@ from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
 my_exp_type = "ODNP_NMR_comp/CPMG"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
+assert os.path.exists(psd.getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
@@ -42,9 +57,8 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to %f since that's what's
-    in your .ini file. Hit enter if this is true" %
-    config_dict["carrierFreq_MHz"]
+    "I'm assuming that you've tuned your probe to %f since that's what's in your .ini file. Hit enter if this is true"
+    % config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field
 if adjust_field:
@@ -62,12 +76,15 @@ if adjust_field:
 # {{{set phase cycling
 # NOTE: The overall phase and the 90-180 phase difference are phase cycled
 # in a nested way
+# Δp₁ l + (Δp₂)(m) + (Δp₁+Δp₂+Δp₃)(n) = (Δp₁)(l+n) + (Δp₂)(m+n) + (Δp₃)(n)
+ph1 = r_[0, 1, 2, 3]
 ph2 = r_[0, 1, 2, 3]
-ph_diff = r_[0, 2]
-# the following puts ph_diff on the inside, which I would not have expected
-ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
-ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
-nPhaseSteps = len(ph2) * len(ph_diff)
+ph_overall = r_[0, 1, 2, 3]
+# the following puts ph1 on the outside, which I would not have expected
+ph1_cyc = np.array([(l + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+ph2_cyc = np.array([(m + n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+ph3_cyc = np.array([(n) % 4 for l in ph1 for m in ph2 for n in ph_overall])
+nPhaseSteps = 4**3
 # }}}
 # {{{ calibrate pulse lengths
 # NOTE: This is done inside the run_spin_echo rather than in the example
@@ -117,13 +134,25 @@ data = generic(
             - marker_us
             - config_dict["deblank_us"],
         ),
+        ("delay", marker_us),  # placeholder for marker
+        ("delay_TTL", config_dict["deblank_us"]),
+        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
+        ("delay", config_dict["deadtime_us"]),
+        ("acquire", config_dict["echo_acq_ms"]),
+        (
+            "delay",
+            config_dict["deadtime_us"]
+            - 2 * marker_us
+            - config_dict["deblank_us"],
+        ),
+        ("delay", marker_us),  # placeholder for jumpto
         # NOTE: here the tau_us is defined as
         # the evolution time from the start of
         # excitation (*during the pulse*) through
         # to the start of the 180 pulse
-        ("marker", "echo_label", config_dict["nEchoes"]),
+        ("marker", "echo_label", config_dict["nEchoes"] - 1),
         ("delay_TTL", config_dict["deblank_us"]),
-        ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
+        ("pulse_TTL", prog_p180_us, "ph_cyc", ph3_cyc),
         ("delay", config_dict["deadtime_us"]),
         ("acquire", config_dict["echo_acq_ms"]),
         (
@@ -144,26 +173,33 @@ data = generic(
     nScans=config_dict["nScans"],
     indirect_idx=0,
     indirect_len=1,
-    amplitude=config_dict["amplitude"],
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
     time_per_segment_ms=config_dict["echo_acq_ms"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
+    manual_echoes=1,
 )
 # }}}
 # {{{ chunk and save data
 data.chunk(
     "t",
-    ["ph2", "ph_diff", "nEcho", "t2"],
-    [len(ph2), len(ph_diff), config_dict["nEchoes"], -1],
+    ["ph1", "ph2", "ph_overall", "nEcho", "t2"],
+    [len(ph1), len(ph2), len(ph_overall), config_dict["nEchoes"], -1],
 )
 data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
-    "ph2", ph2 / 4
-).setaxis("ph_diff", ph_diff / 4)
-data.set_prop("postproc_type", "spincore_diffph_SE_v2")
-data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
+    "ph1", ph1 / 4
+).setaxis("ph2", ph2 / 4).setaxis("ph_overall", ph_overall / 4)
+data.set_prop("postproc_type", "spincore_generalproc_v1")
+data.set_prop(
+    "coherence_pathway",
+    {
+        "ph1": 1,
+        "ph2": -2,
+        "ph_overall": -1,
+    },
+)
 data.set_prop("acq_params", config_dict.asdict())
 config_dict = save_data(data, my_exp_type, config_dict, "cpmg")
 config_dict.write()

@@ -15,7 +15,7 @@ from pyspecdata import strm
 import time
 import logging
 
-# {{{spin echo ppg
+
 def generic(
     ppg_list,
     nScans,
@@ -24,12 +24,14 @@ def generic(
     adcOffset,
     carrierFreq_MHz,
     nPoints,
+    time_per_segment_ms,
     SW_kHz,
     indirect_fields=None,
     ph1_cyc=r_[0, 1, 2, 3],
     ph2_cyc=r_[0],
     ret_data=None,
     amplitude=1.0,
+    manual_echoes=0,
 ):
     """run nScans and slot them into the indirect_idx index of ret_data -- assume
     that the first time this is run, it will be run with ret_data=None and that
@@ -99,16 +101,36 @@ def generic(
                     This parameter is only used when `ret_data` is set to `None`.
     ret_data:       nddata (default None)
                     returned data from previous run or `None` for the first run.
+    manual_echoes:  int default 0
+        The number of echoes that are present outside the loop.  (*e.g.*
+        you might want to do this if they are phase cycled separately,
+        *etc.*, but they need to be included in the total number of
+        echoes).
     """
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     # {{{ pull info about phase cycling and echos from the ppg_list
-    # {{{ tuples with 4 elements are pulses, where the 4th element is the phase cycle
-    all_ppg_arrays = [j[3] for j in ppg_list if len(j)>3]
-    nPhaseSteps = prod([len(j) for j in all_ppg_arrays])
-    # }}}
-    # {{{ for this to work, the loop label for echoes must be called "echo_label"
-    nEchoes = [j[2]+1 for j in ppg_list if len(j)>2 and j[0] == 'marker' and j[1] == 'echo_label']
-    # }}}
+    nEchoes = [
+        j[2]
+        for j in ppg_list
+        if len(j) > 2 and j[0] == "marker" and j[1] == "echo_label"
+    ]
+    if len(nEchoes) == 1:
+        nEchoes = nEchoes[0] + manual_echoes
+    elif len(nEchoes) == 0:
+        nEchoes = 1
+    else:
+        raise ValueError(
+            f"You seem to have {len(nEchoes)} lines in your ppg list that refer to a marker called 'echo_label'.  Therefore, I can't figure out how many echoes are in the pulse sequence!"
+        )
+    nPhaseSteps = int(
+        np.prod(
+            list(
+                dict(
+                    [(j[2], len(j[3])) for j in ppg_list if len(j) > 3]
+                ).values()
+            )
+        )
+    )
     # }}}
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
     for nScans_idx in range(nScans):
@@ -117,8 +139,12 @@ def generic(
         configureTX(adcOffset, carrierFreq_MHz, tx_phases, amplitude, nPoints)
         run_scans_time_list.append(time.time())
         run_scans_names.append("configure Rx")
-        check = configureRX(SW_kHz, nPoints, nScans, nEchoes, nPhaseSteps)
-        assert acq_time_ms == check
+        # in the following, nScans is set to 1, because we never average
+        # on the board -- doing this only messes up the amplitude
+        check = configureRX(SW_kHz, nPoints, 1, nEchoes, nPhaseSteps)
+        assert np.isclose(
+            check, time_per_segment_ms
+        ), f"you are trying to set the acquisition time to {time_per_segment_ms}, but configureRX returns {check}"
         run_scans_time_list.append(time.time())
         run_scans_names.append("init")
         init_ppg()
@@ -136,6 +162,7 @@ def generic(
         raw_data = getData(data_length, nPoints, nEchoes, nPhaseSteps)
         run_scans_time_list.append(time.time())
         run_scans_names.append("shape data")
+        # {{{ create returned data
         data_array = []
         data_array[::] = np.complex128(raw_data[0::2] + 1j * raw_data[1::2])
         dataPoints = float(np.shape(data_array)[0])
@@ -145,13 +172,18 @@ def generic(
             else:
                 # {{{ dtype for structured array
                 times_dtype = np.dtype(
-                    [(indirect_fields[0], np.double), (indirect_fields[1], np.double)]
+                    [
+                        (indirect_fields[0], np.double),
+                        (indirect_fields[1], np.double),
+                    ]
                 )
                 # }}}
             mytimes = np.zeros(indirect_len, dtype=times_dtype)
             time_axis = r_[0:dataPoints] / (SW_kHz * 1e3)
             ret_data = psp.ndshape(
-                [indirect_len, nScans, len(time_axis)], ["indirect", "nScans", "t"]
+                [indirect_len, nScans, len(time_axis)],
+                ["indirect", "nScans", "t"]
+                # note that "t" is a dimension that ends up getting split into phase cycle steps and possibly echoes as well
             ).alloc(dtype=np.complex128)
             ret_data.setaxis("indirect", mytimes)
             ret_data.setaxis("t", time_axis).set_units("t", "s")
@@ -166,7 +198,10 @@ def generic(
         stopBoard()
         run_scans_time_list.append(time.time())
         this_array = np.array(run_scans_time_list)
-        logging.debug(strm("stored scan", nScans_idx, "for indirect_idx", indirect_idx))
+        # }}}
+        logging.debug(
+            strm("stored scan", nScans_idx, "for indirect_idx", indirect_idx)
+        )
         logging.debug(strm("checkpoints:", this_array - this_array[0]))
         logging.debug(
             strm(

@@ -1,40 +1,49 @@
 """
-CPMG
-====
+Spin Echo
+=========
 
-This script will perform a standard CPMG experiment. 
-In order to form a symmetric echo, a padding time is added before 
-and after your tau through a series of delays.
-If you wish to keep the field as is without adjustment, follow
-the 'py run_CPMG.py' command with 'stayput' (e.g. 'py run_CPMG.py stayput')
+This script will perform a standard generic echo experiment,
+but will perform a full four-step cycle on the first pulse,
+as well as independently cycle the 180 pulse.
+The phase argument is like this:
+
+(Δp₁)(m)  + (Δp₁+Δp₂)(n) = (Δp₁)(m+n) + (Δp₂)(m)
+
+we will just name l m and n these by the coherence pathways that they
+label:
+:m: ph1
+:n: ph_overall
+(diff this against `run_generic_echo.py`)
 """
-from pylab import *
-from pyspecdata import *
-import os, sys
-from numpy import *
+
+import pyspecdata as psd
+import os
+import sys
+from numpy import pi, r_
+import numpy as np
 import SpinCore_pp
 from SpinCore_pp import prog_plen, get_integer_sampling_intervals, save_data
 from SpinCore_pp.ppg import generic
 from datetime import datetime
 from Instruments.XEPR_eth import xepr
 
-my_exp_type = "ODNP_NMR_comp/CPMG"
-assert os.path.exists(getDATADIR(exp_type=my_exp_type))
+my_exp_type = "ODNP_NMR_comp/Echoes"
+assert os.path.exists(psd.getDATADIR(exp_type=my_exp_type))
 # {{{importing acquisition parameters
 config_dict = SpinCore_pp.configuration("active.ini")
 (
     nPoints,
     config_dict["SW_kHz"],
-    config_dict["echo_acq_ms"],
+    config_dict["acq_time_ms"],
 ) = get_integer_sampling_intervals(
     SW_kHz=config_dict["SW_kHz"],
-    time_per_segment_ms=config_dict["echo_acq_ms"],
+    time_per_segment_ms=config_dict["acq_time_ms"],
 )
 # }}}
 # {{{add file saving parameters to config dict
-config_dict["type"] = "CPMG"
+config_dict["type"] = "echo"
 config_dict["date"] = datetime.now().strftime("%y%m%d")
-config_dict["cpmg_counter"] += 1
+config_dict["echo_counter"] += 1
 # }}}
 # {{{ command-line option to leave the field untouched (if you set it once, why set it again)
 adjust_field = True
@@ -42,9 +51,8 @@ if len(sys.argv) == 2 and sys.argv[1] == "stayput":
     adjust_field = False
 # }}}
 input(
-    "I'm assuming that you've tuned your probe to %f since that's what's
-    in your .ini file. Hit enter if this is true" %
-    config_dict["carrierFreq_MHz"]
+    "I'm assuming that you've tuned your probe to %f since that's what's in your .ini file. Hit enter if this is true"
+    % config_dict["carrierFreq_MHz"]
 )
 # {{{ let computer set field
 if adjust_field:
@@ -60,14 +68,13 @@ if adjust_field:
         print("field set to ", field_G)
 # }}}
 # {{{set phase cycling
-# NOTE: The overall phase and the 90-180 phase difference are phase cycled
-# in a nested way
-ph2 = r_[0, 1, 2, 3]
-ph_diff = r_[0, 2]
+#    (Δp₁)(m)  + (Δp₁+Δp₂)(n) = (Δp₁)(m+n) + (Δp₂)(m)
+ph1 = r_[0, 1, 2, 3]
+ph_overall = r_[0, 1, 2, 3]
 # the following puts ph_diff on the inside, which I would not have expected
-ph1_cyc = array([(j + k) % 4 for k in ph2 for j in ph_diff])
-ph2_cyc = array([(k + 1) % 4 for k in ph2 for j in ph_diff])
-nPhaseSteps = len(ph2) * len(ph_diff)
+ph1_cyc = np.array([(m + n) % 4 for m in ph1 for n in ph_overall])
+ph2_cyc = np.array([(n) % 4 for m in ph1 for n in ph_overall])
+nPhaseSteps = len(ph1) * len(ph_overall)
 # }}}
 # {{{ calibrate pulse lengths
 # NOTE: This is done inside the run_spin_echo rather than in the example
@@ -75,36 +82,21 @@ nPhaseSteps = len(ph2) * len(ph_diff)
 prog_p90_us = prog_plen(config_dict["p90_us"])
 prog_p180_us = prog_plen(2 * config_dict["p90_us"])
 # }}}
-# {{{ calculate symmetric tau
-# NOTE: here the tau_us is defined as the evolution time from the start of
-# excitation (*during the pulse*) through to the start of the 180 pulse
-marker_us = 1.0  # the marker takes 1 us
-config_dict["tau_us"] = (
-    2 * config_dict["deadtime_us"] + 1e3 * config_dict["echo_acq_ms"]
-) / 2
-assert (
-    config_dict["tau_us"]
-    > 2 * prog_p90_us / pi + marker_us + config_dict["deblank_us"]
-)
-assert config_dict["deadtime_us"] > config_dict["deblank_us"] + 2 * marker_us
-print(
-    "If you are measuring on a scope, the time from the start (or end) of one 180 pulse to the next should be %0.1f us"
-    % (
-        2 * config_dict["deadtime_us"]
-        + 1e3 * config_dict["echo_acq_ms"]
-        + prog_p180_us
-    )
-)
-# }}}
+# Unlike CPMG, here, we are free to choose τ to be
+# whatever we want it to be.  Typically (when not
+# comparing directly to time-domain signal in first
+# echo of CPMG), we use 3.5 ms,
+# which is enough to use Hermitian symmetry, but not so
+# much that we suffer from T₂ decay.
+assert config_dict["tau_us"] > 2 * prog_p90_us / pi + config_dict["deblank_us"]
 # {{{check total points
-total_pts = nPoints * nPhaseSteps * config_dict["nEchoes"]
+total_pts = nPoints * nPhaseSteps
 assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384"
     % total_pts
 )
 # }}}
-# {{{ acquire CPMG
-# NOTE: Number of segments is nEchoes * nPhaseSteps
+# {{{ acquire echo
 data = generic(
     ppg_list=[
         ("phase_reset", 1),
@@ -114,41 +106,25 @@ data = generic(
             "delay",
             config_dict["tau_us"]
             - 2 * prog_p90_us / pi
-            - marker_us
             - config_dict["deblank_us"],
         ),
         # NOTE: here the tau_us is defined as
         # the evolution time from the start of
         # excitation (*during the pulse*) through
         # to the start of the 180 pulse
-        ("marker", "echo_label", config_dict["nEchoes"]),
         ("delay_TTL", config_dict["deblank_us"]),
         ("pulse_TTL", prog_p180_us, "ph_cyc", ph2_cyc),
         ("delay", config_dict["deadtime_us"]),
-        ("acquire", config_dict["echo_acq_ms"]),
-        (
-            "delay",
-            config_dict["deadtime_us"]
-            - 2 * marker_us
-            - config_dict["deblank_us"],
-        ),
-        ("jumpto", "echo_label"),
-        # In the line above I assume this takes
-        # marker_us to execute The way to be sure
-        # of this would be to capture on a scope
-        # and measure from one 180 to the next (or
-        # actually several, since this error would
-        # be cumulative
+        ("acquire", config_dict["acq_time_ms"]),
         ("delay", config_dict["repetition_us"]),
     ],
     nScans=config_dict["nScans"],
     indirect_idx=0,
     indirect_len=1,
-    amplitude=config_dict["amplitude"],
     adcOffset=config_dict["adc_offset"],
     carrierFreq_MHz=config_dict["carrierFreq_MHz"],
     nPoints=nPoints,
-    time_per_segment_ms=config_dict["echo_acq_ms"],
+    time_per_segment_ms=config_dict["acq_time_ms"],
     SW_kHz=config_dict["SW_kHz"],
     ret_data=None,
 )
@@ -156,15 +132,13 @@ data = generic(
 # {{{ chunk and save data
 data.chunk(
     "t",
-    ["ph2", "ph_diff", "nEcho", "t2"],
-    [len(ph2), len(ph_diff), config_dict["nEchoes"], -1],
+    ["ph1", "ph_overall", "t2"],
+    [len(ph1), len(ph_overall), -1],
 )
-data.setaxis("nEcho", r_[0 : config_dict["nEchoes"]]).setaxis(
-    "ph2", ph2 / 4
-).setaxis("ph_diff", ph_diff / 4)
-data.set_prop("postproc_type", "spincore_diffph_SE_v2")
+data.setaxis("ph1", ph1 / 4).setaxis("ph_overall", ph_overall / 4)
+data.set_prop("postproc_type", "spincore_generalproc_v1")
 data.set_prop("coherence_pathway", {"ph_overall": -1, "ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
-config_dict = save_data(data, my_exp_type, config_dict, "cpmg")
+config_dict = save_data(data, my_exp_type, config_dict, "echo")
 config_dict.write()
 # }}}

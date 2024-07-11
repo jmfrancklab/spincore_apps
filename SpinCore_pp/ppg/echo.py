@@ -8,6 +8,7 @@ from .. import (
     stopBoard,
 )
 from .. import load as spincore_load
+from .. import prog_plen
 import pyspecdata as psp
 import numpy as np
 from numpy import r_
@@ -86,6 +87,12 @@ def run_spin_echo(
                     returned data from previous run or `None` for the first run.
     """
     assert nEchoes == 1, "you must only choose nEchoes=1"
+    # take the desired p90 and p180
+    # (2*desired_p90) and convert to what needs to
+    # be programmed in order to get the desired
+    # times
+    prog_p90_us = prog_plen(p90_us)
+    prog_p180_us = prog_plen(2 * p90_us)
     tx_phases = r_[0.0, 90.0, 180.0, 270.0]
     nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
     data_length = 2 * nPoints * nEchoes * nPhaseSteps
@@ -105,10 +112,10 @@ def run_spin_echo(
             [
                 ("phase_reset", 1),
                 ("delay_TTL", deblank_us),
-                ("pulse_TTL", p90_us, "ph1", ph1_cyc),
+                ("pulse_TTL", prog_p90_us, "ph1", ph1_cyc),
                 ("delay", tau_us),
                 ("delay_TTL", deblank_us),
-                ("pulse_TTL", 2.0 * p90_us, "ph2", ph2_cyc),
+                ("pulse_TTL", prog_p180_us, "ph2", ph2_cyc),
                 ("delay", deadtime_us),
                 ("acquire", acq_time_ms),
                 ("delay", repetition_us),
