@@ -83,13 +83,13 @@ for idx, p90_us in enumerate(p90_range_us):
         ret_data=data,
     )
 data.rename("indirect", "p_90")
-data.setaxis("indirect", p90_range_us * 1e-6).set_units("indirect", "s")
+data.setaxis("p_90", p90_range_us * 1e-6).set_units("p_90", "s")
 # {{{ chunk and save data
 data.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
 data.setaxis("ph1", ph1_cyc / 4).setaxis("ph2", ph2_cyc / 4)
 if config_dict["nScans"] > 1:
     data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-data.reorder(["nScans", "ph2", "ph1", "t2"])
+data.reorder(["nScans", "ph2", "ph1", "p_90", "t2"])
 data.set_units("t2", "s")
 data.set_prop("postproc_type", "spincore_nutation_v3")
 data.set_prop("coherence_pathway", {"ph1": +1, "ph2": -2})
