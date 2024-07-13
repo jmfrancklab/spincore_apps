@@ -6,9 +6,9 @@ A ppg that performs a series of echoes at a range of designated field
 values that are determined from the guessed_MHz_to_GHz value in your 
 active.ini and the field width parameter. 
 """
-from pylab import *
-from pyspecdata import *
+from pyspecdata import init_logging, figlist_var, r_, logging, getDATADIR
 import os
+import time
 import SpinCore_pp
 from SpinCore_pp.ppg import run_spin_echo
 from datetime import datetime
@@ -56,12 +56,12 @@ if not phase_cycling:
 # }}}
 # {{{check total points
 total_pts = nPoints * nPhaseSteps
-assert total_pts < 2 ** 14, (
+assert total_pts < 2**14, (
     "You are trying to acquire %d points (too many points) -- either change SW or acq time so nPoints x nPhaseSteps is less than 16384\nyou could try reducing the acq_time_ms to %f"
     % (total_pts, config_dict["acq_time_ms"] * 16384 / total_pts)
 )
-#}}}
-#{{{Run field sweep
+# }}}
+# {{{Run field sweep
 with xepr() as x_server:
     first_B0 = x_server.set_field(field_axis[0])
     time.sleep(3.0)
@@ -70,7 +70,7 @@ with xepr() as x_server:
         nScans=config_dict["nScans"],
         indirect_idx=0,
         indirect_len=len(field_axis),
-        ph1_cyc = ph1_cyc,
+        ph1_cyc=ph1_cyc,
         adcOffset=config_dict["adc_offset"],
         carrierFreq_MHz=carrierFreq_MHz,
         nPoints=nPoints,
@@ -126,16 +126,17 @@ if phase_cycling:
     sweep_data.reorder("t2", first=False)
     for_plot = sweep_data.C
     for_plot.ft("t2", shift=True)
-    for_plot.ft(["ph1"], unitary = True)
+    for_plot.ft(["ph1"], unitary=True)
     fl.next("FTed data")
-    fl.image(for_plot.C.mean("nScans")
+    fl.image(
+        for_plot.C.mean("nScans")
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )
 else:
     if config_dict["nScans"] > 1:
         sweep_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-    sweep_data.rename('t','t2')    
+    sweep_data.rename("t", "t2")
     fl.next("Raw - time")
     fl.image(
         sweep_data.C.mean("nScans")
@@ -145,7 +146,8 @@ else:
     for_plot = sweep_data.C
     for_plot.ft("t2", shift=True)
     fl.next("FTed data")
-    fl.image(for_plot.C.mean("nScans")
+    fl.image(
+        for_plot.C.mean("nScans")
         .setaxis("indirect", "#")
         .set_units("indirect", "scan #")
     )
@@ -168,7 +170,7 @@ if os.path.exists(f"{filename_out}"):
 else:
     try:
         sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)
-    except:
+    except Exception:
         print(
             f"I had problems writing to the correct file {filename}.h5, so I'm going to try to save your file to temp_field_sweep.h5 in the current directory"
         )
