@@ -91,7 +91,7 @@ if config_dict["nScans"] > 1:
     data.setaxis("nScans", r_[0 : config_dict["nScans"]])
 data.reorder(["nScans", "ph2", "ph1", "p_90", "t2"])
 data.set_units("t2", "s")
-data.set_prop("postproc_type", "spincore_nutation_v3")
+data.set_prop("postproc_type", "spincore_nutation_v5")
 data.set_prop("coherence_pathway", {"ph1": +1, "ph2": -2})
 data.set_prop("acq_params", config_dict.asdict())
 config_dict = save_data(data, my_exp_type, config_dict, "echo")

@@ -83,8 +83,8 @@ if myinput.lower().startswith("n"):
 powers = 1e-3 * 10 ** (dB_settings / 10.0)
 # }}}
 # {{{ these change if we change the way the data is saved
-IR_postproc = "spincore_IR_v1" # note that you have changed the way the data is saved, and so this should change likewise!!!!
-Ep_postproc = "spincore_ODNP_v3"
+IR_postproc = "spincore_IR_v2" # note that you have changed the way the data is saved, and so this should change likewise!!!!
+Ep_postproc = "spincore_ODNP_v4"
 # }}}
 #{{{check total points
 total_points = len(Ep_ph1_cyc) * nPoints
@@ -293,7 +293,7 @@ with power_control() as p:
         )
         time_axis_coords[j + thermal_scans]["stop_times"] = time.time()
     DNP_data.set_prop("stop_time", time.time())
-    DNP_data.set_prop("postproc_type", "spincore_ODNP_v4")
+    DNP_data.set_prop("postproc_type", Ep_postproc)
     DNP_data.set_prop("acq_params", config_dict.asdict())
     DNP_data.setaxis("nScans", r_[0 : config_dict["nScans"]])
     if phase_cycling:

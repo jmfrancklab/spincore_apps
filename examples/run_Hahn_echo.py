@@ -92,7 +92,7 @@ data.chunk(
 )
 data.setaxis("ph1", ph1_cyc / 4)
 data.reorder(["ph1", "nScans", "t2"])
-data.set_prop("postproc_type", "spincore_SE_v1")
+data.set_prop("postproc_type", "spincore_SE_v3")
 data.set_prop("coherence_pathway", {"ph1": +1})
 data.set_prop("acq_params", config_dict.asdict())
 config_dict = save_data(data, my_exp_type, config_dict, "echo")

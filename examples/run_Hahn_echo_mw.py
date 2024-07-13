@@ -152,7 +152,7 @@ else:
     fl.next('FTed data')
     fl.image(for_plot)
 echo_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"])
-echo_data.set_prop("postproc_type", "proc_Hahn_echoph")
+echo_data.set_prop("postproc_type", "proc_Hahn_echoph_v2")
 echo_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/Echoes")
 filename_out = filename + ".h5"

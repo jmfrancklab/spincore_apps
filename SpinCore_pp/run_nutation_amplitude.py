@@ -76,7 +76,7 @@ nutation_data = concat(datalist,'repeats').reorder('t')
 nutation_data.chunk('t',['ph2','ph1','t2'],[2,4,-1])
 nutation_data.setaxis('ph2',r_[0:2]/4).setaxis('ph1',r_[0:4]/4)
 nutation_data.set_units('t2','s')
-nutation_data.set_prop('postproc_type','spincore_nutation_v2')
+nutation_data.set_prop('postproc_type','spincore_nutation_v6')
 nutation_data.name(config_dict['type']+config_dict['echo_counter'])
 nutation_data.set_prop('acq_params',config_dict.asdict())
 #}}}

@@ -133,7 +133,7 @@ else:
     fl.next('FTed data')
     fl.image(for_plot)
 var_tau_data.name(config_dict["type"] + "_" + str(config_dict["echo_counter"]))
-var_tau_data.set_prop("postproc_type","SpinCore_var_tau_v1") #still needs to be added to load_Data
+var_tau_data.set_prop("postproc_type","SpinCore_var_tau_v2") #still needs to be added to load_Data
 var_tau_data.set_prop("acq_params", config_dict.asdict())
 target_directory = getDATADIR(exp_type="ODNP_NMR_comp/var_tau")
 filename_out = filename + ".h5"
