@@ -25,9 +25,7 @@ config_dict = SpinCore_pp.configuration("active.ini")
     nPoints,
     config_dict["SW_kHz"],
     config_dict["acq_time_ms"],
-) = get_integer_sampling_intervals(
-    config_dict["SW_kHz"], config_dict["acq_time_ms"]
-)
+) = get_integer_sampling_intervals(config_dict["SW_kHz"], config_dict["acq_time_ms"])
 # }}}
 # {{{add file saving parameters to config dict
 config_dict["type"] = "nutation"
@@ -35,8 +33,9 @@ config_dict["date"] = datetime.now().strftime("%y%m%d")
 config_dict["echo_counter"] += 1
 # }}}
 # {{{set phase cycling
-ph1_cyc = r_[0, 1, 2, 3]
-nPhaseSteps = 4
+ph1_cyc = r_[0, 2]
+ph2_cyc = r_[0, 2]
+nPhaseSteps = len(ph1_cyc) * len(ph2_cyc)
 # }}}
 # {{{let computer set field
 input(
@@ -71,6 +70,7 @@ for idx, p90_us in enumerate(p90_range_us):
         indirect_idx=idx,
         indirect_len=len(p90_range_us),
         ph1_cyc=ph1_cyc,
+        ph2_cyc=ph2_cyc,
         amplitude=config_dict["amplitude"],
         adcOffset=config_dict["adc_offset"],
         carrierFreq_MHz=config_dict["carrierFreq_MHz"],
@@ -82,16 +82,17 @@ for idx, p90_us in enumerate(p90_range_us):
         SW_kHz=config_dict["SW_kHz"],
         ret_data=data,
     )
+data.rename("indirect", "p_90")
 data.setaxis("indirect", p90_range_us * 1e-6).set_units("indirect", "s")
 # {{{ chunk and save data
-data.chunk("t", ["ph1", "t2"], [4, -1])
-data.setaxis("ph1", ph1_cyc / 4)
+data.chunk("t", ["ph2", "ph1", "t2"], [2, 2, -1])
+data.setaxis("ph1", ph1_cyc / 4).setaxis("ph2", ph2_cyc / 4)
 if config_dict["nScans"] > 1:
     data.setaxis("nScans", r_[0 : config_dict["nScans"]])
-data.reorder(["ph1", "nScans", "t2"])
+data.reorder(["nScans", "ph2", "ph1", "t2"])
 data.set_units("t2", "s")
-data.set_prop("postproc_type", "spincore_nutation_v4")
-data.set_prop("coherence_pathway", {"ph1": +1})
+data.set_prop("postproc_type", "spincore_nutation_v3")
+data.set_prop("coherence_pathway", {"ph1": +1, "ph2": -2})
 data.set_prop("acq_params", config_dict.asdict())
 config_dict = save_data(data, my_exp_type, config_dict, "echo")
 config_dict.write()
