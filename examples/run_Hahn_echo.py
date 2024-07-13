@@ -9,8 +9,7 @@ tell you 'I am listening' - then, you should be able to run this program from
 the NMR computer to set the field etc. 
 """
 
-from pylab import *
-from pyspecdata import *
+from pyspecdata import getDATADIR,r_
 import os
 import SpinCore_pp
 from SpinCore_pp import get_integer_sampling_intervals, save_data
