@@ -33,20 +33,25 @@ else:
 print("odnp_counter", myconfig["odnp_counter"])
 # look for a parameter that isn't in the ini file and does not have a default
 try:
-    print("p90_us", myconfig["p90_us"])  # look for something that doesn't exist
+    print(
+        "p90_us", myconfig["p90_us"]
+    )  # look for something that doesn't exist
 except Exception as e:
     print("looking for p90_us failed with:\n\n", e)
 # }}}
 # {{{ pretty formatting
 myconfig["adc_offset"] = 30
-print("print out the config settings as a dictionary!",
-    myconfig.asdict()
+print(
+    "print out the config settings as a dictionary!", myconfig.asdict()
 )  # so we can, e.g. put in an HDF5 file -- this should have the nice case that was registered
-print("print them out more legibly!!\n",
-        myconfig)
+print("print them out more legibly!!\n", myconfig)
 # }}}
 # {{{ set a parameter that is registered, and see that it will change, which can be seen by running the script twice
-print("echo counter was", myconfig["echo_counter"], "and I'm going to increment it.  If you re-run this script, this value should increase")
+print(
+    "echo counter was",
+    myconfig["echo_counter"],
+    "and I'm going to increment it.  If you re-run this script, this value should increase",
+)
 myconfig["echo_counter"] += 1
 myconfig.write()  # this should write the adc offset and whatever else we've changed
 # }}}
@@ -62,6 +67,8 @@ print(
 )
 print(
     "this gives me the vdlist:",
-    SpinCore_pp.vdlist_from_relaxivities(myconfig["concentration"], **relevant_kwargs),
+    SpinCore_pp.vdlist_from_relaxivities(
+        myconfig["concentration"], **relevant_kwargs
+    ),
 )
 # }}}

@@ -56,7 +56,9 @@ vd_kwargs = {
     if j in config_dict.keys()
 }
 vd_list_us = (
-    SpinCore_pp.vdlist_from_relaxivities(config_dict["concentration"], **vd_kwargs)
+    SpinCore_pp.vdlist_from_relaxivities(
+        config_dict["concentration"], **vd_kwargs
+    )
     * 1e6
 )  # convert to microseconds
 FIR_rep = (
@@ -199,7 +201,9 @@ for vd_idx, vd in enumerate(vd_list_us):
 vd_data.rename("indirect", "vd")
 vd_data.setaxis("vd", vd_list_us * 1e-6).set_units("vd", "s")
 if phase_cycling:
-    vd_data.chunk("t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1])
+    vd_data.chunk(
+        "t", ["ph2", "ph1", "t2"], [len(IR_ph1_cyc), len(IR_ph2_cyc), -1]
+    )
     vd_data.setaxis("ph1", IR_ph1_cyc / 4)
     vd_data.setaxis("ph2", IR_ph2_cyc / 4)
 vd_data.setaxis("nScans", r_[0 : config_dict["thermal_nScans"]])
@@ -212,7 +216,9 @@ nodename = vd_data.name()
 # {{{ again, implement a file fallback
 with h5py.File(os.path.normpath(os.path.join(target_directory, f"{filename}"))) as fp:
     if nodename in fp.keys():
-        final_log.append("this nodename already exists, so I will call it temp")
+        final_log.append(
+            "this nodename already exists, so I will call it temp"
+        )
         nodename = "temp_noPower"
         final_log.append(
             f"I had problems writing to the correct file {filename} so I'm going to try to save this node as temp_noPower"
@@ -270,7 +276,12 @@ with power_control() as p:
     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     for j, this_dB in enumerate(dB_settings):
         logger.debug(
-            "SETTING THIS POWER", this_dB, "(", dB_settings[j - 1], powers[j], "W)"
+            "SETTING THIS POWER",
+            this_dB,
+            "(",
+            dB_settings[j - 1],
+            powers[j],
+            "W)",
         )
         if j == 0:
             retval = p.dip_lock(
@@ -326,7 +337,9 @@ with power_control() as p:
         target_directory = os.path.getcwd()
         filename = "temp_ctrl.h5"
         if os.path.exists("temp_ODNP.h5"):
-            final_log.append("there is a temp_ODNP.h5 already! -- I'm removing it")
+            final_log.append(
+                "there is a temp_ODNP.h5 already! -- I'm removing it"
+            )
             os.remove("temp_ODNP.h5")
             DNP_data.hdf5_write(filename, directory=target_directory)
             final_log.append(
@@ -417,7 +430,9 @@ with power_control() as p:
     this_log = p.stop_log()
 # }}}
 config_dict.write()
-with h5py.File(os.path.normpath(os.path.join(target_directory, filename)), "a") as f:
+with h5py.File(
+    os.path.normpath(os.path.join(target_directory, filename)), "a"
+) as f:
     log_grp = f.create_group("log")
     hdf_save_dict_to_group(log_grp, this_log.__getstate__())
 print("*" * 30 + "\n" + "\n".join(final_log))

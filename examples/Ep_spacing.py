@@ -15,4 +15,7 @@ with figlist_var() as fl:
     plt.title("Evenly spaced Ep curve")
     plt.ylabel("Signal")
     plt.xlabel("Power / W")
-    print("The list with the optimal powers for this E(p) experiment is", Ep_powers)
+    print(
+        "The list with the optimal powers for this E(p) experiment is",
+        Ep_powers,
+    )

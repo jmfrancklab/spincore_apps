@@ -43,7 +43,9 @@ date = datetime.now().strftime("%y%m%d")
 config_dict["type"] = "field"
 config_dict["date"] = date
 config_dict["field_counter"] += 1
-filename = f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+filename = (
+    f"{config_dict['date']}_{config_dict['chemical']}_{config_dict['type']}"
+)
 # }}}
 # {{{set phase cycling
 phase_cycling = True
@@ -163,7 +165,9 @@ if os.path.exists(f"{filename_out}"):
         os.path.normpath(os.path.join(target_directory, f"{filename_out}"))
     ) as fp:
         if nodename in fp.keys():
-            print("this nodename already exists, so I will call it temp_field_sweep")
+            print(
+                "this nodename already exists, so I will call it temp_field_sweep"
+            )
             sweep_data.name("temp_field_sweep")
             nodename = "temp_field_sweep"
     sweep_data.hdf5_write(f"{filename_out}", directory=target_directory)

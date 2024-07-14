@@ -47,7 +47,8 @@ with figlist_var() as fl:
     fl.next("time domain, filtered")
     filter_timeconst = 10e-3
     myfilter = exp(
-        -abs((d.fromaxis("t2") - config_dict["tau_us"] * 1e-6)) / filter_timeconst
+        -abs((d.fromaxis("t2") - config_dict["tau_us"] * 1e-6))
+        / filter_timeconst
     )
     for j in d.getaxis("ph1"):
         fl.plot(abs(d["ph1":j]), label=f"Δp={j}", alpha=0.5)
@@ -55,7 +56,10 @@ with figlist_var() as fl:
     # {{{ show filtered data with peak pick
     d = d_fullsw
     d.ift("t2")
-    d *= exp(-abs((d.fromaxis("t2") - config_dict["tau_us"] * 1e-6)) / filter_timeconst)
+    d *= exp(
+        -abs((d.fromaxis("t2") - config_dict["tau_us"] * 1e-6))
+        / filter_timeconst
+    )
     d.ft("t2")
     fl.next("apodized ft")
     for j in d.getaxis("ph1"):
