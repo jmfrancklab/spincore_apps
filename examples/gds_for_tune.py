@@ -138,16 +138,22 @@ with figlist_var() as fl:
 flat_slice.run(abs).mean("t")
 print(
     "reflection ratio calculated from ratio of %f to %f mV"
-    % (abs(flat_slice["ch", 1]).item() / 1e-3, abs(flat_slice["ch", 0]).item() / 1e-3)
+    % (
+        abs(flat_slice["ch", 1]).item() / 1e-3,
+        abs(flat_slice["ch", 0]).item() / 1e-3,
+    )
 )
 ratio = (abs(flat_slice["ch", 1] / flat_slice["ch", 0])).item()
 tuning_dB = np.log10(ratio) * 20
 if tuning_dB < -25:
     print(
-        "congratulations! you have achieved a reflection ratio of %0.1f dB" % tuning_dB
+        "congratulations! you have achieved a reflection ratio of %0.1f dB"
+        % tuning_dB
     )
 else:
-    print("Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!" % tuning_dB)
+    print(
+        "Sorry! Your reflection ratio is %0.1f dB.  TRY HARDER!!!!" % tuning_dB
+    )
 # this is put here in case it used the default
 parser_dict["carrierFreq_MHz"] = carrier_frequency
 parser_dict.write()
