@@ -56,29 +56,27 @@ data_length = 2 * nPoints * config_dict["nEchoes"] * nPhaseSteps
 # {{{ ppg
 amp_range = np.linspace(0, 0.5, 200)[1:]  # ,endpoint=False)
 datalist = []
-for index, val in enumerate(amp_range):
-    amplitude = val  # pulse amp, set from 0.0 to 1.0
-    echo_data = run_spin_echo(
-        nScans=config_dict["nScans"],
-        indirect_idx=0,
-        indirect_len=1,
-        adcOffset=config_dict["adc_offset"],
-        carrierFreq_MHz=config_dict["carrierFreq_MHz"],
-        nPoints=nPoints,
-        nEchoes=config_dict["nEchoes"],
-        p90_us=config_dict["p90_us"],
-        repetition=config_dict["repetition_us"],
-        tau_us=config_dict["tau_us"],
-        SW_kHz=config_dict["SW_kHz"],
-        ph1_cyc=ph1,
-        ph2_cyc=ph2,
-        ret_data=None,
-    )
-    datalist = []
-    with GDS_scope() as g:
-        g.acquire_mode("HIR")
-        for j in range(amp_range):
-            datalist.append(g.waveform(ch=1))
+with GDS_scope() as g:
+    g.acquire_mode("HIR")
+    for index, ampval in enumerate(amp_range):
+        echo_data = run_spin_echo(
+            nScans=config_dict["nScans"],
+            indirect_idx=0,
+            indirect_len=1,
+            adcOffset=config_dict["adc_offset"],
+            carrierFreq_MHz=config_dict["carrierFreq_MHz"],
+            nPoints=nPoints,
+            nEchoes=config_dict["nEchoes"],
+            p90_us=config_dict["p90_us"],
+            repetition=config_dict["repetition_us"],
+            tau_us=config_dict["tau_us"],
+            SW_kHz=config_dict["SW_kHz"],
+            ph1_cyc=ph1,
+            ph2_cyc=ph2,
+            ret_data=None,
+            amplitude=ampval,
+        )
+        datalist.append(g.waveform(ch=1))
 nutation_data = concat(datalist, "repeats").reorder("t")
 nutation_data.chunk("t", ["ph2", "ph1", "t2"], [2, 4, -1])
 nutation_data.setaxis("ph2", r_[0:2] / 4).setaxis("ph1", r_[0:4] / 4)
